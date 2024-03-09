@@ -34,4 +34,8 @@ func TestNewLimitOrder(t *testing.T) {
 	if utils.ConvFloat64ToStr(utils.ConvStrToFloat64(order.Price), 1) != "1.5" {
 		t.Errorf("Expected price to be 1.5, got %s", order.Price)
 	}
+	_, err = orders.CancelOrder(client, order)
+	if err != nil {
+		log.Fatalf("Error cancelling order: %v", err)
+	}
 }
