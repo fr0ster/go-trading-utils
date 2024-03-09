@@ -1,9 +1,16 @@
 package utils
 
-import "strconv"
+import (
+	"log"
+	"strconv"
+)
 
-func ConvStrToFloat64(s string) (float64, error) {
-	return strconv.ParseFloat(s, 64)
+func ConvStrToFloat64(s string) float64 {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return f
 }
 
 func ConvFloat64ToStr(f float64, prec int) string {

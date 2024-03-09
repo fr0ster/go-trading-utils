@@ -141,3 +141,7 @@ func NewTakeProfitLimitOrder(
 		NewClientOrderID(order.ClientOrderID + "TP").
 		Do(context.Background())
 }
+
+func CancelOrder(client *binance.Client, order *binance.CreateOrderResponse) (*binance.CancelOrderResponse, error) {
+	return client.NewCancelOrderService().Symbol(order.Symbol).OrderID(order.OrderID).Do(context.Background())
+}
