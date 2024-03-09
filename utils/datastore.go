@@ -8,8 +8,9 @@ import (
 )
 
 type DataRecord struct {
+	AccountType   binance.AccountType
+	Symbol        binance.SymbolType
 	Balance       float64
-	Orders        []*binance.CreateOrderResponse
 	MiddlePrice   float64
 	Quantity      float64
 	BoundQuantity float64
@@ -21,7 +22,7 @@ type DataStore struct {
 }
 
 // SaveData saves the data to the data store file in JSON format
-func (ds *DataStore) SaveData(data *DataRecord) error {
+func (ds *DataStore) SaveData(records []DataRecord) error {
 	file, err := os.Create(ds.FilePath)
 	if err != nil {
 		return err
@@ -29,8 +30,7 @@ func (ds *DataStore) SaveData(data *DataRecord) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	err = encoder.Encode(data)
-	if err != nil {
+	if err := encoder.Encode(records); err != nil {
 		return err
 	}
 
@@ -38,19 +38,18 @@ func (ds *DataStore) SaveData(data *DataRecord) error {
 }
 
 // LoadData loads the data from the data store file in JSON format
-func (ds *DataStore) LoadData() (*DataRecord, error) {
+func (ds *DataStore) LoadData() ([]DataRecord, error) {
 	file, err := os.Open(ds.FilePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	var records []DataRecord
 	decoder := json.NewDecoder(file)
-	data := &DataRecord{}
-	err = decoder.Decode(data)
-	if err != nil {
+	if err := decoder.Decode(&records); err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return records, nil
 }
