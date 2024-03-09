@@ -22,7 +22,7 @@ type DataStore struct {
 }
 
 // SaveData saves the data to the data store file in JSON format
-func (ds *DataStore) SaveData(records []DataRecord) error {
+func (ds *DataStore) SaveData(data DataRecord) error {
 	file, err := os.Create(ds.FilePath)
 	if err != nil {
 		return err
@@ -30,26 +30,29 @@ func (ds *DataStore) SaveData(records []DataRecord) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(records); err != nil {
+	err = encoder.Encode(data)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// LoadData loads the data from the data store file in JSON format
-func (ds *DataStore) LoadData() ([]DataRecord, error) {
+// LoadData loads the data from the data store file
+func (ds *DataStore) LoadData() (DataRecord, error) {
+	var data DataRecord
+
 	file, err := os.Open(ds.FilePath)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 	defer file.Close()
 
-	var records []DataRecord
 	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&records); err != nil {
-		return nil, err
+	err = decoder.Decode(&data)
+	if err != nil {
+		return data, err
 	}
 
-	return records, nil
+	return data, nil
 }

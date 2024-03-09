@@ -2,12 +2,10 @@ package utils
 
 import (
 	"encoding/json"
-	"io/ioutil"
-
-	// "io/ioutil"
 	"os"
 	"testing"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,32 +20,36 @@ func TestSaveData(t *testing.T) {
 	// Initialize the DataStore with the temporary file path
 	ds := DataStore{FilePath: tmpfile.Name()}
 
-	// Create some sample data records
-	records := []DataRecord{
-		{AccountType: "spot", Symbol: "BTCUSDT", Balance: 1.0, MiddlePrice: 50000.0, Quantity: 0.5, BoundQuantity: 0.2},
-		{AccountType: "margin", Symbol: "ETHUSDT", Balance: 2.0, MiddlePrice: 3000.0, Quantity: 1.0, BoundQuantity: 0.5},
+	// Create a sample data record
+	data := DataRecord{
+		AccountType:   binance.AccountTypeSpot,
+		Symbol:        binance.SymbolType("BTCUSDT"),
+		Balance:       1000.0,
+		MiddlePrice:   50000.0,
+		Quantity:      0.02,
+		BoundQuantity: 0.01,
 	}
 
-	// Save the data records
-	err = ds.SaveData(records)
+	// Save the data to the data store
+	err = ds.SaveData(data)
 	assert.NoError(t, err)
 
 	// Read the saved data from the file
-	data, err := os.ReadFile(tmpfile.Name())
+	fileData, err := os.ReadFile(tmpfile.Name())
 	assert.NoError(t, err)
 
-	// Unmarshal the JSON data into a slice of DataRecord
-	var savedRecords []DataRecord
-	err = json.Unmarshal(data, &savedRecords)
+	// Unmarshal the JSON data into a DataRecord struct
+	var savedData DataRecord
+	err = json.Unmarshal(fileData, &savedData)
 	assert.NoError(t, err)
 
-	// Assert that the saved records match the original records
-	assert.Equal(t, records, savedRecords)
+	// Assert that the saved data matches the original data
+	assert.Equal(t, data, savedData)
 }
 
 func TestLoadData(t *testing.T) {
 	// Create a temporary file for testing
-	tmpfile, err := ioutil.TempFile("", "datastore_test")
+	tmpfile, err := os.CreateTemp("", "datastore_test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,24 +58,24 @@ func TestLoadData(t *testing.T) {
 	// Initialize the DataStore with the temporary file path
 	ds := DataStore{FilePath: tmpfile.Name()}
 
-	// Create some sample data records
-	records := []DataRecord{
-		{AccountType: "spot", Symbol: "BTCUSDT", Balance: 1.0, MiddlePrice: 50000.0, Quantity: 0.5, BoundQuantity: 0.2},
-		{AccountType: "margin", Symbol: "ETHUSDT", Balance: 2.0, MiddlePrice: 3000.0, Quantity: 1.0, BoundQuantity: 0.5},
+	// Create a sample data record
+	data := DataRecord{
+		AccountType:   binance.AccountTypeSpot,
+		Symbol:        binance.SymbolType("BTCUSDT"),
+		Balance:       1000.0,
+		MiddlePrice:   50000.0,
+		Quantity:      0.02,
+		BoundQuantity: 0.01,
 	}
 
-	// Marshal the data records into JSON
-	data, err := json.Marshal(records)
+	// Save the data to the data store
+	err = ds.SaveData(data)
 	assert.NoError(t, err)
 
-	// Write the JSON data to the file
-	err = ioutil.WriteFile(tmpfile.Name(), data, 0644)
+	// Load the data from the data store
+	loadedData, err := ds.LoadData()
 	assert.NoError(t, err)
 
-	// Load the data records
-	loadedRecords, err := ds.LoadData()
-	assert.NoError(t, err)
-
-	// Assert that the loaded records match the original records
-	assert.Equal(t, records, loadedRecords)
+	// Assert that the loaded data matches the original data
+	assert.Equal(t, data, loadedData)
 }
