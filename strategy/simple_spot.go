@@ -10,12 +10,11 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/orders"
-	"github.com/fr0ster/go-binance-utils/services"
 	"github.com/fr0ster/go-binance-utils/streams"
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func SimpleSpot() {
+func SimpleSpot(symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
 		log.Fatal("API_KEY is not set")
@@ -35,26 +34,6 @@ func SimpleSpot() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	symbolname := "SUSHIUSDT"
-
-	quantity := "5"
-	priceF, priceStr, _ := services.GetMarketPrice(client, symbolname)
-	fmt.Println("Market price:", priceF)
-	fmt.Println("Market price string:", priceStr)
-
-	targetPrice := priceF * 0.9
-	stopPriceSLF := targetPrice * 0.95
-	priceSLF := targetPrice * 0.90
-	stopPriceTPF := targetPrice * 1.05
-	priceTPF := targetPrice * 1.10
-
-	price := utils.ConvFloat64ToStr(priceF, 2)
-	trailingDelta := "100"
-	stopPriceSL := utils.ConvFloat64ToStr(stopPriceSLF, 2)
-	priceSL := utils.ConvFloat64ToStr(priceSLF, 2)
-	stopPriceTP := utils.ConvFloat64ToStr(stopPriceTPF, 2)
-	priceTP := utils.ConvFloat64ToStr(priceTPF, 2)
 
 	fmt.Println("Price:", price)
 	fmt.Println("StopPriceSL:", stopPriceSL)
