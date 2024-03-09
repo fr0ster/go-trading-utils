@@ -14,18 +14,7 @@ import (
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func SimpleSpot(symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		log.Fatal("API_KEY is not set")
-	}
-	secretKey := os.Getenv("SECRET_KEY")
-	if secretKey == "" {
-		log.Fatal("SECRET_KEY is not set")
-	}
-
-	binance.UseTestnet = true
-	client := binance.NewClient(apiKey, secretKey)
+func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
 		log.Fatalf("Error starting user stream: %v", err)
