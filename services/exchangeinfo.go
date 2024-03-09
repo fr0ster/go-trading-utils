@@ -2,8 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"log"
 
 	"github.com/adshao/go-binance/v2"
 )
@@ -32,21 +30,4 @@ func GetPermissions(exchangeInfo *binance.ExchangeInfo, symbolname string) []str
 		}
 	}
 	return nil
-}
-
-func PrintFiltersInfo(client *binance.Client, symbolname string) {
-	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
-	if err != nil {
-		log.Fatalf("Error fetching exchange info: %v", err)
-	}
-
-	for _, info := range exchangeInfo.Symbols {
-		if info.Symbol == symbolname {
-			for _, filters := range info.Filters {
-				for _, filter := range filters {
-					fmt.Printf("Filter: %s\n", filter)
-				}
-			}
-		}
-	}
 }
