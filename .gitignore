@@ -1,21 +1,25 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# Вимикання коментарів та файли збірки
 *.exe
-*.exe~
 *.dll
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
-*.test
+# Вимикання файли конфігурації
+*.yaml
+*.yml
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# Вимикання файли логів
+*.log
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Вимикання файли залежностей
+/vendor/
+/go.sum
+go.sum
 
-# Go workspace file
-go.work
+# Вимикання бінарників та тимчасових відладочних бінарників
+/bin/
+/debug/
+__debug_bin
+binance_go_bot
+.fake
+.vscode/launch.json
