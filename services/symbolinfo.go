@@ -9,6 +9,9 @@ import (
 
 func GetMarketPrice(client *binance.Client, symbol string) (float64, string, error) {
 	prices, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
+	if err != nil || len(prices) == 0 {
+		return 0, "", err
+	}
 	marketPrice := prices[0]
 	return utils.ConvStrToFloat64(marketPrice.Price), marketPrice.Price, err
 }

@@ -1,14 +1,13 @@
 package utils
 
 import (
-	"log"
 	"strconv"
 )
 
 func ConvStrToFloat64(s string) float64 {
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		log.Fatal(err)
+		return 0
 	}
 	return f
 }
