@@ -11,7 +11,6 @@ func NewLimitOrder(
 	symbol string,
 	side binance.SideType,
 	quantity,
-	quoteOrderQty,
 	price string,
 	timeInForce binance.TimeInForceType) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
