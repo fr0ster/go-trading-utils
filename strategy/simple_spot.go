@@ -1,0 +1,165 @@
+package strategy
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-binance-utils/orders"
+	"github.com/fr0ster/go-binance-utils/services"
+	"github.com/fr0ster/go-binance-utils/streams"
+	"github.com/fr0ster/go-binance-utils/utils"
+)
+
+func SimpleSpot() {
+	apiKey := os.Getenv("API_KEY")
+	if apiKey == "" {
+		log.Fatal("API_KEY is not set")
+	}
+	secretKey := os.Getenv("SECRET_KEY")
+	if secretKey == "" {
+		log.Fatal("SECRET_KEY is not set")
+	}
+
+	binance.UseTestnet = true
+	client := binance.NewClient(apiKey, secretKey)
+	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		log.Fatalf("Error starting user stream: %v", err)
+	}
+	fmt.Println("ListenKey:", listenKey)
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	symbolname := "SUSHIUSDT"
+
+	quantity := "5"
+	priceF, priceStr, _ := services.GetMarketPrice(client, symbolname)
+	fmt.Println("Market price:", priceF)
+	fmt.Println("Market price string:", priceStr)
+
+	targetPrice := priceF * 0.9
+	stopPriceSLF := targetPrice * 0.95
+	priceSLF := targetPrice * 0.90
+	stopPriceTPF := targetPrice * 1.05
+	priceTPF := targetPrice * 1.10
+
+	price := utils.ConvFloat64ToStr(priceF, 2)
+	trailingDelta := "100"
+	stopPriceSL := utils.ConvFloat64ToStr(stopPriceSLF, 2)
+	priceSL := utils.ConvFloat64ToStr(priceSLF, 2)
+	stopPriceTP := utils.ConvFloat64ToStr(stopPriceTPF, 2)
+	priceTP := utils.ConvFloat64ToStr(priceTPF, 2)
+
+	fmt.Println("Price:", price)
+	fmt.Println("StopPriceSL:", stopPriceSL)
+	fmt.Println("PriceSL:", priceSL)
+	fmt.Println("StopPriceTP:", stopPriceTP)
+	fmt.Println("PriceTP:", priceTP)
+
+	wsHandler, executeOrderChan := streams.GetFilledOrderHandler()
+
+	_, _, err = streams.StartUserDataStream(listenKey, wsHandler, utils.HandleErr)
+	if err != nil {
+		log.Fatalf("Error serving user data websocket: %v", err)
+	}
+
+	order, err := orders.NewLimitOrder(
+		client,
+		symbolname,
+		binance.SideTypeBuy,
+		quantity,
+		price,
+		binance.TimeInForceTypeGTC)
+	if err != nil {
+		log.Fatalf("Error placing order: %v", err)
+	}
+
+	go func() {
+		for event := range executeOrderChan {
+			if event.OrderUpdate.Id == order.OrderID || event.OrderUpdate.ClientOrderId == order.ClientOrderID {
+				fmt.Printf("Order executed: %v\n", order)
+				handleOrders(
+					client,                     // client,
+					order,                      // order,
+					binance.SideTypeSell,       // side,
+					binance.TimeInForceTypeGTC, // timeInForce,
+					priceSL,                    // priceSL,
+					priceTP,                    // priceTP,
+					stopPriceSL,                // stopPriceSL,
+					stopPriceTP,                // stopPriceTP,
+					trailingDelta)              // trailingDelta
+				stop <- syscall.SIGSTOP
+			}
+		}
+	}()
+
+	utils.HandleShutdown(stop)
+}
+
+func handleOrders(
+	client *binance.Client,
+	order *binance.CreateOrderResponse,
+	side binance.SideType,
+	timeInForce binance.TimeInForceType,
+	priceSL,
+	priceTP,
+	stopPriceSL,
+	stopPriceTP,
+	trailingDelta string) {
+	stopLossOrder, err := orders.NewStopLossLimitOrder(
+		client,
+		order,
+		order.Symbol,
+		side,
+		timeInForce,
+		order.ExecutedQuantity,
+		priceSL,
+		stopPriceSL,
+		trailingDelta)
+	if err != nil {
+		if order.Status == binance.OrderStatusTypeNew || order.Status == binance.OrderStatusTypePartiallyFilled {
+			handleCancelOrder(client, order)
+		}
+		log.Fatalf("Error creating stop loss order: %v, StopPrice: %v, TrailingDelta: %v", err, stopPriceSL, trailingDelta)
+	} else {
+		fmt.Printf("StopLossOrder: %v\n", stopLossOrder)
+	}
+
+	takeProfitOrder, err := orders.NewTakeProfitLimitOrder(
+		client,
+		order,
+		order.Symbol,
+		side,
+		timeInForce,
+		order.ExecutedQuantity,
+		priceTP,
+		stopPriceTP,
+		trailingDelta)
+	if err != nil {
+		if stopLossOrder.Status == binance.OrderStatusTypeNew || stopLossOrder.Status == binance.OrderStatusTypePartiallyFilled {
+			handleCancelOrders(client, order, stopLossOrder)
+		}
+		log.Fatalf("Error creating take profit order: %v,  StopPrice: %v, TrailingDelta: %v", err, stopPriceTP, trailingDelta)
+	} else {
+		fmt.Printf("TakeProfitOrder: %v\n", takeProfitOrder)
+	}
+}
+
+func handleCancelOrder(client *binance.Client, order *binance.CreateOrderResponse) {
+	_, err := client.NewCancelOrderService().Symbol(order.Symbol).OrderID(order.OrderID).Do(context.Background())
+	if err != nil {
+		log.Fatalf("Error canceling order: %v", err)
+	}
+}
+
+func handleCancelOrders(client *binance.Client, orders ...*binance.CreateOrderResponse) {
+	for _, order := range orders {
+		handleCancelOrder(client, order)
+	}
+}
