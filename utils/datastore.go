@@ -20,14 +20,16 @@ type DataStore struct {
 	FilePath string
 }
 
-// SaveData saves the data to the specified file path in JSON format
-func (ds *DataStore) SaveData(data []*DataRecord) error {
-	jsonData, err := json.Marshal(data)
+// SaveData saves the data to the data store file in JSON format
+func (ds *DataStore) SaveData(data *DataRecord) error {
+	file, err := os.Create(ds.FilePath)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	err = os.WriteFile(ds.FilePath, jsonData, 0644)
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(data)
 	if err != nil {
 		return err
 	}
@@ -35,15 +37,17 @@ func (ds *DataStore) SaveData(data []*DataRecord) error {
 	return nil
 }
 
-// LoadData loads the data from the specified file path in JSON format
-func (ds *DataStore) LoadData() ([]*DataRecord, error) {
-	jsonData, err := os.ReadFile(ds.FilePath)
+// LoadData loads the data from the data store file in JSON format
+func (ds *DataStore) LoadData() (*DataRecord, error) {
+	file, err := os.Open(ds.FilePath)
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
-	var data []*DataRecord
-	err = json.Unmarshal(jsonData, &data)
+	decoder := json.NewDecoder(file)
+	data := &DataRecord{}
+	err = decoder.Decode(data)
 	if err != nil {
 		return nil, err
 	}
