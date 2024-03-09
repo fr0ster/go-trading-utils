@@ -7,8 +7,8 @@ import (
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func GetMarketPrice(client *binance.Client, symbol string) (float64, error) {
+func GetMarketPrice(client *binance.Client, symbol string) (float64, string, error) {
 	prices, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
 	marketPrice := prices[0]
-	return utils.ConvStrToFloat64(marketPrice.Price), err
+	return utils.ConvStrToFloat64(marketPrice.Price), marketPrice.Price, err
 }
