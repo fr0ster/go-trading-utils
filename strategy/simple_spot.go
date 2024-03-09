@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/orders"
@@ -67,7 +68,7 @@ func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL
 		}
 	}()
 
-	utils.HandleShutdown(stop)
+	utils.HandleShutdown(stop, 30*time.Second)
 }
 
 func handleOrders(

@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-func HandleShutdown(stop <-chan os.Signal) {
+func HandleShutdown(stop <-chan os.Signal, delay time.Duration) {
 	select {
 	case <-stop:
 		fmt.Println("Shutting down...")
-	case <-time.After(30 * time.Second):
+	case <-time.After(delay):
 		log.Fatal("Shutdown timed out")
 	}
 }
