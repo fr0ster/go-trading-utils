@@ -3,7 +3,6 @@ package info_test
 import (
 	"math/rand"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
@@ -12,7 +11,6 @@ import (
 
 var (
 	testDepthMap *info.DepthMapType
-	mu_dict      sync.Mutex
 )
 
 func getRandomPriceDict(dict map[info.Price]info.DepthRecord) (info.Price, info.DepthRecord) {
@@ -50,7 +48,7 @@ func TestInitDepthDictMap(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function being tested
-	err := info.InitDepthMap(client, &mu_dict, "BTCUSDT")
+	err := info.InitDepthMap(client, "BTCUSDT")
 	testDepthMap = info.GetDepthMap()
 
 	// Check if there was an error
@@ -67,7 +65,7 @@ func TestGetDepthMap(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, &mu_dict, "BTCUSDT")
+		info.InitDepthMap(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthMap = info.GetDepthMap()
 	}
@@ -86,7 +84,7 @@ func TestSearchDepthMap(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, &mu_dict, "BTCUSDT")
+		info.InitDepthMap(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthMap = info.GetDepthMap()
 	}
@@ -111,12 +109,12 @@ func TestSearchDepthMap(t *testing.T) {
 }
 
 func TestSearchDepthMapByPrices(t *testing.T) {
-	if len(*testDepthMap) == 0 {
+	if testDepthMap == nil || len(*testDepthMap) == 0 {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, &mu_dict, "BTCUSDT")
+		info.InitDepthMap(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthMap = info.GetDepthMap()
 	}

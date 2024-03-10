@@ -3,7 +3,6 @@ package info_test
 import (
 	"math/rand"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
@@ -11,10 +10,7 @@ import (
 	"github.com/google/btree"
 )
 
-var (
-	testDepthTree = btree.New(2)
-	mu_tree       sync.Mutex
-)
+var testDepthTree = btree.New(2)
 
 func getRandomPriceTree(tree *btree.BTree) *info.DepthRecord {
 	items := make([]info.DepthRecord, 0, tree.Len())
@@ -52,7 +48,7 @@ func TestInitDepthTree(t *testing.T) {
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 
-	err := info.InitDepthTree(client, &mu_tree, "BTCUSDT")
+	err := info.InitDepthTree(client, "BTCUSDT")
 	testDepthTree = info.GetDepthTree()
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
@@ -67,7 +63,7 @@ func TestGetBookTickerTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, &mu_tree, "BTCUSDT")
+		info.InitDepthMap(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthTree = info.GetDepthTree()
 	}
@@ -86,7 +82,7 @@ func TestSearchDepthTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, &mu_tree, "BTCUSDT")
+		info.InitDepthMap(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthTree = info.GetDepthTree()
 	}
@@ -115,7 +111,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthTree(client, &mu_tree, "BTCUSDT")
+		info.InitDepthTree(client, "BTCUSDT")
 		// Call the function being tested
 		testDepthTree = info.GetDepthTree()
 	}
