@@ -6,7 +6,7 @@ import (
 	"github.com/fr0ster/go-binance-utils/spot/utils"
 )
 
-func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (string, string, string, string, string, string, string) {
+func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (string, float64, string, string, string, string, string, string) {
 	balance := data.Balance
 	symbolname := data.Symbol
 
@@ -28,5 +28,5 @@ func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (strin
 	priceSL := utils.ConvFloat64ToStrDefault(priceSLF)
 	stopPriceTP := utils.ConvFloat64ToStrDefault(stopPriceTPF)
 	priceTP := utils.ConvFloat64ToStrDefault(priceTPF)
-	return price, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
+	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
