@@ -2,7 +2,10 @@ package info
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/utils"
@@ -88,4 +91,29 @@ func SearchDepthMapByPrices(low Price, high Price) DepthMapType {
 		}
 	}
 	return result
+}
+
+func ShowDepthMap() {
+	mu_dict.Lock()
+	defer mu_dict.Unlock()
+	// Створюємо зріз ключів
+	keys := make([]Price, 0, len(depthMap))
+	for k := range depthMap {
+		keys = append(keys, k)
+	}
+
+	// Сортуємо зріз ключів
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	// Проходимося по відсортованому зрізу ключів і отримуємо відповідні значення з мапи
+	fmt.Println("BookTickerMap:", "Time:", time.Now().Format("2006-01-02 15:04:05"))
+	for _, key := range keys {
+		value := depthMap[key]
+		fmt.Println(
+			"Price:", key,
+			"AskLastUpdateID:", value.AskLastUpdateID,
+			"AskQuantity:", value.AskQuantity,
+			"BidLastUpdateID:", value.BidLastUpdateID,
+			"BidQuantity:", value.BidQuantity)
+	}
 }
