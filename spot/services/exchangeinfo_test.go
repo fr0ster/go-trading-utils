@@ -1,10 +1,11 @@
-package services
+package services_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-binance-utils/spot/services"
 )
 
 func TestGetExchangeInfo(t *testing.T) {
@@ -14,7 +15,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function being tested
-	exchangeInfo, err := GetExchangeInfo(client)
+	exchangeInfo, err := services.GetExchangeInfo(client)
 
 	// Check if the function returned an error
 	if err != nil {
@@ -32,13 +33,13 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo, err := GetExchangeInfo(client)
+	exchangeInfo, err := services.GetExchangeInfo(client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}
 
 	// Call the function being tested
-	orderTypes := GetOrderTypes(exchangeInfo, "BTCUSDT")
+	orderTypes := services.GetOrderTypes(exchangeInfo, "BTCUSDT")
 
 	// Check if the orderTypes is not empty
 	if len(orderTypes) == 0 {
@@ -51,13 +52,13 @@ func TestGetPermissions(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo, err := GetExchangeInfo(client)
+	exchangeInfo, err := services.GetExchangeInfo(client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}
 
 	// Call the function being tested
-	permissions := GetPermissions(exchangeInfo, "BTCUSDT")
+	permissions := services.GetPermissions(exchangeInfo, "BTCUSDT")
 
 	// Check if the permissions is not empty
 	if len(permissions) == 0 {

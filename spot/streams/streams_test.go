@@ -1,4 +1,4 @@
-package streams
+package streams_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-binance-utils/spot/streams"
 )
 
 func TestStartUserDataStream(t *testing.T) {
@@ -18,7 +19,7 @@ func TestStartUserDataStream(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error starting user stream: %v", err)
 		}
-		doneC, stopC, err := StartUserDataStream(listenKey, nil, nil)
+		doneC, stopC, err := streams.StartUserDataStream(listenKey, nil, nil)
 
 		if err != nil {
 			t.Errorf("Unexpected error: %v", err)
@@ -38,7 +39,7 @@ func TestStartUserDataStream(t *testing.T) {
 func TestStartDepthStream(t *testing.T) {
 	t.Run("StartDepthStream", func(t *testing.T) {
 		symbol := "BTCUSDT"
-		doneC, stopC, err := StartDepthStream(symbol, nil, nil)
+		doneC, stopC, err := streams.StartDepthStream(symbol, nil, nil)
 
 		if err != nil {
 			t.Errorf("Unexpected error: %v", err)

@@ -12,10 +12,11 @@ type DepthMapType map[Price]DepthRecord
 
 var (
 	depthMap = make(DepthMapType)
-	mu_dict  sync.Mutex
+	mu_dict  *sync.Mutex
 )
 
-func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
+func InitDepthMap(client *binance.Client, mu *sync.Mutex, symbolname string) (err error) {
+	mu_dict = mu
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(symbolname)).
@@ -58,16 +59,16 @@ func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
-func GetDepthMap() DepthMapType {
+func GetDepthMap() *DepthMapType {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	return depthMap
+	return &depthMap
 }
 
-func SetDepthMap(dict DepthMapType) {
+func SetDepthMap(dict *DepthMapType) {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	depthMap = dict
+	depthMap = *dict
 }
 
 func SearchDepthMap(key Price) (DepthRecord, bool) {

@@ -11,14 +11,15 @@ import (
 
 var (
 	depthTree = btree.New(2)
-	mu_tree   sync.Mutex
+	mu_tree   *sync.Mutex
 )
 
 func (i DepthRecord) Less(than btree.Item) bool {
 	return i.Price < than.(DepthRecord).Price
 }
 
-func InitDepthTree(client *binance.Client, symbolname string) (err error) {
+func InitDepthTree(client *binance.Client, mu *sync.Mutex, symbolname string) (err error) {
+	mu_tree = mu
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(symbolname)).
