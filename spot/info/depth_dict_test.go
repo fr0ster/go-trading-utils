@@ -1,4 +1,4 @@
-package info
+package info_test
 
 import (
 	"math/rand"
@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-binance-utils/spot/info"
 )
 
-var BookTickerMap = make(map[Price]BookTicker)
+var testDepthMap = make(map[info.Price]info.DepthRecord)
 
-func getRandomPrice(dict map[Price]BookTicker) (Price, BookTicker) {
-	keys := make([]Price, 0, len(dict))
+func getRandomPriceDict(dict map[info.Price]info.DepthRecord) (info.Price, info.DepthRecord) {
+	keys := make([]info.Price, 0, len(dict))
 	for k := range dict {
 		keys = append(keys, k)
 	}
@@ -19,8 +20,8 @@ func getRandomPrice(dict map[Price]BookTicker) (Price, BookTicker) {
 	return randomKey, dict[randomKey]
 }
 
-func getTwoRandomPrices(dict map[Price]BookTicker) (Price, BookTicker, Price, BookTicker) {
-	keys := make([]Price, 0, len(dict))
+func getTwoRandomPricesDict(dict map[info.Price]info.DepthRecord) (info.Price, info.DepthRecord, info.Price, info.DepthRecord) {
+	keys := make([]info.Price, 0, len(dict))
 	for k := range dict {
 		keys = append(keys, k)
 	}
@@ -45,8 +46,8 @@ func TestInitDepthDictMap(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function being tested
-	err := InitDepthDictMap(client, "BTCUSDT")
-	bookTickerMap = GetBookTickerMap()
+	err := info.InitDepthDictMap(client, "BTCUSDT")
+	testDepthMap = info.GetDepthMap()
 
 	// Check if there was an error
 	if err != nil {
@@ -56,40 +57,40 @@ func TestInitDepthDictMap(t *testing.T) {
 	// Add additional assertions if needed
 }
 
-func TestGetBookTickerMap(t *testing.T) {
-	if len(BookTickerMap) == 0 {
+func TestGetDepthMap(t *testing.T) {
+	if len(testDepthMap) == 0 {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		InitDepthDictMap(client, "BTCUSDT")
+		info.InitDepthDictMap(client, "BTCUSDT")
 		// Call the function being tested
-		bookTickerMap = GetBookTickerMap()
+		testDepthMap = info.GetDepthMap()
 	}
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	if len(bookTickerMap) == 0 {
+	if len(testDepthMap) == 0 {
 		t.Errorf("GetBookTickerMap returned an empty map")
 	}
 
 	// Add additional assertions if needed
 }
 
-func TestSearchBookTickerMap(t *testing.T) {
-	if len(BookTickerMap) == 0 {
+func TestSearchDepthMap(t *testing.T) {
+	if len(testDepthMap) == 0 {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		InitDepthDictMap(client, "BTCUSDT")
+		info.InitDepthDictMap(client, "BTCUSDT")
 		// Call the function being tested
-		bookTickerMap = GetBookTickerMap()
+		testDepthMap = info.GetDepthMap()
 	}
 
 	// Call the function being tested
-	price, _ := getRandomPrice(bookTickerMap)
-	SetBookTickerMap(bookTickerMap)
-	ticker, found := SearchBookTickerMap(price)
+	price, _ := getRandomPriceDict(testDepthMap)
+	info.SetDepthMap(testDepthMap)
+	ticker, found := info.SearchDepthMap(price)
 
 	// Check if the ticker was found
 	if !found {
@@ -105,21 +106,21 @@ func TestSearchBookTickerMap(t *testing.T) {
 	// Add additional assertions if needed
 }
 
-func TestSearchBookTickerMapByPrices(t *testing.T) {
-	if len(BookTickerMap) == 0 {
+func TestSearchDepthMapByPrices(t *testing.T) {
+	if len(testDepthMap) == 0 {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		InitDepthDictMap(client, "BTCUSDT")
+		info.InitDepthDictMap(client, "BTCUSDT")
 		// Call the function being tested
-		bookTickerMap = GetBookTickerMap()
+		testDepthMap = info.GetDepthMap()
 	}
 
 	// Call the function being tested
-	priceMin, _, priceMax, _ := getTwoRandomPrices(bookTickerMap)
-	SetBookTickerMap(bookTickerMap)
-	filteredMap := SearchBookTickerMapByPrices(priceMin, priceMax)
+	priceMin, _, priceMax, _ := getTwoRandomPricesDict(testDepthMap)
+	info.SetDepthMap(testDepthMap)
+	filteredMap := info.SearchDepthMapByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	for key := range filteredMap {

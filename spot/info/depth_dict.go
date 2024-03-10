@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	bookTickerMap = make(map[Price]BookTicker)
-	mu_dict       sync.Mutex
+	depthMap = make(map[Price]DepthRecord)
+	mu_dict  sync.Mutex
 )
 
 func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
@@ -24,12 +24,12 @@ func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
 	for _, bid := range res.Bids {
-		value, exists := bookTickerMap[Price(utils.ConvStrToFloat64(bid.Price))]
+		value, exists := depthMap[Price(utils.ConvStrToFloat64(bid.Price))]
 		if exists {
 			value.BidQuantity += Price(utils.ConvStrToFloat64(bid.Quantity))
 		} else {
-			bookTickerMap[Price(utils.ConvStrToFloat64(bid.Price))] =
-				BookTicker{
+			depthMap[Price(utils.ConvStrToFloat64(bid.Price))] =
+				DepthRecord{
 					Price(utils.ConvStrToFloat64(bid.Price)),
 					res.LastUpdateID,
 					0,
@@ -39,12 +39,12 @@ func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
 		}
 	}
 	for _, ask := range res.Asks {
-		value, exists := bookTickerMap[Price(utils.ConvStrToFloat64(ask.Price))]
+		value, exists := depthMap[Price(utils.ConvStrToFloat64(ask.Price))]
 		if exists {
 			value.AskQuantity += Price(utils.ConvStrToFloat64(ask.Quantity))
 		} else {
-			bookTickerMap[Price(utils.ConvStrToFloat64(ask.Price))] =
-				BookTicker{
+			depthMap[Price(utils.ConvStrToFloat64(ask.Price))] =
+				DepthRecord{
 					Price(utils.ConvStrToFloat64(ask.Price)),
 					res.LastUpdateID,
 					Price(utils.ConvStrToFloat64(ask.Quantity)),
@@ -56,30 +56,30 @@ func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
-func GetBookTickerMap() map[Price]BookTicker {
+func GetDepthMap() map[Price]DepthRecord {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	return bookTickerMap
+	return depthMap
 }
 
-func SetBookTickerMap(dict map[Price]BookTicker) {
+func SetDepthMap(dict map[Price]DepthRecord) {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	bookTickerMap = dict
+	depthMap = dict
 }
 
-func SearchBookTickerMap(key Price) (BookTicker, bool) {
+func SearchDepthMap(key Price) (DepthRecord, bool) {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	value, exists := bookTickerMap[key]
+	value, exists := depthMap[key]
 	return value, exists
 }
 
-func SearchBookTickerMapByPrices(low Price, high Price) map[Price]BookTicker {
+func SearchDepthMapByPrices(low Price, high Price) map[Price]DepthRecord {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	result := make(map[Price]BookTicker)
-	for k, v := range bookTickerMap {
+	result := make(map[Price]DepthRecord)
+	for k, v := range depthMap {
 		if k >= low && k <= high {
 			result[k] = v
 		}

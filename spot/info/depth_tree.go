@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	bookTickerTree = btree.New(2)
-	mu_tree        sync.Mutex
+	depthTree = btree.New(2)
+	mu_tree   sync.Mutex
 )
 
 func (i DepthRecord) Less(than btree.Item) bool {
@@ -29,14 +29,14 @@ func InitDepthTree(client *binance.Client, symbolname string) (err error) {
 	mu_tree.Lock()
 	defer mu_tree.Unlock()
 	for _, bid := range res.Bids {
-		bookTickerTree.ReplaceOrInsert(DepthRecord{
+		depthTree.ReplaceOrInsert(DepthRecord{
 			Price:           Price(utils.ConvStrToFloat64(bid.Price)),
 			BidLastUpdateID: res.LastUpdateID,
 			BidQuantity:     Price(utils.ConvStrToFloat64(bid.Quantity)),
 		})
 	}
 	for _, ask := range res.Asks {
-		bookTickerTree.ReplaceOrInsert(DepthRecord{
+		depthTree.ReplaceOrInsert(DepthRecord{
 			Price:           Price(utils.ConvStrToFloat64(ask.Price)),
 			AskLastUpdateID: res.LastUpdateID,
 			AskQuantity:     Price(utils.ConvStrToFloat64(ask.Quantity)),
@@ -45,28 +45,42 @@ func InitDepthTree(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
-func GetBookTickerTree() *btree.BTree {
+func GetDepthTree() *btree.BTree {
 	mu_tree.Lock()
 	defer mu_tree.Unlock()
-	return bookTickerTree
+	return depthTree
 }
 
-func SearchBookTickerTree(price Price) *DepthRecord {
+func SetDepthTree(tree *btree.BTree) {
 	mu_tree.Lock()
 	defer mu_tree.Unlock()
-	return bookTickerTree.Get(DepthRecord{Price: price}).(*DepthRecord)
+	depthTree = tree
 }
 
-func SearchBookTickerTreeByPrices(low Price, high Price) *DepthRecord {
-	mu_tree.Lock()
-	defer mu_tree.Unlock()
-	var result *DepthRecord
-	bookTickerTree.AscendGreaterOrEqual(DepthRecord{Price: low}, func(i btree.Item) bool {
-		if i.(DepthRecord).Price > high {
-			return false
+func SearchDepthTree(price Price) *btree.BTree {
+	newTree := btree.New(2) // створюємо нове B-дерево
+
+	depthTree.Ascend(func(i btree.Item) bool {
+		item := i.(DepthRecord)
+		if item.Price == price {
+			newTree.ReplaceOrInsert(item) // додаємо вузол до нового дерева, якщо він відповідає умовам
 		}
-		result = i.(*DepthRecord)
 		return true
 	})
-	return result
+
+	return newTree
+}
+
+func SearchDepthTreeByPrices(minPrice, maxPrice Price) *btree.BTree {
+	newTree := btree.New(2) // створюємо нове B-дерево
+
+	depthTree.Ascend(func(i btree.Item) bool {
+		item := i.(DepthRecord)
+		if item.Price >= minPrice && item.Price <= maxPrice {
+			newTree.ReplaceOrInsert(item) // додаємо вузол до нового дерева, якщо він відповідає умовам
+		}
+		return true
+	})
+
+	return newTree
 }
