@@ -59,6 +59,8 @@ func SetDepthTree(tree *btree.BTree) {
 }
 
 func SearchDepthTree(price Price) *btree.BTree {
+	mu_dict.Lock()
+	defer mu_dict.Unlock()
 	newTree := btree.New(2) // створюємо нове B-дерево
 
 	depthTree.Ascend(func(i btree.Item) bool {
@@ -73,6 +75,8 @@ func SearchDepthTree(price Price) *btree.BTree {
 }
 
 func SearchDepthTreeByPrices(minPrice, maxPrice Price) *btree.BTree {
+	mu_dict.Lock()
+	defer mu_dict.Unlock()
 	newTree := btree.New(2) // створюємо нове B-дерево
 
 	depthTree.Ascend(func(i btree.Item) bool {
