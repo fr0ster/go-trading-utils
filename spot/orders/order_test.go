@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/orders"
-	"github.com/fr0ster/go-binance-utils/utils"
+	"github.com/fr0ster/go-binance-utils/spot/orders"
+	"github.com/fr0ster/go-binance-utils/spot/utils"
 )
 
 func TestNewLimitOrder(t *testing.T) {

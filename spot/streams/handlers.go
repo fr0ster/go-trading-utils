@@ -10,3 +10,10 @@ func GetFilledOrderHandler() (func(event *binance.WsUserDataEvent), chan *binanc
 		}
 	}, executeOrderChan
 }
+
+func GetUpdateDepthHandler() (func(event *binance.WsDepthEvent), chan *binance.WsDepthEvent) {
+	bookTickerChan := make(chan *binance.WsDepthEvent, 1)
+	return func(event *binance.WsDepthEvent) {
+		bookTickerChan <- event
+	}, bookTickerChan
+}

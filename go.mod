@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/adshao/go-binance/v2 v2.4.5
+	github.com/google/btree v1.1.2
 	github.com/stretchr/testify v1.8.1
 )
 

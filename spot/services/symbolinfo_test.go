@@ -6,7 +6,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/fr0ster/go-binance-utils/services"
+	"github.com/fr0ster/go-binance-utils/spot/services"
 )
 
 func TestGetMarketPrice(t *testing.T) {
