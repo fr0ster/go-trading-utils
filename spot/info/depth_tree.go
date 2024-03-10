@@ -2,6 +2,7 @@ package info
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
@@ -88,4 +89,19 @@ func SearchDepthTreeByPrices(minPrice, maxPrice Price) *btree.BTree {
 	})
 
 	return newTree
+}
+
+func ShowDepthTree() {
+	mu_tree.Lock()
+	defer mu_tree.Unlock()
+	depthTree.Ascend(func(i btree.Item) bool {
+		item := i.(DepthRecord)
+		fmt.Println(
+			"Price:", item.Price,
+			"AskLastUpdateID:", item.AskLastUpdateID,
+			"AskQuantity:", item.AskQuantity,
+			"BidLastUpdateID:", item.BidLastUpdateID,
+			"BidQuantity:", item.BidQuantity)
+		return true
+	})
 }
