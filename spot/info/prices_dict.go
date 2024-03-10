@@ -45,6 +45,6 @@ func ShowPricesMap() {
 	mu_prices_dict.Lock()
 	defer mu_prices_dict.Unlock()
 	for k, v := range PricesMap {
-		println("Symbol:", k, "Price:", v)
+		println("Symbol:", k, "Price:", utils.ConvFloat64ToStr(float64(v), 8))
 	}
 }
