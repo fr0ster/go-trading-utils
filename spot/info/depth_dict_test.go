@@ -46,6 +46,7 @@ func TestInitDepthDictMap(t *testing.T) {
 
 	// Call the function being tested
 	err := InitDepthDictMap(client, "BTCUSDT")
+	bookTickerMap = GetBookTickerMap()
 
 	// Check if there was an error
 	if err != nil {
@@ -56,6 +57,15 @@ func TestInitDepthDictMap(t *testing.T) {
 }
 
 func TestGetBookTickerMap(t *testing.T) {
+	if len(BookTickerMap) == 0 {
+		api_key := os.Getenv("API_KEY")
+		secret_key := os.Getenv("SECRET_KEY")
+		binance.UseTestnet = true
+		client := binance.NewClient(api_key, secret_key)
+		InitDepthDictMap(client, "BTCUSDT")
+		// Call the function being tested
+		bookTickerMap = GetBookTickerMap()
+	}
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
 	if len(bookTickerMap) == 0 {
