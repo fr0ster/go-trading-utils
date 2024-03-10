@@ -1,14 +1,12 @@
 package streams
 
 import (
-	"sync"
-
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/info"
 	"github.com/fr0ster/go-binance-utils/spot/utils"
 )
 
-func GetDepthUpdateHandler(mu *sync.Mutex) (wsHandler binance.WsDepthHandler, depthChan chan bool) {
+func GetDepthUpdateHandler() (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
 		info.DepthDictMutexLock()
