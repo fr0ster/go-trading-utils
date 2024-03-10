@@ -18,7 +18,7 @@ var (
 	mu_dict  sync.Mutex
 )
 
-func GetMutex() *sync.Mutex {
+func GetDepthDictMutex() *sync.Mutex {
 	return &mu_dict
 }
 
