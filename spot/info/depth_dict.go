@@ -8,8 +8,10 @@ import (
 	"github.com/fr0ster/go-binance-utils/spot/utils"
 )
 
+type DepthMapType map[Price]DepthRecord
+
 var (
-	depthMap = make(map[Price]DepthRecord)
+	depthMap = make(DepthMapType)
 	mu_dict  sync.Mutex
 )
 
@@ -56,13 +58,13 @@ func InitDepthDictMap(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
-func GetDepthMap() map[Price]DepthRecord {
+func GetDepthMap() DepthMapType {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
 	return depthMap
 }
 
-func SetDepthMap(dict map[Price]DepthRecord) {
+func SetDepthMap(dict DepthMapType) {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
 	depthMap = dict
@@ -75,10 +77,10 @@ func SearchDepthMap(key Price) (DepthRecord, bool) {
 	return value, exists
 }
 
-func SearchDepthMapByPrices(low Price, high Price) map[Price]DepthRecord {
+func SearchDepthMapByPrices(low Price, high Price) DepthMapType {
 	mu_dict.Lock()
 	defer mu_dict.Unlock()
-	result := make(map[Price]DepthRecord)
+	result := make(DepthMapType)
 	for k, v := range depthMap {
 		if k >= low && k <= high {
 			result[k] = v

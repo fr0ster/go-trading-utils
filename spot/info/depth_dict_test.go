@@ -9,7 +9,7 @@ import (
 	"github.com/fr0ster/go-binance-utils/spot/info"
 )
 
-var testDepthMap = make(map[info.Price]info.DepthRecord)
+var testDepthMap = make(info.DepthMapType)
 
 func getRandomPriceDict(dict map[info.Price]info.DepthRecord) (info.Price, info.DepthRecord) {
 	keys := make([]info.Price, 0, len(dict))
