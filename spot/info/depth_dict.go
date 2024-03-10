@@ -18,8 +18,12 @@ var (
 	mu_dict  sync.Mutex
 )
 
-func GetDepthDictMutex() *sync.Mutex {
-	return &mu_dict
+func DepthDictMutexLock() {
+	mu_dict.Lock()
+}
+
+func DepthDictMutexUnlock() {
+	mu_dict.Unlock()
 }
 
 func InitDepthMap(client *binance.Client, symbolname string) (err error) {

@@ -11,8 +11,8 @@ import (
 func GetDepthUpdateHandler(mu *sync.Mutex) (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
-		mu.Lock()
-		defer mu.Unlock()
+		info.DepthDictMutexLock()
+		defer info.DepthDictMutexUnlock()
 		depthMap := info.GetDepthMap()
 		for _, bid := range event.Bids {
 			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
