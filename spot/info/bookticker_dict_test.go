@@ -19,10 +19,10 @@ func TestGetBookTicker(t *testing.T) {
 	}
 
 	// Set the mock book ticker in the book ticker map
-	info.SetBookTicker("BTCUSDT", bookTicker)
+	info.SetBookTickerMapItem("BTCUSDT", bookTicker)
 
 	// Get the book ticker from the map
-	result := info.GetBookTicker("BTCUSDT")
+	result := info.GetBookTickerMapItem("BTCUSDT")
 
 	// Check if the retrieved book ticker matches the expected value
 	if result != bookTicker {

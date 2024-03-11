@@ -42,13 +42,13 @@ func GetBookTickerMap() BookTickerMapType {
 	return BookTickerMap
 }
 
-func GetBookTicker(symbolname SymbolName) binance.BookTicker {
+func GetBookTickerMapItem(symbolname SymbolName) binance.BookTicker {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
 	return BookTickerMap[symbolname]
 }
 
-func SetBookTicker(symbolname SymbolName, bookticker binance.BookTicker) {
+func SetBookTickerMapItem(symbolname SymbolName, bookticker binance.BookTicker) {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
 	BookTickerMap[symbolname] = bookticker
