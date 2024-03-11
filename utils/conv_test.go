@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/fr0ster/go-binance-utils/spot/utils"
+	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func TestConvStrToFloat64(t *testing.T) {

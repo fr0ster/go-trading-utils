@@ -3,7 +3,7 @@ package strategy
 import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/services"
-	"github.com/fr0ster/go-binance-utils/spot/utils"
+	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (string, float64, string, string, string, string, string, string) {

@@ -3,7 +3,7 @@ package streams
 import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/info"
-	"github.com/fr0ster/go-binance-utils/spot/utils"
+	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func GetDepthUpdateHandler() (wsHandler binance.WsDepthHandler, depthChan chan bool) {

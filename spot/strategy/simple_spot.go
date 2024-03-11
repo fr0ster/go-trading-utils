@@ -12,7 +12,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/orders"
 	"github.com/fr0ster/go-binance-utils/spot/streams"
-	"github.com/fr0ster/go-binance-utils/spot/utils"
+	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
