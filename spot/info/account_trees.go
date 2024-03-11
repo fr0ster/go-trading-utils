@@ -6,6 +6,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/utils"
 	"github.com/google/btree"
+	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -70,4 +71,12 @@ func GetBalances(client *binance.Client) (res []binance.Balance, err error) {
 	}
 	res = accountInfo.Balances
 	return
+}
+
+func ShowBalancesTree() {
+	balancesTree.Ascend(func(a btree.Item) bool {
+		balance := a.(BalanceItemType)
+		logrus.Infof("Asset: %v, Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
+		return true
+	})
 }
