@@ -34,13 +34,11 @@ func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL
 	wsHandler, executeOrderChan := streams.GetFilledOrderHandler()
 
 	_, _, err = streams.StartUserDataStream(listenKey, wsHandler, utils.HandleErr)
-	if err != nil {
-		log.Fatalf("Error serving user data websocket: %v", err)
-	}
+	symbol := binance.SymbolType(symbolname)
 
 	order, err := orders.NewLimitOrder(
 		client,
-		symbolname,
+		symbol,
 		binance.SideTypeBuy,
 		quantity,
 		price,
@@ -84,7 +82,7 @@ func handleOrders(
 	stopLossOrder, err := orders.NewStopLossLimitOrder(
 		client,
 		order,
-		order.Symbol,
+		binance.SymbolType(order.Symbol), // Convert order.Symbol to binance.SymbolType
 		side,
 		timeInForce,
 		order.ExecutedQuantity,
@@ -100,10 +98,11 @@ func handleOrders(
 		fmt.Printf("StopLossOrder: %v\n", stopLossOrder)
 	}
 
+	symbol := binance.SymbolType(order.Symbol)
 	takeProfitOrder, err := orders.NewTakeProfitLimitOrder(
 		client,
 		order,
-		order.Symbol,
+		symbol,
 		side,
 		timeInForce,
 		order.ExecutedQuantity,
