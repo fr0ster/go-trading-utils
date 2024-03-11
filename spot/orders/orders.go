@@ -8,13 +8,13 @@ import (
 
 func NewLimitOrder(
 	client *binance.Client,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	quantity,
 	price string,
 	timeInForce binance.TimeInForceType) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Type(binance.OrderTypeLimit).
 		Side(side).
 		Quantity(quantity).
@@ -24,14 +24,14 @@ func NewLimitOrder(
 
 func NewMarketOrder(
 	client *binance.Client,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	quantity,
 	quoteOrderQty,
 	price string,
 	timeInForce binance.TimeInForceType) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Type(binance.OrderTypeLimit).
 		Side(side).
 		Quantity(quantity).
@@ -42,14 +42,14 @@ func NewMarketOrder(
 
 func NewLimitMakerOrder(
 	client *binance.Client,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	quantity,
 	quoteOrderQty,
 	price string,
 	timeInForce binance.TimeInForceType) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Type(binance.OrderTypeLimit).
 		Side(side).
 		Quantity(quantity).
@@ -61,14 +61,14 @@ func NewLimitMakerOrder(
 func NewStopLossOrder(
 	client *binance.Client,
 	order *binance.CreateOrderResponse,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	quantity,
 	price,
 	stopPrice,
 	trailingDelta string) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Side(side).
 		Type(binance.OrderTypeStopLoss).
 		Quantity(quantity).
@@ -82,14 +82,14 @@ func NewStopLossOrder(
 func NewTakeProfitOrder(
 	client *binance.Client,
 	order *binance.CreateOrderResponse,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	quantity,
 	price,
 	stopPrice,
 	trailingDelta string) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Side(side).
 		Type(binance.OrderTypeTakeProfit).
 		Quantity(quantity).
