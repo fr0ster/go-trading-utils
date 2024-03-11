@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	BookTickerMap     = make(BookTickerMapType)
+	bookTickerMap     = make(BookTickerMapType)
 	mu_bookticker_map sync.Mutex
 )
 
@@ -31,7 +31,7 @@ func InitPricesMap(client *binance.Client, symbolname string) (err error) {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
 	for _, bookTicker := range bookTickerList {
-		BookTickerMap[SymbolName(bookTicker.Symbol)] = *bookTicker
+		bookTickerMap[SymbolName(bookTicker.Symbol)] = *bookTicker
 	}
 	return nil
 }
@@ -39,25 +39,25 @@ func InitPricesMap(client *binance.Client, symbolname string) (err error) {
 func GetBookTickerMap() BookTickerMapType {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
-	return BookTickerMap
+	return bookTickerMap
 }
 
 func GetBookTickerMapItem(symbolname SymbolName) binance.BookTicker {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
-	return BookTickerMap[symbolname]
+	return bookTickerMap[symbolname]
 }
 
 func SetBookTickerMapItem(symbolname SymbolName, bookticker binance.BookTicker) {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
-	BookTickerMap[symbolname] = bookticker
+	bookTickerMap[symbolname] = bookticker
 }
 
 func ShowBookTickerMap() {
 	mu_bookticker_map.Lock()
 	defer mu_bookticker_map.Unlock()
-	for k, v := range BookTickerMap {
+	for k, v := range bookTickerMap {
 		println(
 			"Symbol:", k,
 			"BidPrice:", v.BidPrice,
