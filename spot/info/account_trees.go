@@ -2,6 +2,7 @@ package info
 
 import (
 	"context"
+	"errors"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/utils"
@@ -19,6 +20,7 @@ type (
 
 var (
 	balancesTree = btree.New(2)
+	accountInfo  *binance.Account
 )
 
 // Less defines the comparison method for BookTickerItem.
@@ -28,9 +30,13 @@ func (b BalanceItemType) Less(than btree.Item) bool {
 }
 
 func InitBalancesTree(client *binance.Client) (err error) {
-	balances, err := GetBalances(client)
+	accountInfo, err = GetAccountInfo(client)
 	if err != nil {
 		return
+	}
+	balances := accountInfo.Balances
+	if len(balances) == 0 {
+		return errors.New("no balances found")
 	}
 	for _, balance := range balances {
 		balancesTree.ReplaceOrInsert(BalanceItemType{
@@ -59,17 +65,12 @@ func GetBalance(asset string) (res BalanceItemType, err error) {
 	return item, nil
 }
 
-func GetAccountInfo(client *binance.Client) (res *binance.Account, err error) {
-	res, err = client.NewGetAccountService().Do(context.Background())
-	return
+func SetBalanceTreeItem(item BalanceItemType) {
+	balancesTree.ReplaceOrInsert(item)
 }
 
-func GetBalances(client *binance.Client) (res []binance.Balance, err error) {
-	accountInfo, err := GetAccountInfo(client)
-	if err != nil {
-		return
-	}
-	res = accountInfo.Balances
+func GetAccountInfo(client *binance.Client) (res *binance.Account, err error) {
+	res, err = client.NewGetAccountService().Do(context.Background())
 	return
 }
 
