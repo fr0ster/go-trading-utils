@@ -46,7 +46,7 @@ func BidOrAsk(data utils.DataRecord, client *binance.Client, side string) (price
 	targetPriceF := 0.0
 	err := error(nil)
 
-	bookTicker := info.GetBookTickerTreeItem(info.SymbolName(symbolname))
+	bookTicker := info.GetBookTickerTreeItem(info.SymbolType(symbolname))
 	if bookTicker == nil {
 		targetPriceF, _, err = services.GetMarketPrice(client, string(symbolname))
 		if err != nil {

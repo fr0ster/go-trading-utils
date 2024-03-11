@@ -40,18 +40,18 @@ func TestSetBookTickerTree(t *testing.T) {
 	// Create a new BTree
 	tree := btree.New(2)
 	tree.ReplaceOrInsert(info.BookTickerItem{
-		Symbol:      info.SymbolName("BTCUSDT"),
-		BidPrice:    info.SymbolPrice(10000),
-		BidQuantity: info.SymbolPrice(1),
-		AskPrice:    info.SymbolPrice(10001),
-		AskQuantity: info.SymbolPrice(1),
+		Symbol:      info.SymbolType("BTCUSDT"),
+		BidPrice:    info.PriceType(10000),
+		BidQuantity: info.PriceType(1),
+		AskPrice:    info.PriceType(10001),
+		AskQuantity: info.PriceType(1),
 	})
 	tree.ReplaceOrInsert(info.BookTickerItem{
-		Symbol:      info.SymbolName("ETHUSDT"),
-		BidPrice:    info.SymbolPrice(200),
-		BidQuantity: info.SymbolPrice(2),
-		AskPrice:    info.SymbolPrice(201),
-		AskQuantity: info.SymbolPrice(2),
+		Symbol:      info.SymbolType("ETHUSDT"),
+		BidPrice:    info.PriceType(200),
+		BidQuantity: info.PriceType(2),
+		AskPrice:    info.PriceType(201),
+		AskQuantity: info.PriceType(2),
 	})
 
 	// Call the function under test

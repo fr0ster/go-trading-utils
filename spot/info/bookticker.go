@@ -3,14 +3,14 @@ package info
 import "github.com/adshao/go-binance/v2"
 
 type (
-	BookTickerMapType map[SymbolName]binance.BookTicker
+	BookTickerMapType map[SymbolType]binance.BookTicker
 	BookTickerItem    struct {
-		Symbol      SymbolName
-		BidPrice    SymbolPrice
-		BidQuantity SymbolPrice
-		AskPrice    SymbolPrice
-		AskQuantity SymbolPrice
+		Symbol      SymbolType
+		BidPrice    PriceType
+		BidQuantity PriceType
+		AskPrice    PriceType
+		AskQuantity PriceType
 	}
-	SymbolPrice float64
-	SymbolName  string
+	PriceType  float64
+	SymbolType string
 )

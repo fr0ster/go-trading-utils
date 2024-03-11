@@ -74,9 +74,17 @@ func GetBalances(client *binance.Client) (res []binance.Balance, err error) {
 }
 
 func ShowBalancesTree() {
-	balancesTree.Ascend(func(a btree.Item) bool {
-		balance := a.(BalanceItemType)
-		logrus.Infof("Asset: %v, Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
+	balancesTree.Ascend(func(i btree.Item) bool {
+		balance := i.(BalanceItemType)
+		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
+		return true
+	})
+}
+
+func ShowBalancesTreeByAsset(symbol SymbolType) {
+	balancesTree.AscendGreaterOrEqual(BalanceItemType{Asset: string(symbol)}, func(i btree.Item) bool {
+		balance := i.(BalanceItemType)
+		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
 		return true
 	})
 }

@@ -35,17 +35,17 @@ func InitPricesTree(client *binance.Client, symbolname string) (err error) {
 	defer mu_bookticker_tree.Unlock()
 	for _, bookTicker := range bookTickerList {
 		bookTickerTree.ReplaceOrInsert(BookTickerItem{
-			Symbol:      SymbolName(bookTicker.Symbol),
-			BidPrice:    SymbolPrice(utils.ConvStrToFloat64(bookTicker.BidPrice)),
-			BidQuantity: SymbolPrice(utils.ConvStrToFloat64(bookTicker.BidQuantity)),
-			AskPrice:    SymbolPrice(utils.ConvStrToFloat64(bookTicker.AskPrice)),
-			AskQuantity: SymbolPrice(utils.ConvStrToFloat64(bookTicker.AskQuantity)),
+			Symbol:      SymbolType(bookTicker.Symbol),
+			BidPrice:    PriceType(utils.ConvStrToFloat64(bookTicker.BidPrice)),
+			BidQuantity: PriceType(utils.ConvStrToFloat64(bookTicker.BidQuantity)),
+			AskPrice:    PriceType(utils.ConvStrToFloat64(bookTicker.AskPrice)),
+			AskQuantity: PriceType(utils.ConvStrToFloat64(bookTicker.AskQuantity)),
 		})
 	}
 	return nil
 }
 
-func GetBookTickerTreeItem(symbol SymbolName) *BookTickerItem {
+func GetBookTickerTreeItem(symbol SymbolType) *BookTickerItem {
 	mu_bookticker_tree.Lock()
 	defer mu_bookticker_tree.Unlock()
 	item := bookTickerTree.Get(BookTickerItem{Symbol: symbol})
@@ -74,7 +74,7 @@ func SetBookTickerTreeItem(item BookTickerItem) {
 	bookTickerTree.ReplaceOrInsert(item)
 }
 
-func SearchBookTickerTreeBySymbol(symbol SymbolName) *btree.BTree {
+func SearchBookTickerTreeBySymbol(symbol SymbolType) *btree.BTree {
 	mu_bookticker_tree.Lock()
 	defer mu_bookticker_tree.Unlock()
 	tree := btree.New(2)
@@ -88,7 +88,7 @@ func SearchBookTickerTreeBySymbol(symbol SymbolName) *btree.BTree {
 	return tree
 }
 
-func SearchBookTickerTreeByBidPrice(symbol SymbolName, bidPrice SymbolPrice) *btree.BTree {
+func SearchBookTickerTreeByBidPrice(symbol SymbolType, bidPrice PriceType) *btree.BTree {
 	mu_bookticker_tree.Lock()
 	defer mu_bookticker_tree.Unlock()
 	tree := btree.New(2)
@@ -102,7 +102,7 @@ func SearchBookTickerTreeByBidPrice(symbol SymbolName, bidPrice SymbolPrice) *bt
 	return tree
 }
 
-func SearchBookTickerTreeByAskPrice(symbol SymbolName, askPrice SymbolPrice) *btree.BTree {
+func SearchBookTickerTreeByAskPrice(symbol SymbolType, askPrice PriceType) *btree.BTree {
 	mu_bookticker_tree.Lock()
 	defer mu_bookticker_tree.Unlock()
 	tree := btree.New(2)

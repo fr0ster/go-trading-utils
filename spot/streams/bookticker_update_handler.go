@@ -17,7 +17,7 @@ func GetBookTickerMapUpdateHandler() (wsHandler binance.WsBookTickerHandler, boo
 			AskQuantity: event.BestAskQty,
 		}
 
-		info.SetBookTickerMapItem(info.SymbolName(event.Symbol), bookTickerUpdate)
+		info.SetBookTickerMapItem(info.SymbolType(event.Symbol), bookTickerUpdate)
 		bookTickerEventChan <- true
 	}
 	return
@@ -27,11 +27,11 @@ func GetBookTickerTreeUpdateHandler() (wsHandler binance.WsBookTickerHandler, bo
 	bookTickerEventChan = make(chan bool)
 	wsHandler = func(event *binance.WsBookTickerEvent) {
 		bookTickerUpdate := info.BookTickerItem{
-			Symbol:      info.SymbolName(event.Symbol),
-			BidPrice:    info.SymbolPrice(utils.ConvStrToFloat64(event.BestBidPrice)),
-			BidQuantity: info.SymbolPrice(utils.ConvStrToFloat64(event.BestBidQty)),
-			AskPrice:    info.SymbolPrice(utils.ConvStrToFloat64(event.BestAskPrice)),
-			AskQuantity: info.SymbolPrice(utils.ConvStrToFloat64(event.BestAskQty)),
+			Symbol:      info.SymbolType(event.Symbol),
+			BidPrice:    info.PriceType(utils.ConvStrToFloat64(event.BestBidPrice)),
+			BidQuantity: info.PriceType(utils.ConvStrToFloat64(event.BestBidQty)),
+			AskPrice:    info.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)),
+			AskQuantity: info.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
 		}
 
 		info.SetBookTickerTreeItem(bookTickerUpdate)
