@@ -9,8 +9,8 @@ import (
 func GetDepthUpdateHandler() (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
-		info.DepthDictMutexLock()
-		defer info.DepthDictMutexUnlock()
+		info.DepthMapMutexLock()
+		defer info.DepthMapMutexUnlock()
 		depthMap := info.GetDepthMap() // GetDepthMap returns a pointer to a map of Price to DepthRecord from info package
 		for _, bid := range event.Bids {
 			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]

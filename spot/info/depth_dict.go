@@ -15,15 +15,15 @@ type DepthMapType map[Price]DepthRecord
 
 var (
 	depthMap = make(DepthMapType)
-	mu_dict  sync.Mutex
+	mu_map   sync.Mutex
 )
 
-func DepthDictMutexLock() {
-	mu_dict.Lock()
+func DepthMapMutexLock() {
+	mu_map.Lock()
 }
 
-func DepthDictMutexUnlock() {
-	mu_dict.Unlock()
+func DepthMapMutexUnlock() {
+	mu_map.Unlock()
 }
 
 func InitDepthMap(client *binance.Client, symbolname string) (err error) {
@@ -34,8 +34,8 @@ func InitDepthMap(client *binance.Client, symbolname string) (err error) {
 	if err != nil {
 		return
 	}
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	for _, bid := range res.Bids {
 		value, exists := depthMap[Price(utils.ConvStrToFloat64(bid.Price))]
 		if exists {
@@ -70,27 +70,27 @@ func InitDepthMap(client *binance.Client, symbolname string) (err error) {
 }
 
 func GetDepthMap() *DepthMapType {
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	return &depthMap
 }
 
 func SetDepthMap(dict *DepthMapType) {
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	depthMap = *dict
 }
 
 func SearchDepthMap(key Price) (DepthRecord, bool) {
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	value, exists := depthMap[key]
 	return value, exists
 }
 
 func SearchDepthMapByPrices(low Price, high Price) DepthMapType {
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	result := make(DepthMapType)
 	for k, v := range depthMap {
 		if k >= low && k <= high {
@@ -101,8 +101,8 @@ func SearchDepthMapByPrices(low Price, high Price) DepthMapType {
 }
 
 func ShowDepthMap() {
-	mu_dict.Lock()
-	defer mu_dict.Unlock()
+	mu_map.Lock()
+	defer mu_map.Unlock()
 	// Створюємо зріз ключів
 	keys := make([]Price, 0, len(depthMap))
 	for k := range depthMap {

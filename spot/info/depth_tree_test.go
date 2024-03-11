@@ -57,7 +57,7 @@ func TestInitDepthTree(t *testing.T) {
 	// Add more test cases here
 }
 
-func TestGetBookTickerTree(t *testing.T) {
+func TestGetDepthTree(t *testing.T) {
 	if testDepthTree == nil || testDepthTree.Len() == 0 {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
