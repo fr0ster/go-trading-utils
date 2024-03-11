@@ -103,7 +103,7 @@ func NewTakeProfitOrder(
 func NewStopLossLimitOrder(
 	client *binance.Client,
 	order *binance.CreateOrderResponse,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	timeInForce binance.TimeInForceType,
 	quantity,
@@ -111,7 +111,7 @@ func NewStopLossLimitOrder(
 	stopPrice,
 	trailingDelta string) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)).
 		Side(side).
 		TimeInForce(timeInForce).
 		Type(binance.OrderTypeStopLossLimit).
@@ -126,7 +126,7 @@ func NewStopLossLimitOrder(
 func NewTakeProfitLimitOrder(
 	client *binance.Client,
 	order *binance.CreateOrderResponse,
-	symbol string,
+	symbol binance.SymbolType,
 	side binance.SideType,
 	timeInForce binance.TimeInForceType,
 	quantity,
@@ -134,7 +134,7 @@ func NewTakeProfitLimitOrder(
 	stopPrice,
 	trailingDelta string) (*binance.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
-		Symbol(symbol).
+		Symbol(string(symbol)). // Convert symbol to string
 		Side(side).
 		TimeInForce(timeInForce).
 		Type(binance.OrderTypeTakeProfitLimit).
