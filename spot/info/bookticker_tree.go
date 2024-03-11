@@ -106,6 +106,7 @@ func SearchBookTickerTreeByAskPrice(symbol SymbolName, askPrice SymbolPrice) *bt
 	return tree
 }
 
+// ShowBookTickerTree prints the book ticker information for each item in the BookTickerTree.
 func ShowBookTickerTree() {
 	mu_bookticker_tree.Lock()
 	defer mu_bookticker_tree.Unlock()
