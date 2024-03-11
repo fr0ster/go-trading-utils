@@ -9,40 +9,37 @@ import (
 func GetDepthUpdateHandler() (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
-		info.DepthMapMutexLock()
-		defer info.DepthMapMutexUnlock()
-		depthMap := info.GetDepthMap()
 		for _, bid := range event.Bids {
-			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
+			value, exists := info.GetDepthMapItem(info.Price(utils.ConvStrToFloat64(bid.Price)))
 			if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
 				value.BidQuantity += info.Price(utils.ConvStrToFloat64(bid.Quantity))
 				value.BidLastUpdateID = event.LastUpdateID
 			} else {
-				(*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))] =
+				info.SetDepthMapItem(info.Price(utils.ConvStrToFloat64(bid.Price)),
 					info.DepthRecord{
 						Price:           info.Price(utils.ConvStrToFloat64(bid.Price)),
 						AskLastUpdateID: event.LastUpdateID,
 						AskQuantity:     0,
 						BidLastUpdateID: event.LastUpdateID,
 						BidQuantity:     info.Price(utils.ConvStrToFloat64(bid.Quantity)),
-					}
+					})
 			}
 		}
 
 		for _, bid := range event.Asks {
-			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
+			value, exists := info.GetDepthMapItem(info.Price(utils.ConvStrToFloat64(bid.Price)))
 			if exists && value.AskLastUpdateID+1 > event.FirstUpdateID {
 				value.AskQuantity += info.Price(utils.ConvStrToFloat64(bid.Quantity))
 				value.AskLastUpdateID = event.LastUpdateID
 			} else {
-				(*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))] =
+				info.SetDepthMapItem(info.Price(utils.ConvStrToFloat64(bid.Price)),
 					info.DepthRecord{
 						Price:           info.Price(utils.ConvStrToFloat64(bid.Price)),
 						AskLastUpdateID: event.LastUpdateID,
 						AskQuantity:     info.Price(utils.ConvStrToFloat64(bid.Quantity)),
 						BidLastUpdateID: event.LastUpdateID,
 						BidQuantity:     0,
-					}
+					})
 			}
 		}
 		depthChan <- true
@@ -53,16 +50,13 @@ func GetDepthUpdateHandler() (wsHandler binance.WsDepthHandler, depthChan chan b
 func GetDepthUpdateHandlerTree() (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
-		info.DepthMapMutexLock()
-		defer info.DepthMapMutexUnlock()
-		depthMap := info.GetDepthMap() // GetDepthMap returns a pointer to a map of Price to DepthRecord from info package
 		for _, bid := range event.Bids {
-			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
+			value, exists := info.GetDepthTreeItem(info.Price(utils.ConvStrToFloat64(bid.Price)))
 			if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
 				value.BidQuantity += info.Price(utils.ConvStrToFloat64(bid.Quantity))
 				value.BidLastUpdateID = event.LastUpdateID
 			} else {
-				(*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))] =
+				value =
 					info.DepthRecord{
 						Price:           info.Price(utils.ConvStrToFloat64(bid.Price)),
 						AskLastUpdateID: event.LastUpdateID,
@@ -71,15 +65,16 @@ func GetDepthUpdateHandlerTree() (wsHandler binance.WsDepthHandler, depthChan ch
 						BidQuantity:     0,
 					}
 			}
+			info.SetDepthTreeItem(value)
 		}
 
 		for _, bid := range event.Asks {
-			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
+			value, exists := info.GetDepthTreeItem(info.Price(utils.ConvStrToFloat64(bid.Price)))
 			if exists && value.AskLastUpdateID+1 > event.FirstUpdateID {
 				value.AskQuantity += info.Price(utils.ConvStrToFloat64(bid.Quantity))
 				value.AskLastUpdateID = event.LastUpdateID
 			} else {
-				(*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))] =
+				value =
 					info.DepthRecord{
 						Price:           info.Price(utils.ConvStrToFloat64(bid.Price)),
 						AskLastUpdateID: event.LastUpdateID,
@@ -88,6 +83,7 @@ func GetDepthUpdateHandlerTree() (wsHandler binance.WsDepthHandler, depthChan ch
 						BidQuantity:     0,
 					}
 			}
+			info.SetDepthTreeItem(value)
 		}
 		depthChan <- true
 	}

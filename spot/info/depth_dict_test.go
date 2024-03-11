@@ -92,7 +92,7 @@ func TestSearchDepthMap(t *testing.T) {
 	// Call the function being tested
 	price, _ := getRandomPriceDict(*testDepthMap)
 	info.SetDepthMap(testDepthMap)
-	ticker, found := info.SearchDepthMap(price)
+	ticker, found := info.GetDepthMapItem(price)
 
 	// Check if the ticker was found
 	if !found {
@@ -122,7 +122,7 @@ func TestSearchDepthMapByPrices(t *testing.T) {
 	// Call the function being tested
 	priceMin, _, priceMax, _ := getTwoRandomPricesDict(*testDepthMap)
 	info.SetDepthMap(testDepthMap)
-	filteredMap := info.SearchDepthMapByPrices(priceMin, priceMax)
+	filteredMap := info.GetDepthMapItemByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	for key := range filteredMap {

@@ -119,7 +119,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 	// Call the function being tested
 	priceMin, _, priceMax, _ := getTwoRandomPricesTree(testDepthTree)
 	info.SetDepthTree(testDepthTree)
-	filteredTree := info.SearchDepthTreeByPrices(priceMin, priceMax)
+	filteredTree := info.GetDepthTreeByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {

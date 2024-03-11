@@ -81,14 +81,20 @@ func SetDepthMap(dict *DepthMapType) {
 	depthMap = *dict
 }
 
-func SearchDepthMap(key Price) (DepthRecord, bool) {
+func GetDepthMapItem(key Price) (DepthRecord, bool) {
 	mu_map.Lock()
 	defer mu_map.Unlock()
 	value, exists := depthMap[key]
 	return value, exists
 }
 
-func SearchDepthMapByPrices(low Price, high Price) DepthMapType {
+func SetDepthMapItem(key Price, value DepthRecord) {
+	mu_map.Lock()
+	defer mu_map.Unlock()
+	depthMap[key] = value
+}
+
+func GetDepthMapItemByPrices(low Price, high Price) DepthMapType {
 	mu_map.Lock()
 	defer mu_map.Unlock()
 	result := make(DepthMapType)

@@ -58,6 +58,16 @@ func SetDepthTree(tree *btree.BTree) {
 	depthTree = tree
 }
 
+func GetDepthTreeItem(price Price) (DepthRecord, bool) {
+	mu_tree.Lock()
+	defer mu_tree.Unlock()
+	item := depthTree.Get(DepthRecord{Price: price})
+	if item == nil {
+		return DepthRecord{}, false
+	}
+	return item.(DepthRecord), true
+}
+
 func SearchDepthTree(price Price) *btree.BTree {
 	mu_map.Lock()
 	defer mu_map.Unlock()
@@ -74,7 +84,19 @@ func SearchDepthTree(price Price) *btree.BTree {
 	return newTree
 }
 
-func SearchDepthTreeByPrices(minPrice, maxPrice Price) *btree.BTree {
+func SetDepthTreeItem(value DepthRecord) {
+	mu_tree.Lock()
+	defer mu_tree.Unlock()
+	depthTree.ReplaceOrInsert(DepthRecord{
+		Price:           value.Price,
+		AskLastUpdateID: value.AskLastUpdateID,
+		AskQuantity:     value.AskQuantity,
+		BidLastUpdateID: value.BidLastUpdateID,
+		BidQuantity:     value.BidQuantity,
+	})
+}
+
+func GetDepthTreeByPrices(minPrice, maxPrice Price) *btree.BTree {
 	mu_map.Lock()
 	defer mu_map.Unlock()
 	newTree := btree.New(2) // створюємо нове B-дерево
