@@ -8,12 +8,12 @@ import (
 	"github.com/fr0ster/go-binance-utils/spot/utils"
 )
 
-func GetPriceUpdateHandler(mu *sync.Mutex) (wsHandler binance.WsDepthHandler, depthChan chan bool) {
+func GetDepthMapUpdateHandler(mu *sync.Mutex) (wsHandler binance.WsDepthHandler, depthChan chan bool) {
 	depthChan = make(chan bool)
 	wsHandler = func(event *binance.WsDepthEvent) {
 		mu.Lock()
 		defer mu.Unlock()
-		depthMap := info.GetDepthMap()
+		depthMap := info.GetDepthMap() // GetDepthMap returns a pointer to a map of Price to DepthRecord from info package
 		for _, bid := range event.Bids {
 			value, exists := (*depthMap)[info.Price(utils.ConvStrToFloat64(bid.Price))]
 			if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
