@@ -45,6 +45,16 @@ func InitPricesTree(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
+func GetBookTickerTreeItem(symbol SymbolName) *BookTickerItem {
+	mu_bookticker_tree.Lock()
+	defer mu_bookticker_tree.Unlock()
+	item := BookTickerTree.Get(BookTickerItem{Symbol: symbol})
+	if item == nil {
+		return nil
+	}
+	return item.(*BookTickerItem)
+}
+
 // GetBookTickerTree returns the book ticker tree.
 func GetBookTickerTree() *btree.BTree {
 	mu_bookticker_tree.Lock()
