@@ -113,10 +113,11 @@ func ShowBookTickerTree() {
 		item := i.(BookTickerItem)
 		println(
 			"Symbol:", item.Symbol,
-			"BidPrice:", item.BidPrice,
-			"BidQuantity:", item.BidQuantity,
-			"AskPrice:", item.AskPrice,
-			"AskQuantity:", item.AskQuantity)
+			"BidPrice:", utils.ConvFloat64ToStr(float64(item.BidPrice), 8),
+			"BidQuantity:", utils.ConvFloat64ToStr(float64(item.BidQuantity), 8),
+			"AskPrice:", utils.ConvFloat64ToStr(float64(item.AskPrice), 8),
+			"AskQuantity:", utils.ConvFloat64ToStr(float64(item.AskQuantity), 8),
+		)
 		return true
 	})
 }
