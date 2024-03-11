@@ -25,7 +25,7 @@ func TestSaveData(t *testing.T) {
 		AccountType:   binance.AccountTypeSpot,
 		Symbol:        binance.SymbolType("BTCUSDT"),
 		Balance:       1000.0,
-		MiddlePrice:   50000.0,
+		Value:         50000.0,
 		Quantity:      0.02,
 		BoundQuantity: 0.01,
 	}
@@ -63,7 +63,7 @@ func TestLoadData(t *testing.T) {
 		AccountType:   binance.AccountTypeSpot,
 		Symbol:        binance.SymbolType("BTCUSDT"),
 		Balance:       1000.0,
-		MiddlePrice:   50000.0,
+		Value:         50000.0,
 		Quantity:      0.02,
 		BoundQuantity: 0.01,
 	}

@@ -11,7 +11,6 @@ type DataRecord struct {
 	AccountType   binance.AccountType
 	Symbol        binance.SymbolType
 	Balance       float64
-	MiddlePrice   float64
 	Quantity      float64
 	Value         float64
 	BoundQuantity float64
