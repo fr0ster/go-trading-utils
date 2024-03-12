@@ -144,7 +144,7 @@ func StartBookTickerStream(symbol string, handleErr binance.ErrHandler) (doneC, 
 	wsHandler := func(event *binance.WsBookTickerEvent) {
 		channel <- event
 	}
-	eventChannels.ReplaceOrInsert(EventChannelType{ChannelBookTicker, make(chan *binance.WsBookTickerEvent)})
+	eventChannels.ReplaceOrInsert(EventChannelType{ChannelBookTicker, channel})
 	return binance.WsBookTickerServe(symbol, wsHandler, handleErr)
 }
 
