@@ -21,7 +21,7 @@ func TestSaveData(t *testing.T) {
 	ds := DataStore{FilePath: tmpfile.Name()}
 
 	// Create a sample data record
-	data := DataRecord{
+	data := DataItem{
 		AccountType:   binance.AccountTypeSpot,
 		Symbol:        binance.SymbolType("BTCUSDT"),
 		Balance:       1000.0,
@@ -39,7 +39,7 @@ func TestSaveData(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Unmarshal the JSON data into a DataRecord struct
-	var savedData DataRecord
+	var savedData DataItem
 	err = json.Unmarshal(fileData, &savedData)
 	assert.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestLoadData(t *testing.T) {
 	ds := DataStore{FilePath: tmpfile.Name()}
 
 	// Create a sample data record
-	data := DataRecord{
+	data := DataItem{
 		AccountType:   binance.AccountTypeSpot,
 		Symbol:        binance.SymbolType("BTCUSDT"),
 		Balance:       1000.0,

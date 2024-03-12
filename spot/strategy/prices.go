@@ -7,7 +7,7 @@ import (
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (string, float64, string, string, string, string, string, string) {
+func GetLimitPricesDumpWay(data utils.DataItem, client *binance.Client) (string, float64, string, string, string, string, string, string) {
 	balance := data.Balance
 	symbolname := data.Symbol
 
@@ -32,7 +32,7 @@ func GetLimitPricesDumpWay(data utils.DataRecord, client *binance.Client) (strin
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
 
-func BidOrAsk(data utils.DataRecord, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data utils.DataItem, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,

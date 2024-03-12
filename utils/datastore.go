@@ -1,13 +1,18 @@
 package utils
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/google/btree"
 )
 
-type DataRecord struct {
+type DataItem struct {
+	Timestamp         time.Time
 	AccountType       binance.AccountType
 	Symbol            binance.SymbolType
 	Balance           float64
@@ -18,18 +23,32 @@ type DataRecord struct {
 }
 
 // DataStore represents the data store for your program
-type DataStore struct {
-	FilePath string
+type (
+	DataStore struct {
+		FilePath string
+	}
+)
+
+var (
+	dataTree *btree.BTree
+	mu_file  sync.Mutex
+)
+
+// Less defines the comparison method for BookTickerItem.
+// It compares the symbols of two BookTickerItems.
+func (b DataItem) Less(than btree.Item) bool {
+	return b.Symbol < than.(DataItem).Symbol
 }
 
 // SaveData saves the data to the data store file in JSON format
-func (ds *DataStore) SaveData(data DataRecord) error {
+func (ds *DataStore) SaveData(data DataItem) error {
 	file, err := os.Create(ds.FilePath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
+	data.Timestamp = time.Now()
 	encoder := json.NewEncoder(file)
 	err = encoder.Encode(data)
 	if err != nil {
@@ -40,8 +59,8 @@ func (ds *DataStore) SaveData(data DataRecord) error {
 }
 
 // LoadData loads the data from the data store file
-func (ds *DataStore) LoadData() (DataRecord, error) {
-	var data DataRecord
+func (ds *DataStore) LoadData() (DataItem, error) {
+	var data DataItem
 
 	file, err := os.Open(ds.FilePath)
 	if err != nil {
@@ -56,4 +75,82 @@ func (ds *DataStore) LoadData() (DataRecord, error) {
 	}
 
 	return data, nil
+}
+
+func AddRecordToTree(record DataItem) *btree.BTree {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	if dataTree == nil {
+		dataTree = btree.New(2)
+	}
+	dataTree.ReplaceOrInsert(record)
+	return dataTree
+}
+
+func RemoveRecordFromTree(record DataItem) *btree.BTree {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	if dataTree == nil {
+		return nil
+	}
+	dataTree.Delete(record)
+	return dataTree
+}
+
+func GetRecordFromTree(symbol binance.SymbolType) *DataItem {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	if dataTree == nil {
+		return nil
+	}
+	item := dataTree.Get(DataItem{Symbol: symbol})
+	if item == nil {
+		return nil
+	}
+	return item.(*DataItem)
+}
+
+func GetTree() *btree.BTree {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	return dataTree
+}
+
+func SetTree(tree *btree.BTree) {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	dataTree = tree
+}
+
+func SaveTreeToFile(tree *btree.BTree, filePath string) error {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	encoder := gob.NewEncoder(file)
+	err = encoder.Encode(tree)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func LoadTreeFromFile(filePath string) (*btree.BTree, error) {
+	mu_file.Lock()
+	defer mu_file.Unlock()
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	decoder := gob.NewDecoder(file)
+	var tree *btree.BTree
+	err = decoder.Decode(&tree)
+	if err != nil {
+		return nil, err
+	}
+	return tree, nil
 }
