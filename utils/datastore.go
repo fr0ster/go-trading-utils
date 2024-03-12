@@ -122,10 +122,10 @@ func SetTree(tree *btree.BTree) {
 	dataTree = tree
 }
 
-func (ds *DataStore) SaveTreeToFile(filePath string) error {
+func (ds *DataStore) SaveTreeToFile() error {
 	mu_file.Lock()
 	defer mu_file.Unlock()
-	file, err := os.Create(filePath)
+	file, err := os.Create(ds.FilePath)
 	if err != nil {
 		return err
 	}
@@ -138,10 +138,10 @@ func (ds *DataStore) SaveTreeToFile(filePath string) error {
 	return nil
 }
 
-func (ds *DataStore) LoadTreeFromFile(filePath string) error {
+func (ds *DataStore) LoadTreeFromFile() error {
 	mu_file.Lock()
 	defer mu_file.Unlock()
-	file, err := os.Open(filePath)
+	file, err := os.Open(ds.FilePath)
 	if err != nil {
 		return err
 	}
