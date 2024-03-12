@@ -122,7 +122,7 @@ func SetTree(tree *btree.BTree) {
 	dataTree = tree
 }
 
-func SaveTreeToFile(tree *btree.BTree, filePath string) error {
+func (ds *DataStore) SaveTreeToFile(filePath string) error {
 	mu_file.Lock()
 	defer mu_file.Unlock()
 	file, err := os.Create(filePath)
@@ -131,26 +131,25 @@ func SaveTreeToFile(tree *btree.BTree, filePath string) error {
 	}
 	defer file.Close()
 	encoder := gob.NewEncoder(file)
-	err = encoder.Encode(tree)
+	err = encoder.Encode(dataTree)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func LoadTreeFromFile(filePath string) (*btree.BTree, error) {
+func (ds *DataStore) LoadTreeFromFile(filePath string) error {
 	mu_file.Lock()
 	defer mu_file.Unlock()
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 	decoder := gob.NewDecoder(file)
-	var tree *btree.BTree
-	err = decoder.Decode(&tree)
+	err = decoder.Decode(dataTree)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return tree, nil
+	return nil
 }
