@@ -8,12 +8,13 @@ import (
 )
 
 type DataRecord struct {
-	AccountType   binance.AccountType
-	Symbol        binance.SymbolType
-	Balance       float64
-	Quantity      float64
-	Value         float64
-	BoundQuantity float64
+	AccountType       binance.AccountType
+	Symbol            binance.SymbolType
+	Balance           float64
+	CalculatedBalance float64
+	Quantity          float64
+	Value             float64
+	BoundQuantity     float64
 }
 
 // DataStore represents the data store for your program

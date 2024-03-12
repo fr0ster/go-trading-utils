@@ -37,7 +37,7 @@ func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL
 	}
 	symbol := binance.SymbolType(symbolname)
 
-	executeOrderChan := streams.GetFilledOrderHandler()
+	executeOrderChan := streams.GetFilledOrdersGuard()
 
 	order, err := orders.NewLimitOrder(
 		client,
