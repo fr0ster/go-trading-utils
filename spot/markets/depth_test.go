@@ -13,19 +13,19 @@ import (
 var testDepthTree = btree.New(2)
 
 func getRandomPriceTree(tree *btree.BTree) *markets.DepthItem {
-	items := make([]markets.DepthItem, 0, tree.Len())
+	items := make([]*markets.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(markets.DepthItem))
+		items = append(items, i.(*markets.DepthItem))
 		return true
 	})
 
-	return &items[rand.Intn(len(items))]
+	return items[rand.Intn(len(items))]
 }
 
 func getTwoRandomPricesTree(tree *btree.BTree) (markets.Price, *markets.DepthItem, markets.Price, *markets.DepthItem) {
 	items := make([]markets.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(markets.DepthItem))
+		items = append(items, *i.(*markets.DepthItem))
 		return true
 	})
 
@@ -87,15 +87,16 @@ func TestSearchDepthTree(t *testing.T) {
 		testDepthTree = markets.GetDepths()
 	}
 
+	// Declare and assign a value to the variable "price"
+	price := markets.Price(10.0)
+
 	// Call the function being tested
-	price := getRandomPriceTree(testDepthTree)
-	markets.SetDepths(testDepthTree)
-	filteredTree := markets.SearchDepths(price.Price)
+	filteredTree := markets.SearchDepths(price)
 
 	// Add additional assertions to check the correctness of the returned ticker
 	// For example, check if the ticker's symbol matches the expected value
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(markets.DepthItem)
+		price := i.(*markets.DepthItem)
 		if price.Price != price.Price {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -123,7 +124,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(markets.DepthItem)
+		price := i.(*markets.DepthItem) // Modify the type assertion to use a pointer receiver
 		if price.Price < priceMin || price.Price > priceMax {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -131,6 +132,74 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 	})
 
 	// Add additional assertions if needed
+}
+
+func TestGetDepthMaxBidMinAsk(t *testing.T) {
+	dataTree := btree.New(2)
+	// Price: 1.947 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 172.1
+	// Price: 1.948 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 187.4
+	// Price: 1.949 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 236.1
+	// Price: 1.95 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 189.8
+	// Price: 1.951 AskLastUpdateID: 2369068 AskQuantity: 217.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.952 AskLastUpdateID: 2369068 AskQuantity: 179.4 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.953 AskLastUpdateID: 2369068 AskQuantity: 140.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.954 AskLastUpdateID: 2369068 AskQuantity: 148.5 BidLastUpdateID: 0 BidQuantity: 0
+	records := []markets.DepthItem{
+		{Price: 1.947, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 172.1},
+		{Price: 1.948, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 187.4},
+		{Price: 1.949, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 236.1},
+		{Price: 1.95, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 189.8},
+		{Price: 1.951, AskLastUpdateID: 2369068, AskQuantity: 217.9, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.952, AskLastUpdateID: 2369068, AskQuantity: 179.4, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.953, AskLastUpdateID: 2369068, AskQuantity: 140.9, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.954, AskLastUpdateID: 2369068, AskQuantity: 148.5, BidLastUpdateID: 0, BidQuantity: 0},
+	}
+	for _, record := range records {
+		dataTree.ReplaceOrInsert(&record)
+	}
+	markets.SetDepths(dataTree)
+	// Call the function being tested
+	maxBid, minAsk := markets.GetMaxBidMinAsk()
+	if maxBid.Price != 1.95 {
+		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
+	}
+	if minAsk.Price != 1.951 {
+		t.Errorf("GetDepthMinAsk returned an incorrect min ask price")
+	}
+}
+
+func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
+	dataTree := btree.New(2)
+	// Price: 1.947 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 172.1
+	// Price: 1.948 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 187.4
+	// Price: 1.949 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 236.1
+	// Price: 1.95 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 189.8
+	// Price: 1.951 AskLastUpdateID: 2369068 AskQuantity: 217.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.952 AskLastUpdateID: 2369068 AskQuantity: 179.4 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.953 AskLastUpdateID: 2369068 AskQuantity: 140.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.954 AskLastUpdateID: 2369068 AskQuantity: 148.5 BidLastUpdateID: 0 BidQuantity: 0
+	records := []markets.DepthItem{
+		{Price: 1.947, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 172.1},
+		{Price: 1.948, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 187.4},
+		{Price: 1.949, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 236.1},
+		{Price: 1.95, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 189.8},
+		{Price: 1.951, AskLastUpdateID: 2369068, AskQuantity: 217.9, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.952, AskLastUpdateID: 2369068, AskQuantity: 179.4, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.953, AskLastUpdateID: 2369068, AskQuantity: 140.9, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.954, AskLastUpdateID: 2369068, AskQuantity: 148.5, BidLastUpdateID: 0, BidQuantity: 0},
+	}
+	for _, record := range records {
+		dataTree.ReplaceOrInsert(&record)
+	}
+	markets.SetDepths(dataTree)
+	// Call the function being tested
+	maxBid, minAsk := markets.GetDepthMaxBidQtyMaxAskQty()
+	if maxBid.Price != 1.949 {
+		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
+	}
+	if minAsk.Price != 1.951 {
+		t.Errorf("GetDepthMinAsk returned an incorrect min ask price")
+	}
 }
 
 // Add more test functions for other functions in the file if needed

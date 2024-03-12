@@ -87,7 +87,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 					value.BidLastUpdateID = event.LastUpdateID
 				} else {
 					value =
-						markets.DepthItem{
+						&markets.DepthItem{
 							Price:           markets.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
 							AskQuantity:     markets.Price(utils.ConvStrToFloat64(bid.Quantity)),
@@ -95,7 +95,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 							BidQuantity:     0,
 						}
 				}
-				markets.SetDepth(value)
+				markets.SetDepth(*value)
 			}
 
 			for _, bid := range event.Asks {
@@ -105,7 +105,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 					value.AskLastUpdateID = event.LastUpdateID
 				} else {
 					value =
-						markets.DepthItem{
+						&markets.DepthItem{
 							Price:           markets.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
 							AskQuantity:     markets.Price(utils.ConvStrToFloat64(bid.Quantity)),
@@ -113,7 +113,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 							BidQuantity:     0,
 						}
 				}
-				markets.SetDepth(value)
+				markets.SetDepth(*value)
 			}
 			depthBoolChan <- true
 		}
