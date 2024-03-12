@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	github.com/beldur/kraken-go-api-client v0.0.0-20240207163059-7469c489f802 // indirect
 	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
