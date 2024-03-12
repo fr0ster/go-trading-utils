@@ -159,7 +159,7 @@ func TestGetDepthMaxBidMinAsk(t *testing.T) {
 	}
 	markets.SetDepths(dataTree)
 	// Call the function being tested
-	maxBid, minAsk := markets.GetMaxBidMinAsk()
+	maxBid, minAsk := markets.GetDepthMaxBidMinAsk()
 	if maxBid.Price != 1.95 {
 		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
 	}

@@ -123,12 +123,12 @@ func GetDepthsByPrices(minPrice, maxPrice Price) *btree.BTree {
 	return newTree
 }
 
-func GetDepthMaxBidQtyMaxAskQty() (*DepthItem, *DepthItem) {
+func GetDepthMaxBidQtyMaxAskQty() (maxBidNode *DepthItem, maxAskNode *DepthItem) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	// Шукаємо вузол з максимальною ціною і ненульовим BidQuantity
-	maxBidNode := &DepthItem{}
-	maxAskNode := &DepthItem{}
+	maxBidNode = &DepthItem{}
+	maxAskNode = &DepthItem{}
 	depths.Ascend(func(item btree.Item) bool {
 		node := item.(*DepthItem)
 		if node.BidQuantity != 0 && node.BidQuantity > maxBidNode.BidQuantity {
@@ -142,11 +142,11 @@ func GetDepthMaxBidQtyMaxAskQty() (*DepthItem, *DepthItem) {
 	return maxBidNode, maxAskNode
 }
 
-func GetMaxBidMinAsk() (*DepthItem, *DepthItem) {
+func GetDepthMaxBidMinAsk() (maxBid *DepthItem, minAsk *DepthItem) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
-	maxBid := &DepthItem{}
-	minAsk := &DepthItem{}
+	maxBid = &DepthItem{}
+	minAsk = &DepthItem{}
 	depths.Ascend(func(item btree.Item) bool {
 		node := item.(*DepthItem)
 		if node.BidQuantity != 0 && node.Price > maxBid.Price {
