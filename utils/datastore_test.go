@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ func TestSaveData(t *testing.T) {
 
 	// Create a sample data record
 	data := DataItem{
+		Timestamp:     time.Now().Unix(),
 		AccountType:   binance.AccountTypeSpot,
 		Symbol:        binance.SymbolType("BTCUSDT"),
 		Balance:       1000.0,
@@ -44,7 +46,14 @@ func TestSaveData(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the saved data matches the original data
-	assert.Equal(t, data, savedData)
+
+	assert.Equal(t, data.AccountType, savedData.AccountType)
+	assert.Equal(t, data.Symbol, savedData.Symbol)
+	assert.Equal(t, data.Balance, savedData.Balance)
+	assert.Equal(t, data.Value, savedData.Value)
+	assert.Equal(t, data.Quantity, savedData.Quantity)
+	assert.Equal(t, data.BoundQuantity, savedData.BoundQuantity)
+	assert.Equal(t, data.Timestamp, savedData.Timestamp)
 }
 
 func TestLoadData(t *testing.T) {

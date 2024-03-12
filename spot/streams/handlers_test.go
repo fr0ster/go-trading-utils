@@ -50,15 +50,7 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 }
 
 func TestGetBookTickersUpdateHandler(t *testing.T) {
-	apiKey := os.Getenv("API_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
-	client := binance.NewClient(apiKey, secretKey)
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		log.Fatalf("Error starting user stream: %v", err)
-	}
-	_, _, err = streams.StartBookTickerStream(listenKey, utils.HandleErr)
+	_, _, err := streams.StartBookTickerStream("BTCUSDT", utils.HandleErr)
 	if err != nil {
 		log.Fatalf("Error starting user data stream: %v", err)
 	}

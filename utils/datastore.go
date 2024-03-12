@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/google/btree"
 )
 
 type DataItem struct {
-	Timestamp         time.Time
+	Timestamp         int64
 	AccountType       binance.AccountType
 	Symbol            binance.SymbolType
 	Balance           float64
@@ -49,7 +48,6 @@ func (ds *DataStore) SaveData(data DataItem) error {
 	}
 	defer file.Close()
 
-	data.Timestamp = time.Now()
 	encoder := json.NewEncoder(file)
 	err = encoder.Encode(data)
 	if err != nil {
