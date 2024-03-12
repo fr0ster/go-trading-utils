@@ -33,8 +33,8 @@ func (b EventChannelType) Less(than btree.Item) bool {
 }
 
 func StartUserDataStream(listenKey string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsUserDataEvent)
 	wsHandler := func(event *binance.WsUserDataEvent) {
 		channel <- event
@@ -44,8 +44,8 @@ func StartUserDataStream(listenKey string, handleErr binance.ErrHandler) (doneC,
 }
 
 func GetUserDataChannel() (chan *binance.WsUserDataEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelUserData, nil})
 	if item == nil {
 		return nil, false
@@ -54,8 +54,8 @@ func GetUserDataChannel() (chan *binance.WsUserDataEvent, bool) {
 }
 
 func StartDepthStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsDepthEvent)
 	wsHandler := func(event *binance.WsDepthEvent) {
 		channel <- event
@@ -65,8 +65,8 @@ func StartDepthStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC
 }
 
 func GetDepthChannel() (chan *binance.WsDepthEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelDepth, nil})
 	if item == nil {
 		return nil, false
@@ -75,8 +75,8 @@ func GetDepthChannel() (chan *binance.WsDepthEvent, bool) {
 }
 
 func StartKlineStream(symbol string, interval string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsKlineEvent)
 	wsHandler := func(event *binance.WsKlineEvent) {
 		channel <- event
@@ -86,8 +86,8 @@ func StartKlineStream(symbol string, interval string, handleErr binance.ErrHandl
 }
 
 func GetKlineChannel() (chan *binance.WsKlineEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelKline, nil})
 	if item == nil {
 		return nil, false
@@ -96,8 +96,8 @@ func GetKlineChannel() (chan *binance.WsKlineEvent, bool) {
 }
 
 func StartTradeStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsTradeEvent)
 	wsHandler := func(event *binance.WsTradeEvent) {
 		channel <- event
@@ -107,8 +107,8 @@ func StartTradeStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC
 }
 
 func GetTradeChannel() (chan *binance.WsTradeEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelTrade, nil})
 	if item == nil {
 		return nil, false
@@ -117,8 +117,8 @@ func GetTradeChannel() (chan *binance.WsTradeEvent, bool) {
 }
 
 func StartAggTradeStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsAggTradeEvent)
 	wsHandler := func(event *binance.WsAggTradeEvent) {
 		channel <- event
@@ -128,8 +128,8 @@ func StartAggTradeStream(symbol string, handleErr binance.ErrHandler) (doneC, st
 }
 
 func GetAggTradeChannel() (chan *binance.WsAggTradeEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelAggTrade, nil})
 	if item == nil {
 		return nil, false
@@ -138,8 +138,8 @@ func GetAggTradeChannel() (chan *binance.WsAggTradeEvent, bool) {
 }
 
 func StartBookTickerStream(symbol string, handleErr binance.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	channel := make(chan *binance.WsBookTickerEvent)
 	wsHandler := func(event *binance.WsBookTickerEvent) {
 		channel <- event
@@ -149,8 +149,8 @@ func StartBookTickerStream(symbol string, handleErr binance.ErrHandler) (doneC, 
 }
 
 func GetBookTickerChannel() (chan *binance.WsBookTickerEvent, bool) {
-	// mu_eventChannel.Lock()
-	// defer mu_eventChannel.Unlock()
+	mu_eventChannel.Lock()
+	defer mu_eventChannel.Unlock()
 	item := eventChannels.Get(EventChannelType{ChannelBookTicker, nil})
 	if item == nil {
 		return nil, false
