@@ -1,11 +1,11 @@
-package info_test
+package markets_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/spot/info"
+	"github.com/fr0ster/go-binance-utils/spot/markets"
 	"github.com/google/btree"
 )
 
@@ -16,7 +16,7 @@ func TestInitPricesTree(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	err := info.InitBookTicker(client, "BTCUSDT")
+	err := markets.InitBookTicker(client, "BTCUSDT")
 
 	// Check if there was an error
 	if err != nil {
@@ -28,7 +28,7 @@ func TestInitPricesTree(t *testing.T) {
 
 func TestGetBookTickerTree(t *testing.T) {
 	// Call the function under test
-	tree := info.GetBookTickers()
+	tree := markets.GetBookTickers()
 
 	// TODO: Add assertions to validate the behavior of the function
 	if tree == nil {
@@ -39,27 +39,27 @@ func TestGetBookTickerTree(t *testing.T) {
 func TestSetBookTickerTree(t *testing.T) {
 	// Create a new BTree
 	tree := btree.New(2)
-	tree.ReplaceOrInsert(info.BookTickerItem{
-		Symbol:      info.SymbolType("BTCUSDT"),
-		BidPrice:    info.PriceType(10000),
-		BidQuantity: info.PriceType(1),
-		AskPrice:    info.PriceType(10001),
-		AskQuantity: info.PriceType(1),
+	tree.ReplaceOrInsert(markets.BookTickerItem{
+		Symbol:      markets.SymbolType("BTCUSDT"),
+		BidPrice:    markets.PriceType(10000),
+		BidQuantity: markets.PriceType(1),
+		AskPrice:    markets.PriceType(10001),
+		AskQuantity: markets.PriceType(1),
 	})
-	tree.ReplaceOrInsert(info.BookTickerItem{
-		Symbol:      info.SymbolType("ETHUSDT"),
-		BidPrice:    info.PriceType(200),
-		BidQuantity: info.PriceType(2),
-		AskPrice:    info.PriceType(201),
-		AskQuantity: info.PriceType(2),
+	tree.ReplaceOrInsert(markets.BookTickerItem{
+		Symbol:      markets.SymbolType("ETHUSDT"),
+		BidPrice:    markets.PriceType(200),
+		BidQuantity: markets.PriceType(2),
+		AskPrice:    markets.PriceType(201),
+		AskQuantity: markets.PriceType(2),
 	})
 
 	// Call the function under test
-	info.SetBookTickers(tree)
+	markets.SetBookTickers(tree)
 
 	// TODO: Add assertions to validate the behavior of the function
-	if info.GetBookTickers() != tree {
-		t.Errorf("Expected tree: %v, got: %v", tree, info.GetBookTickers())
+	if markets.GetBookTickers() != tree {
+		t.Errorf("Expected tree: %v, got: %v", tree, markets.GetBookTickers())
 	}
 }
 

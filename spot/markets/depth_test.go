@@ -1,4 +1,4 @@
-package info_test
+package markets_test
 
 import (
 	"math/rand"
@@ -6,26 +6,26 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/spot/info"
+	"github.com/fr0ster/go-binance-utils/spot/markets"
 	"github.com/google/btree"
 )
 
 var testDepthTree = btree.New(2)
 
-func getRandomPriceTree(tree *btree.BTree) *info.DepthItem {
-	items := make([]info.DepthItem, 0, tree.Len())
+func getRandomPriceTree(tree *btree.BTree) *markets.DepthItem {
+	items := make([]markets.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(info.DepthItem))
+		items = append(items, i.(markets.DepthItem))
 		return true
 	})
 
 	return &items[rand.Intn(len(items))]
 }
 
-func getTwoRandomPricesTree(tree *btree.BTree) (info.Price, *info.DepthItem, info.Price, *info.DepthItem) {
-	items := make([]info.DepthItem, 0, tree.Len())
+func getTwoRandomPricesTree(tree *btree.BTree) (markets.Price, *markets.DepthItem, markets.Price, *markets.DepthItem) {
+	items := make([]markets.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(info.DepthItem))
+		items = append(items, i.(markets.DepthItem))
 		return true
 	})
 
@@ -48,8 +48,8 @@ func TestInitDepthTree(t *testing.T) {
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 
-	err := info.InitDepths(client, "BTCUSDT")
-	testDepthTree = info.GetDepths()
+	err := markets.InitDepths(client, "BTCUSDT")
+	testDepthTree = markets.GetDepths()
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}
@@ -63,9 +63,9 @@ func TestGetDepthTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepths(client, "BTCUSDT")
+		markets.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepths()
+		testDepthTree = markets.GetDepths()
 	}
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
@@ -82,20 +82,20 @@ func TestSearchDepthTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepths(client, "BTCUSDT")
+		markets.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepths()
+		testDepthTree = markets.GetDepths()
 	}
 
 	// Call the function being tested
 	price := getRandomPriceTree(testDepthTree)
-	info.SetDepths(testDepthTree)
-	filteredTree := info.SearchDepths(price.Price)
+	markets.SetDepths(testDepthTree)
+	filteredTree := markets.SearchDepths(price.Price)
 
 	// Add additional assertions to check the correctness of the returned ticker
 	// For example, check if the ticker's symbol matches the expected value
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(info.DepthItem)
+		price := i.(markets.DepthItem)
 		if price.Price != price.Price {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -111,19 +111,19 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepths(client, "BTCUSDT")
+		markets.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepths()
+		testDepthTree = markets.GetDepths()
 	}
 
 	// Call the function being tested
 	priceMin, _, priceMax, _ := getTwoRandomPricesTree(testDepthTree)
-	info.SetDepths(testDepthTree)
-	filteredTree := info.GetDepthsByPrices(priceMin, priceMax)
+	markets.SetDepths(testDepthTree)
+	filteredTree := markets.GetDepthsByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(info.DepthItem)
+		price := i.(markets.DepthItem)
 		if price.Price < priceMin || price.Price > priceMax {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}

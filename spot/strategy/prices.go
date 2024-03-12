@@ -2,7 +2,7 @@ package strategy
 
 import (
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/spot/info"
+	"github.com/fr0ster/go-binance-utils/spot/markets"
 	"github.com/fr0ster/go-binance-utils/spot/services"
 	"github.com/fr0ster/go-binance-utils/utils"
 )
@@ -46,7 +46,7 @@ func BidOrAsk(data utils.DataRecord, client *binance.Client, side string) (price
 	targetPriceF := 0.0
 	err := error(nil)
 
-	bookTicker := info.GetBookTicker(info.SymbolType(symbolname))
+	bookTicker := markets.GetBookTicker(markets.SymbolType(symbolname))
 	if bookTicker == nil {
 		targetPriceF, _, err = services.GetMarketPrice(client, string(symbolname))
 		if err != nil {
