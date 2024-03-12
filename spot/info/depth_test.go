@@ -12,20 +12,20 @@ import (
 
 var testDepthTree = btree.New(2)
 
-func getRandomPriceTree(tree *btree.BTree) *info.DepthRecord {
-	items := make([]info.DepthRecord, 0, tree.Len())
+func getRandomPriceTree(tree *btree.BTree) *info.DepthItem {
+	items := make([]info.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(info.DepthRecord))
+		items = append(items, i.(info.DepthItem))
 		return true
 	})
 
 	return &items[rand.Intn(len(items))]
 }
 
-func getTwoRandomPricesTree(tree *btree.BTree) (info.Price, *info.DepthRecord, info.Price, *info.DepthRecord) {
-	items := make([]info.DepthRecord, 0, tree.Len())
+func getTwoRandomPricesTree(tree *btree.BTree) (info.Price, *info.DepthItem, info.Price, *info.DepthItem) {
+	items := make([]info.DepthItem, 0, tree.Len())
 	tree.Ascend(func(i btree.Item) bool {
-		items = append(items, i.(info.DepthRecord))
+		items = append(items, i.(info.DepthItem))
 		return true
 	})
 
@@ -48,8 +48,8 @@ func TestInitDepthTree(t *testing.T) {
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 
-	err := info.InitDepthTree(client, "BTCUSDT")
-	testDepthTree = info.GetDepthTree()
+	err := info.InitDepths(client, "BTCUSDT")
+	testDepthTree = info.GetDepths()
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}
@@ -63,9 +63,9 @@ func TestGetDepthTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, "BTCUSDT")
+		info.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepthTree()
+		testDepthTree = info.GetDepths()
 	}
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
@@ -82,20 +82,20 @@ func TestSearchDepthTree(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthMap(client, "BTCUSDT")
+		info.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepthTree()
+		testDepthTree = info.GetDepths()
 	}
 
 	// Call the function being tested
 	price := getRandomPriceTree(testDepthTree)
-	info.SetDepthTree(testDepthTree)
-	filteredTree := info.SearchDepthTree(price.Price)
+	info.SetDepths(testDepthTree)
+	filteredTree := info.SearchDepths(price.Price)
 
 	// Add additional assertions to check the correctness of the returned ticker
 	// For example, check if the ticker's symbol matches the expected value
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(info.DepthRecord)
+		price := i.(info.DepthItem)
 		if price.Price != price.Price {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -111,19 +111,19 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 		secret_key := os.Getenv("SECRET_KEY")
 		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
-		info.InitDepthTree(client, "BTCUSDT")
+		info.InitDepths(client, "BTCUSDT")
 		// Call the function being tested
-		testDepthTree = info.GetDepthTree()
+		testDepthTree = info.GetDepths()
 	}
 
 	// Call the function being tested
 	priceMin, _, priceMax, _ := getTwoRandomPricesTree(testDepthTree)
-	info.SetDepthTree(testDepthTree)
-	filteredTree := info.GetDepthTreeByPrices(priceMin, priceMax)
+	info.SetDepths(testDepthTree)
+	filteredTree := info.GetDepthsByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(info.DepthRecord)
+		price := i.(info.DepthItem)
 		if price.Price < priceMin || price.Price > priceMax {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}

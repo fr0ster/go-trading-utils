@@ -6,24 +6,7 @@ import (
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func GetBookTickerMapUpdateHandler() (wsHandler binance.WsBookTickerHandler, bookTickerEventChan chan bool) {
-	bookTickerEventChan = make(chan bool)
-	wsHandler = func(event *binance.WsBookTickerEvent) {
-		bookTickerUpdate := binance.BookTicker{
-			Symbol:      event.Symbol,
-			BidPrice:    event.BestBidPrice,
-			BidQuantity: event.BestBidQty,
-			AskPrice:    event.BestAskPrice,
-			AskQuantity: event.BestAskQty,
-		}
-
-		info.SetBookTickerMapItem(info.SymbolType(event.Symbol), bookTickerUpdate)
-		bookTickerEventChan <- true
-	}
-	return
-}
-
-func GetBookTickerTreeUpdateHandler() (wsHandler binance.WsBookTickerHandler, bookTickerEventChan chan bool) {
+func GetBookTickersUpdateHandler() (wsHandler binance.WsBookTickerHandler, bookTickerEventChan chan bool) {
 	bookTickerEventChan = make(chan bool)
 	wsHandler = func(event *binance.WsBookTickerEvent) {
 		bookTickerUpdate := info.BookTickerItem{
@@ -34,7 +17,7 @@ func GetBookTickerTreeUpdateHandler() (wsHandler binance.WsBookTickerHandler, bo
 			AskQuantity: info.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
 		}
 
-		info.SetBookTickerTreeItem(bookTickerUpdate)
+		info.SetBookTicker(bookTickerUpdate)
 		bookTickerEventChan <- true
 	}
 	return

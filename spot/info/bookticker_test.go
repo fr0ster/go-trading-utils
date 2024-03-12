@@ -16,7 +16,7 @@ func TestInitPricesTree(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	err := info.InitPricesTree(client, "BTCUSDT")
+	err := info.InitBookTicker(client, "BTCUSDT")
 
 	// Check if there was an error
 	if err != nil {
@@ -28,7 +28,7 @@ func TestInitPricesTree(t *testing.T) {
 
 func TestGetBookTickerTree(t *testing.T) {
 	// Call the function under test
-	tree := info.GetBookTickerTree()
+	tree := info.GetBookTickers()
 
 	// TODO: Add assertions to validate the behavior of the function
 	if tree == nil {
@@ -55,11 +55,11 @@ func TestSetBookTickerTree(t *testing.T) {
 	})
 
 	// Call the function under test
-	info.SetBookTickerTree(tree)
+	info.SetBookTickers(tree)
 
 	// TODO: Add assertions to validate the behavior of the function
-	if info.GetBookTickerTree() != tree {
-		t.Errorf("Expected tree: %v, got: %v", tree, info.GetBookTickerTree())
+	if info.GetBookTickers() != tree {
+		t.Errorf("Expected tree: %v, got: %v", tree, info.GetBookTickers())
 	}
 }
 
