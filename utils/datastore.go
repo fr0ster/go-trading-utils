@@ -20,6 +20,7 @@ type DataItem struct {
 	Quantity          float64
 	Value             float64
 	BoundQuantity     float64
+	Msg               string
 }
 
 // DataStore represents the data store for your program
