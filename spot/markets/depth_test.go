@@ -11,7 +11,7 @@ import (
 
 func getTestDepths() *markets.DepthBTree {
 	testDepthTree := markets.DepthNew(3)
-	records := []markets.DepthItem{
+	records := []markets.DepthItemType{
 		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
 		{Price: 1.93, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 155.4}, // local maxima
 		{Price: 1.94, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.0},
@@ -44,7 +44,7 @@ func TestInitDepthTree(t *testing.T) {
 
 	// Add more test cases here
 	testDepthTree := markets.DepthNew(3)
-	err := testDepthTree.InitDepths(client, "BTCUSDT")
+	err := testDepthTree.Init(client, "BTCUSDT")
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}
@@ -67,11 +67,11 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 	// Call the function being tested
 	priceMin := markets.Price(1.95)
 	priceMax := markets.Price(1.952)
-	filteredTree := testDepthTree.GetDepthsByPrices(priceMin, priceMax)
+	filteredTree := testDepthTree.GetByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(*markets.DepthItem) // Modify the type assertion to use a pointer receiver
+		price := i.(*markets.DepthItemType) // Modify the type assertion to use a pointer receiver
 		if price.Price < priceMin || price.Price > priceMax {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -84,7 +84,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 func TestGetDepthMaxBidMinAsk(t *testing.T) {
 	testDepthTree := getTestDepths()
 	// Call the function being tested
-	maxBid, minAsk := testDepthTree.GetDepthMaxBidMinAsk()
+	maxBid, minAsk := testDepthTree.GetMaxBidMinAsk()
 	if maxBid.Price != 1.95 {
 		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
 	}
@@ -96,7 +96,7 @@ func TestGetDepthMaxBidMinAsk(t *testing.T) {
 func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
 	testDepthTree := getTestDepths()
 	// Call the function being tested
-	maxBid, minAsk := testDepthTree.GetDepthMaxBidQtyMaxAskQty()
+	maxBid, minAsk := testDepthTree.GetMaxBidQtyMaxAskQty()
 	if maxBid.Price != 1.949 {
 		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
 	}
@@ -108,34 +108,34 @@ func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
 func TestGetDepthBidLocalMaxima(t *testing.T) {
 	testDepthTree := getTestDepths()
 
-	bidLocalsMaxima := testDepthTree.GetDepthBidQtyLocalMaxima()
-	askLocalMaxima := testDepthTree.GetDepthAskQtyLocalMaxima()
+	bidLocalsMaxima := testDepthTree.GetBidQtyLocalMaxima()
+	askLocalMaxima := testDepthTree.GetAskQtyLocalMaxima()
 
 	// Add assertions to check the correctness of the returned map
-	if bidLocalsMaxima.Get(&markets.DepthItem{Price: 1.93}) == nil {
+	if bidLocalsMaxima.Get(&markets.DepthItemType{Price: 1.93}) == nil {
 		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 	}
-	if bidLocalsMaxima.Get(&markets.DepthItem{Price: 1.949}) == nil {
+	if bidLocalsMaxima.Get(&markets.DepthItemType{Price: 1.949}) == nil {
 		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 	}
-	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.951}) == nil {
+	if askLocalMaxima.Get(&markets.DepthItemType{Price: 1.951}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
-	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.953}) == nil {
+	if askLocalMaxima.Get(&markets.DepthItemType{Price: 1.953}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
-	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.957}) == nil {
+	if askLocalMaxima.Get(&markets.DepthItemType{Price: 1.957}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
 	bidLocalsMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*markets.DepthItem)
+		item := i.(*markets.DepthItemType)
 		if (item.Price != 1.93) && (item.Price != 1.949) {
 			t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 		}
 		return true
 	})
 	askLocalMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*markets.DepthItem)
+		item := i.(*markets.DepthItemType)
 		if item.Price != 1.951 && item.Price != 1.953 && item.Price != 1.957 {
 			t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 		}

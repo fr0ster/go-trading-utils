@@ -1,6 +1,8 @@
 package strategy
 
 import (
+	"errors"
+
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/markets"
 	"github.com/fr0ster/go-binance-utils/spot/services"
@@ -32,7 +34,7 @@ func GetLimitPricesDumpWay(data utils.DataItem, client *binance.Client) (string,
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
 
-func BidOrAsk(data utils.DataItem, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data utils.DataItem, bookTickers *markets.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,
@@ -44,14 +46,10 @@ func BidOrAsk(data utils.DataItem, client *binance.Client, side string) (price, 
 	balance := data.Balance
 	symbolname := data.Symbol
 	targetPriceF := 0.0
-	err := error(nil)
 
-	bookTicker := markets.GetBookTicker(markets.SymbolType(symbolname))
+	bookTicker := bookTickers.GetItem(markets.SymbolType(symbolname))
 	if bookTicker == nil {
-		targetPriceF, _, err = services.GetMarketPrice(client, string(symbolname))
-		if err != nil {
-			utils.HandleErr(err)
-		}
+		utils.HandleErr(errors.New("BookTicker not found"))
 	} else {
 		if side == "BUY" {
 			targetPriceF = float64(bookTicker.AskPrice) * 0.9

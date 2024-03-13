@@ -10,7 +10,10 @@ import (
 )
 
 type (
-	BookTickerItem struct {
+	BookTickerBTree struct {
+		*btree.BTree
+	}
+	BookTickerItemType struct {
 		Symbol      SymbolType
 		BidPrice    PriceType
 		BidQuantity PriceType
@@ -21,21 +24,28 @@ type (
 	SymbolType string
 )
 
-var (
-	bookTickers   = btree.New(2) // Book ticker tree
-	mu_bookticker sync.Mutex     // Mutex for book ticker tree
-)
+var mu_bookticker sync.Mutex
+
+func BookTickerNew(degree int) *BookTickerBTree {
+	return &BookTickerBTree{
+		BTree: btree.New(degree),
+	}
+}
 
 // Less defines the comparison method for BookTickerItem.
 // It compares the symbols of two BookTickerItems.
-func (b BookTickerItem) Less(than btree.Item) bool {
-	return b.Symbol < than.(BookTickerItem).Symbol
+func (i *BookTickerItemType) Less(than btree.Item) bool {
+	return i.Symbol < than.(*BookTickerItemType).Symbol
 }
 
-// InitBookTicker initializes the book ticker tree with prices.
+func (i *BookTickerItemType) Equal(than btree.Item) bool {
+	return i.Symbol == than.(*BookTickerItemType).Symbol
+}
+
+// Init initializes the book ticker tree with prices.
 // It retrieves the book tickers for the given symbol from the Binance client
 // and inserts them into the book ticker tree.
-func InitBookTicker(client *binance.Client, symbolname string) (err error) {
+func (tree *BookTickerBTree) Init(client *binance.Client, symbolname string) (err error) {
 	bookTickerList, err :=
 		client.NewListBookTickersService().
 			Symbol(string(symbolname)).
@@ -46,7 +56,7 @@ func InitBookTicker(client *binance.Client, symbolname string) (err error) {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
 	for _, bookTicker := range bookTickerList {
-		bookTickers.ReplaceOrInsert(BookTickerItem{
+		tree.ReplaceOrInsert(&BookTickerItemType{
 			Symbol:      SymbolType(bookTicker.Symbol),
 			BidPrice:    PriceType(utils.ConvStrToFloat64(bookTicker.BidPrice)),
 			BidQuantity: PriceType(utils.ConvStrToFloat64(bookTicker.BidQuantity)),
@@ -57,83 +67,70 @@ func InitBookTicker(client *binance.Client, symbolname string) (err error) {
 	return nil
 }
 
-func GetBookTicker(symbol SymbolType) *BookTickerItem {
+func (tree *BookTickerBTree) GetItem(symbol SymbolType) *BookTickerItemType {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	item := bookTickers.Get(BookTickerItem{Symbol: symbol})
+	item := tree.Get(&BookTickerItemType{Symbol: symbol})
 	if item == nil {
 		return nil
 	}
-	return item.(*BookTickerItem)
+	return item.(*BookTickerItemType)
 }
 
-// GetBookTickers returns the book ticker tree.
-func GetBookTickers() *btree.BTree {
+func (tree *BookTickerBTree) SetItem(item BookTickerItemType) {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	return bookTickers
+	tree.ReplaceOrInsert(&item)
 }
 
-func SetBookTickers(tree *btree.BTree) {
+func (tree *BookTickerBTree) GetBySymbol(symbol SymbolType) *BookTickerBTree {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	bookTickers = tree
-}
-
-func SetBookTicker(item BookTickerItem) {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
-	bookTickers.ReplaceOrInsert(item)
-}
-
-func SearchBookTickersBySymbol(symbol SymbolType) *btree.BTree {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
-	tree := btree.New(2)
-	bookTickers.Ascend(func(i btree.Item) bool {
-		item := i.(BookTickerItem)
+	newTree := BookTickerNew(2)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*BookTickerItemType)
 		if item.Symbol == symbol {
-			tree.ReplaceOrInsert(item)
+			newTree.ReplaceOrInsert(item)
 		}
 		return true
 	})
-	return tree
+	return newTree
 }
 
-func SearchBookTickersByBidPrice(symbol SymbolType, bidPrice PriceType) *btree.BTree {
+func (tree *BookTickerBTree) GetByBidPrice(symbol SymbolType, bidPrice PriceType) *BookTickerBTree {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	tree := btree.New(2)
-	bookTickers.Ascend(func(i btree.Item) bool {
-		item := i.(BookTickerItem)
+	newTree := BookTickerNew(2)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*BookTickerItemType)
 		if item.Symbol == symbol && item.BidPrice == bidPrice {
-			tree.ReplaceOrInsert(item)
+			newTree.ReplaceOrInsert(item)
 		}
 		return true
 	})
-	return tree
+	return newTree
 }
 
-func SearchBookTickersByAskPrice(symbol SymbolType, askPrice PriceType) *btree.BTree {
+func (tree *BookTickerBTree) GetByAskPrice(symbol SymbolType, askPrice PriceType) *BookTickerBTree {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	tree := btree.New(2)
-	bookTickers.Ascend(func(i btree.Item) bool {
-		item := i.(BookTickerItem)
+	newTree := BookTickerNew(2)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*BookTickerItemType)
 		if item.Symbol == symbol && item.AskPrice == askPrice {
-			tree.ReplaceOrInsert(item)
+			newTree.ReplaceOrInsert(item)
 		}
 		return true
 	})
-	return tree
+	return newTree
 }
 
-// ShowBookTickers prints the book ticker information for each item in the BookTickerTree.
-func ShowBookTickers() {
+// Show prints the book ticker information for each item in the BookTickerTree.
+func (tree *BookTickerBTree) Show() {
 	mu_bookticker.Lock()
 	defer mu_bookticker.Unlock()
-	bookTickers.Ascend(func(i btree.Item) bool {
-		item := i.(BookTickerItem)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*BookTickerItemType)
 		println(
 			"Symbol:", item.Symbol,
 			"BidPrice:", utils.ConvFloat64ToStr(float64(item.BidPrice), 8),

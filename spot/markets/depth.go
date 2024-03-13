@@ -15,7 +15,7 @@ type (
 	DepthBTree struct {
 		*btree.BTree
 	}
-	DepthItem struct {
+	DepthItemType struct {
 		Price           Price
 		AskLastUpdateID int64
 		AskQuantity     Price
@@ -32,11 +32,15 @@ func DepthNew(degree int) *DepthBTree {
 
 var mu_depth sync.Mutex
 
-func (i *DepthItem) Less(than btree.Item) bool {
-	return i.Price < than.(*DepthItem).Price
+func (i *DepthItemType) Less(than btree.Item) bool {
+	return i.Price < than.(*DepthItemType).Price
 }
 
-func (tree *DepthBTree) InitDepths(client *binance.Client, symbolname string) (err error) {
+func (i *DepthItemType) Equal(than btree.Item) bool {
+	return i.Price == than.(*DepthItemType).Price
+}
+
+func (tree *DepthBTree) Init(client *binance.Client, symbolname string) (err error) {
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(symbolname)).
@@ -47,14 +51,14 @@ func (tree *DepthBTree) InitDepths(client *binance.Client, symbolname string) (e
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	for _, bid := range res.Bids {
-		tree.ReplaceOrInsert(&DepthItem{
+		tree.ReplaceOrInsert(&DepthItemType{
 			Price:           Price(utils.ConvStrToFloat64(bid.Price)),
 			BidLastUpdateID: res.LastUpdateID,
 			BidQuantity:     Price(utils.ConvStrToFloat64(bid.Quantity)),
 		})
 	}
 	for _, ask := range res.Asks {
-		tree.ReplaceOrInsert(&DepthItem{
+		tree.ReplaceOrInsert(&DepthItemType{
 			Price:           Price(utils.ConvStrToFloat64(ask.Price)),
 			AskLastUpdateID: res.LastUpdateID,
 			AskQuantity:     Price(utils.ConvStrToFloat64(ask.Quantity)),
@@ -63,32 +67,20 @@ func (tree *DepthBTree) InitDepths(client *binance.Client, symbolname string) (e
 	return nil
 }
 
-// func GetDepths() *DepthBTree {
-// 	mu_depth.Lock()
-// 	defer mu_depth.Unlock()
-// 	return tree
-// }
-
-// func SetDepths(tree *DepthBTree) {
-// 	mu_depth.Lock()
-// 	defer mu_depth.Unlock()
-// 	tree = tree
-// }
-
-func (tree *DepthBTree) GetDepth(price Price) (*DepthItem, bool) {
+func (tree *DepthBTree) GetItem(price Price) (*DepthItemType, bool) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
-	item := tree.Get(&DepthItem{Price: price})
+	item := tree.Get(&DepthItemType{Price: price})
 	if item == nil {
 		return nil, false
 	}
-	return item.(*DepthItem), true
+	return item.(*DepthItemType), true
 }
 
-func (tree *DepthBTree) SetDepth(value DepthItem) {
+func (tree *DepthBTree) SetItem(value DepthItemType) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
-	tree.ReplaceOrInsert(&DepthItem{
+	tree.ReplaceOrInsert(&DepthItemType{
 		Price:           value.Price,
 		AskLastUpdateID: value.AskLastUpdateID,
 		AskQuantity:     value.AskQuantity,
@@ -97,13 +89,13 @@ func (tree *DepthBTree) SetDepth(value DepthItem) {
 	})
 }
 
-func (tree *DepthBTree) GetDepthsByPrices(minPrice, maxPrice Price) *DepthBTree {
+func (tree *DepthBTree) GetByPrices(minPrice, maxPrice Price) *DepthBTree {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	newTree := DepthNew(2) // створюємо нове B-дерево
 
 	tree.Ascend(func(i btree.Item) bool {
-		item := i.(*DepthItem)
+		item := i.(*DepthItemType)
 		if item.Price >= minPrice && item.Price <= maxPrice {
 			newTree.ReplaceOrInsert(item) // додаємо вузол до нового дерева, якщо він відповідає умовам
 		}
@@ -113,14 +105,42 @@ func (tree *DepthBTree) GetDepthsByPrices(minPrice, maxPrice Price) *DepthBTree 
 	return newTree
 }
 
-func (tree *DepthBTree) GetDepthMaxBidQtyMaxAskQty() (maxBidNode *DepthItem, maxAskNode *DepthItem) {
+func (tree *DepthBTree) GetMaxBids() DepthBTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	bids := DepthNew(2)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*DepthItemType)
+		if item.BidQuantity != 0 {
+			bids.ReplaceOrInsert(item)
+		}
+		return true
+	})
+	return *bids
+}
+
+func (tree *DepthBTree) GetMaxAsks() DepthBTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	asks := DepthNew(2)
+	tree.Ascend(func(i btree.Item) bool {
+		item := i.(*DepthItemType)
+		if item.AskQuantity != 0 {
+			asks.ReplaceOrInsert(item)
+		}
+		return true
+	})
+	return *asks
+}
+
+func (tree *DepthBTree) GetMaxBidQtyMaxAskQty() (maxBidNode *DepthItemType, maxAskNode *DepthItemType) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	// Шукаємо вузол з максимальною ціною і ненульовим BidQuantity
-	maxBidNode = &DepthItem{}
-	maxAskNode = &DepthItem{}
+	maxBidNode = &DepthItemType{}
+	maxAskNode = &DepthItemType{}
 	tree.Ascend(func(item btree.Item) bool {
-		node := item.(*DepthItem)
+		node := item.(*DepthItemType)
 		if node.BidQuantity != 0 && node.BidQuantity > maxBidNode.BidQuantity {
 			maxBidNode = node
 		}
@@ -132,13 +152,13 @@ func (tree *DepthBTree) GetDepthMaxBidQtyMaxAskQty() (maxBidNode *DepthItem, max
 	return maxBidNode, maxAskNode
 }
 
-func (tree *DepthBTree) GetDepthMaxBidMinAsk() (maxBid *DepthItem, minAsk *DepthItem) {
+func (tree *DepthBTree) GetMaxBidMinAsk() (maxBid *DepthItemType, minAsk *DepthItemType) {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
-	maxBid = &DepthItem{}
-	minAsk = &DepthItem{}
+	maxBid = &DepthItemType{}
+	minAsk = &DepthItemType{}
 	tree.Ascend(func(item btree.Item) bool {
-		node := item.(*DepthItem)
+		node := item.(*DepthItemType)
 		if node.BidQuantity != 0 && node.Price > maxBid.Price {
 			maxBid = node
 		}
@@ -152,13 +172,13 @@ func (tree *DepthBTree) GetDepthMaxBidMinAsk() (maxBid *DepthItem, minAsk *Depth
 	return maxBid, minAsk
 }
 
-func (tree *DepthBTree) GetDepthBidQtyLocalMaxima() *DepthBTree {
+func (tree *DepthBTree) GetBidQtyLocalMaxima() *DepthBTree {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	maximaTree := DepthNew(2)
-	var prev, current, next *DepthItem
+	var prev, current, next *DepthItemType
 	tree.Ascend(func(a btree.Item) bool {
-		next = a.(*DepthItem)
+		next = a.(*DepthItemType)
 		if current != nil && prev != nil && current.BidQuantity > prev.BidQuantity && current.BidQuantity > next.BidQuantity {
 			maximaTree.ReplaceOrInsert(current)
 		}
@@ -169,13 +189,13 @@ func (tree *DepthBTree) GetDepthBidQtyLocalMaxima() *DepthBTree {
 	return maximaTree
 }
 
-func (tree *DepthBTree) GetDepthAskQtyLocalMaxima() *DepthBTree {
+func (tree *DepthBTree) GetAskQtyLocalMaxima() *DepthBTree {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	maximaTree := DepthNew(2)
-	var prev, current, next *DepthItem
+	var prev, current, next *DepthItemType
 	tree.Ascend(func(a btree.Item) bool {
-		next = a.(*DepthItem)
+		next = a.(*DepthItemType)
 		if current != nil && prev != nil && current.AskQuantity > prev.AskQuantity && current.AskQuantity > next.AskQuantity {
 			maximaTree.ReplaceOrInsert(current)
 		}
@@ -186,13 +206,13 @@ func (tree *DepthBTree) GetDepthAskQtyLocalMaxima() *DepthBTree {
 	return maximaTree
 }
 
-func (tree *DepthBTree) GetDepthBidQtyLocalMinima() *DepthBTree {
+func (tree *DepthBTree) GetBidQtyLocalMinima() *DepthBTree {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	minimaTree := DepthNew(2)
-	var prev, current, next *DepthItem
+	var prev, current, next *DepthItemType
 	tree.Ascend(func(a btree.Item) bool {
-		next = a.(*DepthItem)
+		next = a.(*DepthItemType)
 		if current != nil && prev != nil && current.BidQuantity < prev.BidQuantity && current.BidQuantity < next.BidQuantity {
 			minimaTree.ReplaceOrInsert(current)
 		}
@@ -203,13 +223,13 @@ func (tree *DepthBTree) GetDepthBidQtyLocalMinima() *DepthBTree {
 	return minimaTree
 }
 
-func (tree *DepthBTree) GetDepthAskQtyLocalMinima() *DepthBTree {
+func (tree *DepthBTree) GetAskQtyLocalMinima() *DepthBTree {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	minimaTree := DepthNew(2)
-	var prev, current, next *DepthItem
+	var prev, current, next *DepthItemType
 	tree.Ascend(func(a btree.Item) bool {
-		next = a.(*DepthItem)
+		next = a.(*DepthItemType)
 		if current != nil && prev != nil && current.AskQuantity < prev.AskQuantity && current.AskQuantity < next.AskQuantity {
 			minimaTree.ReplaceOrInsert(current)
 		}
@@ -220,11 +240,11 @@ func (tree *DepthBTree) GetDepthAskQtyLocalMinima() *DepthBTree {
 	return minimaTree
 }
 
-func (tree *DepthBTree) ShowDepths() {
+func (tree *DepthBTree) Show() {
 	mu_depth.Lock()
 	defer mu_depth.Unlock()
 	tree.Ascend(func(i btree.Item) bool {
-		item := i.(*DepthItem)
+		item := i.(*DepthItemType)
 		fmt.Println(
 			"Price:", item.Price,
 			"AskLastUpdateID:", item.AskLastUpdateID,
