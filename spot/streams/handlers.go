@@ -27,12 +27,12 @@ func GetBalancesUpdateGuard(balances *markets.BalanceBTree, source chan *binance
 		for {
 			event := <-source
 			for _, item := range event.AccountUpdate.WsAccountUpdates {
-				accountUpdate := markets.BalanceItemType{
+				balanceUpdate := markets.BalanceItemType{
 					Asset:  item.Asset,
 					Free:   utils.ConvStrToFloat64(item.Free),
 					Locked: utils.ConvStrToFloat64(item.Locked),
 				}
-				balances.SetItem(accountUpdate)
+				balances.SetItem(balanceUpdate)
 			}
 			out <- true
 		}
