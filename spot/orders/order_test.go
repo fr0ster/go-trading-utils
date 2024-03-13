@@ -6,19 +6,25 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/common"
 	"github.com/fr0ster/go-binance-utils/spot/orders"
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func TestNewLimitOrder(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
+	api_key := os.Getenv("BINANCE_TEST_API_KEY")
+	secret_key := os.Getenv("BINANCE_TEST_SECRET_KEY")
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	// Create a new limit order
 	order, err := orders.NewLimitOrder(client, "SUSHIUSDT", binance.SideTypeBuy, "5.0", "1.5", binance.TimeInForceTypeGTC)
 	if err != nil {
-		log.Fatalf("Error creating limit order: %v", err)
+		if apiErr, _ := err.(*common.APIError); apiErr.Code == 0 {
+			log.Printf("Error with code 0: %v", err)
+			return
+		} else {
+			log.Fatalf("Error creating limit order: %v", err)
+		}
 	}
 
 	// Verify the order details

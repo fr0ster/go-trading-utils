@@ -16,7 +16,7 @@ import (
 func TestGetFilledOrderHandler(t *testing.T) {
 	apiKey := os.Getenv("API_KEY")
 	secretKey := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(apiKey, secretKey)
 	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
@@ -34,7 +34,7 @@ func TestGetFilledOrderHandler(t *testing.T) {
 func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 	apiKey := os.Getenv("API_KEY")
 	secretKey := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(apiKey, secretKey)
 	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {

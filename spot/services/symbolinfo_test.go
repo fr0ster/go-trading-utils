@@ -12,7 +12,7 @@ import (
 func TestGetMarketPrice(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 
 	// Define test cases

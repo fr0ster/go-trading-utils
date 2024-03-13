@@ -11,7 +11,7 @@ import (
 func TestGetExchangeInfo(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 
 	// Call the function being tested
@@ -31,7 +31,7 @@ func TestGetExchangeInfo(t *testing.T) {
 func TestGetOrderTypes(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo, err := services.GetExchangeInfo(client)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestGetOrderTypes(t *testing.T) {
 func TestGetPermissions(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
+	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo, err := services.GetExchangeInfo(client)
 	if err != nil {
