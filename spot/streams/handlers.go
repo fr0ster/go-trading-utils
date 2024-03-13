@@ -21,7 +21,7 @@ func GetFilledOrdersGuard(source chan *binance.WsUserDataEvent) (out chan *binan
 	return
 }
 
-func GetBalancesUpdateGuard(source chan *binance.WsUserDataEvent) (out chan bool) {
+func GetBalancesUpdateGuard(balances *markets.BalanceBTree, source chan *binance.WsUserDataEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
@@ -32,7 +32,7 @@ func GetBalancesUpdateGuard(source chan *binance.WsUserDataEvent) (out chan bool
 					Free:   utils.ConvStrToFloat64(item.Free),
 					Locked: utils.ConvStrToFloat64(item.Locked),
 				}
-				markets.GetBalancesTree().ReplaceOrInsert(accountUpdate)
+				balances.SetItem(accountUpdate)
 			}
 			out <- true
 		}

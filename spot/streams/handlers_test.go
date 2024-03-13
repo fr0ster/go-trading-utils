@@ -44,7 +44,13 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	outChannel := streams.GetBalancesUpdateGuard(inChannel)
+	balances := markets.BalanceNew(3)
+	balances.SetItem(markets.BalanceItemType{
+		Asset:  "BTC",
+		Free:   0.0,
+		Locked: 0.0,
+	})
+	outChannel := streams.GetBalancesUpdateGuard(balances, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -63,14 +69,23 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 }
 
 func TestGetBookTickersUpdateHandler(t *testing.T) {
-	even := &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeExecutionReport,
-		OrderUpdate: binance.WsOrderUpdate{
-			Status: string(binance.OrderStatusTypeFilled),
-		},
+	even := &binance.WsBookTickerEvent{
+		Symbol:       "BTCUSDT",
+		BestBidPrice: "10000.0",
+		BestBidQty:   "210.0",
+		BestAskPrice: "11000.0",
+		BestAskQty:   "320.0",
 	}
-	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	outChannel := streams.GetBalancesUpdateGuard(inChannel)
+	inChannel := make(chan *binance.WsBookTickerEvent, 1)
+	bookTicker := markets.BookTickerNew(3)
+	bookTicker.SetItem(markets.BookTickerItemType{
+		Symbol:      "BTCUSDT",
+		BidPrice:    0.0,
+		BidQuantity: 0.0,
+		AskPrice:    0.0,
+		AskQuantity: 0.0,
+	})
+	outChannel := streams.GetBookTickersUpdateGuard(bookTicker, inChannel)
 	inChannel <- even
 	res := false
 	for {
