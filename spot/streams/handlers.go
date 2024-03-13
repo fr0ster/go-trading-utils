@@ -71,7 +71,7 @@ func GetBookTickersUpdateGuard() (bookTickerEventChan chan bool) {
 	return bookTickerEventChan
 }
 
-func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
+func GetDepthsUpdateGuard(depths *markets.DepthBTree) (depthBoolChan chan bool) {
 	depthBoolChan = make(chan bool)
 	go func() {
 		depthChan, res := GetDepthChannel()
@@ -81,7 +81,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 		for {
 			event := <-depthChan
 			for _, bid := range event.Bids {
-				value, exists := markets.GetDepth(markets.Price(utils.ConvStrToFloat64(bid.Price)))
+				value, exists := depths.GetDepth(markets.Price(utils.ConvStrToFloat64(bid.Price)))
 				if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
 					value.BidQuantity += markets.Price(utils.ConvStrToFloat64(bid.Quantity))
 					value.BidLastUpdateID = event.LastUpdateID
@@ -95,11 +95,11 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 							BidQuantity:     0,
 						}
 				}
-				markets.SetDepth(*value)
+				depths.SetDepth(*value)
 			}
 
 			for _, bid := range event.Asks {
-				value, exists := markets.GetDepth(markets.Price(utils.ConvStrToFloat64(bid.Price)))
+				value, exists := depths.GetDepth(markets.Price(utils.ConvStrToFloat64(bid.Price)))
 				if exists && value.AskLastUpdateID+1 > event.FirstUpdateID {
 					value.AskQuantity += markets.Price(utils.ConvStrToFloat64(bid.Quantity))
 					value.AskLastUpdateID = event.LastUpdateID
@@ -113,7 +113,7 @@ func GetDepthsUpdateGuard() (depthBoolChan chan bool) {
 							BidQuantity:     0,
 						}
 				}
-				markets.SetDepth(*value)
+				depths.SetDepth(*value)
 			}
 			depthBoolChan <- true
 		}

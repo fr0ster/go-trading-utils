@@ -9,7 +9,7 @@ import (
 	"github.com/google/btree"
 )
 
-func testDepthTreeInit() *markets.DepthBTree {
+func getTestDepths() *markets.DepthBTree {
 	testDepthTree := markets.DepthNew(3)
 	records := []markets.DepthItem{
 		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
@@ -62,7 +62,7 @@ func TestGetDepthNew(t *testing.T) {
 }
 
 func TestSearchDepthTreeByPrices(t *testing.T) {
-	testDepthTree := testDepthTreeInit()
+	testDepthTree := getTestDepths()
 
 	// Call the function being tested
 	priceMin := markets.Price(1.95)
@@ -82,7 +82,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 }
 
 func TestGetDepthMaxBidMinAsk(t *testing.T) {
-	testDepthTree := testDepthTreeInit()
+	testDepthTree := getTestDepths()
 	// Call the function being tested
 	maxBid, minAsk := testDepthTree.GetDepthMaxBidMinAsk()
 	if maxBid.Price != 1.95 {
@@ -94,7 +94,7 @@ func TestGetDepthMaxBidMinAsk(t *testing.T) {
 }
 
 func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
-	testDepthTree := testDepthTreeInit()
+	testDepthTree := getTestDepths()
 	// Call the function being tested
 	maxBid, minAsk := testDepthTree.GetDepthMaxBidQtyMaxAskQty()
 	if maxBid.Price != 1.949 {
@@ -106,7 +106,7 @@ func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
 }
 
 func TestGetDepthBidLocalMaxima(t *testing.T) {
-	testDepthTree := testDepthTreeInit()
+	testDepthTree := getTestDepths()
 
 	bidLocalsMaxima := testDepthTree.GetDepthBidQtyLocalMaxima()
 	askLocalMaxima := testDepthTree.GetDepthAskQtyLocalMaxima()
