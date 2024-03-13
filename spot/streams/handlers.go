@@ -6,15 +6,11 @@ import (
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
-func GetFilledOrdersGuard() (executeOrderChan chan *binance.WsUserDataEvent) {
+func GetFilledOrdersGuard(channel chan *binance.WsUserDataEvent) (executeOrderChan chan *binance.WsUserDataEvent) {
 	executeOrderChan = make(chan *binance.WsUserDataEvent, 1)
 	go func() {
-		userDataChannel, err := GetUserDataChannel()
-		if !err {
-			return
-		}
 		for {
-			event := <-userDataChannel
+			event := <-channel
 			if event.Event == binance.UserDataEventTypeExecutionReport &&
 				(event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
 					event.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled)) {
@@ -25,15 +21,11 @@ func GetFilledOrdersGuard() (executeOrderChan chan *binance.WsUserDataEvent) {
 	return
 }
 
-func GetBalancesUpdateGuard() (accountEventChan chan bool) {
+func GetBalancesUpdateGuard(channel chan *binance.WsUserDataEvent) (accountEventChan chan bool) {
 	accountEventChan = make(chan bool)
 	go func() {
-		accountChan, res := GetUserDataChannel()
-		if !res {
-			return
-		}
 		for {
-			event := <-accountChan
+			event := <-channel
 			for _, item := range event.AccountUpdate.WsAccountUpdates {
 				accountUpdate := markets.BalanceItemType{
 					Asset:  item.Asset,
@@ -48,39 +40,30 @@ func GetBalancesUpdateGuard() (accountEventChan chan bool) {
 	return
 }
 
-func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree) (bookTickerEventChan chan bool) {
+func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree, channel chan *binance.WsBookTickerEvent) (bookTickerEventChan chan bool) {
 	bookTickerEventChan = make(chan bool)
 	go func() {
-		// bookTickerChan, res := GetBookTickerChannel()
-		// if !res {
-		// 	return
-		// }
 		for {
-			// event := <-bookTickerChan
-			// value, exists := bookTickers.GetItem(markets.SymbolType(event.Symbol))
-			// bookTickerUpdate := markets.BookTickerItemType{
-			// 	Symbol:      markets.SymbolType(event.Symbol),
-			// 	BidPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestBidPrice)),
-			// 	BidQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestBidQty)),
-			// 	AskPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)),
-			// 	AskQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
-			// }
-			// markets.SetBookTicker(bookTickerUpdate)
+			event := <-channel
+			bookTickerUpdate := markets.BookTickerItemType{
+				Symbol:      markets.SymbolType(event.Symbol),
+				BidPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestBidPrice)),
+				BidQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestBidQty)),
+				AskPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)),
+				AskQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
+			}
+			bookTickers.SetItem(bookTickerUpdate)
 			bookTickerEventChan <- true
 		}
 	}()
 	return bookTickerEventChan
 }
 
-func GetDepthsUpdateGuard(depths *markets.DepthBTree) (depthBoolChan chan bool) {
+func GetDepthsUpdateGuard(depths *markets.DepthBTree, newDepths chan *binance.WsDepthEvent) (depthBoolChan chan bool) {
 	depthBoolChan = make(chan bool)
 	go func() {
-		depthChan, res := GetDepthChannel()
-		if !res {
-			return
-		}
 		for {
-			event := <-depthChan
+			event := <-newDepths
 			for _, bid := range event.Bids {
 				value, exists := depths.GetItem(markets.Price(utils.ConvStrToFloat64(bid.Price)))
 				if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {

@@ -1,63 +1,91 @@
 package streams_test
 
 import (
-	"context"
-	"log"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/markets"
 	"github.com/fr0ster/go-binance-utils/spot/streams"
 	"github.com/fr0ster/go-binance-utils/utils"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetFilledOrderHandler(t *testing.T) {
-	apiKey := os.Getenv("API_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
-	client := binance.NewClient(apiKey, secretKey)
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		log.Fatalf("Error starting user stream: %v", err)
+	even := &binance.WsUserDataEvent{
+		Event: binance.UserDataEventTypeExecutionReport,
+		OrderUpdate: binance.WsOrderUpdate{
+			Status: string(binance.OrderStatusTypeFilled),
+		},
 	}
-	_, _, err = streams.StartUserDataStream(listenKey, utils.HandleErr)
-	if err != nil {
-		log.Fatalf("Error starting user data stream: %v", err)
+	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	outChannel := streams.GetFilledOrdersGuard(inChannel)
+	inChannel <- even
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
 	}
-	executeOrderChan := streams.GetFilledOrdersGuard()
-
-	assert.NotNil(t, executeOrderChan, "executeOrderChan should not be nil")
 }
 
 func TestGetBalanceTreeUpdateHandler(t *testing.T) {
-	apiKey := os.Getenv("API_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
-	client := binance.NewClient(apiKey, secretKey)
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		log.Fatalf("Error starting user stream: %v", err)
+	even := &binance.WsUserDataEvent{
+		Event: binance.UserDataEventTypeExecutionReport,
+		OrderUpdate: binance.WsOrderUpdate{
+			Status: string(binance.OrderStatusTypeFilled),
+		},
 	}
-	_, _, err = streams.StartUserDataStream(listenKey, utils.HandleErr)
-	if err != nil {
-		log.Fatalf("Error starting user data stream: %v", err)
+	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	outChannel := streams.GetBalancesUpdateGuard(inChannel)
+	inChannel <- even
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
 	}
-	executeOrderChan := streams.GetBalancesUpdateGuard()
-
-	assert.NotNil(t, executeOrderChan, "executeOrderChan should not be nil")
-
 }
 
 func TestGetBookTickersUpdateHandler(t *testing.T) {
-	_, _, err := streams.StartBookTickerStream("BTCUSDT", utils.HandleErr)
-	if err != nil {
-		log.Fatalf("Error starting user data stream: %v", err)
+	even := &binance.WsUserDataEvent{
+		Event: binance.UserDataEventTypeExecutionReport,
+		OrderUpdate: binance.WsOrderUpdate{
+			Status: string(binance.OrderStatusTypeFilled),
+		},
 	}
-	bookTickerBoolChan := streams.GetBalancesUpdateGuard()
-
-	assert.NotNil(t, bookTickerBoolChan, "Book Ticker channel should not be nil")
+	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	outChannel := streams.GetBalancesUpdateGuard(inChannel)
+	inChannel <- even
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
+	}
 }
 
 func getTestDepths() *markets.DepthBTree {
@@ -88,13 +116,32 @@ func getTestDepths() *markets.DepthBTree {
 }
 
 func TestGetDepthsUpdaterHandler(t *testing.T) {
-	_, _, err := streams.StartDepthStream("BTCUSDT", utils.HandleErr)
-	if err != nil {
-		log.Fatalf("Error starting user data stream: %v", err)
+	inChannel := make(chan *binance.WsDepthEvent, 1)
+	outChannel := streams.GetDepthsUpdateGuard(getTestDepths(), inChannel)
+	go func() {
+		for i := 0; i < 10; i++ {
+			inChannel <- &binance.WsDepthEvent{
+				Event:         "depthUpdate",
+				Symbol:        "BTCUSDT",
+				FirstUpdateID: 2369068,
+				LastUpdateID:  2369068,
+				Bids:          []binance.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
+				Asks:          []binance.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
+			}
+		}
+	}()
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
 	}
-	depthsChan := streams.GetDepthsUpdateGuard(getTestDepths())
-	if err != nil {
-		log.Fatalf("Error starting user data stream: %v", err)
-	}
-	assert.NotNil(t, depthsChan, "Depths channel should not be nil")
 }

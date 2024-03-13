@@ -31,13 +31,14 @@ func SimpleSpot(client *binance.Client, symbolname, quantity, price, stopPriceSL
 	fmt.Println("StopPriceTP:", stopPriceTP)
 	fmt.Println("PriceTP:", priceTP)
 
-	_, _, err = streams.StartUserDataStream(listenKey, utils.HandleErr)
+	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	_, _, err = streams.StartUserDataStream(listenKey, inChannel, utils.HandleErr)
 	if err != nil {
 		log.Fatalf("Error starting user data stream: %v", err)
 	}
 	symbol := binance.SymbolType(symbolname)
 
-	executeOrderChan := streams.GetFilledOrdersGuard()
+	executeOrderChan := streams.GetFilledOrdersGuard(inChannel)
 
 	order, err := orders.NewLimitOrder(
 		client,
