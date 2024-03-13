@@ -22,7 +22,7 @@ type (
 )
 
 var (
-	depths   = btree.New(2)
+	depths   = btree.New(3)
 	mu_depth sync.Mutex
 )
 
@@ -160,6 +160,74 @@ func GetDepthMaxBidMinAsk() (maxBid *DepthItem, minAsk *DepthItem) {
 		return true
 	})
 	return maxBid, minAsk
+}
+
+func GetDepthBidQtyLocalMaxima() *btree.BTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	maximaTree := btree.New(2)
+	var prev, current, next *DepthItem
+	depths.Ascend(func(a btree.Item) bool {
+		next = a.(*DepthItem)
+		if current != nil && prev != nil && current.BidQuantity > prev.BidQuantity && current.BidQuantity > next.BidQuantity {
+			maximaTree.ReplaceOrInsert(current)
+		}
+		prev = current
+		current = next
+		return true
+	})
+	return maximaTree
+}
+
+func GetDepthAskQtyLocalMaxima() *btree.BTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	maximaTree := btree.New(2)
+	var prev, current, next *DepthItem
+	depths.Ascend(func(a btree.Item) bool {
+		next = a.(*DepthItem)
+		if current != nil && prev != nil && current.AskQuantity > prev.AskQuantity && current.AskQuantity > next.AskQuantity {
+			maximaTree.ReplaceOrInsert(current)
+		}
+		prev = current
+		current = next
+		return true
+	})
+	return maximaTree
+}
+
+func GetDepthBidQtyLocalMinima() *btree.BTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	minimaTree := btree.New(2)
+	var prev, current, next *DepthItem
+	depths.Ascend(func(a btree.Item) bool {
+		next = a.(*DepthItem)
+		if current != nil && prev != nil && current.BidQuantity < prev.BidQuantity && current.BidQuantity < next.BidQuantity {
+			minimaTree.ReplaceOrInsert(current)
+		}
+		prev = current
+		current = next
+		return true
+	})
+	return minimaTree
+}
+
+func GetDepthAskQtyLocalMinima() *btree.BTree {
+	mu_depth.Lock()
+	defer mu_depth.Unlock()
+	minimaTree := btree.New(2)
+	var prev, current, next *DepthItem
+	depths.Ascend(func(a btree.Item) bool {
+		next = a.(*DepthItem)
+		if current != nil && prev != nil && current.AskQuantity < prev.AskQuantity && current.AskQuantity < next.AskQuantity {
+			minimaTree.ReplaceOrInsert(current)
+		}
+		prev = current
+		current = next
+		return true
+	})
+	return minimaTree
 }
 
 func ShowDepths() {

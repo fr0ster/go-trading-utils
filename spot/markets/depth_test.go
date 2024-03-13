@@ -202,4 +202,74 @@ func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
 	}
 }
 
+func TestGetDepthBidLocalMaxima(t *testing.T) {
+	// Price: 1.947 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 172.1
+	// Price: 1.948 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 187.4
+	// Price: 1.949 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 236.1
+	// Price: 1.95 AskLastUpdateID: 0 AskQuantity: 0 BidLastUpdateID: 2369068 BidQuantity: 189.8
+	// Price: 1.951 AskLastUpdateID: 2369068 AskQuantity: 217.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.952 AskLastUpdateID: 2369068 AskQuantity: 179.4 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.953 AskLastUpdateID: 2369068 AskQuantity: 140.9 BidLastUpdateID: 0 BidQuantity: 0
+	// Price: 1.954 AskLastUpdateID: 2369068 AskQuantity: 148.5 BidLastUpdateID: 0 BidQuantity: 0
+	// Створення нового BTree
+	tree := btree.New(2)
+
+	// Додавання вузлів до дерева
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.93, BidQuantity: 100.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.94, BidQuantity: 130.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.941, BidQuantity: 150.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.945, BidQuantity: 140.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.947, BidQuantity: 172.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.948, BidQuantity: 187.4})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.949, BidQuantity: 236.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.95, BidQuantity: 189.8})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.951, AskQuantity: 217.9})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.952, AskQuantity: 179.4})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.953, AskQuantity: 140.9})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.954, AskQuantity: 148.5})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.955, AskQuantity: 150.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.956, AskQuantity: 130.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.957, AskQuantity: 170.1})
+	tree.ReplaceOrInsert(&markets.DepthItem{Price: 1.958, AskQuantity: 140.1})
+
+	markets.SetDepths(tree)
+
+	bidLocalsMaxima := markets.GetDepthBidQtyLocalMaxima()
+	askLocalMaxima := markets.GetDepthAskQtyLocalMaxima()
+
+	// Add assertions to check the correctness of the returned map
+	if bidLocalsMaxima.Get(&markets.DepthItem{Price: 1.941}) == nil {
+		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+	}
+	if bidLocalsMaxima.Get(&markets.DepthItem{Price: 1.949}) == nil {
+		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+	}
+	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.951}) == nil {
+		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+	}
+	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.955}) == nil {
+		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+	}
+	if askLocalMaxima.Get(&markets.DepthItem{Price: 1.957}) == nil {
+		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+	}
+	bidLocalsMaxima.Ascend(func(i btree.Item) bool {
+		item := i.(*markets.DepthItem)
+		if (item.Price != 1.941) && (item.Price != 1.949) {
+			t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+		}
+		return true
+	})
+	askLocalMaxima.Ascend(func(i btree.Item) bool {
+		item := i.(*markets.DepthItem)
+		if item.Price != 1.951 && item.Price != 1.955 && item.Price != 1.957 {
+			t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+		}
+		return true
+	})
+
+	// Add additional assertions if needed
+
+}
+
 // Add more test functions for other functions in the file if needed
