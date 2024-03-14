@@ -2,6 +2,7 @@ package markets
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/utils"
@@ -12,6 +13,7 @@ import (
 type (
 	BalanceBTree struct {
 		*btree.BTree
+		sync.Mutex
 	}
 	BalanceItemType struct {
 		Asset  string
@@ -23,6 +25,7 @@ type (
 func BalanceNew(degree int) *BalanceBTree {
 	return &BalanceBTree{
 		BTree: btree.New(degree),
+		Mutex: sync.Mutex{},
 	}
 }
 
@@ -40,6 +43,8 @@ func (balancesTree *BalanceBTree) Init(balances []binance.Balance) (err error) {
 	if len(balances) == 0 {
 		return errors.New("balances is empty")
 	}
+	balancesTree.Mutex.Lock()
+	defer balancesTree.Mutex.Unlock()
 	for _, balance := range balances {
 		balancesTree.ReplaceOrInsert(BalanceItemType{
 			Asset:  balance.Asset,
@@ -54,15 +59,21 @@ func (balancesTree *BalanceBTree) GetItem(asset string) (res BalanceItemType, er
 	item := BalanceItemType{
 		Asset: asset,
 	}
+	balancesTree.Mutex.Lock()
+	defer balancesTree.Mutex.Unlock()
 	item = balancesTree.Get(item).(BalanceItemType)
 	return item, nil
 }
 
 func (balancesTree *BalanceBTree) SetItem(item BalanceItemType) {
+	balancesTree.Mutex.Lock()
+	defer balancesTree.Mutex.Unlock()
 	balancesTree.ReplaceOrInsert(item)
 }
 
 func (balancesTree *BalanceBTree) Show() {
+	balancesTree.Mutex.Lock()
+	defer balancesTree.Mutex.Unlock()
 	balancesTree.Ascend(func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
 		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
@@ -70,7 +81,9 @@ func (balancesTree *BalanceBTree) Show() {
 	})
 }
 
-func (balancesTree *DepthBTree) ShowBalancesTreeByAsset(symbol SymbolType) {
+func (balancesTree *DepthBTree) ShowByAsset(symbol SymbolType) {
+	balancesTree.Mutex.Lock()
+	defer balancesTree.Mutex.Unlock()
 	balancesTree.AscendGreaterOrEqual(BalanceItemType{Asset: string(symbol)}, func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
 		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)

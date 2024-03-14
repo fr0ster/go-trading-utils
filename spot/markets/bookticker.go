@@ -12,6 +12,7 @@ import (
 type (
 	BookTickerBTree struct {
 		*btree.BTree
+		sync.Mutex
 	}
 	BookTickerItemType struct {
 		Symbol      SymbolType
@@ -24,11 +25,12 @@ type (
 	SymbolType string
 )
 
-var mu_bookticker sync.Mutex
+// var tree.Mutex sync.Mutex
 
 func BookTickerNew(degree int) *BookTickerBTree {
 	return &BookTickerBTree{
 		BTree: btree.New(degree),
+		Mutex: sync.Mutex{},
 	}
 }
 
@@ -53,8 +55,8 @@ func (tree *BookTickerBTree) Init(client *binance.Client, symbolname string) (er
 	if err != nil {
 		return
 	}
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	for _, bookTicker := range bookTickerList {
 		tree.ReplaceOrInsert(&BookTickerItemType{
 			Symbol:      SymbolType(bookTicker.Symbol),
@@ -68,8 +70,8 @@ func (tree *BookTickerBTree) Init(client *binance.Client, symbolname string) (er
 }
 
 func (tree *BookTickerBTree) GetItem(symbol SymbolType) *BookTickerItemType {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	item := tree.Get(&BookTickerItemType{Symbol: symbol})
 	if item == nil {
 		return nil
@@ -78,14 +80,14 @@ func (tree *BookTickerBTree) GetItem(symbol SymbolType) *BookTickerItemType {
 }
 
 func (tree *BookTickerBTree) SetItem(item BookTickerItemType) {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	tree.ReplaceOrInsert(&item)
 }
 
 func (tree *BookTickerBTree) GetBySymbol(symbol SymbolType) *BookTickerBTree {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	newTree := BookTickerNew(2)
 	tree.Ascend(func(i btree.Item) bool {
 		item := i.(*BookTickerItemType)
@@ -98,8 +100,8 @@ func (tree *BookTickerBTree) GetBySymbol(symbol SymbolType) *BookTickerBTree {
 }
 
 func (tree *BookTickerBTree) GetByBidPrice(symbol SymbolType, bidPrice PriceType) *BookTickerBTree {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	newTree := BookTickerNew(2)
 	tree.Ascend(func(i btree.Item) bool {
 		item := i.(*BookTickerItemType)
@@ -112,8 +114,8 @@ func (tree *BookTickerBTree) GetByBidPrice(symbol SymbolType, bidPrice PriceType
 }
 
 func (tree *BookTickerBTree) GetByAskPrice(symbol SymbolType, askPrice PriceType) *BookTickerBTree {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	newTree := BookTickerNew(2)
 	tree.Ascend(func(i btree.Item) bool {
 		item := i.(*BookTickerItemType)
@@ -127,8 +129,8 @@ func (tree *BookTickerBTree) GetByAskPrice(symbol SymbolType, askPrice PriceType
 
 // Show prints the book ticker information for each item in the BookTickerTree.
 func (tree *BookTickerBTree) Show() {
-	mu_bookticker.Lock()
-	defer mu_bookticker.Unlock()
+	tree.Mutex.Lock()
+	defer tree.Mutex.Unlock()
 	tree.Ascend(func(i btree.Item) bool {
 		item := i.(*BookTickerItemType)
 		println(
