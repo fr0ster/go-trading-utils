@@ -18,6 +18,10 @@ func NewConfig(filePath string) *Config {
 	}
 }
 
+func (c *Config) Init(config types.Config) {
+	c.Config = config
+}
+
 func (c *Config) Load() error {
 	ds := NewDataStore(c.FilePath)
 	err := ds.LoadFromFile()
