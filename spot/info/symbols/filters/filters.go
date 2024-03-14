@@ -47,6 +47,12 @@ func (s *Filters) Insert(filterName FilterName, filter Filter) {
 	s.ReplaceOrInsert(&FilterItem{filterName, filter})
 }
 
+func (s *Filters) Init(filters []Filter) {
+	for _, filter := range filters {
+		s.Insert(filter["filterType"].(FilterName), filter)
+	}
+}
+
 func (s *Filters) GetFilter(symbol string) *FilterItem {
 	item := s.Get(&FilterItem{FilterName: FilterName(symbol)})
 	if item == nil {
@@ -61,12 +67,6 @@ func (s *Filters) DeleteFilter(symbol string) {
 
 func (s *Filters) Len() int {
 	return s.BTree.Len()
-}
-
-func (s *Filters) Init(filters []Filter) {
-	for _, filter := range filters {
-		s.Insert(filter["filterType"].(FilterName), filter)
-	}
 }
 
 ///////////////////////////////////////////////
