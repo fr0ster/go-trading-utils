@@ -4,23 +4,10 @@ import (
 	"encoding/json"
 	"os"
 	"sync"
-
-	"github.com/adshao/go-binance/v2"
 )
 
 type (
-	DataItem struct {
-		Timestamp         int64
-		AccountType       binance.AccountType
-		Symbol            binance.SymbolType
-		Balance           float64
-		CalculatedBalance float64
-		Quantity          float64
-		Value             float64
-		BoundQuantity     float64
-		Msg               string
-	}
-
+	DataItem  string
 	DataStore struct {
 		FilePath string
 		Data     []DataItem
@@ -28,61 +15,45 @@ type (
 	}
 )
 
+// NewDataStore is a constructor for DataStore
 func NewDataStore(filePath string) *DataStore {
 	return &DataStore{
 		FilePath: filePath,
-		Data:     make([]DataItem, 0),
+		Data:     []DataItem{},
 		Mutex:    sync.Mutex{},
 	}
 }
 
-func (ds *DataStore) Lock() {
+// AddItem adds a new DataItem to the DataStore
+func (ds *DataStore) AddItem(item DataItem) {
 	ds.Mutex.Lock()
+	defer ds.Mutex.Unlock()
+
+	ds.Data = append(ds.Data, []DataItem{item}...)
 }
 
-func (ds *DataStore) Unlock() {
-	ds.Mutex.Unlock()
-}
+// SaveToFile saves the DataStore to a file
+func (ds *DataStore) SaveToFile() error {
+	ds.Mutex.Lock()
+	defer ds.Mutex.Unlock()
 
-func (ds *DataStore) AddData(data DataItem) {
-	ds.Lock()
-	defer ds.Unlock()
-	ds.Data = append(ds.Data, data)
-}
-
-// SaveData saves the data to the data store file in JSON format
-func (ds *DataStore) SaveData() error {
-	file, err := os.Open(ds.FilePath)
-	if err != nil {
-		file, err = os.Create(ds.FilePath)
-		if err != nil {
-			return err
-		}
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	err = encoder.Encode(ds.Data)
+	data, err := json.Marshal(ds.Data)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return os.WriteFile(ds.FilePath, data, 0644)
 }
 
-// LoadData loads the data from the data store file
-func (ds *DataStore) LoadData() error {
-	file, err := os.Open(ds.FilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+// LoadFromFile loads the DataStore from a file
+func (ds *DataStore) LoadFromFile() error {
+	ds.Mutex.Lock()
+	defer ds.Mutex.Unlock()
 
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&ds.Data)
+	data, err := os.ReadFile(ds.FilePath)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return json.Unmarshal(data, &ds.Data)
 }
