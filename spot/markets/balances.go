@@ -11,12 +11,13 @@ import (
 )
 
 type (
+	AssetType    string
 	BalanceBTree struct {
 		*btree.BTree
 		sync.Mutex
 	}
 	BalanceItemType struct {
-		Asset  string
+		Asset  AssetType
 		Free   float64
 		Locked float64
 	}
@@ -53,7 +54,7 @@ func (tree *BalanceBTree) Init(balances []binance.Balance) (err error) {
 	}
 	for _, balance := range balances {
 		tree.ReplaceOrInsert(BalanceItemType{
-			Asset:  balance.Asset,
+			Asset:  AssetType(balance.Asset),
 			Free:   utils.ConvStrToFloat64(balance.Free),
 			Locked: utils.ConvStrToFloat64(balance.Locked),
 		})
@@ -61,9 +62,9 @@ func (tree *BalanceBTree) Init(balances []binance.Balance) (err error) {
 	return nil
 }
 
-func (tree *BalanceBTree) GetItem(asset string) (res BalanceItemType, err error) {
+func (tree *BalanceBTree) GetItem(asset AssetType) (res BalanceItemType, err error) {
 	item := BalanceItemType{
-		Asset: asset,
+		Asset: AssetType(asset),
 	}
 	item = tree.Get(item).(BalanceItemType)
 	return item, nil
@@ -82,7 +83,7 @@ func (tree *BalanceBTree) Show() {
 }
 
 func (tree *DepthBTree) ShowByAsset(symbol SymbolType) {
-	tree.AscendGreaterOrEqual(BalanceItemType{Asset: string(symbol)}, func(i btree.Item) bool {
+	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(symbol)}, func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
 		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
 		return false
