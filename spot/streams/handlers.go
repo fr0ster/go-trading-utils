@@ -32,7 +32,9 @@ func GetBalancesUpdateGuard(balances *markets.BalanceBTree, source chan *binance
 					Free:   utils.ConvStrToFloat64(item.Free),
 					Locked: utils.ConvStrToFloat64(item.Locked),
 				}
+				balances.Lock()
 				balances.SetItem(balanceUpdate)
+				balances.Unlock()
 			}
 			out <- true
 		}
@@ -52,7 +54,9 @@ func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree, source chan
 				AskPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)),
 				AskQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
 			}
+			bookTickers.Lock()
 			bookTickers.SetItem(bookTickerUpdate)
+			bookTickers.Unlock()
 			out <- true
 		}
 	}()
@@ -79,7 +83,9 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *binance.WsDep
 							BidQuantity:     0,
 						}
 				}
+				depths.Lock()
 				depths.SetItem(*value)
+				depths.Unlock()
 			}
 
 			for _, bid := range event.Asks {
@@ -97,7 +103,9 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *binance.WsDep
 							BidQuantity:     0,
 						}
 				}
+				depths.Lock()
 				depths.SetItem(*value)
+				depths.Unlock()
 			}
 			out <- true
 		}

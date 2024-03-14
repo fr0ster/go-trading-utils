@@ -12,6 +12,14 @@ type AccountType struct {
 	sync.Mutex
 }
 
+func (account *AccountType) Lock() {
+	account.Mutex.Lock()
+}
+
+func (account *AccountType) Unlock() {
+	account.Mutex.Unlock()
+}
+
 func AccountNew(client *binance.Client) (*AccountType, error) {
 	res, err := client.NewGetAccountService().Do(context.Background())
 	return &AccountType{Account: res, Mutex: sync.Mutex{}}, err
