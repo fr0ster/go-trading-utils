@@ -1,11 +1,11 @@
 package strategy
 
 import (
+	"context"
 	"errors"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/spot/markets"
-	"github.com/fr0ster/go-binance-utils/spot/services"
 	"github.com/fr0ster/go-binance-utils/types"
 	"github.com/fr0ster/go-binance-utils/utils"
 )
@@ -14,7 +14,7 @@ func GetLimitPricesDumpWay(data types.Config, client *binance.Client) (string, f
 	balance := data.Balance
 	symbolname := data.Symbol
 
-	priceF, _, err := services.GetMarketPrice(client, string(symbolname))
+	priceF, _, err := GetMarketPrice(client, string(symbolname))
 	if err != nil {
 		utils.HandleErr(err)
 	}
@@ -70,4 +70,13 @@ func BidOrAsk(data types.Config, bookTickers *markets.BookTickerBTree, client *b
 	priceTP = utils.ConvFloat64ToStrDefault(targetPriceF * 1.10)
 
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
+}
+
+func GetMarketPrice(client *binance.Client, symbol string) (float64, string, error) {
+	prices, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
+	if err != nil || len(prices) == 0 {
+		return 0, "", err
+	}
+	marketPrice := prices[0]
+	return utils.ConvStrToFloat64(marketPrice.Price), marketPrice.Price, err
 }
