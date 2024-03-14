@@ -1,16 +1,14 @@
 package utils
 
 import (
-	"encoding/json"
 	"os"
 	"sync"
 )
 
 type (
-	DataItem  string
 	DataStore struct {
 		FilePath string
-		Data     []DataItem
+		Data     []byte
 		Mutex    sync.Mutex
 	}
 )
@@ -19,17 +17,20 @@ type (
 func NewDataStore(filePath string) *DataStore {
 	return &DataStore{
 		FilePath: filePath,
-		Data:     []DataItem{},
+		Data:     []byte{},
 		Mutex:    sync.Mutex{},
 	}
 }
 
-// AddItem adds a new DataItem to the DataStore
-func (ds *DataStore) AddItem(item DataItem) {
+func (ds *DataStore) GetData() (data []byte) {
+	return ds.Data
+}
+
+func (ds *DataStore) SetData(data []byte) {
 	ds.Mutex.Lock()
 	defer ds.Mutex.Unlock()
 
-	ds.Data = append(ds.Data, []DataItem{item}...)
+	ds.Data = data
 }
 
 // SaveToFile saves the DataStore to a file
@@ -37,12 +38,7 @@ func (ds *DataStore) SaveToFile() error {
 	ds.Mutex.Lock()
 	defer ds.Mutex.Unlock()
 
-	data, err := json.Marshal(ds.Data)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(ds.FilePath, data, 0644)
+	return os.WriteFile(ds.FilePath, ds.Data, 0644)
 }
 
 // LoadFromFile loads the DataStore from a file
@@ -55,5 +51,6 @@ func (ds *DataStore) LoadFromFile() error {
 		return err
 	}
 
-	return json.Unmarshal(data, &ds.Data)
+	ds.Data = data
+	return nil
 }

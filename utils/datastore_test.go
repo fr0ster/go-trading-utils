@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/fr0ster/go-binance-utils/types"
 	"github.com/fr0ster/go-binance-utils/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,15 +19,26 @@ func TestSaveData(t *testing.T) {
 	}
 	defer os.Remove(tmpfile.Name())
 
+	// Create a sample data record
+	time, _ := time.Parse(time.RFC3339, "2021-01-01T00:00:00Z")
+	testData := types.Config{
+		Timestamp:         time,
+		AccountType:       "SPOT",
+		Symbol:            "BTCUSDT",
+		Balance:           1000.0,
+		CalculatedBalance: 1000.0,
+		Quantity:          1.0,
+		Value:             1000.0,
+		BoundQuantity:     1.0,
+	}
+
 	// Initialize the DataStore with the temporary file path
 	ds := utils.NewDataStore(tmpfile.Name())
 
-	// Create a sample data record
-	ds.AddItem(utils.DataItem("Test data string 001"))
-	ds.AddItem(utils.DataItem("Test data string 002"))
-	ds.AddItem(utils.DataItem("Test data string 003"))
-
 	// Save the data to the data store
+	jsonData, err := json.Marshal(testData)
+	assert.NoError(t, err)
+	ds.SetData(jsonData)
 	err = ds.SaveToFile()
 	assert.NoError(t, err)
 
@@ -34,38 +47,36 @@ func TestSaveData(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Unmarshal the JSON data into a DataRecord struct
-	var savedData []utils.DataItem
+	var savedData types.Config
 	err = json.Unmarshal(fileData, &savedData)
 	assert.NoError(t, err)
 
-	for raw, test := range savedData {
-		// Assert that the saved data matches the original data
-		if raw == 0 {
-			assert.Equal(t, "Test data string 001", string(test))
-		} else if raw == 1 {
-			assert.Equal(t, "Test data string 002", string(test))
-		} else if raw == 2 {
-			assert.Equal(t, "Test data string 003", string(test))
-		}
+	// Assert that the saved data matches the original data
+	if savedData != testData {
+		t.Errorf("Expected data to be %v, but got %v", testData, savedData)
 	}
 }
 
 func TestLoadData(t *testing.T) {
 	// Create a temporary file for testing
 	tmpfile, err := os.CreateTemp("", "datastore_test")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 	defer os.Remove(tmpfile.Name())
 
 	// Initialize the DataStore with the temporary file path
 	ds := utils.NewDataStore(tmpfile.Name())
 
 	// Save the data to the data store
-	testData := []utils.DataItem{
-		"Test data string 001",
-		"Test data string 002",
-		"Test data string 003",
+	time, _ := time.Parse(time.RFC3339, "2021-01-01T00:00:00Z")
+	testData := types.Config{
+		Timestamp:         time,
+		AccountType:       "SPOT",
+		Symbol:            "BTCUSDT",
+		Balance:           1000.0,
+		CalculatedBalance: 1000.0,
+		Quantity:          1.0,
+		Value:             1000.0,
+		BoundQuantity:     1.0,
 	}
 
 	// Assign the result of append to a variable
@@ -78,15 +89,13 @@ func TestLoadData(t *testing.T) {
 	err = ds.LoadFromFile()
 	assert.NoError(t, err)
 
-	for raw, test := range ds.Data {
-		// Assert that the loaded data matches the original data
-		// Assert that the saved data matches the original data
-		if raw == 0 {
-			assert.Equal(t, "Test data string 001", string(test))
-		} else if raw == 1 {
-			assert.Equal(t, "Test data string 002", string(test))
-		} else if raw == 2 {
-			assert.Equal(t, "Test data string 003", string(test))
-		}
+	var savedData types.Config
+	err = json.Unmarshal(ds.GetData(), &savedData)
+	assert.NoError(t, err)
+
+	// Assert that the loaded data matches the original data
+	// Assert that the saved data matches the original data
+	if savedData != testData {
+		t.Errorf("Expected data to be %v, but got %v", testData, savedData)
 	}
 }
