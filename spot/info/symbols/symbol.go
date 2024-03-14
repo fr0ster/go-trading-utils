@@ -1,4 +1,4 @@
-package info
+package symbols
 
 import (
 	"sync"
@@ -30,15 +30,19 @@ func NewSymbols(degree int) *Symbols {
 	}
 }
 
-func (s *Symbols) Insert(symbol *Symbol) {
+func (s *Symbols) Lock() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+}
+
+func (s *Symbols) Unlock() {
+	s.mu.Unlock()
+}
+
+func (s *Symbols) Insert(symbol *Symbol) {
 	s.ReplaceOrInsert(symbol)
 }
 
 func (s *Symbols) GetSymbol(symbol string) *Symbol {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	item := s.Get(&Symbol{Symbol: symbol})
 	if item == nil {
 		return nil
@@ -47,14 +51,11 @@ func (s *Symbols) GetSymbol(symbol string) *Symbol {
 }
 
 func (s *Symbols) DeleteSymbol(symbol string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.Delete(&Symbol{Symbol: symbol})
 }
 
 func (s *Symbols) Len() int {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	return s.BTree.Len()
 }
 

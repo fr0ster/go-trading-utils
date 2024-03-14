@@ -1,15 +1,15 @@
-package info_test
+package symbols_test
 
 import (
 	"testing"
 
-	"github.com/fr0ster/go-binance-utils/info"
+	symbol_info "github.com/fr0ster/go-binance-utils/spot/info/symbols"
 )
 
 func TestSymbols_Insert(t *testing.T) {
-	symbols := info.NewSymbols(3)
+	symbols := symbol_info.NewSymbols(3)
 
-	symbol := &info.Symbol{
+	symbol := &symbol_info.Symbol{
 		Symbol: "BTCUSDT",
 	}
 
@@ -25,9 +25,9 @@ func TestSymbols_Insert(t *testing.T) {
 }
 
 func TestSymbols_DeleteSymbol(t *testing.T) {
-	symbols := info.NewSymbols(3)
+	symbols := symbol_info.NewSymbols(3)
 
-	symbol := &info.Symbol{
+	symbol := &symbol_info.Symbol{
 		Symbol: "BTCUSDT",
 	}
 
