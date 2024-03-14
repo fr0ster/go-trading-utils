@@ -31,3 +31,12 @@ func GetPermissions(exchangeInfo *binance.ExchangeInfo, symbolname string) []str
 	}
 	return nil
 }
+
+func GetFilters(exchangeInfo *binance.ExchangeInfo, symbolname string) []map[string]interface{} { //[]binance.SymbolFilter {
+	for _, info := range exchangeInfo.Symbols {
+		if info.Symbol == symbolname {
+			return info.Filters
+		}
+	}
+	return nil
+}
