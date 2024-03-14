@@ -1,55 +1,68 @@
 package utils
 
 import (
-	"encoding/gob"
 	"encoding/json"
 	"os"
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/google/btree"
 )
 
-type DataItem struct {
-	Timestamp         int64
-	AccountType       binance.AccountType
-	Symbol            binance.SymbolType
-	Balance           float64
-	CalculatedBalance float64
-	Quantity          float64
-	Value             float64
-	BoundQuantity     float64
-	Msg               string
-}
-
-// DataStore represents the data store for your program
 type (
+	DataItem struct {
+		Timestamp         int64
+		AccountType       binance.AccountType
+		Symbol            binance.SymbolType
+		Balance           float64
+		CalculatedBalance float64
+		Quantity          float64
+		Value             float64
+		BoundQuantity     float64
+		Msg               string
+	}
+
 	DataStore struct {
 		FilePath string
+		Data     []DataItem
+		Mutex    sync.Mutex
 	}
 )
 
-var (
-	dataTree *btree.BTree
-	mu_file  sync.Mutex
-)
+func NewDataStore(filePath string) *DataStore {
+	return &DataStore{
+		FilePath: filePath,
+		Data:     make([]DataItem, 0),
+		Mutex:    sync.Mutex{},
+	}
+}
 
-// Less defines the comparison method for BookTickerItem.
-// It compares the symbols of two BookTickerItems.
-func (b DataItem) Less(than btree.Item) bool {
-	return b.Symbol < than.(DataItem).Symbol
+func (ds *DataStore) Lock() {
+	ds.Mutex.Lock()
+}
+
+func (ds *DataStore) Unlock() {
+	ds.Mutex.Unlock()
+}
+
+func (ds *DataStore) AddData(data DataItem) {
+	ds.Lock()
+	defer ds.Unlock()
+	ds.Data = append(ds.Data, data)
 }
 
 // SaveData saves the data to the data store file in JSON format
-func (ds *DataStore) SaveData(data DataItem) error {
-	file, err := os.Create(ds.FilePath)
+func (ds *DataStore) SaveData() error {
+	file, err := os.Open(ds.FilePath)
 	if err != nil {
-		return err
+		file, err = os.Create(ds.FilePath)
+		if err != nil {
+			return err
+		}
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	err = encoder.Encode(data)
+	err = encoder.Encode(ds.Data)
 	if err != nil {
 		return err
 	}
@@ -58,97 +71,18 @@ func (ds *DataStore) SaveData(data DataItem) error {
 }
 
 // LoadData loads the data from the data store file
-func (ds *DataStore) LoadData() (DataItem, error) {
-	var data DataItem
-
+func (ds *DataStore) LoadData() error {
 	file, err := os.Open(ds.FilePath)
 	if err != nil {
-		return data, err
+		return err
 	}
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&data)
-	if err != nil {
-		return data, err
-	}
-
-	return data, nil
-}
-
-func AddRecordToTree(record DataItem) *btree.BTree {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	if dataTree == nil {
-		dataTree = btree.New(2)
-	}
-	dataTree.ReplaceOrInsert(record)
-	return dataTree
-}
-
-func RemoveRecordFromTree(record DataItem) *btree.BTree {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	if dataTree == nil {
-		return nil
-	}
-	dataTree.Delete(record)
-	return dataTree
-}
-
-func GetRecordFromTree(symbol binance.SymbolType) *DataItem {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	if dataTree == nil {
-		return nil
-	}
-	item := dataTree.Get(DataItem{Symbol: symbol})
-	if item == nil {
-		return nil
-	}
-	return item.(*DataItem)
-}
-
-func GetTree() *btree.BTree {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	return dataTree
-}
-
-func SetTree(tree *btree.BTree) {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	dataTree = tree
-}
-
-func (ds *DataStore) SaveTreeToFile() error {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	file, err := os.Create(ds.FilePath)
+	err = decoder.Decode(&ds.Data)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	encoder := gob.NewEncoder(file)
-	err = encoder.Encode(dataTree)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func (ds *DataStore) LoadTreeFromFile() error {
-	mu_file.Lock()
-	defer mu_file.Unlock()
-	file, err := os.Open(ds.FilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	decoder := gob.NewDecoder(file)
-	err = decoder.Decode(dataTree)
-	if err != nil {
-		return err
-	}
 	return nil
 }
