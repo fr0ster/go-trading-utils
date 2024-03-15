@@ -81,156 +81,90 @@ func (s *Filters) GetFilters_Price_Filter() *binance.PriceFilter {
 	return &priceFilter
 }
 
-// func GetFilers_Lot_Size_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.LotSizeFilter {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "LOT_SIZE" {
-// 					lotSizeFilter := binance.LotSizeFilter{
-// 						MinQuantity: filter["minQty"].(string),
-// 						MaxQuantity: filter["maxQty"].(string),
-// 						StepSize:    filter["stepSize"].(string),
-// 					}
-// 					return &lotSizeFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilers_Lot_Size_Filter() *binance.LotSizeFilter {
+	filter := s.GetFilter("LOT_SIZE")
+	lotSizeFilter := binance.LotSizeFilter{
+		MinQuantity: filter.Filter["minQty"].(string),
+		MaxQuantity: filter.Filter["maxQty"].(string),
+		StepSize:    filter.Filter["stepSize"].(string),
+	}
+	return &lotSizeFilter
+}
 
-// func GetFilters_Iceberg_Parts_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.IcebergPartsFilter {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "ICEBERG_PARTS" {
-// 					icebergPartsFilter := binance.IcebergPartsFilter{
-// 						Limit: int(filter["limit"].(float64)),
-// 					}
-// 					return &icebergPartsFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilters_Iceberg_Parts_Filter() *binance.IcebergPartsFilter {
+	filter := s.GetFilter("ICEBERG_PARTS")
+	icebergPartsFilter := binance.IcebergPartsFilter{
+		Limit: int(filter.Filter["limit"].(float64)),
+	}
+	return &icebergPartsFilter
+}
 
-// func GetFilters_Market_Lot_Size_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.MarketLotSizeFilter {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "MARKET_LOT_SIZE" {
-// 					marketLotSizeFilter := binance.MarketLotSizeFilter{
-// 						MinQuantity: filter["minQty"].(string),
-// 						MaxQuantity: filter["maxQty"].(string),
-// 						StepSize:    filter["stepSize"].(string),
-// 					}
-// 					return &marketLotSizeFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilters_Market_Lot_Size_Filter() *binance.MarketLotSizeFilter {
+	filter := s.GetFilter("MARKET_LOT_SIZE")
+	marketLotSizeFilter := binance.MarketLotSizeFilter{
+		MinQuantity: filter.Filter["minQty"].(string),
+		MaxQuantity: filter.Filter["maxQty"].(string),
+		StepSize:    filter.Filter["stepSize"].(string),
+	}
+	return &marketLotSizeFilter
+}
 
-// type TrailingDelta struct {
-// 	minTrailingAboveDelta float64
-// 	minTrailingBelowDelta float64
-// 	maxTrailingAboveDelta float64
-// 	maxTrailingBelowDelta float64
-// }
+type TrailingDelta struct {
+	minTrailingAboveDelta float64
+	minTrailingBelowDelta float64
+	maxTrailingAboveDelta float64
+	maxTrailingBelowDelta float64
+}
 
-// func GetFilters_Trailing_Delta_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) TrailingDelta {
-// 	trailingStopFilter := TrailingDelta{}
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "TRAILING_STOP" {
-// 					trailingStopFilter = TrailingDelta{
-// 						minTrailingAboveDelta: filter["minTrailingStop"].(float64),
-// 						minTrailingBelowDelta: filter["minTrailingStop"].(float64),
-// 						maxTrailingAboveDelta: filter["maxTrailingStop"].(float64),
-// 						maxTrailingBelowDelta: filter["maxTrailingStop"].(float64),
-// 					}
-// 					return trailingStopFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return TrailingDelta{}
-// }
+func (s *Filters) GetFilters_Trailing_Delta_Filter() TrailingDelta {
+	filter := s.GetFilter("TRAILING_STOP")
+	trailingStopFilter := TrailingDelta{
+		minTrailingAboveDelta: filter.Filter["minTrailingStop"].(float64),
+		minTrailingBelowDelta: filter.Filter["minTrailingStop"].(float64),
+		maxTrailingAboveDelta: filter.Filter["maxTrailingStop"].(float64),
+		maxTrailingBelowDelta: filter.Filter["maxTrailingStop"].(float64),
+	}
+	return trailingStopFilter
+}
 
-// type Percent_Price_By_Side struct {
-// 	bidMultiplierUp   string
-// 	bidMultiplierDown string
-// 	askMultiplierUp   string
-// 	askMultiplierDown string
-// 	averagePriceMins  int
-// }
+type Percent_Price_By_Side struct {
+	bidMultiplierUp   string
+	bidMultiplierDown string
+	askMultiplierUp   string
+	askMultiplierDown string
+	averagePriceMins  int
+}
 
-// func GetFilters_Percent_Price_By_Side_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string, side string) *Percent_Price_By_Side {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "PERCENT_PRICE_BY_SIDE" {
-// 					percentPriceFilter := Percent_Price_By_Side{
-// 						bidMultiplierUp:   filter["bidMultiplierUp"].(string),
-// 						bidMultiplierDown: filter["bidMultiplierDown"].(string),
-// 						askMultiplierUp:   filter["askMultiplierUp"].(string),
-// 						askMultiplierDown: filter["askMultiplierDown"].(string),
-// 						averagePriceMins:  int(filter["averagePriceMins"].(float64)),
-// 					}
-// 					return &percentPriceFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilters_Percent_Price_By_Side_Filter() *Percent_Price_By_Side {
+	filter := s.GetFilter("PERCENT_PRICE_BY_SIDE")
+	percentPriceFilter := Percent_Price_By_Side{
+		bidMultiplierUp:   filter.Filter["bidMultiplierUp"].(string),
+		bidMultiplierDown: filter.Filter["bidMultiplierDown"].(string),
+		askMultiplierUp:   filter.Filter["askMultiplierUp"].(string),
+		askMultiplierDown: filter.Filter["askMultiplierDown"].(string),
+		averagePriceMins:  int(filter.Filter["averagePriceMins"].(float64)),
+	}
+	return &percentPriceFilter
+}
 
-// func GetFilters_Notional_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.NotionalFilter {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "NOTIONAL" {
-// 					notionalFilter := binance.NotionalFilter{
-// 						MinNotional: filter["minNotional"].(string),
-// 					}
-// 					return &notionalFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilters_Notional_Filter() *binance.NotionalFilter {
+	filter := s.GetFilter("NOTIONAL")
+	notionalFilter := binance.NotionalFilter{
+		MinNotional: filter.Filter["minNotional"].(string),
+	}
+	return &notionalFilter
+}
 
-// func GetFilters_Max_Num_Orders_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) float64 {
-// 	maxNumOrdersFilter := 0.0
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "MAX_NUM_ORDERS" {
-// 					maxNumOrdersFilter = float64(filter["maxNumOrders"].(float64))
-// 					return maxNumOrdersFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return 0
-// }
+func (s *Filters) GetFilters_Max_Num_Orders_Filter() float64 {
+	filter := s.GetFilter("MAX_NUM_ORDERS")
+	maxNumOrdersFilter := float64(filter.Filter["maxNumOrders"].(float64))
+	return maxNumOrdersFilter
+}
 
-// func GetFilters_Max_Num_Algo_Orders_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.MaxNumAlgoOrdersFilter {
-// 	for _, info := range exchangeInfo.Symbols {
-// 		if info.Symbol == symbolname {
-// 			for _, filter := range info.Filters {
-// 				if filter["filterType"] == "MAX_NUM_ALGO_ORDERS" {
-// 					maxNumAlgoOrdersFilter := binance.MaxNumAlgoOrdersFilter{
-// 						MaxNumAlgoOrders: int(filter["maxNumAlgoOrders"].(float64)),
-// 					}
-// 					return &maxNumAlgoOrdersFilter
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func (s *Filters) GetFilters_Max_Num_Algo_Orders_Filter(exchangeInfo *binance.ExchangeInfo, symbolname string) *binance.MaxNumAlgoOrdersFilter {
+	filter := s.GetFilter("MAX_NUM_ALGO_ORDERS")
+	maxNumAlgoOrdersFilter := binance.MaxNumAlgoOrdersFilter{
+		MaxNumAlgoOrders: int(filter.Filter["maxNumAlgoOrders"].(float64)),
+	}
+	return &maxNumAlgoOrdersFilter
+}
