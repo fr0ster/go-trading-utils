@@ -8,8 +8,6 @@ import (
 	"github.com/fr0ster/go-binance-utils/spot/info"
 )
 
-const errorMsg = "Error: %v"
-
 func TestGetExchangeInfo(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
