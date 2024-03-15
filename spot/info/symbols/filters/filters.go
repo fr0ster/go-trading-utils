@@ -37,7 +37,10 @@ func (s *Filters) Insert(filterName FilterName, filter Filter) {
 
 func (s *Filters) Init(filters []Filter) {
 	for _, filter := range filters {
-		s.Insert(filter["filterType"].(FilterName), filter)
+		filterName, ok := filter["filterType"].(FilterName)
+		if ok {
+			s.Insert(filterName, filter)
+		}
 	}
 }
 
