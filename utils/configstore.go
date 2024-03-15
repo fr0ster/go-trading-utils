@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-binance-utils/types"
 )
 
@@ -12,14 +13,23 @@ type Config struct {
 }
 
 func NewConfig(filePath string) *Config {
-	return &Config{
+	config := &Config{
 		Config:   types.Config{},
 		FilePath: filePath,
 	}
-}
-
-func (c *Config) Init(config types.Config) {
-	c.Config = config
+	err := config.Load()
+	if err != nil {
+		config = &Config{
+			Config: types.Config{
+				AccountType:   binance.AccountTypeSpot,
+				Symbol:        binance.SymbolType("BTCUSDT"),
+				Balance:       0.0,
+				Value:         0.0,
+				Quantity:      0.0,
+				BoundQuantity: 0.0,
+			}, FilePath: filePath}
+	}
+	return config
 }
 
 func (c *Config) Load() error {
