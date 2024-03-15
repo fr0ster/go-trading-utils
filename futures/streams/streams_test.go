@@ -12,9 +12,9 @@ import (
 
 func TestStartUserDataStream(t *testing.T) {
 	t.Run("StartUserDataStream", func(t *testing.T) {
-		api_key := os.Getenv("API_KEY")
-		secret_key := os.Getenv("SECRET_KEY")
-		// futures.UseTestnet = true
+		api_key := os.Getenv("FUTURE_TEST_BINANCE_API_KEY")
+		secret_key := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
+		futures.UseTestnet = true
 		client := futures.NewClient(api_key, secret_key)
 		listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 		if err != nil {

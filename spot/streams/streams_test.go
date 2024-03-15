@@ -14,7 +14,7 @@ func TestStartUserDataStream(t *testing.T) {
 	t.Run("StartUserDataStream", func(t *testing.T) {
 		api_key := os.Getenv("API_KEY")
 		secret_key := os.Getenv("SECRET_KEY")
-		// binance.UseTestnet = true
+		binance.UseTestnet = true
 		client := binance.NewClient(api_key, secret_key)
 		listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 		if err != nil {
