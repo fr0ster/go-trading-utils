@@ -25,16 +25,3 @@ func GetExchangeInfo(client *binance.Client) (*ExchangeInfo, error) {
 func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.Symbol {
 	return exchangeInfo.Symbols.GetSymbol(symbol)
 }
-
-// func (exchangeInfo *ExchangeInfo) GetOrderTypes(symbolname string) []binance.OrderType {
-// 	res := make([]binance.OrderType, 0)
-// 	symbol := exchangeInfo.Symbols.GetSymbol(symbolname)
-// 	for _, orderType := range symbol.OrderTypes {
-// 		res = append(res, binance.OrderType(orderType))
-// 	}
-// 	return res
-// }
-
-// func (exchangeInfo *ExchangeInfo) GetPermissions(symbolname string) []string {
-// 	return exchangeInfo.Symbols.GetSymbol(symbolname).Permissions
-// }
