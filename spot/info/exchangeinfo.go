@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	symbol_info "github.com/fr0ster/go-binance-utils/spot/info/symbols"
+	filters_info "github.com/fr0ster/go-binance-utils/spot/info/symbols/filters"
 )
 
 type ExchangeInfo struct {
@@ -18,9 +19,7 @@ func GetExchangeInfo(client *binance.Client) (ExchangeInfo, error) {
 		return ExchangeInfo{}, err
 	}
 	symbols := symbol_info.NewSymbols(2)
-	for _, symbol := range exchangeInfo.Symbols {
-		symbols.Insert(&symbol_info.Symbol{Symbol: symbol.Symbol})
-	}
+	symbols.Init(exchangeInfo.Symbols)
 	return ExchangeInfo{exchangeInfo, symbols}, nil
 }
 
@@ -37,6 +36,6 @@ func (exchangeInfo *ExchangeInfo) GetPermissions(symbolname string) []string {
 	return exchangeInfo.Symbols.GetSymbol(symbolname).Permissions
 }
 
-func (exchangeInfo *ExchangeInfo) GetFilters(symbolname string) []map[string]interface{} {
+func (exchangeInfo *ExchangeInfo) GetFilters(symbolname string) filters_info.Filters {
 	return exchangeInfo.Symbols.GetSymbol(symbolname).Filters
 }

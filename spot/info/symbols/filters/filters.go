@@ -1,8 +1,6 @@
 package filters
 
 import (
-	"sync"
-
 	"github.com/adshao/go-binance/v2"
 	"github.com/google/btree"
 )
@@ -16,7 +14,6 @@ type (
 	}
 	Filters struct {
 		btree.BTree
-		mu sync.Mutex
 	}
 )
 
@@ -31,16 +28,7 @@ func (s *FilterItem) Equal(than btree.Item) bool {
 func NewFilters(degree int) *Filters {
 	return &Filters{
 		BTree: *btree.New(degree),
-		mu:    sync.Mutex{},
 	}
-}
-
-func (s *Filters) Lock() {
-	s.mu.Lock()
-}
-
-func (s *Filters) Unlock() {
-	s.mu.Unlock()
 }
 
 func (s *Filters) Insert(filterName FilterName, filter Filter) {
