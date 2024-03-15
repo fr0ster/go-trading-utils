@@ -8,11 +8,17 @@ import (
 	symbol_info "github.com/fr0ster/go-binance-utils/spot/info/symbols/symbol"
 )
 
+func TestSymbolsNew(t *testing.T) {
+	symbols := symbols_info.NewSymbols(2, []binance.Symbol{})
+
+	if symbols == nil {
+		t.Errorf("Expected symbols to be initialized, but got nil")
+	}
+}
+
 func TestSymbolsLen(t *testing.T) {
-	symbols := symbols_info.NewSymbols(2)
-	symbols.Init(append([]binance.Symbol{}, binance.Symbol{
-		Symbol: "BTCUSDT",
-	}))
+	symbols :=
+		symbols_info.NewSymbols(2, append([]binance.Symbol{}, binance.Symbol{Symbol: "BTCUSDT"}))
 
 	// TODO: Add test cases to insert symbols into the BTree
 
@@ -25,7 +31,8 @@ func TestSymbolsLen(t *testing.T) {
 }
 
 func TestSymbolsInsert(t *testing.T) {
-	symbols := symbols_info.NewSymbols(2)
+	symbols :=
+		symbols_info.NewSymbols(2, []binance.Symbol{})
 
 	symbol := symbol_info.NewSymbol(2, &binance.Symbol{
 		// Initialize the symbol with test data
@@ -37,15 +44,11 @@ func TestSymbolsInsert(t *testing.T) {
 }
 
 func TestSymbolsGetSymbol(t *testing.T) {
-	symbols := symbols_info.NewSymbols(2)
-	expectedSymbol := binance.Symbol{
-		Symbol: "BTCUSDT",
-	}
-	symbols.Init(append([]binance.Symbol{}, expectedSymbol))
+	symbolName := "BTCUSDT"
+	symbols :=
+		symbols_info.NewSymbols(2, append([]binance.Symbol{}, binance.Symbol{Symbol: symbolName}))
 
 	// TODO: Add test cases to insert symbols into the BTree
-
-	symbolName := "BTCUSDT"
 
 	actualSymbol := symbols.GetSymbol(symbolName)
 
@@ -54,20 +57,4 @@ func TestSymbolsGetSymbol(t *testing.T) {
 	}
 
 	// TODO: Add assertions to compare the actual symbol with the expected symbol
-}
-
-func TestSymbolsInit(t *testing.T) {
-	symbols := symbols_info.NewSymbols(2)
-
-	binanceSymbols := binance.Symbol{
-		Symbol: "BTCUSDT",
-	}
-
-	err := symbols.Init(append([]binance.Symbol{}, binanceSymbols))
-
-	if err != nil {
-		t.Errorf("Expected Init to return nil error, but got %v", err)
-	}
-
-	// TODO: Add assertions or additional tests
 }

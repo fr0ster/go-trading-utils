@@ -18,8 +18,7 @@ func GetExchangeInfo(client *binance.Client) (ExchangeInfo, error) {
 	if err != nil {
 		return ExchangeInfo{}, err
 	}
-	symbols := symbol_info.NewSymbols(2)
-	symbols.Init(exchangeInfo.Symbols)
+	symbols := symbol_info.NewSymbols(2, exchangeInfo.Symbols)
 	return ExchangeInfo{exchangeInfo, symbols}, nil
 }
 

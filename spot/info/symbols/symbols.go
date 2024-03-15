@@ -16,12 +16,16 @@ type (
 	}
 )
 
-func NewSymbols(degree int) *Symbols {
-	return &Symbols{
+func NewSymbols(degree int, symbols []binance.Symbol) *Symbols {
+	s := Symbols{
 		degree: degree,
 		BTree:  *btree.New(degree),
 		mu:     sync.Mutex{},
 	}
+	for _, symbol := range symbols {
+		s.Insert((*symbol_info.Symbol)(symbol_info.NewSymbol(s.degree, &symbol)))
+	}
+	return &s
 }
 
 func (s *Symbols) Lock() {
@@ -46,11 +50,4 @@ func (s *Symbols) GetSymbol(symbol string) *symbol_info.Symbol {
 		return nil
 	}
 	return item.(*symbol_info.Symbol)
-}
-
-func (s *Symbols) Init(symbols []binance.Symbol) error {
-	for _, symbol := range symbols {
-		s.Insert((*symbol_info.Symbol)(symbol_info.NewSymbol(s.degree, &symbol)))
-	}
-	return nil
 }
