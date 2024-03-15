@@ -22,5 +22,5 @@ go.sum
 __debug_bin
 binance_go_bot
 .fake
-.vscode/launch.json
+.vscode/*
 ./datastore.json
