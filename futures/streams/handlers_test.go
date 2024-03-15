@@ -4,20 +4,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/spot/markets"
-	"github.com/fr0ster/go-binance-utils/spot/streams"
+	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-binance-utils/futures/markets"
+	"github.com/fr0ster/go-binance-utils/futures/streams"
 	"github.com/fr0ster/go-binance-utils/utils"
 )
 
 func TestGetFilledOrderHandler(t *testing.T) {
-	even := &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeExecutionReport,
-		OrderUpdate: binance.WsOrderUpdate{
-			Status: string(binance.OrderStatusTypeFilled),
+	even := &futures.WsUserDataEvent{
+		Event: futures.UserDataEventTypeOrderTradeUpdate,
+		OrderTradeUpdate: futures.WsOrderTradeUpdate{
+			Status: futures.OrderStatusTypeFilled,
 		},
 	}
-	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	inChannel := make(chan *futures.WsUserDataEvent, 1)
 	outChannel := streams.GetFilledOrdersGuard(inChannel)
 	inChannel <- even
 	res := false
@@ -37,18 +37,19 @@ func TestGetFilledOrderHandler(t *testing.T) {
 }
 
 func TestGetBalanceTreeUpdateHandler(t *testing.T) {
-	even := &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeExecutionReport,
-		OrderUpdate: binance.WsOrderUpdate{
-			Status: string(binance.OrderStatusTypeFilled),
+	even := &futures.WsUserDataEvent{
+		Event: futures.UserDataEventTypeAccountUpdate,
+		OrderTradeUpdate: futures.WsOrderTradeUpdate{
+			Status: futures.OrderStatusTypeFilled,
 		},
 	}
-	inChannel := make(chan *binance.WsUserDataEvent, 1)
+	inChannel := make(chan *futures.WsUserDataEvent, 1)
 	balances := markets.BalanceNew(3, nil)
 	balances.SetItem(markets.BalanceItemType{
-		Asset:  "BTC",
-		Free:   0.0,
-		Locked: 0.0,
+		Asset:              "BTC",
+		Balance:            0.0,
+		ChangeBalance:      0.0,
+		CrossWalletBalance: 0.0,
 	})
 	outChannel := streams.GetBalancesUpdateGuard(balances, inChannel)
 	inChannel <- even
@@ -69,14 +70,14 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 }
 
 func TestGetBookTickersUpdateHandler(t *testing.T) {
-	even := &binance.WsBookTickerEvent{
+	even := &futures.WsBookTickerEvent{
 		Symbol:       "BTCUSDT",
 		BestBidPrice: "10000.0",
 		BestBidQty:   "210.0",
 		BestAskPrice: "11000.0",
 		BestAskQty:   "320.0",
 	}
-	inChannel := make(chan *binance.WsBookTickerEvent, 1)
+	inChannel := make(chan *futures.WsBookTickerEvent, 1)
 	bookTicker := markets.BookTickerNew(3)
 	bookTicker.SetItem(markets.BookTickerItemType{
 		Symbol:      "BTCUSDT",
@@ -131,17 +132,17 @@ func getTestDepths() *markets.DepthBTree {
 }
 
 func TestGetDepthsUpdaterHandler(t *testing.T) {
-	inChannel := make(chan *binance.WsDepthEvent, 1)
+	inChannel := make(chan *futures.WsDepthEvent, 1)
 	outChannel := streams.GetDepthsUpdateGuard(getTestDepths(), inChannel)
 	go func() {
 		for i := 0; i < 10; i++ {
-			inChannel <- &binance.WsDepthEvent{
+			inChannel <- &futures.WsDepthEvent{
 				Event:         "depthUpdate",
 				Symbol:        "BTCUSDT",
 				FirstUpdateID: 2369068,
 				LastUpdateID:  2369068,
-				Bids:          []binance.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
-				Asks:          []binance.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
+				Bids:          []futures.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
+				Asks:          []futures.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
 			}
 		}
 	}()

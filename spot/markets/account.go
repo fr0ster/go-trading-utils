@@ -9,6 +9,7 @@ import (
 
 type AccountType struct {
 	*binance.Account
+	degree int
 	sync.Mutex
 }
 
@@ -20,14 +21,13 @@ func (account *AccountType) Unlock() {
 	account.Mutex.Unlock()
 }
 
-func AccountNew(client *binance.Client) (*AccountType, error) {
+func AccountNew(client *binance.Client, degree int) (*AccountType, error) {
 	res, err := client.NewGetAccountService().Do(context.Background())
-	return &AccountType{Account: res, Mutex: sync.Mutex{}}, err
+	return &AccountType{Account: res, degree: degree, Mutex: sync.Mutex{}}, err
 }
 
 func (account *AccountType) GetBalances() *BalanceBTree {
-	balances := BalanceNew(3)
-	balances.Init(account.Account.Balances)
+	balances := BalanceNew(account.degree, account.Account.Balances)
 	return balances
 }
 
