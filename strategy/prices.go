@@ -3,11 +3,11 @@ package strategy
 import (
 	"context"
 	"errors"
+	"go/types"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/spot/markets"
-	"github.com/fr0ster/go-binance-utils/types"
-	"github.com/fr0ster/go-binance-utils/utils"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/utils"
 )
 
 func GetLimitPricesDumpWay(data types.Config, client *binance.Client) (string, float64, string, string, string, string, string, string) {

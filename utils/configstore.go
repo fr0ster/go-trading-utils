@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-binance-utils/types"
+	"github.com/fr0ster/go-traiding-utils/types"
 )
 
 type Config struct {
