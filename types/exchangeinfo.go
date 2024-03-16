@@ -34,7 +34,6 @@ type SymbolInfo struct {
 	MinNotional            string         `json:"minNotional"`
 	IsSpotTradingAllowed   bool           `json:"isSpotTradingAllowed"`
 	IsMarginTradingAllowed bool           `json:"isMarginTradingAllowed"`
-	Filters                []SymbolFilter `json:"filters"`
 }
 
 type SymbolFilter struct {
