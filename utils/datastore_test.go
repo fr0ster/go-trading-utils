@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fr0ster/go-trading-utils/binance/types"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/stretchr/testify/assert"
 )
