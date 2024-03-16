@@ -1,1 +1,1 @@
-# go-binance-utils
+# go-trading-utils
