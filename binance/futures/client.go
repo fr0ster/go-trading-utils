@@ -1,4 +1,4 @@
-package spot
+package futures
 
 import "github.com/adshao/go-binance/v2/futures"
 
