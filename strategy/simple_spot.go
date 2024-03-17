@@ -19,7 +19,7 @@ func SimpleSpot(client *interfaces.Client, symbolname, quantity, price, stopPric
 	apiKey := os.Getenv("API_KEY")
 	secretKey := os.Getenv("SECRET_KEY")
 	listenKey, err :=
-		spot.NewClient(apiKey, secretKey).
+		spot.NewClient(apiKey, secretKey, true).
 			GetClient().
 			NewStartUserStreamService().
 			Do(context.Background())

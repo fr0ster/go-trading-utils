@@ -6,7 +6,8 @@ type SpotClient struct {
 	client *futures.Client
 }
 
-func NewClient(apiKey, secretKey string) *SpotClient {
+func NewClient(apiKey, secretKey string, UseTestnet bool) *SpotClient {
+	futures.UseTestnet = UseTestnet
 	return &SpotClient{
 		client: futures.NewClient(apiKey, secretKey),
 	}
