@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/interfaces"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
@@ -17,7 +16,14 @@ type (
 		*btree.BTree
 		sync.Mutex
 	}
-	DepthItemType interfaces.DepthItemType
+
+	DepthItemType struct {
+		Price           types.Price
+		AskLastUpdateID int64
+		AskQuantity     types.Price
+		BidLastUpdateID int64
+		BidQuantity     types.Price
+	}
 )
 
 func DepthNew(degree int) *DepthBTree {
@@ -33,6 +39,10 @@ func (i *DepthItemType) Less(than btree.Item) bool {
 
 func (i *DepthItemType) Equal(than btree.Item) bool {
 	return i.Price == than.(*DepthItemType).Price
+}
+
+func (item *DepthItemType) GetItem() *DepthItemType {
+	return item
 }
 
 func (tree *DepthBTree) Lock() {

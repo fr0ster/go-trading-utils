@@ -21,6 +21,10 @@ func NewKlineStream(symbol, interval string) *KlineStream {
 	}
 }
 
+func (u *KlineStream) GetStreamEvent() chan bool {
+	return u.EventChannel
+}
+
 func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsKlineEvent) {
 		u.DataChannel <- event

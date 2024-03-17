@@ -44,6 +44,10 @@ func (i *BookTickerItemType) Equal(than btree.Item) bool {
 	return i.Symbol == than.(*BookTickerItemType).Symbol
 }
 
+func (item *BookTickerItemType) GetItem() *BookTickerItemType {
+	return item
+}
+
 func (tree *BookTickerBTree) Lock() {
 	tree.Mutex.Lock()
 }

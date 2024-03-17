@@ -19,6 +19,10 @@ func NewTradeStream(symbol string) *AggTradeStream {
 	}
 }
 
+func (u *AggTradeStream) GetStreamEvent() chan bool {
+	return u.EventChannel
+}
+
 func (u *AggTradeStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsAggTradeEvent) {
 		u.DataChannel <- event
@@ -38,6 +42,10 @@ func NewCombinedAggTradeServe(symbols []string) *CombinedAggTradeServe {
 		EventChannel: make(chan bool),
 		symbols:      symbols,
 	}
+}
+
+func (u *CombinedAggTradeServe) GetStreamEvent() chan bool {
+	return u.EventChannel
 }
 
 func (u *CombinedAggTradeServe) Start() (doneC, stopC chan struct{}, err error) {

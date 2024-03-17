@@ -19,6 +19,10 @@ func NewTradeStream(symbol string) *TradeStream {
 	}
 }
 
+func (u *TradeStream) GetStreamEvent() chan bool {
+	return u.EventChannel
+}
+
 func (u *TradeStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsTradeEvent) {
 		u.DataChannel <- event
