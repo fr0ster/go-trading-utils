@@ -40,6 +40,10 @@ func (i *DepthItemType) Equal(than btree.Item) bool {
 	return i.Price == than.(*DepthItemType).Price
 }
 
+func (i *DepthItemType) GetItem() *DepthItemType {
+	return i
+}
+
 func (tree *DepthBTree) Lock() {
 	tree.Mutex.Lock()
 }

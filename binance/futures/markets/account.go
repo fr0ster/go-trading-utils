@@ -12,6 +12,10 @@ type AccountType struct {
 	sync.Mutex
 }
 
+func (i *AccountType) GetItem() *AccountType {
+	return i
+}
+
 func (account *AccountType) Lock() {
 	account.Mutex.Lock()
 }

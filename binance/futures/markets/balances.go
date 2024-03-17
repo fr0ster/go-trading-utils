@@ -49,6 +49,10 @@ func (b *BalanceItemType) Equal(than btree.Item) bool {
 	return b.Asset == than.(*BalanceItemType).Asset
 }
 
+func (i *BalanceItemType) GetItem() *BalanceItemType {
+	return i
+}
+
 func (tree *BalanceBTree) Lock() {
 	tree.Mutex.Lock()
 }
