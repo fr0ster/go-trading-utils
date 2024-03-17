@@ -6,7 +6,7 @@ type SpotClient struct {
 	client *binance.Client
 }
 
-func NewSpotClient(apiKey, secretKey string) *SpotClient {
+func NewClient(apiKey, secretKey string) *SpotClient {
 	return &SpotClient{
 		client: binance.NewClient(apiKey, secretKey),
 	}

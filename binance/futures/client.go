@@ -6,7 +6,7 @@ type SpotClient struct {
 	client *futures.Client
 }
 
-func NewSpotClient(apiKey, secretKey string) *SpotClient {
+func NewClient(apiKey, secretKey string) *SpotClient {
 	return &SpotClient{
 		client: futures.NewClient(apiKey, secretKey),
 	}
