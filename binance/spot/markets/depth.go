@@ -6,23 +6,18 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/interfaces"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
 type (
-	Price      float64
 	DepthBTree struct {
 		*btree.BTree
 		sync.Mutex
 	}
-	DepthItemType struct {
-		Price           Price
-		AskLastUpdateID int64
-		AskQuantity     Price
-		BidLastUpdateID int64
-		BidQuantity     Price
-	}
+	DepthItemType interfaces.DepthItemType
 )
 
 func DepthNew(degree int) *DepthBTree {
@@ -58,22 +53,22 @@ func (tree *DepthBTree) Init(client *binance.Client, symbolname string) (err err
 	}
 	for _, bid := range res.Bids {
 		tree.ReplaceOrInsert(&DepthItemType{
-			Price:           Price(utils.ConvStrToFloat64(bid.Price)),
+			Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
 			BidLastUpdateID: res.LastUpdateID,
-			BidQuantity:     Price(utils.ConvStrToFloat64(bid.Quantity)),
+			BidQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
 		})
 	}
 	for _, ask := range res.Asks {
 		tree.ReplaceOrInsert(&DepthItemType{
-			Price:           Price(utils.ConvStrToFloat64(ask.Price)),
+			Price:           types.Price(utils.ConvStrToFloat64(ask.Price)),
 			AskLastUpdateID: res.LastUpdateID,
-			AskQuantity:     Price(utils.ConvStrToFloat64(ask.Quantity)),
+			AskQuantity:     types.Price(utils.ConvStrToFloat64(ask.Quantity)),
 		})
 	}
 	return nil
 }
 
-func (tree *DepthBTree) GetItem(price Price) (*DepthItemType, bool) {
+func (tree *DepthBTree) GetItem(price types.Price) (*DepthItemType, bool) {
 	item := tree.Get(&DepthItemType{Price: price})
 	if item == nil {
 		return nil, false
@@ -91,7 +86,7 @@ func (tree *DepthBTree) SetItem(value DepthItemType) {
 	})
 }
 
-func (tree *DepthBTree) GetByPrices(minPrice, maxPrice Price) *DepthBTree {
+func (tree *DepthBTree) GetByPrices(minPrice, maxPrice types.Price) *DepthBTree {
 	newTree := DepthNew(2) // створюємо нове B-дерево
 
 	tree.Ascend(func(i btree.Item) bool {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -65,8 +66,8 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 	testDepthTree := getTestDepths()
 
 	// Call the function being tested
-	priceMin := markets.Price(1.95)
-	priceMax := markets.Price(1.952)
+	priceMin := types.Price(1.95)
+	priceMax := types.Price(1.952)
 	filteredTree := testDepthTree.GetByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map
