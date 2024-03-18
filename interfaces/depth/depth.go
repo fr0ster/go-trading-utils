@@ -19,13 +19,13 @@ type (
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool) *Depths
 		GetItem(price types.Price) (*DepthItemType, bool)
 		SetItem(value DepthItemType)
-		// GetByPrices(minPrice, maxPrice types.Price) *DepthBTree
-		// GetMaxBids() *DepthBTree
-		// GetMaxAsks() *DepthBTree
+		GetByPrices(minPrice, maxPrice types.Price) *DepthBTree
+		GetMaxBids() *DepthBTree
+		GetMaxAsks() *DepthBTree
 		GetMaxBidQtyMaxAskQty() (maxBidNode *DepthItemType, maxAskNode *DepthItemType)
 		GetMaxBidMinAsk() (maxBid *DepthItemType, minAsk *DepthItemType)
-		// GetBidQtyLocalMaxima() *DepthBTree
-		// GetAskQtyLocalMaxima() *DepthBTree
+		GetBidQtyLocalMaxima() *DepthBTree
+		GetAskQtyLocalMaxima() *DepthBTree
 		Show()
 	}
 	DepthItemType struct {
