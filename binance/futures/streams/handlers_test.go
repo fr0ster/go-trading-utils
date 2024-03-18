@@ -7,6 +7,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
 	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
+	"github.com/fr0ster/go-trading-utils/interfaces"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -106,7 +107,7 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 
 func getTestDepths() *markets.DepthBTree {
 	testDepthTree := markets.DepthNew(3)
-	records := []markets.DepthItemType{
+	records := []interfaces.DepthItemType{
 		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
 		{Price: 1.93, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 155.4}, // local maxima
 		{Price: 1.94, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.0},
