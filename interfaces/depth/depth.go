@@ -17,15 +17,14 @@ type (
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool) *Depths
-		GetItem(price types.Price) (*DepthItemType, bool)
+		GetItem(price types.Price) *DepthItemType
 		SetItem(value DepthItemType)
-		GetByPrices(minPrice, maxPrice types.Price) *DepthBTree
-		GetMaxBids() *DepthBTree
-		GetMaxAsks() *DepthBTree
+		GetMaxBids() *DepthItemType
+		GetMaxAsks() *DepthItemType
 		GetMaxBidQtyMaxAskQty() (maxBidNode *DepthItemType, maxAskNode *DepthItemType)
 		GetMaxBidMinAsk() (maxBid *DepthItemType, minAsk *DepthItemType)
-		GetBidQtyLocalMaxima() *DepthBTree
-		GetAskQtyLocalMaxima() *DepthBTree
+		GetBidQtyLocalMaxima() *btree.BTree
+		GetAskQtyLocalMaxima() *btree.BTree
 		Show()
 	}
 	DepthItemType struct {
