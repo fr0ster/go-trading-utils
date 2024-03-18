@@ -3,7 +3,8 @@ package streams
 import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
-	"github.com/fr0ster/go-trading-utils/interfaces"
+	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
+	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
@@ -66,7 +67,7 @@ func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree, source chan
 	return out
 }
 
-func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *futures.WsDepthEvent) (out chan bool) {
+func GetDepthsUpdateGuard(depths *depth.DepthBTree, source chan *futures.WsDepthEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
@@ -78,7 +79,7 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *futures.WsDep
 					value.BidLastUpdateID = event.LastUpdateID
 				} else {
 					value =
-						&interfaces.DepthItemType{
+						&depth_interface.DepthItemType{
 							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
 							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
@@ -98,7 +99,7 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *futures.WsDep
 					value.AskLastUpdateID = event.LastUpdateID
 				} else {
 					value =
-						&interfaces.DepthItemType{
+						&depth_interface.DepthItemType{
 							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
 							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),

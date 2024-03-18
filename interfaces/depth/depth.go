@@ -1,4 +1,4 @@
-package interfaces
+package depth_interface
 
 import (
 	"sync"
@@ -16,7 +16,7 @@ type (
 	Depths interface {
 		Lock()
 		Unlock()
-		Init(apt_key, secret_key, symbolname string, UseTestnet bool) *DepthBTree
+		Init(apt_key, secret_key, symbolname string, UseTestnet bool) *Depths
 		GetItem(price types.Price) (*DepthItemType, bool)
 		SetItem(value DepthItemType)
 		GetByPrices(minPrice, maxPrice types.Price) *DepthBTree

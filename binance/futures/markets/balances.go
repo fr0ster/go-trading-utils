@@ -86,7 +86,7 @@ func (tree *BalanceBTree) Show() {
 	})
 }
 
-func (tree *DepthBTree) ShowByAsset(symbol SymbolType) {
+func (tree *BalanceBTree) ShowByAsset(symbol SymbolType) {
 	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(symbol)}, func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
 		logrus.Infof(

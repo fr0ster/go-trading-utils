@@ -1,18 +1,18 @@
-package markets_test
+package depth_test
 
 import (
 	"os"
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
-	"github.com/fr0ster/go-trading-utils/interfaces"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
+	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
-func getTestDepths() *markets.DepthBTree {
-	testDepthTree := markets.DepthNew(3)
-	records := []interfaces.DepthItemType{
+func getTestDepths() *depth.DepthBTree {
+	testDepthTree := depth.DepthNew(3)
+	records := []depth_interface.DepthItemType{
 		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
 		{Price: 1.93, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 155.4}, // local maxima
 		{Price: 1.94, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.0},
@@ -43,7 +43,7 @@ func TestInitDepthTree(t *testing.T) {
 	UseTestnet := true
 
 	// Add more test cases here
-	testDepthTree := markets.DepthNew(3)
+	testDepthTree := depth.DepthNew(3)
 	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
@@ -53,7 +53,7 @@ func TestInitDepthTree(t *testing.T) {
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := markets.DepthNew(3)
+	testDepthTree := depth.DepthNew(3)
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
@@ -71,7 +71,7 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 
 	// Add assertions to check the correctness of the filtered map
 	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(*interfaces.DepthItemType) // Modify the type assertion to use a pointer receiver
+		price := i.(*depth_interface.DepthItemType) // Modify the type assertion to use a pointer receiver
 		if price.Price < priceMin || price.Price > priceMax {
 			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
 		}
@@ -112,30 +112,30 @@ func TestGetDepthBidLocalMaxima(t *testing.T) {
 	askLocalMaxima := testDepthTree.GetAskQtyLocalMaxima()
 
 	// Add assertions to check the correctness of the returned map
-	if bidLocalsMaxima.Get(&interfaces.DepthItemType{Price: 1.93}) == nil {
+	if bidLocalsMaxima.Get(&depth_interface.DepthItemType{Price: 1.93}) == nil {
 		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 	}
-	if bidLocalsMaxima.Get(&interfaces.DepthItemType{Price: 1.949}) == nil {
+	if bidLocalsMaxima.Get(&depth_interface.DepthItemType{Price: 1.949}) == nil {
 		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 	}
-	if askLocalMaxima.Get(&interfaces.DepthItemType{Price: 1.951}) == nil {
+	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.951}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
-	if askLocalMaxima.Get(&interfaces.DepthItemType{Price: 1.953}) == nil {
+	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.953}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
-	if askLocalMaxima.Get(&interfaces.DepthItemType{Price: 1.957}) == nil {
+	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.957}) == nil {
 		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 	}
 	bidLocalsMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*interfaces.DepthItemType)
+		item := i.(*depth_interface.DepthItemType)
 		if (item.Price != 1.93) && (item.Price != 1.949) {
 			t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
 		}
 		return true
 	})
 	askLocalMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*interfaces.DepthItemType)
+		item := i.(*depth_interface.DepthItemType)
 		if item.Price != 1.951 && item.Price != 1.953 && item.Price != 1.957 {
 			t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
 		}
