@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/common"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -25,203 +26,11 @@ func DepthNew(degree int) *DepthBTree {
 	}
 }
 
-// func (d *DepthBTree) Lock() {
-// 	d.Mutex.Lock()
-// }
-
-// func (d *DepthBTree) Unlock() {
-// 	d.Mutex.Unlock()
-// }
-
-// func (d *DepthBTree) Init(apt_key, secret_key, symbolname string, UseTestnet bool) *DepthBTree {
-// 	binance.UseTestnet = UseTestnet
-// 	res, err :=
-// 		binance.NewClient(apt_key, secret_key).NewDepthService().
-// 			Symbol(string(symbolname)).
-// 			Do(context.Background())
-// 	if err != nil {
-// 		return nil
-// 	}
-// 	for _, bid := range res.Bids {
-// 		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-// 			Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
-// 			BidLastUpdateID: res.LastUpdateID,
-// 			BidQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
-// 		})
-// 	}
-// 	for _, ask := range res.Asks {
-// 		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-// 			Price:           types.Price(utils.ConvStrToFloat64(ask.Price)),
-// 			AskLastUpdateID: res.LastUpdateID,
-// 			AskQuantity:     types.Price(utils.ConvStrToFloat64(ask.Quantity)),
-// 		})
-// 	}
-// 	return nil
-// }
-
-// func (d *DepthBTree) GetItem(price types.Price) (*depth_interface.DepthItemType, bool) {
-// 	item := d.BTree.Get(&depth_interface.DepthItemType{Price: price})
-// 	if item == nil {
-// 		return nil, false
-// 	}
-// 	return item.(*depth_interface.DepthItemType), true
-// }
-
-// func (d *DepthBTree) SetItem(value depth_interface.DepthItemType) {
-// 	d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-// 		Price:           value.Price,
-// 		AskLastUpdateID: value.AskLastUpdateID,
-// 		AskQuantity:     value.AskQuantity,
-// 		BidLastUpdateID: value.BidLastUpdateID,
-// 		BidQuantity:     value.BidQuantity,
-// 	})
-// }
-
-// func (d *DepthBTree) GetByPrices(minPrice, maxPrice types.Price) *DepthBTree {
-// 	newTree := DepthNew(int(d.Degree)) // створюємо нове B-дерево
-
-// 	d.BTree.Ascend(func(i btree.Item) bool {
-// 		item := i.(*depth_interface.DepthItemType)
-// 		if item.Price >= minPrice && item.Price <= maxPrice {
-// 			newTree.BTree.ReplaceOrInsert(item) // додаємо вузол до нового дерева, якщо він відповідає умовам
-// 		}
-// 		return true
-// 	})
-
-// 	return newTree
-// }
-
-// func (d *DepthBTree) GetMaxBids() *DepthBTree {
-// 	bids := DepthNew(int(d.Degree))
-// 	d.Ascend(func(i btree.Item) bool {
-// 		item := i.(*depth_interface.DepthItemType)
-// 		if item.BidQuantity != 0 {
-// 			bids.ReplaceOrInsert(item)
-// 		}
-// 		return true
-// 	})
-// 	return bids
-// }
-
-// func (d *DepthBTree) GetMaxAsks() *DepthBTree {
-// 	asks := DepthNew(2)
-// 	d.Ascend(func(i btree.Item) bool {
-// 		item := i.(*depth_interface.DepthItemType)
-// 		if item.AskQuantity != 0 {
-// 			asks.ReplaceOrInsert(item)
-// 		}
-// 		return true
-// 	})
-// 	return asks
-// }
-
-// func (d *DepthBTree) GetMaxBidQtyMaxAskQty() (maxBidNode *depth_interface.DepthItemType, maxAskNode *depth_interface.DepthItemType) {
-// 	// Шукаємо вузол з максимальною ціною і ненульовим BidQuantity
-// 	maxBidNode = &depth_interface.DepthItemType{}
-// 	maxAskNode = &depth_interface.DepthItemType{}
-// 	d.Ascend(func(item btree.Item) bool {
-// 		node := item.(*depth_interface.DepthItemType)
-// 		if node.BidQuantity != 0 && node.BidQuantity > maxBidNode.BidQuantity {
-// 			maxBidNode = node
-// 		}
-// 		if node.AskQuantity != 0 && node.AskQuantity > maxAskNode.AskQuantity {
-// 			maxAskNode = node
-// 		}
-// 		return true
-// 	})
-// 	return maxBidNode, maxAskNode
-// }
-
-// func (d *DepthBTree) GetMaxBidMinAsk() (maxBid *depth_interface.DepthItemType, minAsk *depth_interface.DepthItemType) {
-// 	maxBid = &depth_interface.DepthItemType{}
-// 	minAsk = &depth_interface.DepthItemType{}
-// 	d.Ascend(func(item btree.Item) bool {
-// 		node := item.(*depth_interface.DepthItemType)
-// 		if node.BidQuantity != 0 && node.Price > maxBid.Price {
-// 			maxBid = node
-// 		}
-// 		if minAsk.Price == 0 && node.AskQuantity != 0 {
-// 			minAsk = node
-// 		} else if node.AskQuantity != 0 && node.Price < minAsk.Price {
-// 			minAsk = node
-// 		}
-// 		return true
-// 	})
-// 	return maxBid, minAsk
-// }
-
-// func (d *DepthBTree) GetBidQtyLocalMaxima() *DepthBTree {
-// 	maximaTree := DepthNew(2)
-// 	var prev, current, next *depth_interface.DepthItemType
-// 	d.Ascend(func(a btree.Item) bool {
-// 		next = a.(*depth_interface.DepthItemType)
-// 		if current != nil && prev != nil && current.BidQuantity > prev.BidQuantity && current.BidQuantity > next.BidQuantity {
-// 			maximaTree.ReplaceOrInsert(current)
-// 		}
-// 		prev = current
-// 		current = next
-// 		return true
-// 	})
-// 	return maximaTree
-// }
-
-// func (d *DepthBTree) GetAskQtyLocalMaxima() *DepthBTree {
-// 	maximaTree := DepthNew(2)
-// 	var prev, current, next *depth_interface.DepthItemType
-// 	d.Ascend(func(a btree.Item) bool {
-// 		next = a.(*depth_interface.DepthItemType)
-// 		if current != nil && prev != nil && current.AskQuantity > prev.AskQuantity && current.AskQuantity > next.AskQuantity {
-// 			maximaTree.ReplaceOrInsert(current)
-// 		}
-// 		prev = current
-// 		current = next
-// 		return true
-// 	})
-// 	return maximaTree
-// }
-
-// func (d *DepthBTree) GetBidQtyLocalMinima() *DepthBTree {
-// 	minimaTree := DepthNew(2)
-// 	var prev, current, next *depth_interface.DepthItemType
-// 	d.Ascend(func(a btree.Item) bool {
-// 		next = a.(*depth_interface.DepthItemType)
-// 		if current != nil && prev != nil && current.BidQuantity < prev.BidQuantity && current.BidQuantity < next.BidQuantity {
-// 			minimaTree.ReplaceOrInsert(current)
-// 		}
-// 		prev = current
-// 		current = next
-// 		return true
-// 	})
-// 	return minimaTree
-// }
-
-// func (d *DepthBTree) GetAskQtyLocalMinima() *DepthBTree {
-// 	minimaTree := DepthNew(2)
-// 	var prev, current, next *depth_interface.DepthItemType
-// 	d.Ascend(func(a btree.Item) bool {
-// 		next = a.(*depth_interface.DepthItemType)
-// 		if current != nil && prev != nil && current.AskQuantity < prev.AskQuantity && current.AskQuantity < next.AskQuantity {
-// 			minimaTree.ReplaceOrInsert(current)
-// 		}
-// 		prev = current
-// 		current = next
-// 		return true
-// 	})
-// 	return minimaTree
-// }
-
-// func (d *DepthBTree) Show() {
-// 	d.Ascend(func(i btree.Item) bool {
-// 		item := i.(*depth_interface.DepthItemType)
-// 		fmt.Println(
-// 			"Price:", item.Price,
-// 			"AskLastUpdateID:", item.AskLastUpdateID,
-// 			"AskQuantity:", item.AskQuantity,
-// 			"BidLastUpdateID:", item.BidLastUpdateID,
-// 			"BidQuantity:", item.BidQuantity)
-// 		return true
-// 	})
-// }
+// DeleteItem implements depth_interface.Depths.
+func (d *DepthBTree) DeleteItem(value *depth_interface.DepthItemType) bool {
+	item := d.BTree.Delete(value)
+	return item != nil
+}
 
 // GetAskQtyLocalMaxima implements depth_interface.Depths.
 func (d *DepthBTree) GetAskQtyLocalMaxima() *btree.BTree {
@@ -335,16 +144,14 @@ func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, 
 	}
 	for _, bid := range res.Bids {
 		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-			Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
-			BidLastUpdateID: res.LastUpdateID,
-			BidQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
+			Price:       types.Price(utils.ConvStrToFloat64(bid.Price)),
+			BidQuantity: types.Price(utils.ConvStrToFloat64(bid.Quantity)),
 		})
 	}
 	for _, ask := range res.Asks {
 		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-			Price:           types.Price(utils.ConvStrToFloat64(ask.Price)),
-			AskLastUpdateID: res.LastUpdateID,
-			AskQuantity:     types.Price(utils.ConvStrToFloat64(ask.Quantity)),
+			Price:       types.Price(utils.ConvStrToFloat64(ask.Price)),
+			AskQuantity: types.Price(utils.ConvStrToFloat64(ask.Quantity)),
 		})
 	}
 	return nil
@@ -359,11 +166,9 @@ func (d *DepthBTree) Lock() {
 // SetItem implements depth_interface.Depths.
 func (d *DepthBTree) SetItem(value depth_interface.DepthItemType) {
 	d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-		Price:           value.Price,
-		AskLastUpdateID: value.AskLastUpdateID,
-		AskQuantity:     value.AskQuantity,
-		BidLastUpdateID: value.BidLastUpdateID,
-		BidQuantity:     value.BidQuantity,
+		Price:       value.Price,
+		AskQuantity: value.AskQuantity,
+		BidQuantity: value.BidQuantity,
 	})
 }
 
@@ -373,9 +178,7 @@ func (d *DepthBTree) Show() {
 		item := i.(*depth_interface.DepthItemType)
 		fmt.Println(
 			"Price:", item.Price,
-			"AskLastUpdateID:", item.AskLastUpdateID,
 			"AskQuantity:", item.AskQuantity,
-			"BidLastUpdateID:", item.BidLastUpdateID,
 			"BidQuantity:", item.BidQuantity)
 		return true
 	})
@@ -385,4 +188,48 @@ func (d *DepthBTree) Show() {
 // Subtle: this method shadows the method (Mutex).Unlock of DepthBTree.Mutex.
 func (d *DepthBTree) Unlock() {
 	d.Mutex.Unlock()
+}
+
+// UpdateAsk implements depth_interface.Depths.
+func (d *DepthBTree) UpdateAsk(ask common.PriceLevel, askLastUpdateID depth_interface.AskLastUpdateID) (err error) {
+	price, quantity, err := ask.Parse()
+	if err != nil {
+		return
+	}
+	value := d.GetItem(types.Price(price))
+	d.AskLastUpdateID = askLastUpdateID
+	if value != nil {
+		value.AskQuantity += types.Price(quantity)
+	} else {
+		value =
+			&depth_interface.DepthItemType{
+				Price:       types.Price(price),
+				AskQuantity: types.Price(quantity),
+				BidQuantity: 0,
+			}
+	}
+	d.SetItem(*value)
+	return nil
+}
+
+// UpdateBid implements depth_interface.Depths.
+func (d *DepthBTree) UpdateBid(bid common.PriceLevel, bidLastUpdateID depth_interface.BidLastUpdateID) (err error) {
+	price, quantity, err := bid.Parse()
+	if err != nil {
+		return
+	}
+	value := d.GetItem(types.Price(price))
+	d.BidLastUpdateID = bidLastUpdateID
+	if value != nil {
+		value.BidQuantity += types.Price(quantity)
+	} else {
+		value =
+			&depth_interface.DepthItemType{
+				Price:       types.Price(price),
+				AskQuantity: types.Price(quantity),
+				BidQuantity: 0,
+			}
+	}
+	d.SetItem(*value)
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
-	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -71,44 +70,19 @@ func GetDepthsUpdateGuard(depths *depth.DepthBTree, source chan *binance.WsDepth
 	go func() {
 		for {
 			event := <-source
-			for _, bid := range event.Bids {
-				value, exists := depths.GetItem(types.Price(utils.ConvStrToFloat64(bid.Price)))
-				if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
-					value.BidQuantity += types.Price(utils.ConvStrToFloat64(bid.Quantity))
-					value.BidLastUpdateID = event.LastUpdateID
-				} else {
-					value =
-						&depth_interface.DepthItemType{
-							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
-							AskLastUpdateID: event.LastUpdateID,
-							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
-							BidLastUpdateID: event.LastUpdateID,
-							BidQuantity:     0,
-						}
+			if int64(depths.BidLastUpdateID)+1 > event.FirstUpdateID {
+				for _, bid := range event.Bids {
+					depths.Lock()
+					depths.UpdateBid(bid, depth_interface.BidLastUpdateID(event.LastUpdateID))
+					depths.Unlock()
 				}
-				depths.Lock()
-				depths.SetItem(*value)
-				depths.Unlock()
 			}
-
-			for _, bid := range event.Asks {
-				value, exists := depths.GetItem(types.Price(utils.ConvStrToFloat64(bid.Price)))
-				if exists && value.AskLastUpdateID+1 > event.FirstUpdateID {
-					value.AskQuantity += types.Price(utils.ConvStrToFloat64(bid.Quantity))
-					value.AskLastUpdateID = event.LastUpdateID
-				} else {
-					value =
-						&depth_interface.DepthItemType{
-							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
-							AskLastUpdateID: event.LastUpdateID,
-							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
-							BidLastUpdateID: event.LastUpdateID,
-							BidQuantity:     0,
-						}
+			if int64(depths.AskLastUpdateID)+1 > event.FirstUpdateID {
+				for _, ask := range event.Asks {
+					depths.Lock()
+					depths.UpdateAsk(ask, depth_interface.AskLastUpdateID(event.LastUpdateID))
+					depths.Unlock()
 				}
-				depths.Lock()
-				depths.SetItem(*value)
-				depths.Unlock()
 			}
 			out <- true
 		}

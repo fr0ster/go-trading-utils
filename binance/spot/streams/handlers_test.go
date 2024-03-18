@@ -108,22 +108,22 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 func getTestDepths() *depth.DepthBTree {
 	testDepthTree := depth.DepthNew(3)
 	records := []depth_interface.DepthItemType{
-		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
-		{Price: 1.93, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 155.4}, // local maxima
-		{Price: 1.94, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.0},
-		{Price: 1.941, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 130.4},
-		{Price: 1.947, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 172.1},
-		{Price: 1.948, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 187.4},
-		{Price: 1.949, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 236.1}, // local maxima
-		{Price: 1.95, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 189.8},
-		{Price: 1.951, AskLastUpdateID: 2369068, AskQuantity: 217.9, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.952, AskLastUpdateID: 2369068, AskQuantity: 179.4, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.953, AskLastUpdateID: 2369068, AskQuantity: 180.9, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.954, AskLastUpdateID: 2369068, AskQuantity: 148.5, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.955, AskLastUpdateID: 2369068, AskQuantity: 120.0, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.956, AskLastUpdateID: 2369068, AskQuantity: 110.0, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.957, AskLastUpdateID: 2369068, AskQuantity: 140.0, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.958, AskLastUpdateID: 2369068, AskQuantity: 90.0, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
+		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima
+		{Price: 1.94, AskQuantity: 0, BidQuantity: 150.0},
+		{Price: 1.941, AskQuantity: 0, BidQuantity: 130.4},
+		{Price: 1.947, AskQuantity: 0, BidQuantity: 172.1},
+		{Price: 1.948, AskQuantity: 0, BidQuantity: 187.4},
+		{Price: 1.949, AskQuantity: 0, BidQuantity: 236.1}, // local maxima
+		{Price: 1.95, AskQuantity: 0, BidQuantity: 189.8},
+		{Price: 1.951, AskQuantity: 217.9, BidQuantity: 0}, // local maxima
+		{Price: 1.952, AskQuantity: 179.4, BidQuantity: 0},
+		{Price: 1.953, AskQuantity: 180.9, BidQuantity: 0}, // local maxima
+		{Price: 1.954, AskQuantity: 148.5, BidQuantity: 0},
+		{Price: 1.955, AskQuantity: 120.0, BidQuantity: 0},
+		{Price: 1.956, AskQuantity: 110.0, BidQuantity: 0},
+		{Price: 1.957, AskQuantity: 140.0, BidQuantity: 0}, // local maxima
+		{Price: 1.958, AskQuantity: 90.0, BidQuantity: 0},
 	}
 	for _, record := range records {
 		testDepthTree.ReplaceOrInsert(&record)

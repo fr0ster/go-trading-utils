@@ -6,29 +6,28 @@ import (
 
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
-	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
 func getTestDepths() *depth.DepthBTree {
 	testDepthTree := depth.DepthNew(3)
 	records := []depth_interface.DepthItemType{
-		{Price: 1.92, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.2},
-		{Price: 1.93, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 155.4}, // local maxima
-		{Price: 1.94, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 150.0},
-		{Price: 1.941, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 130.4},
-		{Price: 1.947, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 172.1},
-		{Price: 1.948, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 187.4},
-		{Price: 1.949, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 236.1}, // local maxima
-		{Price: 1.95, AskLastUpdateID: 0, AskQuantity: 0, BidLastUpdateID: 2369068, BidQuantity: 189.8},
-		{Price: 1.951, AskLastUpdateID: 2369068, AskQuantity: 217.9, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.952, AskLastUpdateID: 2369068, AskQuantity: 179.4, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.953, AskLastUpdateID: 2369068, AskQuantity: 180.9, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.954, AskLastUpdateID: 2369068, AskQuantity: 148.5, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.955, AskLastUpdateID: 2369068, AskQuantity: 120.0, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.956, AskLastUpdateID: 2369068, AskQuantity: 110.0, BidLastUpdateID: 0, BidQuantity: 0},
-		{Price: 1.957, AskLastUpdateID: 2369068, AskQuantity: 140.0, BidLastUpdateID: 0, BidQuantity: 0}, // local maxima
-		{Price: 1.958, AskLastUpdateID: 2369068, AskQuantity: 90.0, BidLastUpdateID: 0, BidQuantity: 0},
+		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
+		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima
+		{Price: 1.94, AskQuantity: 0, BidQuantity: 150.0},
+		{Price: 1.941, AskQuantity: 0, BidQuantity: 130.4},
+		{Price: 1.947, AskQuantity: 0, BidQuantity: 172.1},
+		{Price: 1.948, AskQuantity: 0, BidQuantity: 187.4},
+		{Price: 1.949, AskQuantity: 0, BidQuantity: 236.1}, // local maxima
+		{Price: 1.95, AskQuantity: 0, BidQuantity: 189.8},
+		{Price: 1.951, AskQuantity: 217.9, BidQuantity: 0}, // local maxima
+		{Price: 1.952, AskQuantity: 179.4, BidQuantity: 0},
+		{Price: 1.953, AskQuantity: 180.9, BidQuantity: 0}, // local maxima
+		{Price: 1.954, AskQuantity: 148.5, BidQuantity: 0},
+		{Price: 1.955, AskQuantity: 120.0, BidQuantity: 0},
+		{Price: 1.956, AskQuantity: 110.0, BidQuantity: 0},
+		{Price: 1.957, AskQuantity: 140.0, BidQuantity: 0}, // local maxima
+		{Price: 1.958, AskQuantity: 90.0, BidQuantity: 0},
 	}
 	for _, record := range records {
 		testDepthTree.ReplaceOrInsert(&record)
@@ -57,26 +56,6 @@ func TestGetDepthNew(t *testing.T) {
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
-
-	// Add additional assertions if needed
-}
-
-func TestSearchDepthTreeByPrices(t *testing.T) {
-	testDepthTree := getTestDepths()
-
-	// Call the function being tested
-	priceMin := types.Price(1.95)
-	priceMax := types.Price(1.952)
-	filteredTree := testDepthTree.GetByPrices(priceMin, priceMax)
-
-	// Add assertions to check the correctness of the filtered map
-	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(*depth_interface.DepthItemType) // Modify the type assertion to use a pointer receiver
-		if price.Price < priceMin || price.Price > priceMax {
-			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
-		}
-		return true
-	})
 
 	// Add additional assertions if needed
 }
