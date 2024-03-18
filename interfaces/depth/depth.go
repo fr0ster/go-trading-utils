@@ -26,8 +26,6 @@ type (
 		GetMaxBidMinAsk() (maxBid *DepthItemType, minAsk *DepthItemType)
 		GetBidQtyLocalMaxima() *DepthBTree
 		GetAskQtyLocalMaxima() *DepthBTree
-		GetBidQtyLocalMinima() *DepthBTree
-		GetAskQtyLocalMinima() *DepthBTree
 		Show()
 	}
 	DepthItemType struct {
