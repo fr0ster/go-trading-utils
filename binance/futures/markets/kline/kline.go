@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
 	"github.com/google/btree"
 )
@@ -29,9 +29,9 @@ func New(degree int) *Kline {
 
 // Init implements depth_interface.Depths.
 func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
-	binance.UseTestnet = UseTestnet
+	futures.UseTestnet = UseTestnet
 	klines, _ :=
-		binance.NewClient(apt_key, secret_key).NewKlinesService().
+		futures.NewClient(apt_key, secret_key).NewKlinesService().
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, kline := range klines {

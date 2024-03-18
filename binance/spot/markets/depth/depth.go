@@ -7,7 +7,6 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/adshao/go-binance/v2/futures"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -38,7 +37,7 @@ func New(degree int) *DepthBTree {
 
 // Init implements depth_interface.Depths.
 func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) error {
-	futures.UseTestnet = UseTestnet
+	binance.UseTestnet = UseTestnet
 	d.client = binance.NewClient(apt_key, secret_key)
 	res, err :=
 		d.client.NewDepthService().
