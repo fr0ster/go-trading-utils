@@ -215,7 +215,7 @@ func (d *DepthBTree) UpdateAsk(ask common.PriceLevel, askLastUpdateID int64) (er
 	if err != nil {
 		return
 	}
-	value := d.GetItem(price)
+	value := d.GetItem(utils.RoundToDecimalPlace(price, d.round))
 	d.AskLastUpdateID = askLastUpdateID
 	if value != nil {
 		value.AskQuantity += quantity
@@ -237,7 +237,7 @@ func (d *DepthBTree) UpdateBid(bid common.PriceLevel, bidLastUpdateID int64) (er
 	if err != nil {
 		return
 	}
-	value := d.GetItem(price)
+	value := d.GetItem(utils.RoundToDecimalPlace(price, d.round))
 	d.BidLastUpdateID = bidLastUpdateID
 	if value != nil {
 		value.BidQuantity += quantity
