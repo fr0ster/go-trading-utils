@@ -3,6 +3,7 @@ package streams
 import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -70,16 +71,16 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *futures.WsDep
 		for {
 			event := <-source
 			for _, bid := range event.Bids {
-				value, exists := depths.GetItem(markets.Price(utils.ConvStrToFloat64(bid.Price)))
+				value, exists := depths.GetItem(types.Price(utils.ConvStrToFloat64(bid.Price)))
 				if exists && value.BidLastUpdateID+1 > event.FirstUpdateID {
-					value.BidQuantity += markets.Price(utils.ConvStrToFloat64(bid.Quantity))
+					value.BidQuantity += types.Price(utils.ConvStrToFloat64(bid.Quantity))
 					value.BidLastUpdateID = event.LastUpdateID
 				} else {
 					value =
 						&markets.DepthItemType{
-							Price:           markets.Price(utils.ConvStrToFloat64(bid.Price)),
+							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
-							AskQuantity:     markets.Price(utils.ConvStrToFloat64(bid.Quantity)),
+							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
 							BidLastUpdateID: event.LastUpdateID,
 							BidQuantity:     0,
 						}
@@ -90,16 +91,16 @@ func GetDepthsUpdateGuard(depths *markets.DepthBTree, source chan *futures.WsDep
 			}
 
 			for _, bid := range event.Asks {
-				value, exists := depths.GetItem(markets.Price(utils.ConvStrToFloat64(bid.Price)))
+				value, exists := depths.GetItem(types.Price(utils.ConvStrToFloat64(bid.Price)))
 				if exists && value.AskLastUpdateID+1 > event.FirstUpdateID {
-					value.AskQuantity += markets.Price(utils.ConvStrToFloat64(bid.Quantity))
+					value.AskQuantity += types.Price(utils.ConvStrToFloat64(bid.Quantity))
 					value.AskLastUpdateID = event.LastUpdateID
 				} else {
 					value =
 						&markets.DepthItemType{
-							Price:           markets.Price(utils.ConvStrToFloat64(bid.Price)),
+							Price:           types.Price(utils.ConvStrToFloat64(bid.Price)),
 							AskLastUpdateID: event.LastUpdateID,
-							AskQuantity:     markets.Price(utils.ConvStrToFloat64(bid.Quantity)),
+							AskQuantity:     types.Price(utils.ConvStrToFloat64(bid.Quantity)),
 							BidLastUpdateID: event.LastUpdateID,
 							BidQuantity:     0,
 						}

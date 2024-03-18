@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -39,12 +39,11 @@ func getTestDepths() *markets.DepthBTree {
 func TestInitDepthTree(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	// futures.UseTestnet = true
-	client := futures.NewClient(api_key, secret_key)
+	UseTestnet := true
 
 	// Add more test cases here
 	testDepthTree := markets.DepthNew(3)
-	err := testDepthTree.Init(client, "BTCUSDT")
+	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}
@@ -65,8 +64,8 @@ func TestSearchDepthTreeByPrices(t *testing.T) {
 	testDepthTree := getTestDepths()
 
 	// Call the function being tested
-	priceMin := markets.Price(1.95)
-	priceMax := markets.Price(1.952)
+	priceMin := types.Price(1.95)
+	priceMax := types.Price(1.952)
 	filteredTree := testDepthTree.GetByPrices(priceMin, priceMax)
 
 	// Add assertions to check the correctness of the filtered map

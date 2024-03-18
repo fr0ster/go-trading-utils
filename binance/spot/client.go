@@ -1,6 +1,8 @@
 package spot
 
-import "github.com/adshao/go-binance/v2"
+import (
+	"github.com/adshao/go-binance/v2"
+)
 
 type SpotClient struct {
 	client *binance.Client
