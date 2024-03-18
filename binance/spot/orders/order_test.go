@@ -12,8 +12,8 @@ import (
 )
 
 func TestNewLimitOrder(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
+	api_key := os.Getenv("SPOT_TEST_BINANCE_API_KEY")
+	secret_key := os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	// Create a new limit order

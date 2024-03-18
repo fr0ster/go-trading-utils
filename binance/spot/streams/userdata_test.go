@@ -13,7 +13,7 @@ import (
 func TestNewUserDataStream(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	listenKey, err := spot.NewClient(api_key, secret_key, true).GetClient().NewStartUserStreamService().Do(context.Background())
+	listenKey, err := spot.NewClient(api_key, secret_key, false).GetClient().NewStartUserStreamService().Do(context.Background())
 	assert.Nil(t, err)
 	stream := streams.NewUserDataStream(listenKey)
 
@@ -25,7 +25,7 @@ func TestNewUserDataStream(t *testing.T) {
 func TestUserDataStream_Start(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	listenKey, err := spot.NewClient(api_key, secret_key, true).GetClient().NewStartUserStreamService().Do(context.Background())
+	listenKey, err := spot.NewClient(api_key, secret_key, false).GetClient().NewStartUserStreamService().Do(context.Background())
 	assert.Nil(t, err)
 	stream := streams.NewUserDataStream(listenKey)
 	doneC, stopC, err := stream.Start()

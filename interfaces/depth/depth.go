@@ -1,23 +1,16 @@
-package depth_interface
+package depth
 
 import (
-	"sync"
-
 	"github.com/adshao/go-binance/v2/common"
 	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
 type (
-	Depth interface {
-		GetItem() *Depth
-		Less(than interface{}) bool
-		Equal(than interface{}) bool
-	}
 	Depths interface {
 		Lock()
 		Unlock()
-		Init(apt_key, secret_key, symbolname string, UseTestnet bool) *Depths
+		Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error)
 		GetItem(price types.Price) *DepthItemType
 		SetItem(value DepthItemType)
 		UpdateAsk(ask common.PriceLevel, askLastUpdateID AskLastUpdateID) (err error)
@@ -37,14 +30,6 @@ type (
 	}
 	AskLastUpdateID int64
 	BidLastUpdateID int64
-	Degree          int
-	DepthBTree      struct {
-		btree.BTree
-		sync.Mutex
-		Degree
-		AskLastUpdateID
-		BidLastUpdateID
-	}
 )
 
 // DepthItemType - тип для зберігання заявок в стакані

@@ -14,16 +14,52 @@ import (
 )
 
 type (
-	DepthBTree depth_interface.DepthBTree
+	// DepthBTree depth_interface.DepthBTree
+	Degree     int
+	DepthBTree struct {
+		client *futures.Client
+		btree.BTree
+		mutex  sync.Mutex
+		degree int
+		depth_interface.AskLastUpdateID
+		depth_interface.BidLastUpdateID
+	}
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
-func DepthNew(degree int) *DepthBTree {
+func New(degree int) *DepthBTree {
 	return &DepthBTree{
+		client: nil,
 		BTree:  *btree.New(int(degree)),
-		Mutex:  sync.Mutex{},
-		Degree: depth_interface.Degree(degree),
+		mutex:  sync.Mutex{},
+		degree: degree,
 	}
+}
+
+// Init implements depth_interface.Depths.
+func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) error {
+	futures.UseTestnet = UseTestnet
+	d.client = futures.NewClient(apt_key, secret_key)
+	res, err :=
+		d.client.NewDepthService().
+			Symbol(string(symbolname)).
+			Do(context.Background())
+	if err != nil {
+		return err
+	}
+	for _, bid := range res.Bids {
+		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
+			Price:       types.Price(utils.ConvStrToFloat64(bid.Price)),
+			BidQuantity: types.Price(utils.ConvStrToFloat64(bid.Quantity)),
+		})
+	}
+	for _, ask := range res.Asks {
+		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
+			Price:       types.Price(utils.ConvStrToFloat64(ask.Price)),
+			AskQuantity: types.Price(utils.ConvStrToFloat64(ask.Quantity)),
+		})
+	}
+	return nil
 }
 
 // UpdateItem implements depth_interface.Depths.
@@ -35,7 +71,7 @@ func (d *DepthBTree) DeleteItem(value *depth_interface.DepthItemType) bool {
 
 // GetAskQtyLocalMaxima implements depth_interface.Depths.
 func (d *DepthBTree) GetAskQtyLocalMaxima() *btree.BTree {
-	maximaTree := DepthNew(2)
+	maximaTree := New(int(d.degree))
 	var prev, current, next *depth_interface.DepthItemType
 	d.Ascend(func(a btree.Item) bool {
 		next = a.(*depth_interface.DepthItemType)
@@ -51,7 +87,7 @@ func (d *DepthBTree) GetAskQtyLocalMaxima() *btree.BTree {
 
 // GetBidQtyLocalMaxima implements depth_interface.Depths.
 func (d *DepthBTree) GetBidQtyLocalMaxima() *btree.BTree {
-	maximaTree := DepthNew(2)
+	maximaTree := New(int(d.degree))
 	var prev, current, next *depth_interface.DepthItemType
 	d.Ascend(func(a btree.Item) bool {
 		next = a.(*depth_interface.DepthItemType)
@@ -133,35 +169,10 @@ func (d *DepthBTree) GetMaxBids() *depth_interface.DepthItemType {
 	return bid
 }
 
-// Init implements depth_interface.Depths.
-func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) *depth_interface.Depths {
-	futures.UseTestnet = UseTestnet
-	res, err :=
-		futures.NewClient(apt_key, secret_key).NewDepthService().
-			Symbol(string(symbolname)).
-			Do(context.Background())
-	if err != nil {
-		return nil
-	}
-	for _, bid := range res.Bids {
-		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-			Price:       types.Price(utils.ConvStrToFloat64(bid.Price)),
-			BidQuantity: types.Price(utils.ConvStrToFloat64(bid.Quantity)),
-		})
-	}
-	for _, ask := range res.Asks {
-		d.BTree.ReplaceOrInsert(&depth_interface.DepthItemType{
-			Price:       types.Price(utils.ConvStrToFloat64(ask.Price)),
-			AskQuantity: types.Price(utils.ConvStrToFloat64(ask.Quantity)),
-		})
-	}
-	return nil
-}
-
 // Lock implements depth_interface.Depths.
 // Subtle: this method shadows the method (Mutex).Lock of DepthBTree.Mutex.
 func (d *DepthBTree) Lock() {
-	d.Mutex.Lock()
+	d.mutex.Lock()
 }
 
 // SetItem implements depth_interface.Depths.
@@ -188,7 +199,7 @@ func (d *DepthBTree) Show() {
 // Unlock implements depth_interface.Depths.
 // Subtle: this method shadows the method (Mutex).Unlock of DepthBTree.Mutex.
 func (d *DepthBTree) Unlock() {
-	d.Mutex.Unlock()
+	d.mutex.Unlock()
 }
 
 // UpdateAsk implements depth_interface.Depths.
