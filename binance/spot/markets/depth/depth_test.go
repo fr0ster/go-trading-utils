@@ -10,7 +10,7 @@ import (
 )
 
 func getTestDepths() *depth.DepthBTree {
-	testDepthTree := depth.New(3)
+	testDepthTree := depth.New(3, 3)
 	records := []depth_interface.DepthItemType{
 		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
 		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima
@@ -39,10 +39,10 @@ func getTestDepths() *depth.DepthBTree {
 func TestInitDepthTree(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := true
+	UseTestnet := false
 
 	// Add more test cases here
-	testDepthTree := depth.New(3)
+	testDepthTree := depth.New(3, 2)
 	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
@@ -52,7 +52,7 @@ func TestInitDepthTree(t *testing.T) {
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := depth.New(3)
+	testDepthTree := depth.New(3, 2)
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}

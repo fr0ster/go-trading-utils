@@ -2,7 +2,6 @@ package depth
 
 import (
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -11,10 +10,10 @@ type (
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error)
-		GetItem(price types.Price) *DepthItemType
+		GetItem(price float64) *DepthItemType
 		SetItem(value DepthItemType)
-		UpdateAsk(ask common.PriceLevel, askLastUpdateID AskLastUpdateID) (err error)
-		UpdateBid(bid common.PriceLevel, bidLastUpdateID BidLastUpdateID) (err error)
+		UpdateAsk(ask common.PriceLevel, askLastUpdateID int64) (err error)
+		UpdateBid(bid common.PriceLevel, bidLastUpdateID int64) (err error)
 		GetMaxBids() *DepthItemType
 		GetMaxAsks() *DepthItemType
 		GetMaxBidQtyMaxAskQty() (maxBidNode *DepthItemType, maxAskNode *DepthItemType)
@@ -24,12 +23,10 @@ type (
 		Show()
 	}
 	DepthItemType struct {
-		Price       types.Price
-		AskQuantity types.Price
-		BidQuantity types.Price
+		Price       float64
+		AskQuantity float64
+		BidQuantity float64
 	}
-	AskLastUpdateID int64
-	BidLastUpdateID int64
 )
 
 // DepthItemType - тип для зберігання заявок в стакані

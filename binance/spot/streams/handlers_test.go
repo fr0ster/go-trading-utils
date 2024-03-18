@@ -106,7 +106,7 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 }
 
 func getTestDepths() *depth.DepthBTree {
-	testDepthTree := depth.New(3)
+	testDepthTree := depth.New(3, 3)
 	records := []depth_interface.DepthItemType{
 		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
 		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima

@@ -4,7 +4,6 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -74,14 +73,14 @@ func GetDepthsUpdateGuard(depths *depth.DepthBTree, source chan *futures.WsDepth
 			if int64(depths.BidLastUpdateID)+1 > event.FirstUpdateID {
 				for _, bid := range event.Bids {
 					depths.Lock()
-					depths.UpdateBid(bid, depth_interface.BidLastUpdateID(event.LastUpdateID))
+					depths.UpdateBid(bid, event.LastUpdateID)
 					depths.Unlock()
 				}
 			}
 			if int64(depths.AskLastUpdateID)+1 > event.FirstUpdateID {
 				for _, ask := range event.Asks {
 					depths.Lock()
-					depths.UpdateAsk(ask, depth_interface.AskLastUpdateID(event.LastUpdateID))
+					depths.UpdateAsk(ask, event.LastUpdateID)
 					depths.Unlock()
 				}
 			}

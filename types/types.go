@@ -21,5 +21,4 @@ type (
 		Timestamp time.Time
 		Message   string
 	}
-	Price float64
 )

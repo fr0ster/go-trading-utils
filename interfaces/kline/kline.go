@@ -1,7 +1,6 @@
 package kline
 
 import (
-	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -10,7 +9,7 @@ type (
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool)
-		GetItem(price types.Price) *Kline
+		GetItem(openTime int64) *Kline
 		SetItem(value Kline)
 		Show()
 	}
