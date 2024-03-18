@@ -6,7 +6,6 @@ import (
 
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
-	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -57,26 +56,6 @@ func TestGetDepthNew(t *testing.T) {
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
-
-	// Add additional assertions if needed
-}
-
-func TestSearchDepthTreeByPrices(t *testing.T) {
-	testDepthTree := getTestDepths()
-
-	// Call the function being tested
-	priceMin := types.Price(1.95)
-	priceMax := types.Price(1.952)
-	filteredTree := testDepthTree.GetByPrices(priceMin, priceMax)
-
-	// Add assertions to check the correctness of the filtered map
-	filteredTree.Ascend(func(i btree.Item) bool {
-		price := i.(*depth_interface.DepthItemType) // Modify the type assertion to use a pointer receiver
-		if price.Price < priceMin || price.Price > priceMax {
-			t.Errorf("SearchDepthTreeByPrices returned a tree with incorrect prices")
-		}
-		return true
-	})
 
 	// Add additional assertions if needed
 }
