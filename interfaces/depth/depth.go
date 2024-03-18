@@ -10,6 +10,8 @@ type (
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error)
+		Ascend(iter func(btree.Item) bool)
+		Descend(iter func(btree.Item) bool)
 		GetItem(price float64) *DepthItemType
 		SetItem(value DepthItemType)
 		UpdateAsk(ask common.PriceLevel, askLastUpdateID int64) (err error)

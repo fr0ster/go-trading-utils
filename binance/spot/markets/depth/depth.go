@@ -56,6 +56,16 @@ func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, 
 	return nil
 }
 
+// Ascend implements depth_interface.Depths.
+func (d *DepthBTree) Ascend(iter func(btree.Item) bool) {
+	d.BTree.Ascend(iter)
+}
+
+// Descend implements depth_interface.Depths.
+func (d *DepthBTree) Descend(iter func(btree.Item) bool) {
+	d.BTree.Descend(iter)
+}
+
 // DeleteItem implements depth_interface.Depths.
 func (d *DepthBTree) DeleteItem(value *depth_interface.DepthItemType) bool {
 	item := d.BTree.Delete(value)
