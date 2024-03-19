@@ -73,14 +73,14 @@ func GetDepthsUpdateGuard(depths *depth.DepthBTree, source chan *futures.WsDepth
 			if int64(depths.BidLastUpdateID)+1 > event.FirstUpdateID {
 				for _, bid := range event.Bids {
 					depths.Lock()
-					depths.UpdateBid(bid, event.LastUpdateID)
+					depths.UpdateBid(bid)
 					depths.Unlock()
 				}
 			}
 			if int64(depths.AskLastUpdateID)+1 > event.FirstUpdateID {
 				for _, ask := range event.Asks {
 					depths.Lock()
-					depths.UpdateAsk(ask, event.LastUpdateID)
+					depths.UpdateAsk(ask)
 					depths.Unlock()
 				}
 			}

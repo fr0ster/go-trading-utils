@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/adshao/go-binance/v2/common"
 	"github.com/adshao/go-binance/v2/futures"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -47,31 +48,10 @@ func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, 
 		return err
 	}
 	for _, bid := range res.Bids {
-		price, quantity, err := bid.Parse()
-		if err != nil {
-			continue
-		}
-		d.SetItem(depth_interface.DepthItemType{
-			Price:       utils.RoundToDecimalPlace(price, d.round),
-			AskQuantity: 0,
-			BidQuantity: quantity,
-		})
+		d.UpdateBid(bid)
 	}
 	for _, ask := range res.Asks {
-		price, quantity, err := ask.Parse()
-		if err != nil {
-			continue
-		}
-		d.SetItem(depth_interface.DepthItemType{
-			Price:       utils.RoundToDecimalPlace(price, d.round),
-			AskQuantity: quantity,
-			BidQuantity: 0,
-		})
-		d.SetItem(depth_interface.DepthItemType{
-			Price:       utils.RoundToDecimalPlace(price, d.round),
-			AskQuantity: quantity,
-			BidQuantity: 0,
-		})
+		d.UpdateAsk(ask)
 	}
 	return nil
 }
@@ -227,4 +207,34 @@ func (d *DepthBTree) Show() {
 // Subtle: this method shadows the method (Mutex).Unlock of DepthBTree.Mutex.
 func (d *DepthBTree) Unlock() {
 	d.mutex.Unlock()
+}
+
+// UpdateAsk implements depth_interface.Depths.
+func (d *DepthBTree) UpdateAsk(ask common.PriceLevel) {
+	price, quantity, err := ask.Parse()
+	if err != nil {
+		return
+	}
+	d.Lock()
+	d.SetItem(depth_interface.DepthItemType{
+		Price:       utils.RoundToDecimalPlace(price, d.round),
+		BidQuantity: 0,
+		AskQuantity: quantity,
+	})
+	d.Unlock()
+}
+
+// UpdateBid implements depth_interface.Depths.
+func (d *DepthBTree) UpdateBid(bid common.PriceLevel) {
+	price, quantity, err := bid.Parse()
+	if err != nil {
+		return
+	}
+	d.Lock()
+	d.SetItem(depth_interface.DepthItemType{
+		Price:       utils.RoundToDecimalPlace(price, d.round),
+		BidQuantity: quantity,
+		AskQuantity: 0,
+	})
+	d.Unlock()
 }
