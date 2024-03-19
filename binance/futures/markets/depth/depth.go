@@ -18,6 +18,7 @@ type (
 		mutex           sync.Mutex
 		degree          int
 		round           int
+		limit           int
 		AskLastUpdateID int64
 		BidLastUpdateID int64
 	}
@@ -25,7 +26,7 @@ type (
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
-func New(degree, round int) *Depth {
+func New(degree, round, limit int) *Depth {
 	return &Depth{
 		client: nil,
 		asks:   *btree.New(degree),
@@ -33,6 +34,7 @@ func New(degree, round int) *Depth {
 		mutex:  sync.Mutex{},
 		degree: degree,
 		round:  round,
+		limit:  limit,
 	}
 }
 
@@ -62,6 +64,7 @@ func (d *Depth) Init(apt_key, secret_key, symbolname string, UseTestnet bool) (e
 	res, err :=
 		d.client.NewDepthService().
 			Symbol(string(symbolname)).
+			Limit(d.limit).
 			Do(context.Background())
 	if err != nil {
 		return err
