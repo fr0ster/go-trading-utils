@@ -2,7 +2,7 @@ package streams
 
 import (
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/balances"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
@@ -24,20 +24,20 @@ func GetFilledOrdersGuard(source chan *binance.WsUserDataEvent) (out chan *binan
 	return
 }
 
-func GetBalancesUpdateGuard(balances *markets.BalanceBTree, source chan *binance.WsUserDataEvent) (out chan bool) {
+func GetBalancesUpdateGuard(bt *balances.BalanceBTree, source chan *binance.WsUserDataEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
 			event := <-source
 			for _, item := range event.AccountUpdate.WsAccountUpdates {
-				balanceUpdate := markets.BalanceItemType{
-					Asset:  markets.AssetType(item.Asset),
+				balanceUpdate := balances.BalanceItemType{
+					Asset:  balances.AssetType(item.Asset),
 					Free:   utils.ConvStrToFloat64(item.Free),
 					Locked: utils.ConvStrToFloat64(item.Locked),
 				}
-				balances.Lock()
-				balances.SetItem(balanceUpdate)
-				balances.Unlock()
+				bt.Lock()
+				bt.SetItem(balanceUpdate)
+				bt.Unlock()
 			}
 			out <- true
 		}

@@ -1,9 +1,9 @@
-package markets
+package balances
 
 import (
 	"sync"
 
-	"github.com/adshao/go-binance/v2/futures"
+	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -16,24 +16,22 @@ type (
 		sync.Mutex
 	}
 	BalanceItemType struct {
-		Asset              AssetType
-		Balance            float64
-		CrossWalletBalance float64
-		ChangeBalance      float64
+		Asset  AssetType
+		Free   float64
+		Locked float64
 	}
 )
 
-func BalanceNew(degree int, balances []futures.WsBalance) *BalanceBTree {
+func New(degree int, balances []binance.Balance) *BalanceBTree {
 	balancesTree := &BalanceBTree{
 		BTree: btree.New(degree),
 		Mutex: sync.Mutex{},
 	}
 	for _, balance := range balances {
 		balancesTree.ReplaceOrInsert(BalanceItemType{
-			Asset:              AssetType(balance.Asset),
-			Balance:            utils.ConvStrToFloat64(balance.Balance),
-			CrossWalletBalance: utils.ConvStrToFloat64(balance.CrossWalletBalance),
-			ChangeBalance:      utils.ConvStrToFloat64(balance.ChangeBalance),
+			Asset:  AssetType(balance.Asset),
+			Free:   utils.ConvStrToFloat64(balance.Free),
+			Locked: utils.ConvStrToFloat64(balance.Locked),
 		})
 	}
 	return balancesTree
@@ -47,10 +45,6 @@ func (b BalanceItemType) Less(than btree.Item) bool {
 
 func (b *BalanceItemType) Equal(than btree.Item) bool {
 	return b.Asset == than.(*BalanceItemType).Asset
-}
-
-func (i *BalanceItemType) GetItem() *BalanceItemType {
-	return i
 }
 
 func (tree *BalanceBTree) Lock() {
@@ -76,25 +70,15 @@ func (tree *BalanceBTree) SetItem(item BalanceItemType) {
 func (tree *BalanceBTree) Show() {
 	tree.Ascend(func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
-		logrus.Infof(
-			"%s: Balance: %f, CrossWalletBalance: %f, ChangeBalance: %f",
-			balance.Asset,
-			balance.Balance,
-			balance.CrossWalletBalance,
-			balance.ChangeBalance)
+		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
 		return true
 	})
 }
 
-func (tree *BalanceBTree) ShowByAsset(symbol SymbolType) {
-	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(symbol)}, func(i btree.Item) bool {
+func (tree *BalanceBTree) ShowByAsset(asset string) {
+	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(asset)}, func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
-		logrus.Infof(
-			"%s: Balance: %f, CrossWalletBalance: %f, ChangeBalance: %f",
-			balance.Asset,
-			balance.Balance,
-			balance.CrossWalletBalance,
-			balance.ChangeBalance)
+		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
 		return false
 	})
 }

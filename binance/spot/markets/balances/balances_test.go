@@ -1,23 +1,23 @@
-package markets_test
+package balances_test
 
 import (
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/balances"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBalanceBTree(t *testing.T) {
 	// Initialize the BalanceBTree
-	balanceTree := markets.BalanceNew(3, nil)
+	balanceTree := balances.New(3, nil)
 
 	// Create some sample balance items
-	balanceItem1 := markets.BalanceItemType{
+	balanceItem1 := balances.BalanceItemType{
 		Asset:  "BTC",
 		Free:   1.0,
 		Locked: 0.0,
 	}
-	balanceItem2 := markets.BalanceItemType{
+	balanceItem2 := balances.BalanceItemType{
 		Asset:  "ETH",
 		Free:   2.0,
 		Locked: 0.5,

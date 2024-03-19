@@ -1,10 +1,11 @@
-package markets
+package account_test
 
 import (
 	"os"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/account"
 )
 
 func TestAccountNew(t *testing.T) {
@@ -12,7 +13,7 @@ func TestAccountNew(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	account, err := AccountNew(client, 3)
+	account, err := account.New(client, 3)
 	if err != nil || account == nil {
 		t.Errorf("Error creating account: %v", err)
 	}
@@ -25,7 +26,7 @@ func TestAccountType_GetBalances(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	account, _ := AccountNew(client, 3)
+	account, _ := account.New(client, 3)
 
 	balances := account.GetBalances()
 
@@ -41,7 +42,7 @@ func TestAccountType_GetAccountInfo(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	account, _ := AccountNew(client, 3)
+	account, _ := account.New(client, 3)
 
 	accountInfo := account.GetAccountInfo()
 

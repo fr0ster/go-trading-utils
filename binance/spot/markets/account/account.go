@@ -1,10 +1,11 @@
-package markets
+package account
 
 import (
 	"context"
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/balances"
 )
 
 type AccountType struct {
@@ -21,13 +22,13 @@ func (account *AccountType) Unlock() {
 	account.Mutex.Unlock()
 }
 
-func AccountNew(client *binance.Client, degree int) (*AccountType, error) {
+func New(client *binance.Client, degree int) (*AccountType, error) {
 	res, err := client.NewGetAccountService().Do(context.Background())
 	return &AccountType{Account: res, degree: degree, Mutex: sync.Mutex{}}, err
 }
 
-func (account *AccountType) GetBalances() *BalanceBTree {
-	balances := BalanceNew(account.degree, account.Account.Balances)
+func (account *AccountType) GetBalances() *balances.BalanceBTree {
+	balances := balances.New(account.degree, account.Account.Balances)
 	return balances
 }
 

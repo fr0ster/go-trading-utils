@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/balances"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
@@ -49,13 +49,13 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	balances := markets.BalanceNew(3, nil)
-	balances.SetItem(markets.BalanceItemType{
+	bt := balances.New(3, nil)
+	bt.SetItem(balances.BalanceItemType{
 		Asset:  "BTC",
 		Free:   0.0,
 		Locked: 0.0,
 	})
-	outChannel := streams.GetBalancesUpdateGuard(balances, inChannel)
+	outChannel := streams.GetBalancesUpdateGuard(bt, inChannel)
 	inChannel <- even
 	res := false
 	for {

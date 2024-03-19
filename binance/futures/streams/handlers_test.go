@@ -1,13 +1,17 @@
 package streams_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/fr0ster/go-trading-utils/binance/futures/markets"
+	accounts "github.com/fr0ster/go-trading-utils/binance/futures/markets/account"
+	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
+	bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
+	bookticker_interfaces "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
@@ -47,14 +51,37 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	balances := markets.BalanceNew(3, nil)
-	balances.SetItem(markets.BalanceItemType{
-		Asset:              "BTC",
-		Balance:            0.0,
-		ChangeBalance:      0.0,
-		CrossWalletBalance: 0.0,
+
+	api_key := os.Getenv("API_KEY")
+	secret_key := os.Getenv("SECRET_KEY")
+	account, err := accounts.New(futures.NewClient(api_key, secret_key), 3)
+	if err != nil || account == nil {
+		t.Errorf("Error creating account: %v", err)
+	}
+
+	accountAsset := &futures.AccountAsset{
+		Asset:                  "BTC",
+		InitialMargin:          "0.0",
+		MaintMargin:            "0.0",
+		MarginBalance:          "0.0",
+		MaxWithdrawAmount:      "0.0",
+		OpenOrderInitialMargin: "0.0",
+		PositionInitialMargin:  "0.0",
+		UnrealizedProfit:       "0.0",
+		WalletBalance:          "0.0",
+		CrossWalletBalance:     "0.0",
+		CrossUnPnl:             "0.0",
+		AvailableBalance:       "0.0",
+		MarginAvailable:        false,
+		UpdateTime:             0,
+	}
+	bt := balances.New(3, append([]*futures.AccountAsset{}, accountAsset))
+	bt.SetItem(balances.BalanceItemType{
+		Asset:  "BTC",
+		Free:   0.0,
+		Locked: 0.0,
 	})
-	outChannel := streams.GetBalancesUpdateGuard(balances, inChannel)
+	outChannel := streams.GetBalancesUpdateGuard(bt, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -81,8 +108,8 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 		BestAskQty:   "320.0",
 	}
 	inChannel := make(chan *futures.WsBookTickerEvent, 1)
-	bookTicker := markets.BookTickerNew(3)
-	bookTicker.SetItem(markets.BookTickerItemType{
+	bookTicker := bookticker.New(3)
+	bookTicker.Set(bookticker_interfaces.BookTickerItem{
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,
 		BidQuantity: 0.0,

@@ -1,9 +1,9 @@
-package markets
+package balances
 
 import (
 	"sync"
 
-	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -22,16 +22,16 @@ type (
 	}
 )
 
-func BalanceNew(degree int, balances []binance.Balance) *BalanceBTree {
+func New(degree int, assets []*futures.AccountAsset) *BalanceBTree {
 	balancesTree := &BalanceBTree{
 		BTree: btree.New(degree),
 		Mutex: sync.Mutex{},
 	}
-	for _, balance := range balances {
+	for _, balance := range assets {
 		balancesTree.ReplaceOrInsert(BalanceItemType{
 			Asset:  AssetType(balance.Asset),
-			Free:   utils.ConvStrToFloat64(balance.Free),
-			Locked: utils.ConvStrToFloat64(balance.Locked),
+			Free:   utils.ConvStrToFloat64(balance.AvailableBalance),
+			Locked: utils.ConvStrToFloat64(balance.WalletBalance) - utils.ConvStrToFloat64(balance.AvailableBalance),
 		})
 	}
 	return balancesTree
@@ -54,20 +54,6 @@ func (tree *BalanceBTree) Lock() {
 func (tree *BalanceBTree) Unlock() {
 	tree.Mutex.Unlock()
 }
-
-// func (tree *BalanceBTree) Init(balances []binance.Balance) (err error) {
-// 	if len(balances) == 0 {
-// 		return errors.New("balances is empty")
-// 	}
-// 	for _, balance := range balances {
-// 		tree.ReplaceOrInsert(BalanceItemType{
-// 			Asset:  AssetType(balance.Asset),
-// 			Free:   utils.ConvStrToFloat64(balance.Free),
-// 			Locked: utils.ConvStrToFloat64(balance.Locked),
-// 		})
-// 	}
-// 	return nil
-// }
 
 func (tree *BalanceBTree) GetItem(asset AssetType) (res BalanceItemType, err error) {
 	item := BalanceItemType{
