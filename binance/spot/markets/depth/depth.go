@@ -169,7 +169,8 @@ func (d *Depth) GetBidLocalMaxima() *btree.BTree {
 	var prev, current, next *depth_interface.DepthItemType
 	d.BidAscend(func(a btree.Item) bool {
 		next = a.(*depth_interface.DepthItemType)
-		if current != nil && prev != nil && current.Quantity > prev.Quantity && current.Quantity > next.Quantity {
+		if (current != nil && prev != nil && current.Quantity > prev.Quantity && current.Quantity > next.Quantity) ||
+			(current != nil && prev == nil && current.Quantity > next.Quantity) {
 			maximaTree.ReplaceOrInsert(current)
 		}
 		prev = current
@@ -185,7 +186,8 @@ func (d *Depth) GetAskLocalMaxima() *btree.BTree {
 	var prev, current, next *depth_interface.DepthItemType
 	d.AskAscend(func(a btree.Item) bool {
 		next = a.(*depth_interface.DepthItemType)
-		if current != nil && prev != nil && current.Quantity > prev.Quantity && current.Quantity > next.Quantity {
+		if (current != nil && prev != nil && current.Quantity > prev.Quantity && current.Quantity > next.Quantity) ||
+			(current != nil && prev == nil && current.Quantity > next.Quantity) {
 			maximaTree.ReplaceOrInsert(current)
 		}
 		prev = current

@@ -179,6 +179,12 @@ func TestGetBidLocalMaxima(t *testing.T) {
 	if maxima == nil {
 		t.Errorf("Failed to get bid local maxima")
 	}
+	if maxima.Get(&depth_interface.DepthItemType{Price: 1.93}) == nil {
+		t.Errorf("Failed to get bid local maxima")
+	}
+	if maxima.Get(&depth_interface.DepthItemType{Price: 1.949}) == nil {
+		t.Errorf("Failed to get bid local maxima")
+	}
 }
 
 func TestGetAskLocalMaxima(t *testing.T) {
@@ -188,6 +194,15 @@ func TestGetAskLocalMaxima(t *testing.T) {
 	maxima := ds.GetAskLocalMaxima()
 	if maxima == nil {
 		t.Errorf("Failed to get ask local maxima")
+	}
+	if maxima.Get(&depth_interface.DepthItemType{Price: 1.951}) == nil {
+		t.Errorf("Failed to get ask local maxima: 1.951")
+	}
+	if maxima.Get(&depth_interface.DepthItemType{Price: 1.953}) == nil {
+		t.Errorf("Failed to get ask local maxima: 1.953")
+	}
+	if maxima.Get(&depth_interface.DepthItemType{Price: 1.957}) == nil {
+		t.Errorf("Failed to get ask local maxima: 1.957")
 	}
 }
 
