@@ -1,7 +1,6 @@
 package strategy
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,20 +8,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot"
-	"github.com/fr0ster/go-trading-utils/interfaces"
+	listenkey_interface "github.com/fr0ster/go-trading-utils/interfaces/listenkey"
 
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
-func SimpleSpot(client *interfaces.Client, symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
-	apiKey := os.Getenv("API_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
-	listenKey, err :=
-		spot.NewClient(apiKey, secretKey, true).
-			GetClient().
-			NewStartUserStreamService().
-			Do(context.Background())
+func SimpleSpot(listGen listenkey_interface.ListGen, symbolname, quantity, price, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+	// apiKey := os.Getenv("API_KEY")
+	// secretKey := os.Getenv("SECRET_KEY")
+	listenKey, err := listGen.GetListenKey()
 	if err != nil {
 		log.Fatalf("Error starting user stream: %v", err)
 	}

@@ -1,11 +1,10 @@
 package streams_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot"
+	"github.com/fr0ster/go-trading-utils/binance/spot/listenkey"
 	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,7 +12,7 @@ import (
 func TestNewUserDataStream(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	listenKey, err := spot.NewClient(api_key, secret_key, false).GetClient().NewStartUserStreamService().Do(context.Background())
+	listenKey, err := listenkey.New(api_key, secret_key, false).GetListenKey()
 	assert.Nil(t, err)
 	stream := streams.NewUserDataStream(listenKey)
 
@@ -25,7 +24,7 @@ func TestNewUserDataStream(t *testing.T) {
 func TestUserDataStream_Start(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	listenKey, err := spot.NewClient(api_key, secret_key, false).GetClient().NewStartUserStreamService().Do(context.Background())
+	listenKey, err := listenkey.New(api_key, secret_key, false).GetListenKey()
 	assert.Nil(t, err)
 	stream := streams.NewUserDataStream(listenKey)
 	doneC, stopC, err := stream.Start()
