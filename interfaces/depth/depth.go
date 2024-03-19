@@ -5,7 +5,7 @@ import (
 )
 
 type (
-	Depths interface {
+	Depth interface {
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error)

@@ -196,7 +196,7 @@ func TestInterface(t *testing.T) {
 	ds := depth.New(3, 2, 5)
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
-	err := func(ds depth_interface.Depths, max float64) error {
+	err := func(ds depth_interface.Depth, max float64) error {
 		di := ds.GetMaxAsks()
 		if di.Price != max {
 			return errors.New("Failed to get max asks")
