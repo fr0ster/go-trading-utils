@@ -10,7 +10,7 @@ type (
 	Config struct {
 		Timestamp         time.Time
 		AccountType       binance.AccountType
-		Symbol            binance.SymbolType
+		Symbol            string
 		Balance           float64
 		CalculatedBalance float64
 		Quantity          float64

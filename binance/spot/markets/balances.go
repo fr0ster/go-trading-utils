@@ -89,8 +89,8 @@ func (tree *BalanceBTree) Show() {
 	})
 }
 
-func (tree *BalanceBTree) ShowByAsset(symbol SymbolType) {
-	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(symbol)}, func(i btree.Item) bool {
+func (tree *BalanceBTree) ShowByAsset(asset string) {
+	tree.AscendGreaterOrEqual(BalanceItemType{Asset: AssetType(asset)}, func(i btree.Item) bool {
 		balance := i.(BalanceItemType)
 		logrus.Infof("%s: Free: %f, Locked: %f", balance.Asset, balance.Free, balance.Locked)
 		return false

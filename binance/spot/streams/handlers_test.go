@@ -6,8 +6,10 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
+	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
@@ -80,8 +82,8 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 		BestAskQty:   "320.0",
 	}
 	inChannel := make(chan *binance.WsBookTickerEvent, 1)
-	bookTicker := markets.BookTickerNew(3)
-	bookTicker.SetItem(markets.BookTickerItemType{
+	bookTicker := bookticker.BookTickerNew(3)
+	bookTicker.Set(bookticker_interface.BookTickerItem{
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,
 		BidQuantity: 0.0,

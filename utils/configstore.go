@@ -22,7 +22,7 @@ func NewConfig(filePath string) *Config {
 		config = &Config{
 			Config: types.Config{
 				AccountType:   binance.AccountTypeSpot,
-				Symbol:        binance.SymbolType("BTCUSDT"),
+				Symbol:        "BTCUSDT",
 				Balance:       0.0,
 				Value:         0.0,
 				Quantity:      0.0,

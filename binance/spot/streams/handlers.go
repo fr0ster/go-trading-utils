@@ -3,7 +3,9 @@ package streams
 import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets"
+	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
+	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -43,20 +45,20 @@ func GetBalancesUpdateGuard(balances *markets.BalanceBTree, source chan *binance
 	return
 }
 
-func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree, source chan *binance.WsBookTickerEvent) (out chan bool) {
+func GetBookTickersUpdateGuard(bookTickers *bookticker.BookTickerBTree, source chan *binance.WsBookTickerEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
 			event := <-source
-			bookTickerUpdate := markets.BookTickerItemType{
-				Symbol:      markets.SymbolType(event.Symbol),
-				BidPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestBidPrice)),
-				BidQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestBidQty)),
-				AskPrice:    markets.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)),
-				AskQuantity: markets.PriceType(utils.ConvStrToFloat64(event.BestAskQty)),
+			bookTickerUpdate := bookticker_interface.BookTickerItem{
+				Symbol:      event.Symbol,
+				BidPrice:    utils.ConvStrToFloat64(event.BestBidPrice),
+				BidQuantity: utils.ConvStrToFloat64(event.BestBidQty),
+				AskPrice:    utils.ConvStrToFloat64(event.BestAskPrice),
+				AskQuantity: utils.ConvStrToFloat64(event.BestAskQty),
 			}
 			bookTickers.Lock()
-			bookTickers.SetItem(bookTickerUpdate)
+			bookTickers.Set(bookTickerUpdate)
 			bookTickers.Unlock()
 			out <- true
 		}
