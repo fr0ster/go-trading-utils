@@ -1,7 +1,6 @@
 package depth
 
 import (
-	"github.com/adshao/go-binance/v2/common"
 	"github.com/google/btree"
 )
 
@@ -14,8 +13,6 @@ type (
 		Descend(iter func(btree.Item) bool)
 		GetItem(price float64) *DepthItemType
 		SetItem(value DepthItemType)
-		UpdateAsk(ask common.PriceLevel, askLastUpdateID int64) (err error)
-		UpdateBid(bid common.PriceLevel, bidLastUpdateID int64) (err error)
 		GetMaxBids() *DepthItemType
 		GetMaxAsks() *DepthItemType
 		GetMaxBidQtyMaxAskQty() (maxBidNode *DepthItemType, maxAskNode *DepthItemType)

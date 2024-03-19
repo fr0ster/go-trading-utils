@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/adshao/go-binance/v2/common"
 	"github.com/adshao/go-binance/v2/futures"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -48,10 +47,31 @@ func (d *DepthBTree) Init(apt_key string, secret_key string, symbolname string, 
 		return err
 	}
 	for _, bid := range res.Bids {
-		d.UpdateBid(bid, res.LastUpdateID)
+		price, quantity, err := bid.Parse()
+		if err != nil {
+			continue
+		}
+		d.SetItem(depth_interface.DepthItemType{
+			Price:       utils.RoundToDecimalPlace(price, d.round),
+			AskQuantity: 0,
+			BidQuantity: quantity,
+		})
 	}
 	for _, ask := range res.Asks {
-		d.UpdateBid(ask, res.LastUpdateID)
+		price, quantity, err := ask.Parse()
+		if err != nil {
+			continue
+		}
+		d.SetItem(depth_interface.DepthItemType{
+			Price:       utils.RoundToDecimalPlace(price, d.round),
+			AskQuantity: quantity,
+			BidQuantity: 0,
+		})
+		d.SetItem(depth_interface.DepthItemType{
+			Price:       utils.RoundToDecimalPlace(price, d.round),
+			AskQuantity: quantity,
+			BidQuantity: 0,
+		})
 	}
 	return nil
 }
@@ -207,48 +227,4 @@ func (d *DepthBTree) Show() {
 // Subtle: this method shadows the method (Mutex).Unlock of DepthBTree.Mutex.
 func (d *DepthBTree) Unlock() {
 	d.mutex.Unlock()
-}
-
-// UpdateAsk implements depth_interface.Depths.
-func (d *DepthBTree) UpdateAsk(ask common.PriceLevel, askLastUpdateID int64) (err error) {
-	price, quantity, err := ask.Parse()
-	if err != nil {
-		return
-	}
-	value := d.GetItem(utils.RoundToDecimalPlace(price, d.round))
-	d.AskLastUpdateID = askLastUpdateID
-	if value != nil {
-		value.AskQuantity += quantity
-	} else {
-		value =
-			&depth_interface.DepthItemType{
-				Price:       utils.RoundToDecimalPlace(price, d.round),
-				AskQuantity: quantity,
-				BidQuantity: 0,
-			}
-	}
-	d.SetItem(*value)
-	return nil
-}
-
-// UpdateBid implements depth_interface.Depths.
-func (d *DepthBTree) UpdateBid(bid common.PriceLevel, bidLastUpdateID int64) (err error) {
-	price, quantity, err := bid.Parse()
-	if err != nil {
-		return
-	}
-	value := d.GetItem(utils.RoundToDecimalPlace(price, d.round))
-	d.BidLastUpdateID = bidLastUpdateID
-	if value != nil {
-		value.BidQuantity += quantity
-	} else {
-		value =
-			&depth_interface.DepthItemType{
-				Price:       utils.RoundToDecimalPlace(price, d.round),
-				AskQuantity: quantity,
-				BidQuantity: 0,
-			}
-	}
-	d.SetItem(*value)
-	return nil
 }
