@@ -135,7 +135,7 @@ func getTestDepths() *depth.Depth {
 	for _, ask := range askList {
 		asks.ReplaceOrInsert(&ask)
 	}
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 

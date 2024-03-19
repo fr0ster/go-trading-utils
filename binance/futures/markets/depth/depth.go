@@ -12,7 +12,7 @@ import (
 
 type (
 	Depth struct {
-		client          *futures.Client
+		symbol          string
 		asks            btree.BTree
 		bids            btree.BTree
 		mutex           sync.Mutex
@@ -25,10 +25,19 @@ type (
 	// DepthBTree btree.BTree
 )
 
+// DepthItemType - тип для зберігання заявок в стакані
+func (i *Depth) Less(than btree.Item) bool {
+	return i.symbol < than.(*Depth).symbol
+}
+
+func (i *Depth) Equal(than btree.Item) bool {
+	return i.symbol == than.(*Depth).symbol
+}
+
 // DepthBTree - B-дерево для зберігання стакана заявок
-func New(degree, round, limit int) *Depth {
+func New(degree, round, limit int, symbol string) *Depth {
 	return &Depth{
-		client: nil,
+		symbol: symbol,
 		asks:   *btree.New(degree),
 		bids:   *btree.New(degree),
 		mutex:  sync.Mutex{},
@@ -60,9 +69,9 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 
 func (d *Depth) Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error) {
 	futures.UseTestnet = UseTestnet
-	d.client = futures.NewClient(apt_key, secret_key)
+	client := futures.NewClient(apt_key, secret_key)
 	res, err :=
-		d.client.NewDepthService().
+		client.NewDepthService().
 			Symbol(string(symbolname)).
 			Limit(d.limit).
 			Do(context.Background())

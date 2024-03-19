@@ -46,7 +46,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := depth.New(3, 2, 5)
+	testDepthTree := depth.New(3, 2, 5, "SUSHIUSDT")
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
@@ -60,7 +60,7 @@ func TestInitDepthTree(t *testing.T) {
 	UseTestnet := false
 
 	// Add more test cases here
-	testDepthTree := depth.New(3, 2, 5)
+	testDepthTree := depth.New(3, 2, 5, "SUSHIUSDT")
 	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
@@ -69,7 +69,7 @@ func TestInitDepthTree(t *testing.T) {
 
 func TestGetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ask := ds.GetAsk(1.951)
 	if ask == nil {
@@ -79,7 +79,7 @@ func TestGetAsk(t *testing.T) {
 
 func TestGetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	bid := ds.GetBid(1.93)
 	if bid == nil {
@@ -89,7 +89,7 @@ func TestGetBid(t *testing.T) {
 
 func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ask := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask)
@@ -100,7 +100,7 @@ func TestSetAsk(t *testing.T) {
 
 func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	bid := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid)
@@ -111,7 +111,7 @@ func TestSetBid(t *testing.T) {
 
 func TestUpdateAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
@@ -122,7 +122,7 @@ func TestUpdateAsk(t *testing.T) {
 
 func TestUpdateBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
@@ -133,7 +133,7 @@ func TestUpdateBid(t *testing.T) {
 
 func TestGetMaxAsks(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	max := ds.GetMaxAsks()
 	if max == nil {
@@ -143,7 +143,7 @@ func TestGetMaxAsks(t *testing.T) {
 
 func TestGetMaxBids(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	max := ds.GetMaxBids()
 	if max == nil {
@@ -153,7 +153,7 @@ func TestGetMaxBids(t *testing.T) {
 
 func TestGetMinAsks(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	min := ds.GetMinAsks()
 	if min == nil {
@@ -163,7 +163,7 @@ func TestGetMinAsks(t *testing.T) {
 
 func TestGetMinBids(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	min := ds.GetMinBids()
 	if min == nil {
@@ -173,7 +173,7 @@ func TestGetMinBids(t *testing.T) {
 
 func TestGetBidLocalMaxima(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	maxima := ds.GetBidLocalMaxima()
 	if maxima == nil {
@@ -183,7 +183,7 @@ func TestGetBidLocalMaxima(t *testing.T) {
 
 func TestGetAskLocalMaxima(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	maxima := ds.GetAskLocalMaxima()
 	if maxima == nil {
@@ -193,7 +193,7 @@ func TestGetAskLocalMaxima(t *testing.T) {
 
 func TestInterface(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth.New(3, 2, 5)
+	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 	err := func(ds depth_interface.Depth, max float64) error {
