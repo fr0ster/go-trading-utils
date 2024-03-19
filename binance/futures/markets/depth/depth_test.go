@@ -115,8 +115,8 @@ func TestUpdateAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
-	if ask.Quantity != 300.0 {
-		t.Errorf("Failed to update ask")
+	if ask.Quantity != 517.9 {
+		t.Errorf("Failed to update ask, expected 517.9, got %f", ask.Quantity)
 	}
 }
 
@@ -126,8 +126,8 @@ func TestUpdateBid(t *testing.T) {
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
-	if bid.Quantity != 300.0 {
-		t.Errorf("Failed to update bid")
+	if bid.Quantity != 455.4 {
+		t.Errorf("Failed to update bid, expected 480.9, got %f", bid.Quantity)
 	}
 }
 

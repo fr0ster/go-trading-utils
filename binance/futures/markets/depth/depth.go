@@ -135,12 +135,23 @@ func (d *Depth) SetBid(value depth_interface.DepthItemType) {
 
 // UpdateAsk implements depth_interface.Depths.
 func (d *Depth) UpdateAsk(price float64, quantity float64) {
-	d.asks.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
+	old := d.asks.Get(&depth_interface.DepthItemType{Price: price}).(*depth_interface.DepthItemType)
+	if old != nil {
+		d.asks.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity + old.Quantity})
+	} else {
+		d.asks.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
+	}
 }
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) {
-	d.bids.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
+
+	old := d.bids.Get(&depth_interface.DepthItemType{Price: price}).(*depth_interface.DepthItemType)
+	if old != nil {
+		d.bids.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity + old.Quantity})
+	} else {
+		d.bids.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
+	}
 }
 
 // GetMaxAsks implements depth_interface.Depths.
