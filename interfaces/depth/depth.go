@@ -22,7 +22,6 @@ type (
 		GetMaxBidMinAsk() (maxBid *DepthItemType, minAsk *DepthItemType)
 		GetBidQtyLocalMaxima() *btree.BTree
 		GetAskQtyLocalMaxima() *btree.BTree
-		Show()
 	}
 	DepthItemType struct {
 		Price       float64

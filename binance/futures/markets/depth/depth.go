@@ -2,7 +2,6 @@ package depth
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/adshao/go-binance/v2/common"
@@ -188,18 +187,6 @@ func (d *DepthBTree) SetItem(value depth_interface.DepthItemType) {
 		Price:       value.Price,
 		AskQuantity: value.AskQuantity,
 		BidQuantity: value.BidQuantity,
-	})
-}
-
-// Show implements depth_interface.Depths.
-func (d *DepthBTree) Show() {
-	d.Ascend(func(i btree.Item) bool {
-		item := i.(*depth_interface.DepthItemType)
-		fmt.Println(
-			"Price:", item.Price,
-			"AskQuantity:", item.AskQuantity,
-			"BidQuantity:", item.BidQuantity)
-		return true
 	})
 }
 
