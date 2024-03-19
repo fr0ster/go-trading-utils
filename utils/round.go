@@ -2,11 +2,12 @@ package utils
 
 import "math"
 
-func RoundToDecimalPlace(num float64, decimalPlaces int) float64 {
-	if decimalPlaces < 0 {
-		return num
+func RoundToDecimalPlace(x float64, exp float64) float64 {
+	if exp >= 0 {
+		pow := math.Pow(10, float64(exp))
+		return math.Round(x*pow) / pow
 	} else {
-		multiplier := math.Pow(10, float64(decimalPlaces))
-		return math.Round(num*multiplier) / multiplier
+		pow := math.Pow(10, float64(-exp))
+		return math.Round(x/pow) * pow
 	}
 }
