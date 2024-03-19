@@ -64,22 +64,30 @@ func GetBookTickersUpdateGuard(bookTickers *markets.BookTickerBTree, source chan
 	return out
 }
 
-func GetDepthsUpdateGuard(depths *depth.DepthBTree, source chan *binance.WsDepthEvent) (out chan bool) {
+func GetDepthsUpdateGuard(depths *depth.Depth, source chan *binance.WsDepthEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
 			event := <-source
 			if int64(depths.BidLastUpdateID)+1 > event.FirstUpdateID {
 				for _, bid := range event.Bids {
+					price, quantity, err := bid.Parse()
+					if err != nil {
+						continue
+					}
 					depths.Lock()
-					depths.UpdateBid(bid)
+					depths.UpdateBid(price, quantity)
 					depths.Unlock()
 				}
 			}
 			if int64(depths.AskLastUpdateID)+1 > event.FirstUpdateID {
 				for _, ask := range event.Asks {
+					price, quantity, err := ask.Parse()
+					if err != nil {
+						continue
+					}
 					depths.Lock()
-					depths.UpdateAsk(ask)
+					depths.UpdateAsk(price, quantity)
 					depths.Unlock()
 				}
 			}

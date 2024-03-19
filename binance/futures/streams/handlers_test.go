@@ -10,6 +10,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
+	"github.com/google/btree"
 )
 
 func TestGetFilledOrderHandler(t *testing.T) {
@@ -106,31 +107,40 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 	}
 }
 
-func getTestDepths() *depth.DepthBTree {
-	testDepthTree := depth.New(3, 3)
-	records := []depth_interface.DepthItemType{
-		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
-		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima
-		{Price: 1.94, AskQuantity: 0, BidQuantity: 150.0},
-		{Price: 1.941, AskQuantity: 0, BidQuantity: 130.4},
-		{Price: 1.947, AskQuantity: 0, BidQuantity: 172.1},
-		{Price: 1.948, AskQuantity: 0, BidQuantity: 187.4},
-		{Price: 1.949, AskQuantity: 0, BidQuantity: 236.1}, // local maxima
-		{Price: 1.95, AskQuantity: 0, BidQuantity: 189.8},
-		{Price: 1.951, AskQuantity: 217.9, BidQuantity: 0}, // local maxima
-		{Price: 1.952, AskQuantity: 179.4, BidQuantity: 0},
-		{Price: 1.953, AskQuantity: 180.9, BidQuantity: 0}, // local maxima
-		{Price: 1.954, AskQuantity: 148.5, BidQuantity: 0},
-		{Price: 1.955, AskQuantity: 120.0, BidQuantity: 0},
-		{Price: 1.956, AskQuantity: 110.0, BidQuantity: 0},
-		{Price: 1.957, AskQuantity: 140.0, BidQuantity: 0}, // local maxima
-		{Price: 1.958, AskQuantity: 90.0, BidQuantity: 0},
+func getTestDepths() *depth.Depth {
+	bids := btree.New(3)
+	bidList := []depth_interface.DepthItemType{
+		{Price: 1.92, Quantity: 150.2},
+		{Price: 1.93, Quantity: 155.4}, // local maxima
+		{Price: 1.94, Quantity: 150.0},
+		{Price: 1.941, Quantity: 130.4},
+		{Price: 1.947, Quantity: 172.1},
+		{Price: 1.948, Quantity: 187.4},
+		{Price: 1.949, Quantity: 236.1}, // local maxima
+		{Price: 1.95, Quantity: 189.8},
 	}
-	for _, record := range records {
-		testDepthTree.ReplaceOrInsert(&record)
+	asks := btree.New(3)
+	askList := []depth_interface.DepthItemType{
+		{Price: 1.951, Quantity: 217.9}, // local maxima
+		{Price: 1.952, Quantity: 179.4},
+		{Price: 1.953, Quantity: 180.9}, // local maxima
+		{Price: 1.954, Quantity: 148.5},
+		{Price: 1.955, Quantity: 120.0},
+		{Price: 1.956, Quantity: 110.0},
+		{Price: 1.957, Quantity: 140.0}, // local maxima
+		{Price: 1.958, Quantity: 90.0},
 	}
+	for _, bid := range bidList {
+		bids.ReplaceOrInsert(&bid)
+	}
+	for _, ask := range askList {
+		asks.ReplaceOrInsert(&ask)
+	}
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	ds.SetBids(bids)
 
-	return testDepthTree
+	return ds
 }
 
 func TestGetDepthsUpdaterHandler(t *testing.T) {

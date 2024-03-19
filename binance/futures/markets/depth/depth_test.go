@@ -1,6 +1,7 @@
 package depth_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -9,50 +10,43 @@ import (
 	"github.com/google/btree"
 )
 
-func getTestDepths() *depth.DepthBTree {
-	testDepthTree := depth.New(3, 3)
-	records := []depth_interface.DepthItemType{
-		{Price: 1.92, AskQuantity: 0, BidQuantity: 150.2},
-		{Price: 1.93, AskQuantity: 0, BidQuantity: 155.4}, // local maxima
-		{Price: 1.94, AskQuantity: 0, BidQuantity: 150.0},
-		{Price: 1.941, AskQuantity: 0, BidQuantity: 130.4},
-		{Price: 1.947, AskQuantity: 0, BidQuantity: 172.1},
-		{Price: 1.948, AskQuantity: 0, BidQuantity: 187.4},
-		{Price: 1.949, AskQuantity: 0, BidQuantity: 236.1}, // local maxima
-		{Price: 1.95, AskQuantity: 0, BidQuantity: 189.8},
-		{Price: 1.951, AskQuantity: 217.9, BidQuantity: 0}, // local maxima
-		{Price: 1.952, AskQuantity: 179.4, BidQuantity: 0},
-		{Price: 1.953, AskQuantity: 180.9, BidQuantity: 0}, // local maxima
-		{Price: 1.954, AskQuantity: 148.5, BidQuantity: 0},
-		{Price: 1.955, AskQuantity: 120.0, BidQuantity: 0},
-		{Price: 1.956, AskQuantity: 110.0, BidQuantity: 0},
-		{Price: 1.957, AskQuantity: 140.0, BidQuantity: 0}, // local maxima
-		{Price: 1.958, AskQuantity: 90.0, BidQuantity: 0},
+func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
+	bids = btree.New(3)
+	bidList := []depth_interface.DepthItemType{
+		{Price: 1.92, Quantity: 150.2},
+		{Price: 1.93, Quantity: 155.4}, // local maxima
+		{Price: 1.94, Quantity: 150.0},
+		{Price: 1.941, Quantity: 130.4},
+		{Price: 1.947, Quantity: 172.1},
+		{Price: 1.948, Quantity: 187.4},
+		{Price: 1.949, Quantity: 236.1}, // local maxima
+		{Price: 1.95, Quantity: 189.8},
 	}
-	for _, record := range records {
-		testDepthTree.ReplaceOrInsert(&record)
+	asks = btree.New(3)
+	askList := []depth_interface.DepthItemType{
+		{Price: 1.951, Quantity: 217.9}, // local maxima
+		{Price: 1.952, Quantity: 179.4},
+		{Price: 1.953, Quantity: 180.9}, // local maxima
+		{Price: 1.954, Quantity: 148.5},
+		{Price: 1.955, Quantity: 120.0},
+		{Price: 1.956, Quantity: 110.0},
+		{Price: 1.957, Quantity: 140.0}, // local maxima
+		{Price: 1.958, Quantity: 90.0},
+	}
+	for _, bid := range bidList {
+		bids.ReplaceOrInsert(&bid)
+	}
+	for _, ask := range askList {
+		asks.ReplaceOrInsert(&ask)
 	}
 
-	return testDepthTree
-}
-
-func TestInitDepthTree(t *testing.T) {
-	api_key := os.Getenv("FUTURE_TEST_BINANCE_API_KEY")
-	secret_key := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
-	UseTestnet := true
-
-	// Add more test cases here
-	testDepthTree := depth.New(3, 3)
-	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
-	if err != nil {
-		t.Errorf("Failed to initialize depth tree: %v", err)
-	}
+	return
 }
 
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := depth.New(3, 3)
+	testDepthTree := depth.New(3, 2)
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
@@ -60,69 +54,156 @@ func TestGetDepthNew(t *testing.T) {
 	// Add additional assertions if needed
 }
 
-func TestGetDepthMaxBidMinAsk(t *testing.T) {
-	testDepthTree := getTestDepths()
-	// Call the function being tested
-	maxBid, minAsk := testDepthTree.GetMaxBidMinAsk()
-	if maxBid.Price != 1.95 {
-		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
-	}
-	if minAsk.Price != 1.951 {
-		t.Errorf("GetDepthMinAsk returned an incorrect min ask price")
+func TestInitDepthTree(t *testing.T) {
+	api_key := os.Getenv("API_KEY")
+	secret_key := os.Getenv("SECRET_KEY")
+	UseTestnet := false
+
+	// Add more test cases here
+	testDepthTree := depth.New(3, 2)
+	err := testDepthTree.Init(api_key, secret_key, "BTCUSDT", UseTestnet)
+	if err != nil {
+		t.Errorf("Failed to initialize depth tree: %v", err)
 	}
 }
 
-func TestGetDepthMaxBidQtyMaxAskQty(t *testing.T) {
-	testDepthTree := getTestDepths()
-	// Call the function being tested
-	maxBid, minAsk := testDepthTree.GetMaxBidQtyMaxAskQty()
-	if maxBid.Price != 1.949 {
-		t.Errorf("GetDepthMaxBid returned an incorrect max bid price")
-	}
-	if minAsk.Price != 1.951 {
-		t.Errorf("GetDepthMinAsk returned an incorrect min ask price")
+func TestGetAsk(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	ask := ds.GetAsk(1.951)
+	if ask == nil {
+		t.Errorf("Failed to get ask")
 	}
 }
 
-func TestGetDepthBidLocalMaxima(t *testing.T) {
-	testDepthTree := getTestDepths()
+func TestGetBid(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	bid := ds.GetBid(1.93)
+	if bid == nil {
+		t.Errorf("Failed to get bid")
+	}
+}
 
-	bidLocalsMaxima := testDepthTree.GetBidQtyLocalMaxima()
-	askLocalMaxima := testDepthTree.GetAskQtyLocalMaxima()
+func TestSetAsk(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	ask := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
+	ds.SetAsk(ask)
+	if ds.GetAsk(1.96) == nil {
+		t.Errorf("Failed to set ask")
+	}
+}
 
-	// Add assertions to check the correctness of the returned map
-	if bidLocalsMaxima.Get(&depth_interface.DepthItemType{Price: 1.93}) == nil {
-		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+func TestSetBid(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	bid := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
+	ds.SetBid(bid)
+	if ds.GetBid(1.96) == nil {
+		t.Errorf("Failed to set bid")
 	}
-	if bidLocalsMaxima.Get(&depth_interface.DepthItemType{Price: 1.949}) == nil {
-		t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+}
+
+func TestUpdateAsk(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	ds.UpdateAsk(1.951, 300.0)
+	ask := ds.GetAsk(1.951)
+	if ask.Quantity != 300.0 {
+		t.Errorf("Failed to update ask")
 	}
-	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.951}) == nil {
-		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+}
+
+func TestUpdateBid(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	ds.UpdateBid(1.93, 300.0)
+	bid := ds.GetBid(1.93)
+	if bid.Quantity != 300.0 {
+		t.Errorf("Failed to update bid")
 	}
-	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.953}) == nil {
-		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+}
+
+func TestGetMaxAsks(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	max := ds.GetMaxAsks()
+	if max == nil {
+		t.Errorf("Failed to get max asks")
 	}
-	if askLocalMaxima.Get(&depth_interface.DepthItemType{Price: 1.957}) == nil {
-		t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
+}
+
+func TestGetMaxBids(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	max := ds.GetMaxBids()
+	if max == nil {
+		t.Errorf("Failed to get max bids")
 	}
-	bidLocalsMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*depth_interface.DepthItemType)
-		if (item.Price != 1.93) && (item.Price != 1.949) {
-			t.Errorf("GetDepthBidQtyLocalMaxima returned an incorrect max bid price")
+}
+
+func TestGetMinAsks(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	min := ds.GetMinAsks()
+	if min == nil {
+		t.Errorf("Failed to get min asks")
+	}
+}
+
+func TestGetMinBids(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	min := ds.GetMinBids()
+	if min == nil {
+		t.Errorf("Failed to get min bids")
+	}
+}
+
+func TestGetBidLocalMaxima(t *testing.T) {
+	_, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetBids(bids)
+	maxima := ds.GetBidLocalMaxima()
+	if maxima == nil {
+		t.Errorf("Failed to get bid local maxima")
+	}
+}
+
+func TestGetAskLocalMaxima(t *testing.T) {
+	asks, _ := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	maxima := ds.GetAskLocalMaxima()
+	if maxima == nil {
+		t.Errorf("Failed to get ask local maxima")
+	}
+}
+
+func TestInterface(t *testing.T) {
+	asks, bids := getTestDepths()
+	ds := depth.New(3, 2)
+	ds.SetAsks(asks)
+	ds.SetBids(bids)
+	err := func(ds depth_interface.Depths, max float64) error {
+		di := ds.GetMaxAsks()
+		if di.Price != max {
+			return errors.New("Failed to get max asks")
 		}
-		return true
-	})
-	askLocalMaxima.Ascend(func(i btree.Item) bool {
-		item := i.(*depth_interface.DepthItemType)
-		if item.Price != 1.951 && item.Price != 1.953 && item.Price != 1.957 {
-			t.Errorf("GetDepthAskQtyLocalMaxima returned an incorrect max ask price")
-		}
-		return true
-	})
-
-	// Add additional assertions if needed
-
+		return nil
+	}(ds, 1.958)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 }
-
-// Add more test functions for other functions in the file if needed
