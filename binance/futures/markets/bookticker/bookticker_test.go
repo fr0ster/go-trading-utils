@@ -10,7 +10,7 @@ import (
 )
 
 func initBookTicker() *bookticker.BookTickerBTree {
-	bookTicker := bookticker.BookTickerNew(3)
+	bookTicker := bookticker.New(3)
 	bookTicker.Set(bookticker_interface.BookTickerItem{Symbol: "BTCUSDT", BidPrice: 10000, BidQuantity: 1, AskPrice: 10001, AskQuantity: 1})
 	bookTicker.Set(bookticker_interface.BookTickerItem{Symbol: "ETHUSDT", BidPrice: 1000, BidQuantity: 1, AskPrice: 1001, AskQuantity: 1})
 	bookTicker.Set(bookticker_interface.BookTickerItem{Symbol: "BNBUSDT", BidPrice: 100, BidQuantity: 1, AskPrice: 101, AskQuantity: 1})
@@ -28,7 +28,7 @@ func TestInitPricesTree(t *testing.T) {
 	// binance.UseTestnet = true
 
 	// Call the function under test
-	bookTicker := bookticker.BookTickerNew(3)
+	bookTicker := bookticker.New(3)
 	err := bookTicker.Init(api_key, secret_key, "BTCUSDT", false)
 
 	// Check if there was an error

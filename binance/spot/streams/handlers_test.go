@@ -82,7 +82,7 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 		BestAskQty:   "320.0",
 	}
 	inChannel := make(chan *binance.WsBookTickerEvent, 1)
-	bookTicker := bookticker.BookTickerNew(3)
+	bookTicker := bookticker.New(3)
 	bookTicker.Set(bookticker_interface.BookTickerItem{
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,

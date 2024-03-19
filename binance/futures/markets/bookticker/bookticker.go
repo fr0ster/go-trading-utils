@@ -18,7 +18,7 @@ type (
 	}
 )
 
-func BookTickerNew(degree int) *BookTickerBTree {
+func New(degree int) *BookTickerBTree {
 	return &BookTickerBTree{
 		tree:   btree.New(degree),
 		mutex:  sync.Mutex{},
