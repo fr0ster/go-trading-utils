@@ -36,7 +36,7 @@ func (c *Config) Load() error {
 	ds := NewDataStore(c.FilePath)
 	err := ds.LoadFromFile()
 	if err != nil {
-		c.Config = types.Config{}
+		return err
 	}
 	err = json.Unmarshal(ds.GetData(), &c.Config)
 	return err

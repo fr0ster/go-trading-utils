@@ -75,6 +75,10 @@ func TestGetAsk(t *testing.T) {
 	if ask == nil {
 		t.Errorf("Failed to get ask")
 	}
+	ask = ds.GetAsk(0)
+	if ask != nil {
+		t.Errorf("Failed to get ask")
+	}
 }
 
 func TestGetBid(t *testing.T) {
