@@ -92,7 +92,7 @@ func TestSetAsk(t *testing.T) {
 	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ask := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
-	ds.SetAsk(ask)
+	ds.SetAsk(ask.Price, ask.Quantity)
 	if ds.GetAsk(1.96) == nil {
 		t.Errorf("Failed to set ask")
 	}
@@ -103,7 +103,7 @@ func TestSetBid(t *testing.T) {
 	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
 	bid := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
-	ds.SetBid(bid)
+	ds.SetBid(bid.Price, bid.Quantity)
 	if ds.GetBid(1.96) == nil {
 		t.Errorf("Failed to set bid")
 	}

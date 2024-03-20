@@ -78,7 +78,7 @@ func GetDepthsUpdateGuard(depths *depth.Depth, source chan *futures.WsDepthEvent
 						continue
 					}
 					depths.Lock()
-					depths.UpdateBid(price, quantity)
+					depths.SetBid(price, quantity)
 					depths.Unlock()
 				}
 			}
@@ -89,7 +89,7 @@ func GetDepthsUpdateGuard(depths *depth.Depth, source chan *futures.WsDepthEvent
 						continue
 					}
 					depths.Lock()
-					depths.UpdateAsk(price, quantity)
+					depths.SetAsk(price, quantity)
 					depths.Unlock()
 				}
 			}

@@ -132,13 +132,13 @@ func (d *Depth) GetBid(price float64) *depth_interface.DepthItemType {
 }
 
 // SetAsk implements depth_interface.Depths.
-func (d *Depth) SetAsk(value depth_interface.DepthItemType) {
-	d.asks.ReplaceOrInsert(&value)
+func (d *Depth) SetAsk(price float64, quantity float64) {
+	d.asks.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
 }
 
 // SetBid implements depth_interface.Depths.
-func (d *Depth) SetBid(value depth_interface.DepthItemType) {
-	d.bids.ReplaceOrInsert(&value)
+func (d *Depth) SetBid(price float64, quantity float64) {
+	d.bids.ReplaceOrInsert(&depth_interface.DepthItemType{Price: price, Quantity: quantity})
 }
 
 // UpdateAsk implements depth_interface.Depths.

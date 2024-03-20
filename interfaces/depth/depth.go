@@ -15,8 +15,8 @@ type (
 		BidDescend(iter func(btree.Item) bool)
 		GetAsk(price float64) *DepthItemType
 		GetBid(price float64) *DepthItemType
-		SetAsk(value DepthItemType)
-		SetBid(value DepthItemType)
+		SetAsk(price float64, quantity float64)
+		SetBid(price float64, quantity float64)
 		UpdateAsk(price float64, quantity float64)
 		UpdateBid(price float64, quantity float64)
 		GetMaxAsks() *DepthItemType
