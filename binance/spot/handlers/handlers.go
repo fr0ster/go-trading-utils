@@ -63,7 +63,7 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker.BookTickerBTree, source c
 			out <- true
 		}
 	}()
-	return out
+	return
 }
 
 func GetDepthsUpdateGuard(depths *depth.Depth, source chan *binance.WsDepthEvent) (out chan bool) {
