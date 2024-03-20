@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/futures/listenkey"
+	"github.com/fr0ster/go-trading-utils/binance/futures/client/listenkey"
 	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
 	"github.com/stretchr/testify/assert"
 )

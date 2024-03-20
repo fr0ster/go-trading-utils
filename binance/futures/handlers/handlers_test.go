@@ -1,4 +1,4 @@
-package streams_test
+package handlers_test
 
 import (
 	"os"
@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	accounts "github.com/fr0ster/go-trading-utils/binance/futures/markets/account"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
 	bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
 	bookticker_interfaces "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -25,7 +25,7 @@ func TestGetFilledOrderHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	outChannel := streams.GetFilledOrdersGuard(inChannel)
+	outChannel := handlers.GetFilledOrdersGuard(inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -81,7 +81,7 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 		Free:   0.0,
 		Locked: 0.0,
 	})
-	outChannel := streams.GetBalancesUpdateGuard(bt, inChannel)
+	outChannel := handlers.GetBalancesUpdateGuard(bt, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -116,7 +116,7 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 		AskPrice:    0.0,
 		AskQuantity: 0.0,
 	})
-	outChannel := streams.GetBookTickersUpdateGuard(bookTicker, inChannel)
+	outChannel := handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -172,7 +172,7 @@ func getTestDepths() *depth.Depth {
 
 func TestGetDepthsUpdaterHandler(t *testing.T) {
 	inChannel := make(chan *futures.WsDepthEvent, 1)
-	outChannel := streams.GetDepthsUpdateGuard(getTestDepths(), inChannel)
+	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
 	go func() {
 		for i := 0; i < 10; i++ {
 			inChannel <- &futures.WsDepthEvent{

@@ -1,4 +1,4 @@
-package streams
+package handlers
 
 import (
 	"github.com/adshao/go-binance/v2"

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot/listenkey"
+	"github.com/fr0ster/go-trading-utils/binance/spot/client/listenkey"
 	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
 	"github.com/stretchr/testify/assert"
 )
