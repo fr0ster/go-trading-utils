@@ -84,7 +84,7 @@ func NewTrades() *Trades {
 		mu:   sync.Mutex{},
 	}
 }
-func tradesInit(res []*binance.Trade, a *Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+func tradesInit(res []*binance.Trade, a *Trades) (err error) {
 	for _, val := range res {
 		trade := val
 		a.Update(&TradeItem{
@@ -111,7 +111,7 @@ func HistoricalTradesInit(a *Trades, apt_key, secret_key, symbolname string, lim
 	if err != nil {
 		return err
 	}
-	return tradesInit(res, a, apt_key, secret_key, symbolname, limit, UseTestnet)
+	return tradesInit(res, a)
 }
 
 func RecentTradesInit(a *Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
@@ -125,5 +125,5 @@ func RecentTradesInit(a *Trades, apt_key, secret_key, symbolname string, limit i
 	if err != nil {
 		return err
 	}
-	return tradesInit(res, a, apt_key, secret_key, symbolname, limit, UseTestnet)
+	return tradesInit(res, a)
 }

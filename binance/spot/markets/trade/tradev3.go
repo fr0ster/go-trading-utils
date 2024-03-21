@@ -92,7 +92,7 @@ func NewTradesV3() *TradesV3 {
 	}
 }
 
-func tradesV3Init(res []*binance.TradeV3, a *TradesV3, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+func tradesV3Init(res []*binance.TradeV3, a *TradesV3) (err error) {
 	for _, val := range res {
 		old := val
 		a.Update(&TradeV3Item{
@@ -125,7 +125,7 @@ func ListTradesInit(a *TradesV3, apt_key, secret_key, symbolname string, limit i
 	if err != nil {
 		return err
 	}
-	return tradesV3Init(res, a, secret_key, symbolname, limit, UseTestnet)
+	return tradesV3Init(res, a)
 }
 
 func ListMarginTradesInit(a *TradesV3, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
@@ -139,5 +139,5 @@ func ListMarginTradesInit(a *TradesV3, apt_key, secret_key, symbolname string, l
 	if err != nil {
 		return err
 	}
-	return tradesV3Init(res, a, secret_key, symbolname, limit, UseTestnet)
+	return tradesV3Init(res, a)
 }
