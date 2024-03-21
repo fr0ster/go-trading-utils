@@ -26,6 +26,7 @@ func (u *AggTradeStream) GetStreamEvent() chan bool {
 func (u *AggTradeStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsAggTradeEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return futures.WsAggTradeServe(u.symbol, wsHandler, utils.HandleErr)
 }
@@ -51,6 +52,7 @@ func (u *CombinedAggTradeServe) GetStreamEvent() chan bool {
 func (u *CombinedAggTradeServe) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsAggTradeEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return futures.WsCombinedAggTradeServe(u.symbols, wsHandler, utils.HandleErr)
 }

@@ -26,6 +26,7 @@ func (u *TradeStream) GetStreamEvent() chan bool {
 func (u *TradeStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsTradeEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return binance.WsTradeServe(u.symbol, wsHandler, utils.HandleErr)
 }
@@ -44,9 +45,39 @@ func NewAggTradeStream(symbol string) *AggTradeStream {
 	}
 }
 
+func (u *AggTradeStream) GetStreamEvent() chan bool {
+	return u.EventChannel
+}
+
 func (u *AggTradeStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsAggTradeEvent) {
 		u.DataChannel <- event
 	}
 	return binance.WsAggTradeServe(u.symbol, wsHandler, utils.HandleErr)
+}
+
+type CombinedTradeStream struct {
+	DataChannel  chan *binance.WsCombinedTradeEvent
+	EventChannel chan bool
+	symbols      []string
+}
+
+func NewCombinedTradeStream(symbols []string) *CombinedTradeStream {
+	return &CombinedTradeStream{
+		DataChannel:  make(chan *binance.WsCombinedTradeEvent),
+		EventChannel: make(chan bool),
+		symbols:      symbols,
+	}
+}
+
+func (u *CombinedTradeStream) GetStreamEvent() chan bool {
+	return u.EventChannel
+}
+
+func (u *CombinedTradeStream) Start() (doneC, stopC chan struct{}, err error) {
+	wsHandler := func(event *binance.WsCombinedTradeEvent) {
+		u.DataChannel <- event
+		u.EventChannel <- true
+	}
+	return binance.WsCombinedTradeServe(u.symbols, wsHandler, utils.HandleErr)
 }

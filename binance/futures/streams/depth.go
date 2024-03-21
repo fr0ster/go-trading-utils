@@ -112,6 +112,7 @@ func (u *CombinedDepthStream) GetStreamEvent() chan bool {
 func (u *CombinedDepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsDepthEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return futures.WsCombinedDepthServe(u.symbolLevels, wsHandler, utils.HandleErr)
 }

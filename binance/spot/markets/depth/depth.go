@@ -22,7 +22,6 @@ type (
 		AskLastUpdateID int64
 		BidLastUpdateID int64
 	}
-	// DepthBTree btree.BTree
 )
 
 // DepthItemType - тип для зберігання заявок в стакані

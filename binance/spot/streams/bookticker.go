@@ -26,6 +26,7 @@ func (u *BookTickerStream) GetStreamEvent() chan bool {
 func (u *BookTickerStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsBookTickerEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return binance.WsBookTickerServe(u.symbol, wsHandler, utils.HandleErr)
 }

@@ -26,6 +26,7 @@ func (u *DepthStream) GetStreamEvent() chan bool {
 func (u *DepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsDepthEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return binance.WsDepthServe(u.symbol, wsHandler, utils.HandleErr)
 }

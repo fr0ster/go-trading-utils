@@ -15,7 +15,7 @@ import (
 	"github.com/google/btree"
 )
 
-func TestGetFilledOrderHandler(t *testing.T) {
+func TestChangingOfOrdersHandler(t *testing.T) {
 	even := &binance.WsUserDataEvent{
 		Event: binance.UserDataEventTypeExecutionReport,
 		OrderUpdate: binance.WsOrderUpdate{
@@ -23,7 +23,11 @@ func TestGetFilledOrderHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	outChannel := handlers.GetFilledOrdersGuard(inChannel)
+	outChannel :=
+		handlers.GetChangingOfOrdersGuard(
+			inChannel,
+			binance.UserDataEventTypeExecutionReport,
+			append([]binance.OrderStatusType{binance.OrderStatusTypeFilled}, binance.OrderStatusTypeFilled))
 	inChannel <- even
 	res := false
 	for {
@@ -41,7 +45,7 @@ func TestGetFilledOrderHandler(t *testing.T) {
 	}
 }
 
-func TestGetBalanceTreeUpdateHandler(t *testing.T) {
+func TestBalanceTreeUpdateHandler(t *testing.T) {
 	even := &binance.WsUserDataEvent{
 		Event: binance.UserDataEventTypeExecutionReport,
 		OrderUpdate: binance.WsOrderUpdate{
@@ -73,7 +77,7 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 	}
 }
 
-func TestGetBookTickersUpdateHandler(t *testing.T) {
+func TestBookTickersUpdateHandler(t *testing.T) {
 	even := &binance.WsBookTickerEvent{
 		Symbol:       "BTCUSDT",
 		BestBidPrice: "10000.0",
@@ -144,7 +148,7 @@ func getTestDepths() *depth.Depth {
 	return ds
 }
 
-func TestGetDepthsUpdaterHandler(t *testing.T) {
+func TestDepthsUpdaterHandler(t *testing.T) {
 	inChannel := make(chan *binance.WsDepthEvent, 1)
 	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
 	go func() {
@@ -174,3 +178,32 @@ func TestGetDepthsUpdaterHandler(t *testing.T) {
 		}
 	}
 }
+
+// func TestTradesUpdaterHandler(t *testing.T) {
+// 	inChannel := make(chan *binance.WsTradeEvent, 1)
+// 	outChannel := handlers.GetTradesUpdateGuard(getTestDepths(), inChannel)
+// 	go func() {
+// 		for i := 0; i < 10; i++ {
+// 			inChannel <- &binance.WsTradeEvent{
+// 				Event: "trade",
+// 				Symbol: "BTCUSDT",
+// 				Price: utils.ConvFloat64ToStr(float64(i), 2),
+// 				Quantity: utils.ConvFloat64ToStr(float64(i), 2),
+// 			}
+// 		}
+// 	}()
+// 	res := false
+// 	for {
+// 		select {
+// 		case <-outChannel:
+// 			res = true
+// 		case <-time.After(1000 * time.Millisecond):
+// 			res = false
+// 		}
+// 		if !res {
+// 			t.Fatal("Error sending order event to channel")
+// 		} else {
+// 			break
+// 		}
+// 	}
+// }

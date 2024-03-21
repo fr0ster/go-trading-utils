@@ -28,6 +28,7 @@ func (u *KlineStream) GetStreamEvent() chan bool {
 func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsKlineEvent) {
 		u.DataChannel <- event
+		u.EventChannel <- true
 	}
 	return futures.WsKlineServe(u.symbol, u.interval, wsHandler, utils.HandleErr)
 }
