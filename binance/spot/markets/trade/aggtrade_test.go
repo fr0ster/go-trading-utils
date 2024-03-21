@@ -5,6 +5,7 @@ import (
 
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/trade"
 	aggtrade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInterface(t *testing.T) {
@@ -12,7 +13,9 @@ func TestInterface(t *testing.T) {
 	test := func(i aggtrade_interface.Trades) {
 
 	}
-	test(aggTrade)
+	assert.NotPanics(t, func() {
+		test(aggTrade)
+	})
 }
 
 // func TestNewAggTrades(t *testing.T) {
