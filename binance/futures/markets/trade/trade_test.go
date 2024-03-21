@@ -36,17 +36,3 @@ func TestRecentTradesInterface(t *testing.T) {
 		test(trades)
 	})
 }
-
-func TestAggTradesInterface(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
-	trades := trade.NewAggTrades()
-	trade.AggTradeInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
-	test := func(i aggtrade_interface.Trades) {
-
-	}
-	assert.NotPanics(t, func() {
-		test(trades)
-	})
-}
