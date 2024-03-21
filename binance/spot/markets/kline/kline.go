@@ -31,7 +31,8 @@ func New(degree int) *Kline {
 func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
 	binance.UseTestnet = UseTestnet
 	klines, _ :=
-		binance.NewClient(apt_key, secret_key).NewKlinesService().
+		binance.NewClient(apt_key, secret_key).
+			NewKlinesService().
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, kline := range klines {

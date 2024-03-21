@@ -36,8 +36,8 @@ func (a *TradesV3) Descend(iter func(btree.Item) bool) {
 }
 
 // Get implements Trades.
-func (a *TradesV3) Get(val btree.Item) btree.Item {
-	res := a.tree.Get(val)
+func (a *TradesV3) Get(id int64) btree.Item {
+	res := a.tree.Get(&TradeV3Item{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -61,7 +61,7 @@ func (a *TradesV3) Unlock() {
 
 // Update implements Trades.
 func (a *TradesV3) Update(val btree.Item) {
-	old := a.Get(val)
+	old := a.Get(val.(*TradeV3Item).ID)
 	if old == nil {
 		a.Set(val)
 	} else {

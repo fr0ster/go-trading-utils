@@ -10,7 +10,7 @@ type (
 		// Init(apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error)
 		Ascend(iter func(btree.Item) bool)
 		Descend(iter func(btree.Item) bool)
-		Get(val btree.Item) btree.Item
+		Get(id int64) btree.Item
 		Set(val btree.Item)
 		Update(val btree.Item)
 	}
