@@ -6,17 +6,23 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
-	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
+	// kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
 	"github.com/google/btree"
 )
 
 type (
-	Kline struct {
+	KlineItem futures.Kline
+	Kline     struct {
 		btree.BTree
 		mutex  sync.Mutex
 		degree int
 	}
 )
+
+// Less implements btree.Item.
+func (k *KlineItem) Less(than btree.Item) bool {
+	return k.OpenTime < than.(*KlineItem).OpenTime
+}
 
 // Kline - B-дерево для зберігання стакана заявок
 func New(degree int) *Kline {
@@ -27,7 +33,6 @@ func New(degree int) *Kline {
 	}
 }
 
-// Init implements depth_interface.Depths.
 func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
 	futures.UseTestnet = UseTestnet
 	klines, _ :=
@@ -35,7 +40,7 @@ func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTe
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, kline := range klines {
-		d.BTree.ReplaceOrInsert(&kline_interface.Kline{
+		d.BTree.ReplaceOrInsert(&KlineItem{
 			OpenTime:                 kline.OpenTime,
 			Open:                     kline.Open,
 			High:                     kline.High,
@@ -62,19 +67,19 @@ func (d *Kline) Unlock() {
 }
 
 // GetItem implements depth_interface.Depths.
-func (d *Kline) GetItem(openTime int64) *kline_interface.Kline {
-	return d.BTree.Get(&kline_interface.Kline{OpenTime: int64(openTime)}).(*kline_interface.Kline)
+func (d *Kline) GetItem(openTime int64) *KlineItem {
+	return d.BTree.Get(&KlineItem{OpenTime: int64(openTime)}).(*KlineItem)
 }
 
 // SetItem implements depth_interface.Depths.
-func (d *Kline) SetItem(value kline_interface.Kline) {
+func (d *Kline) SetItem(value KlineItem) {
 	d.BTree.ReplaceOrInsert(&value)
 }
 
 // Show implements depth_interface.Depths.
 func (d *Kline) Show() {
 	d.Ascend(func(a btree.Item) bool {
-		kline := a.(*kline_interface.Kline)
+		kline := a.(*KlineItem)
 		fmt.Printf(
 			"OpenTime: %d, Open: %s, High: %s, Low: %s, Close: %s, Volume: %s, CloseTime: %d, QuoteAssetVolume: %s, TradeNum: %d, TakerBuyBaseAssetVolume: %s, TakerBuyQuoteAssetVolume: %s\n",
 			kline.OpenTime,

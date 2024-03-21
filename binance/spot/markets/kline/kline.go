@@ -2,32 +2,39 @@ package kline
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
 	"github.com/google/btree"
 )
 
 type (
-	Kline struct {
-		btree.BTree
+	KlineItem binance.Kline
+	Kline     struct {
+		tree   btree.BTree
 		mutex  sync.Mutex
 		degree int
 	}
 )
 
+// Kline - тип для зберігання свічок
+func (i *KlineItem) Less(than btree.Item) bool {
+	return i.OpenTime < than.(*KlineItem).OpenTime
+}
+
+func (i *KlineItem) Equal(than btree.Item) bool {
+	return i.OpenTime == than.(*KlineItem).OpenTime
+}
+
 // Kline - B-дерево для зберігання стакана заявок
 func New(degree int) *Kline {
 	return &Kline{
-		BTree:  *btree.New(int(degree)),
+		tree:   *btree.New(degree),
 		mutex:  sync.Mutex{},
 		degree: degree,
 	}
 }
 
-// Init implements depth_interface.Depths.
 func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
 	binance.UseTestnet = UseTestnet
 	klines, _ :=
@@ -36,7 +43,7 @@ func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTe
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, kline := range klines {
-		d.BTree.ReplaceOrInsert(&kline_interface.Kline{
+		d.tree.ReplaceOrInsert(&KlineItem{
 			OpenTime:                 kline.OpenTime,
 			Open:                     kline.Open,
 			High:                     kline.High,
@@ -52,6 +59,14 @@ func (d *Kline) Init(apt_key string, secret_key string, symbolname string, UseTe
 	}
 }
 
+func (d *Kline) Ascend(f func(btree.Item) bool) {
+	d.tree.Ascend(f)
+}
+
+func (d *Kline) Descend(f func(btree.Item) bool) {
+	d.tree.Descend(f)
+}
+
 // Lock implements depth_interface.Depths.
 func (d *Kline) Lock() {
 	d.mutex.Lock()
@@ -63,33 +78,11 @@ func (d *Kline) Unlock() {
 }
 
 // GetItem implements depth_interface.Depths.
-func (d *Kline) GetItem(openTime int64) *kline_interface.Kline {
-	return d.BTree.Get(&kline_interface.Kline{OpenTime: int64(openTime)}).(*kline_interface.Kline)
+func (d *Kline) Get(openTime int64) btree.Item {
+	return d.tree.Get(&KlineItem{OpenTime: int64(openTime)})
 }
 
 // SetItem implements depth_interface.Depths.
-func (d *Kline) SetItem(value kline_interface.Kline) {
-	d.BTree.ReplaceOrInsert(&value)
-}
-
-// Show implements depth_interface.Depths.
-func (d *Kline) Show() {
-	d.Ascend(func(a btree.Item) bool {
-		kline := a.(*kline_interface.Kline)
-		fmt.Printf(
-			"OpenTime: %d, Open: %s, High: %s, Low: %s, Close: %s, Volume: %s, CloseTime: %d, QuoteAssetVolume: %s, TradeNum: %d, TakerBuyBaseAssetVolume: %s, TakerBuyQuoteAssetVolume: %s\n",
-			kline.OpenTime,
-			kline.Open,
-			kline.High,
-			kline.Low,
-			kline.Close,
-			kline.Volume,
-			kline.CloseTime,
-			kline.QuoteAssetVolume,
-			kline.TradeNum,
-			kline.TakerBuyBaseAssetVolume,
-			kline.TakerBuyQuoteAssetVolume,
-		)
-		return true
-	})
+func (d *Kline) Set(value btree.Item) {
+	d.tree.ReplaceOrInsert(value)
 }

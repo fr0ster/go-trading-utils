@@ -4,11 +4,10 @@ import (
 	"testing"
 
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/kline"
-	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
 )
 
-func getTestData() []kline_interface.Kline {
-	return []kline_interface.Kline{
+func getTestData() []kline.KlineItem {
+	return []kline.KlineItem{
 		{
 			OpenTime:                 1625097600,
 			Open:                     "100",
@@ -40,7 +39,7 @@ func getTestData() []kline_interface.Kline {
 
 func TestKline(t *testing.T) {
 	// Create a sample Kline instance
-	k := &kline_interface.Kline{
+	k := &kline.KlineItem{
 		OpenTime:                 1625097600,
 		Open:                     "100",
 		High:                     "150",
@@ -55,13 +54,13 @@ func TestKline(t *testing.T) {
 	}
 
 	// Test the Less method
-	less := k.Less(&kline_interface.Kline{OpenTime: 1625097601})
+	less := k.Less(&kline.KlineItem{OpenTime: 1625097601})
 	if !less {
 		t.Errorf("Expected k.Less to be true, got false")
 	}
 
 	// Test the Equal method
-	equal := k.Equal(&kline_interface.Kline{OpenTime: 1625097600})
+	equal := k.Equal(&kline.KlineItem{OpenTime: 1625097600})
 	if !equal {
 		t.Errorf("Expected k.Equal to be true, got false")
 	}
@@ -77,17 +76,17 @@ func TestKlines(t *testing.T) {
 
 	// Test the Init method
 	for _, k := range getTestData() {
-		kl.SetItem(k)
+		kl.Set(&k)
 	}
 
 	// Test the GetItem method
-	item := kl.GetItem(1625097600)
+	item := kl.Get(1625097600)
 	if item == nil {
 		t.Errorf("Expected kl.GetItem to return a non-nil value")
 	}
 
 	// Test the SetItem method
-	kl.SetItem(kline_interface.Kline{
+	kl.Set(&kline.KlineItem{
 		OpenTime:                 1625097602,
 		Open:                     "100",
 		High:                     "150",
@@ -100,7 +99,4 @@ func TestKlines(t *testing.T) {
 		TakerBuyBaseAssetVolume:  "500",
 		TakerBuyQuoteAssetVolume: "60000",
 	})
-
-	// Test the Show method
-	kl.Show()
 }

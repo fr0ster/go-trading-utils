@@ -11,9 +11,8 @@ import (
 type (
 	TradeV3Item binance.TradeV3
 	TradesV3    struct {
-		client *binance.Client
-		tree   btree.BTree
-		mu     sync.Mutex
+		tree btree.BTree
+		mu   sync.Mutex
 	}
 )
 

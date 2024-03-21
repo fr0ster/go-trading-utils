@@ -9,9 +9,10 @@ type (
 		Lock()
 		Unlock()
 		Init(apt_key, secret_key, symbolname string, UseTestnet bool)
-		GetItem(openTime int64) *Kline
-		SetItem(value Kline)
-		Show()
+		Ascend(func(btree.Item) bool)
+		Descend(func(btree.Item) bool)
+		Get(openTime int64) btree.Item
+		Set(value btree.Item)
 	}
 	// WsKline define websocket kline
 	WsKline struct {
@@ -32,26 +33,4 @@ type (
 		ActiveBuyVolume      string `json:"V"`
 		ActiveBuyQuoteVolume string `json:"Q"`
 	}
-	Kline struct {
-		OpenTime                 int64  `json:"openTime"`
-		Open                     string `json:"open"`
-		High                     string `json:"high"`
-		Low                      string `json:"low"`
-		Close                    string `json:"close"`
-		Volume                   string `json:"volume"`
-		CloseTime                int64  `json:"closeTime"`
-		QuoteAssetVolume         string `json:"quoteAssetVolume"`
-		TradeNum                 int64  `json:"tradeNum"`
-		TakerBuyBaseAssetVolume  string `json:"takerBuyBaseAssetVolume"`
-		TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
-	}
 )
-
-// Kline - тип для зберігання свічок
-func (i *Kline) Less(than btree.Item) bool {
-	return i.OpenTime < than.(*Kline).OpenTime
-}
-
-func (i *Kline) Equal(than btree.Item) bool {
-	return i.OpenTime == than.(*Kline).OpenTime
-}
