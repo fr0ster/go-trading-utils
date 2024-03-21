@@ -16,12 +16,12 @@ type (
 	}
 )
 
-func (i *AggTradeItem) Less(than btree.Item) bool {
-	return i.AggTradeID < than.(*AggTradeItem).AggTradeID
+func (i AggTradeItem) Less(than btree.Item) bool {
+	return i.AggTradeID < than.(AggTradeItem).AggTradeID
 }
 
-func (i *AggTradeItem) Equal(than btree.Item) bool {
-	return i.AggTradeID == than.(*AggTradeItem).AggTradeID
+func (i AggTradeItem) Equal(than btree.Item) bool {
+	return i.AggTradeID == than.(AggTradeItem).AggTradeID
 }
 
 // Ascend implements trades.Trades.
@@ -36,7 +36,7 @@ func (a *AggTrades) Descend(iter func(btree.Item) bool) {
 
 // Get implements trades.Trades.
 func (a *AggTrades) Get(id int64) btree.Item {
-	res := a.tree.Get(&AggTradeItem{AggTradeID: id})
+	res := a.tree.Get(AggTradeItem{AggTradeID: id})
 	if res == nil {
 		return nil
 	}
@@ -60,19 +60,9 @@ func (a *AggTrades) Unlock() {
 
 // Update implements trades.Trades.
 func (a *AggTrades) Update(val btree.Item) {
-	old := a.Get(val.(*AggTradeItem).AggTradeID)
+	old := a.Get(val.(AggTradeItem).AggTradeID)
 	if old != nil {
-		a.Set(
-			&AggTradeItem{
-				AggTradeID:       val.(*AggTradeItem).AggTradeID,
-				Price:            val.(*AggTradeItem).Price,
-				Quantity:         old.(*AggTradeItem).Quantity + val.(*AggTradeItem).Quantity,
-				FirstTradeID:     val.(*AggTradeItem).FirstTradeID,
-				LastTradeID:      val.(*AggTradeItem).LastTradeID,
-				Timestamp:        val.(*AggTradeItem).Timestamp,
-				IsBuyerMaker:     val.(*AggTradeItem).IsBuyerMaker,
-				IsBestPriceMatch: val.(*AggTradeItem).IsBestPriceMatch,
-			})
+		a.Set(old.(AggTradeItem))
 	} else {
 		a.Set(val)
 	}
@@ -90,16 +80,7 @@ func AggTradeInit(a *AggTrades, apt_key, secret_key, symbolname string, limit in
 		return err
 	}
 	for _, trade := range res {
-		new_val := &AggTradeItem{
-			AggTradeID:       trade.AggTradeID,
-			Price:            trade.Price,
-			Quantity:         trade.Quantity,
-			FirstTradeID:     trade.FirstTradeID,
-			LastTradeID:      trade.LastTradeID,
-			Timestamp:        trade.Timestamp,
-			IsBuyerMaker:     trade.IsBuyerMaker,
-			IsBestPriceMatch: trade.IsBestPriceMatch}
-		a.Update(new_val)
+		a.Update(AggTradeItem(*trade))
 	}
 	return nil
 }

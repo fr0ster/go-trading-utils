@@ -12,7 +12,6 @@ import (
 	bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	bookticker_interfaces "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
-	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
@@ -136,7 +135,7 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 
 func getTestDepths() *depth.Depth {
 	bids := btree.New(3)
-	bidList := []depth_interface.DepthItemType{
+	bidList := []depth.DepthItemType{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -147,7 +146,7 @@ func getTestDepths() *depth.Depth {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks := btree.New(3)
-	askList := []depth_interface.DepthItemType{
+	askList := []depth.DepthItemType{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima
@@ -158,10 +157,10 @@ func getTestDepths() *depth.Depth {
 		{Price: 1.958, Quantity: 90.0},
 	}
 	for _, bid := range bidList {
-		bids.ReplaceOrInsert(&bid)
+		bids.ReplaceOrInsert(bid)
 	}
 	for _, ask := range askList {
-		asks.ReplaceOrInsert(&ask)
+		asks.ReplaceOrInsert(ask)
 	}
 	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)

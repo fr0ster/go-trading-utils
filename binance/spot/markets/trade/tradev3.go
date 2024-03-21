@@ -16,12 +16,12 @@ type (
 	}
 )
 
-func (i *TradeV3Item) Less(than btree.Item) bool {
-	return i.ID < than.(*TradeV3Item).ID
+func (i TradeV3Item) Less(than btree.Item) bool {
+	return i.ID < than.(TradeV3Item).ID
 }
 
-func (i *TradeV3Item) Equal(than btree.Item) bool {
-	return i.ID == than.(*TradeV3Item).ID
+func (i TradeV3Item) Equal(than btree.Item) bool {
+	return i.ID == than.(TradeV3Item).ID
 }
 
 // Ascend implements Trades.
@@ -36,7 +36,7 @@ func (a *TradesV3) Descend(iter func(btree.Item) bool) {
 
 // Get implements Trades.
 func (a *TradesV3) Get(id int64) btree.Item {
-	res := a.tree.Get(&TradeV3Item{ID: id})
+	res := a.tree.Get(TradeV3Item{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -60,27 +60,11 @@ func (a *TradesV3) Unlock() {
 
 // Update implements Trades.
 func (a *TradesV3) Update(val btree.Item) {
-	old := a.Get(val.(*TradeV3Item).ID)
+	old := a.Get(val.(TradeV3Item).ID)
 	if old == nil {
 		a.Set(val)
 	} else {
-		a.Set(
-			&TradeV3Item{
-				ID:              old.(*TradeV3Item).ID,
-				Symbol:          old.(*TradeV3Item).Symbol,
-				OrderID:         old.(*TradeV3Item).OrderID,
-				OrderListId:     old.(*TradeV3Item).OrderListId,
-				Price:           old.(*TradeV3Item).Price,
-				Quantity:        old.(*TradeV3Item).Quantity,
-				QuoteQuantity:   old.(*TradeV3Item).QuoteQuantity,
-				Commission:      old.(*TradeV3Item).Commission,
-				CommissionAsset: old.(*TradeV3Item).CommissionAsset,
-				Time:            old.(*TradeV3Item).Time,
-				IsBuyer:         old.(*TradeV3Item).IsBuyer,
-				IsMaker:         old.(*TradeV3Item).IsMaker,
-				IsBestMatch:     old.(*TradeV3Item).IsBestMatch,
-				IsIsolated:      old.(*TradeV3Item).IsIsolated})
-
+		a.Set(old.(TradeV3Item))
 	}
 }
 
@@ -93,22 +77,7 @@ func NewTradesV3() *TradesV3 {
 
 func tradesV3Init(res []*binance.TradeV3, a *TradesV3) (err error) {
 	for _, val := range res {
-		old := val
-		a.Update(&TradeV3Item{
-			ID:              old.ID,
-			Symbol:          old.Symbol,
-			OrderID:         old.OrderID,
-			OrderListId:     old.OrderListId,
-			Price:           old.Price,
-			Quantity:        old.Quantity,
-			QuoteQuantity:   old.QuoteQuantity,
-			Commission:      old.Commission,
-			CommissionAsset: old.CommissionAsset,
-			Time:            old.Time,
-			IsBuyer:         old.IsBuyer,
-			IsMaker:         old.IsMaker,
-			IsBestMatch:     old.IsBestMatch,
-			IsIsolated:      old.IsIsolated})
+		a.Update(TradeV3Item(*val))
 	}
 	return nil
 }

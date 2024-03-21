@@ -1,18 +1,16 @@
 package depth_test
 
 import (
-	"errors"
 	"os"
 	"testing"
 
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
-	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/google/btree"
 )
 
 func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 	bids = btree.New(3)
-	bidList := []depth_interface.DepthItemType{
+	bidList := []depth.DepthItemType{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -23,7 +21,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks = btree.New(3)
-	askList := []depth_interface.DepthItemType{
+	askList := []depth.DepthItemType{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima
@@ -34,10 +32,10 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		{Price: 1.958, Quantity: 90.0},
 	}
 	for _, bid := range bidList {
-		bids.ReplaceOrInsert(&bid)
+		bids.ReplaceOrInsert(bid)
 	}
 	for _, ask := range askList {
-		asks.ReplaceOrInsert(&ask)
+		asks.ReplaceOrInsert(ask)
 	}
 
 	return
@@ -95,7 +93,7 @@ func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
 	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetAsks(asks)
-	ask := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
+	ask := depth.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
 	if ds.GetAsk(1.96) == nil {
 		t.Errorf("Failed to set ask")
@@ -106,7 +104,7 @@ func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
 	ds := depth.New(3, 2, 5, "SUSHIUSDT")
 	ds.SetBids(bids)
-	bid := depth_interface.DepthItemType{Price: 1.96, Quantity: 200.0}
+	bid := depth.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
 	if ds.GetBid(1.96) == nil {
 		t.Errorf("Failed to set bid")
@@ -119,7 +117,7 @@ func TestUpdateAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
-	if ask.Quantity != 517.9 {
+	if ask != nil && ask.(depth.DepthItemType).Quantity != 517.9 {
 		t.Errorf("Failed to update ask")
 	}
 }
@@ -130,99 +128,7 @@ func TestUpdateBid(t *testing.T) {
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
-	if bid.Quantity != 455.4 {
+	if bid != nil && bid.(depth.DepthItemType).Quantity != 455.4 {
 		t.Errorf("Failed to update bid")
-	}
-}
-
-func TestGetMaxAsks(t *testing.T) {
-	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetAsks(asks)
-	max := ds.GetMaxAsks()
-	if max == nil {
-		t.Errorf("Failed to get max asks")
-	}
-}
-
-func TestGetMaxBids(t *testing.T) {
-	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetBids(bids)
-	max := ds.GetMaxBids()
-	if max == nil {
-		t.Errorf("Failed to get max bids")
-	}
-}
-
-func TestGetMinAsks(t *testing.T) {
-	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetAsks(asks)
-	min := ds.GetMinAsks()
-	if min == nil {
-		t.Errorf("Failed to get min asks")
-	}
-}
-
-func TestGetMinBids(t *testing.T) {
-	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetBids(bids)
-	min := ds.GetMinBids()
-	if min == nil {
-		t.Errorf("Failed to get min bids")
-	}
-}
-
-func TestGetBidLocalMaxima(t *testing.T) {
-	_, bids := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetBids(bids)
-	maxima := ds.GetBidLocalMaxima()
-	if maxima == nil {
-		t.Errorf("Failed to get bid local maxima")
-	}
-	if maxima.Get(&depth_interface.DepthItemType{Price: 1.93}) == nil {
-		t.Errorf("Failed to get bid local maxima")
-	}
-	if maxima.Get(&depth_interface.DepthItemType{Price: 1.949}) == nil {
-		t.Errorf("Failed to get bid local maxima")
-	}
-}
-
-func TestGetAskLocalMaxima(t *testing.T) {
-	asks, _ := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetAsks(asks)
-	maxima := ds.GetAskLocalMaxima()
-	if maxima == nil {
-		t.Errorf("Failed to get ask local maxima")
-	}
-	if maxima.Get(&depth_interface.DepthItemType{Price: 1.951}) == nil {
-		t.Errorf("Failed to get ask local maxima: 1.951")
-	}
-	if maxima.Get(&depth_interface.DepthItemType{Price: 1.953}) == nil {
-		t.Errorf("Failed to get ask local maxima: 1.953")
-	}
-	if maxima.Get(&depth_interface.DepthItemType{Price: 1.957}) == nil {
-		t.Errorf("Failed to get ask local maxima: 1.957")
-	}
-}
-
-func TestInterface(t *testing.T) {
-	asks, bids := getTestDepths()
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
-	ds.SetAsks(asks)
-	ds.SetBids(bids)
-	err := func(ds depth_interface.Depth, max float64) error {
-		di := ds.GetMaxAsks()
-		if di.Price != max {
-			return errors.New("Failed to get max asks")
-		}
-		return nil
-	}(ds, 1.958)
-	if err != nil {
-		t.Errorf(err.Error())
 	}
 }

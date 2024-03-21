@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -18,4 +19,8 @@ func ConvFloat64ToStrDefault(f float64) string {
 
 func ConvFloat64ToStr(f float64, prec int) string {
 	return strconv.FormatFloat(f, 'f', prec, 64)
+}
+
+func ConvFloat64ToStrNoExtraZeros(f float64) string {
+	return fmt.Sprintf("%g", f)
 }

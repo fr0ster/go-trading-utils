@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	// prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
 )
 
 type (
-	PriceChangeStatsItem binance.PriceChangeStats
+	PriceChangeStatsItem futures.PriceChangeStats
 	PriceChangeStats     struct {
 		tree   btree.BTree
 		mutex  sync.Mutex
@@ -43,35 +43,12 @@ func New(degree int) *PriceChangeStats {
 func (d *PriceChangeStats) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
 	binance.UseTestnet = UseTestnet
 	pcss, _ :=
-		binance.NewClient(apt_key, secret_key).
+		futures.NewClient(apt_key, secret_key).
 			NewListPriceChangeStatsService().
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, pcs := range pcss {
-		d.tree.ReplaceOrInsert(&PriceChangeStatsItem{
-			Symbol:             pcs.Symbol,
-			PriceChange:        pcs.PriceChange,
-			PriceChangePercent: pcs.PriceChangePercent,
-			WeightedAvgPrice:   pcs.WeightedAvgPrice,
-			PrevClosePrice:     pcs.PrevClosePrice,
-			LastPrice:          pcs.LastPrice,
-			LastQty:            pcs.LastQty,
-			BidPrice:           pcs.BidPrice,
-			BidQty:             pcs.BidQty,
-			AskPrice:           pcs.AskPrice,
-			AskQty:             pcs.AskQty,
-			OpenPrice:          pcs.OpenPrice,
-			HighPrice:          pcs.HighPrice,
-			LowPrice:           pcs.LowPrice,
-			Volume:             pcs.Volume,
-			QuoteVolume:        pcs.QuoteVolume,
-			OpenTime:           pcs.OpenTime,
-			CloseTime:          pcs.CloseTime,
-			FirstID:            pcs.FirstID,
-			LastID:             pcs.LastID,
-			Count:              pcs.Count,
-		})
-
+		d.tree.ReplaceOrInsert(PriceChangeStatsItem(*pcs))
 	}
 }
 
