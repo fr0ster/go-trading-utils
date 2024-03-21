@@ -9,12 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHistoricalTradesInterface(t *testing.T) {
+func TestListTradeInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
 	UseTestnet := false
-	trades := trade.NewTrades()
-	trade.HistoricalTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	trades := trade.NewTradesV3()
+	trade.ListTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
 	test := func(i aggtrade_interface.Trades) {
 
 	}
@@ -23,12 +23,12 @@ func TestHistoricalTradesInterface(t *testing.T) {
 	})
 }
 
-func TestRecentTradesInterface(t *testing.T) {
+func TestListMarginTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
 	UseTestnet := false
-	trades := trade.NewTrades()
-	trade.RecentTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	trades := trade.NewTradesV3()
+	trade.ListMarginTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
 	test := func(i aggtrade_interface.Trades) {
 
 	}
