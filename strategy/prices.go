@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/types"
+	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -35,7 +35,7 @@ func GetLimitPricesDumpWay(data types.Config, client *binance.Client) (string, f
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
 
-func BidOrAsk(data types.Config, bookTickers *bookticker.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data types.Config, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,
@@ -48,7 +48,10 @@ func BidOrAsk(data types.Config, bookTickers *bookticker.BookTickerBTree, client
 	symbolname := data.Symbol
 	targetPriceF := 0.0
 
-	bookTicker := bookTickers.Get(symbolname)
+	bookTicker, err := bookticker_types.Binance2BookTicker(bookTickers.Get(symbolname))
+	if err != nil {
+		utils.HandleErr(errors.New("BookTicker not found"))
+	}
 	if bookTicker == nil {
 		utils.HandleErr(errors.New("BookTicker not found"))
 	} else {

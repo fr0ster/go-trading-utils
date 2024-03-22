@@ -9,9 +9,8 @@ import (
 	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	accounts "github.com/fr0ster/go-trading-utils/binance/futures/markets/account"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
-	bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-	bookticker_interfaces "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
+	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
@@ -107,8 +106,8 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 		BestAskQty:   "320.0",
 	}
 	inChannel := make(chan *futures.WsBookTickerEvent, 1)
-	bookTicker := bookticker.New(3)
-	bookTicker.Set(bookticker_interfaces.BookTickerItem{
+	bookTicker := bookticker_types.New(3)
+	bookTicker.Set(bookticker_types.BookTickerItem{
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,
 		BidQuantity: 0.0,
