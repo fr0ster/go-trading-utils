@@ -12,18 +12,10 @@ import (
 type (
 	// types.Trade binance.Trade
 	Trades struct {
-		tree btree.BTree
-		mu   sync.Mutex
+		tree *btree.BTree
+		mu   *sync.Mutex
 	}
 )
-
-// func (i types.Trade) Less(than btree.Item) bool {
-// 	return i.ID < than.(types.Trade).ID
-// }
-
-// func (i types.Trade) Equal(than btree.Item) bool {
-// 	return i.ID == than.(types.Trade).ID
-// }
 
 // Ascend implements Trades.
 func (a *Trades) Ascend(iter func(btree.Item) bool) {
@@ -71,8 +63,8 @@ func (a *Trades) Update(val btree.Item) {
 
 func NewTrades() *Trades {
 	return &Trades{
-		tree: *btree.New(2),
-		mu:   sync.Mutex{},
+		tree: btree.New(2),
+		mu:   &sync.Mutex{},
 	}
 }
 func tradesInit(res []*binance.Trade, a *Trades) (err error) {

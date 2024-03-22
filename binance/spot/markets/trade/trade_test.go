@@ -6,6 +6,8 @@ import (
 
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/trade"
 	aggtrade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
+	"github.com/fr0ster/go-trading-utils/types"
+	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +18,15 @@ func TestHistoricalTradesInterface(t *testing.T) {
 	trades := trade.NewTrades()
 	trade.HistoricalTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
 	test := func(i aggtrade_interface.Trades) {
-
+		i.Lock()
+		defer i.Unlock()
+		i.Ascend(func(item btree.Item) bool {
+			if item != nil {
+				ht := item.(types.Trade)
+				assert.NotNil(t, ht)
+			}
+			return true
+		})
 	}
 	assert.NotPanics(t, func() {
 		test(trades)

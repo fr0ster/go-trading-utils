@@ -11,8 +11,8 @@ import (
 type (
 	AggTradeItem binance.AggTrade
 	AggTrades    struct {
-		tree btree.BTree
-		mu   sync.Mutex
+		tree *btree.BTree
+		mu   *sync.Mutex
 	}
 )
 
@@ -87,7 +87,7 @@ func AggTradeInit(a *AggTrades, apt_key, secret_key, symbolname string, limit in
 
 func NewAggTrades() *AggTrades {
 	return &AggTrades{
-		tree: *btree.New(2),
-		mu:   sync.Mutex{},
+		tree: btree.New(2),
+		mu:   &sync.Mutex{},
 	}
 }

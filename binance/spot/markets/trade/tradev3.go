@@ -11,8 +11,8 @@ import (
 type (
 	TradeV3Item binance.TradeV3
 	TradesV3    struct {
-		tree btree.BTree
-		mu   sync.Mutex
+		tree *btree.BTree
+		mu   *sync.Mutex
 	}
 )
 
@@ -70,8 +70,8 @@ func (a *TradesV3) Update(val btree.Item) {
 
 func NewTradesV3() *TradesV3 {
 	return &TradesV3{
-		tree: *btree.New(2),
-		mu:   sync.Mutex{},
+		tree: btree.New(2),
+		mu:   &sync.Mutex{},
 	}
 }
 

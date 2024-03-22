@@ -17,14 +17,6 @@ type (
 	}
 )
 
-// func (i types.AggTrade) Less(than btree.Item) bool {
-// 	return i.AggTradeID < than.(*types.AggTrade).AggTradeID
-// }
-
-// func (i types.AggTrade) Equal(than btree.Item) bool {
-// 	return i.AggTradeID == than.(*types.AggTrade).AggTradeID
-// }
-
 // Ascend implements AggTrades.
 func (a *AggTrades) Ascend(iter func(btree.Item) bool) {
 	a.tree.Ascend(iter)
