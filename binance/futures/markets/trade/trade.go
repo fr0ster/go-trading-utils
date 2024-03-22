@@ -5,24 +5,25 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
 type (
-	TradeItem futures.Trade
-	Trades    struct {
+	// types.Trade futures.Trade
+	Trades struct {
 		tree btree.BTree
 		mu   sync.Mutex
 	}
 )
 
-func (i TradeItem) Less(than btree.Item) bool {
-	return i.ID < than.(TradeItem).ID
-}
+// func (i types.Trade) Less(than btree.Item) bool {
+// 	return i.ID < than.(types.Trade).ID
+// }
 
-func (i TradeItem) Equal(than btree.Item) bool {
-	return i.ID == than.(TradeItem).ID
-}
+// func (i types.Trade) Equal(than btree.Item) bool {
+// 	return i.ID == than.(types.Trade).ID
+// }
 
 // Ascend implements Trades.
 func (a *Trades) Ascend(iter func(btree.Item) bool) {
@@ -36,7 +37,7 @@ func (a *Trades) Descend(iter func(btree.Item) bool) {
 
 // Get implements Trades.
 func (a *Trades) Get(id int64) btree.Item {
-	res := a.tree.Get(TradeItem{ID: id})
+	res := a.tree.Get(types.Trade{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -60,11 +61,11 @@ func (a *Trades) Unlock() {
 
 // Update implements Trades.
 func (a *Trades) Update(val btree.Item) {
-	old := a.Get(val.(TradeItem).ID)
+	old := a.Get(val.(types.Trade).ID)
 	if old == nil {
 		a.Set(val)
 	} else {
-		a.Set(old.(TradeItem))
+		a.Set(old.(types.Trade))
 	}
 }
 
@@ -76,7 +77,13 @@ func NewTrades() *Trades {
 }
 func tradesInit(res []*futures.Trade, a *Trades) (err error) {
 	for _, val := range res {
-		a.Update(TradeItem(*val))
+		a.Update(types.Trade{
+			ID:           val.ID,
+			Price:        val.Price,
+			Quantity:     val.Quantity,
+			Time:         val.Time,
+			IsBuyerMaker: val.IsBuyerMaker,
+		})
 	}
 	return nil
 }
