@@ -1,14 +1,14 @@
-package prices_test
+package price_test
 
 import (
 	"testing"
 
-	prices "github.com/fr0ster/go-trading-utils/binance/spot/markets/prices"
-	prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
+	prices_interface "github.com/fr0ster/go-trading-utils/interfaces/price"
+	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func getTestData() []*prices.PriceChangeStatsItem {
-	return append([]*prices.PriceChangeStatsItem{
+func getTestData() []*price_types.PriceChangeStatsItem {
+	return append([]*price_types.PriceChangeStatsItem{
 		{
 			Symbol:             "BTCUSDT",
 			PriceChange:        "0.00000000",
@@ -59,13 +59,13 @@ func getTestData() []*prices.PriceChangeStatsItem {
 }
 
 func TestPricesInterfaces(t *testing.T) {
-	pcs := prices.New(2)
+	pcs := price_types.New(2)
 	test := func(p prices_interface.Prices) {
 		p.Lock()
 		defer p.Unlock()
 		// p.Init("test", "test", "BTCUSDT", true)
 		for _, k := range getTestData() {
-			p.Set(&prices.PriceChangeStatsItem{
+			p.Set(&price_types.PriceChangeStatsItem{
 				Symbol:             k.Symbol,
 				PriceChange:        k.PriceChange,
 				PriceChangePercent: k.PriceChangePercent,
