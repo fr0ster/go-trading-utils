@@ -7,8 +7,8 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func getTestData() []*kline_types.KlineItem {
-	return []*kline_types.KlineItem{
+func getTestData() []kline_types.KlineItem {
+	return []kline_types.KlineItem{
 		{
 			OpenTime:                 1625097600,
 			Open:                     "100",
