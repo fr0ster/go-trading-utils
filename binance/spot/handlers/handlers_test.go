@@ -10,6 +10,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
@@ -113,7 +114,7 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 
 func getTestDepths() *depth.Depth {
 	bids := btree.New(3)
-	bidList := []depth.DepthItemType{
+	bidList := []types.DepthItemType{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -124,7 +125,7 @@ func getTestDepths() *depth.Depth {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks := btree.New(3)
-	askList := []depth.DepthItemType{
+	askList := []types.DepthItemType{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima

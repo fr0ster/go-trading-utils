@@ -28,6 +28,10 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 		if da == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}
+		levels := da.GetLevels()
+		if levels == nil {
+			t.Errorf("DepthAnalyzerLoad returned an empty map")
+		}
 	}
 
 	test(da)

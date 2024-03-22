@@ -1,6 +1,9 @@
 package types
 
-import "github.com/google/btree"
+import (
+	"github.com/adshao/go-binance/v2/common"
+	"github.com/google/btree"
+)
 
 type (
 	DepthItemType struct {
@@ -16,4 +19,8 @@ func (i DepthItemType) Less(than btree.Item) bool {
 
 func (i DepthItemType) Equal(than btree.Item) bool {
 	return i.Price == than.(DepthItemType).Price
+}
+
+func (i *DepthItemType) Parse(a common.PriceLevel) {
+	i.Price, i.Quantity, _ = a.Parse()
 }
