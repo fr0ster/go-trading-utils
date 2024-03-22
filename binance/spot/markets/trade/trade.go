@@ -2,79 +2,19 @@ package trade
 
 import (
 	"context"
-	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/types"
-	"github.com/google/btree"
+	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
-type (
-	// types.Trade binance.Trade
-	Trades struct {
-		tree *btree.BTree
-		mu   *sync.Mutex
-	}
-)
-
-// Ascend implements Trades.
-func (a *Trades) Ascend(iter func(btree.Item) bool) {
-	a.tree.Ascend(iter)
-}
-
-// Descend implements Trades.
-func (a *Trades) Descend(iter func(btree.Item) bool) {
-	a.tree.Descend(iter)
-}
-
-// Get implements Trades.
-func (a *Trades) Get(id int64) btree.Item {
-	res := a.tree.Get(types.Trade{ID: id})
-	if res == nil {
-		return nil
-	}
-	return res
-}
-
-// Lock implements Trades.
-func (a *Trades) Lock() {
-	a.mu.Lock()
-}
-
-// Set implements Trades.
-func (a *Trades) Set(val btree.Item) {
-	a.tree.ReplaceOrInsert(val)
-}
-
-// Unlock implements Trades.
-func (a *Trades) Unlock() {
-	a.mu.Unlock()
-}
-
-// Update implements Trades.
-func (a *Trades) Update(val btree.Item) {
-	old := a.Get(val.(types.Trade).ID)
-	if old == nil {
-		a.Set(val)
-	} else {
-		a.Set(old.(types.Trade))
-	}
-}
-
-func NewTrades() *Trades {
-	return &Trades{
-		tree: btree.New(2),
-		mu:   &sync.Mutex{},
-	}
-}
-func tradesInit(res []*binance.Trade, a *Trades) (err error) {
+func tradesInit(res []*binance.Trade, a *trade_types.Trades) (err error) {
 	for _, val := range res {
-		a.Update(types.Trade(*val))
+		a.Update(trade_types.Trade(*val))
 	}
 	return nil
 }
 
-func HistoricalTradesInit(a *Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+func HistoricalTradesInit(a *trade_types.Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
 	binance.UseTestnet = UseTestnet
 	client := binance.NewClient(apt_key, secret_key)
 	res, err :=
@@ -88,7 +28,7 @@ func HistoricalTradesInit(a *Trades, apt_key, secret_key, symbolname string, lim
 	return tradesInit(res, a)
 }
 
-func RecentTradesInit(a *Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+func RecentTradesInit(a *trade_types.Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
 	binance.UseTestnet = UseTestnet
 	client := binance.NewClient(apt_key, secret_key)
 	res, err :=
