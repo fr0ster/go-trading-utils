@@ -18,7 +18,7 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	limit := 10
 	degree := 3
 	symbol := "BTCUSDT"
-	depth := depth_types.DepthNew(degree, symbol)
+	depth := depth_types.NewDepth(degree, symbol)
 	spot_depth.SpotDepthInit(depth, api_key, secret_key, symbol, limit, UseTestnet)
 
 	da := depth_analyzer.New(degree)

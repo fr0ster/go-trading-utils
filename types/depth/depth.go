@@ -146,7 +146,7 @@ func (d *Depth) Unlock() {
 }
 
 // DepthBTree - B-дерево для зберігання стакана заявок
-func DepthNew(degree int, symbol string) *Depth {
+func NewDepth(degree int, symbol string) *Depth {
 	return &Depth{
 		symbol: symbol,
 		asks:   btree.New(degree),

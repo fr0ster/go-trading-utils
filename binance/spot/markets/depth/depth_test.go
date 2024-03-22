@@ -46,7 +46,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := depth_types.DepthNew(3, "SUSHIUSDT")
+	testDepthTree := depth_types.NewDepth(3, "SUSHIUSDT")
 	if testDepthTree == nil {
 		t.Errorf("GetDepthTree returned an empty map")
 	}
@@ -60,7 +60,7 @@ func TestInitDepthTree(t *testing.T) {
 	UseTestnet := false
 
 	// Add more test cases here
-	testDepthTree := depth_types.DepthNew(3, "SUSHIUSDT")
+	testDepthTree := depth_types.NewDepth(3, "SUSHIUSDT")
 	err := spot_depth.SpotDepthInit(testDepthTree, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
@@ -69,7 +69,7 @@ func TestInitDepthTree(t *testing.T) {
 
 func TestGetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ask := ds.GetAsk(1.951)
 	if ask == nil {
@@ -83,7 +83,7 @@ func TestGetAsk(t *testing.T) {
 
 func TestGetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
 	bid := ds.GetBid(1.93)
 	if bid == nil {
@@ -93,7 +93,7 @@ func TestGetBid(t *testing.T) {
 
 func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ask := depth_types.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
@@ -104,7 +104,7 @@ func TestSetAsk(t *testing.T) {
 
 func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
 	bid := depth_types.DepthItemType{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
@@ -115,7 +115,7 @@ func TestSetBid(t *testing.T) {
 
 func TestUpdateAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
@@ -126,7 +126,7 @@ func TestUpdateAsk(t *testing.T) {
 
 func TestUpdateBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
@@ -144,7 +144,7 @@ func TestDepthInterface(t *testing.T) {
 		}
 	}
 	_, bids := getTestDepths()
-	ds := depth_types.DepthNew(3, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
 	test(ds)
 }

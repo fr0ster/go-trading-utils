@@ -3,12 +3,12 @@ package kline_test
 import (
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets/kline"
 	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
+	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func getTestData() []*kline.KlineItem {
-	return []*kline.KlineItem{
+func getTestData() []*kline_types.KlineItem {
+	return []*kline_types.KlineItem{
 		{
 			OpenTime:                 1625097600,
 			Open:                     "100",
@@ -39,7 +39,7 @@ func getTestData() []*kline.KlineItem {
 }
 
 func TestKlineInterface(t *testing.T) {
-	kline := kline.New(2)
+	kline := kline_types.New(2)
 	test := func(k kline_interface.Klines) {
 	}
 

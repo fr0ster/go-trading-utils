@@ -8,7 +8,6 @@ type (
 	Klines interface {
 		Lock()
 		Unlock()
-		Init(apt_key, secret_key, symbolname string, UseTestnet bool)
 		Ascend(func(btree.Item) bool)
 		Descend(func(btree.Item) bool)
 		Get(openTime int64) btree.Item

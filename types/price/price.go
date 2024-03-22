@@ -1,10 +1,8 @@
 package price
 
 import (
-	"context"
 	"sync"
 
-	"github.com/adshao/go-binance/v2"
 	// prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
 	"github.com/google/btree"
 )
@@ -33,25 +31,6 @@ type (
 		LastID             int64  `json:"lastId"`
 		Count              int64  `json:"count"`
 	}
-	// PriceChangeStatsItem struct {
-	// 	Symbol             string `json:"symbol"`
-	// 	PriceChange        string `json:"priceChange"`
-	// 	PriceChangePercent string `json:"priceChangePercent"`
-	// 	WeightedAvgPrice   string `json:"weightedAvgPrice"`
-	// 	PrevClosePrice     string `json:"prevClosePrice"`
-	// 	LastPrice          string `json:"lastPrice"`
-	// 	LastQuantity       string `json:"lastQty"`
-	// 	OpenPrice          string `json:"openPrice"`
-	// 	HighPrice          string `json:"highPrice"`
-	// 	LowPrice           string `json:"lowPrice"`
-	// 	Volume             string `json:"volume"`
-	// 	QuoteVolume        string `json:"quoteVolume"`
-	// 	OpenTime           int64  `json:"openTime"`
-	// 	CloseTime          int64  `json:"closeTime"`
-	// 	FirstID            int64  `json:"firstId"`
-	// 	LastID             int64  `json:"lastId"`
-	// 	Count              int64  `json:"count"`
-	// }
 	PriceChangeStats struct {
 		tree   btree.BTree
 		mutex  sync.Mutex
@@ -72,18 +51,6 @@ func (d *PriceChangeStats) Set(value btree.Item) {
 	d.tree.ReplaceOrInsert(value)
 }
 
-func (d *PriceChangeStats) Init(apt_key string, secret_key string, symbolname string, UseTestnet bool) {
-	binance.UseTestnet = UseTestnet
-	pcss, _ :=
-		binance.NewClient(apt_key, secret_key).
-			NewListPriceChangeStatsService().
-			Symbol(string(symbolname)).
-			Do(context.Background())
-	for _, pcs := range pcss {
-		d.tree.ReplaceOrInsert(PriceChangeStatsItem(*pcs))
-	}
-}
-
 func (d *PriceChangeStats) Lock() {
 	d.mutex.Lock()
 }
@@ -93,7 +60,7 @@ func (d *PriceChangeStats) Unlock() {
 }
 
 // PriceChangeStats - B-дерево для зберігання Цінових змін
-func New(degree int) *PriceChangeStats {
+func NewPriceChangeStat(degree int) *PriceChangeStats {
 	return &PriceChangeStats{
 		tree:   *btree.New(degree),
 		mutex:  sync.Mutex{},

@@ -59,7 +59,7 @@ func getTestData() []*price_types.PriceChangeStatsItem {
 }
 
 func TestPricesInterfaces(t *testing.T) {
-	pcs := price_types.New(2)
+	pcs := price_types.NewPriceChangeStat(2)
 	test := func(p prices_interface.Prices) {
 		p.Lock()
 		defer p.Unlock()
