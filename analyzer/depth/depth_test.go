@@ -8,6 +8,7 @@ import (
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	analyzer_interface "github.com/fr0ster/go-trading-utils/interfaces/analyzer"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
 func TestDepthAnalyzerLoad(t *testing.T) {
@@ -16,10 +17,9 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	UseTestnet := false
 	limit := 10
 	degree := 3
-	round := 2
 	symbol := "BTCUSDT"
-	depth := spot_depth.New(degree, round, limit, symbol)
-	depth.Init(api_key, secret_key, symbol, UseTestnet)
+	depth := depth_types.DepthNew(degree, symbol)
+	spot_depth.SpotDepthInit(depth, api_key, secret_key, symbol, limit, UseTestnet)
 
 	da := depth_analyzer.New(degree)
 	da.Update(depth)

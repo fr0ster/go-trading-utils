@@ -4,16 +4,11 @@ import (
 	"sync"
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
-	"github.com/fr0ster/go-trading-utils/types"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/google/btree"
 )
 
 type (
-	// DepthAnalyzerItem struct {
-	// 	Price float64
-	// 	// Side     string
-	// 	Quantity float64
-	// }
 	Depth struct {
 		asks   *btree.BTree
 		bids   *btree.BTree
@@ -21,19 +16,6 @@ type (
 		degree int
 	}
 )
-
-// // DepthItemType - тип для зберігання заявок в стакані
-// func (i DepthAnalyzerItem) Less(than btree.Item) bool {
-// 	return i.Price < than.(DepthAnalyzerItem).Price
-// }
-
-// func (i DepthAnalyzerItem) Equal(than btree.Item) bool {
-// 	return i.Price == than.(DepthAnalyzerItem).Price
-// }
-
-// func (i *DepthAnalyzerItem) Parse(a common.PriceLevel) {
-// 	i.Price, i.Quantity, _ = a.Parse()
-// }
 
 func New(degree int) *Depth {
 	return &Depth{
@@ -74,7 +56,7 @@ func (d *Depth) GetLevels() *btree.BTree {
 		if a == nil {
 			return 0
 		}
-		return a.(types.DepthItemType).Quantity
+		return a.(depth_types.DepthItemType).Quantity
 	}
 	ascend := func(dataIn, dataOut *btree.BTree) (res *btree.BTree) {
 		var prev, current, next btree.Item

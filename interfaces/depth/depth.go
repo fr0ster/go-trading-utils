@@ -8,7 +8,6 @@ type (
 	Depth interface {
 		Lock()
 		Unlock()
-		Init(apt_key, secret_key, symbolname string, UseTestnet bool) (err error)
 		AskAscend(iter func(btree.Item) bool)
 		AskDescend(iter func(btree.Item) bool)
 		BidAscend(iter func(btree.Item) bool)
