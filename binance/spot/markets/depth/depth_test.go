@@ -34,10 +34,10 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		{Price: 1.958, Quantity: 90.0},
 	}
 	for _, bid := range bidList {
-		bids.ReplaceOrInsert(bid)
+		bids.ReplaceOrInsert(&bid)
 	}
 	for _, ask := range askList {
-		asks.ReplaceOrInsert(ask)
+		asks.ReplaceOrInsert(&ask)
 	}
 
 	return
@@ -119,7 +119,7 @@ func TestUpdateAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
-	if ask != nil && ask.(depth_types.DepthItemType).Quantity != 517.9 {
+	if ask != nil && ask.(*depth_types.DepthItemType).Quantity != 517.9 {
 		t.Errorf("Failed to update ask")
 	}
 }
@@ -130,7 +130,7 @@ func TestUpdateBid(t *testing.T) {
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
-	if bid != nil && bid.(depth_types.DepthItemType).Quantity != 455.4 {
+	if bid != nil && bid.(*depth_types.DepthItemType).Quantity != 455.4 {
 		t.Errorf("Failed to update bid")
 	}
 }
@@ -139,7 +139,7 @@ func TestDepthInterface(t *testing.T) {
 	test := func(ds depth_interface.Depth) {
 		ds.UpdateBid(1.93, 300.0)
 		bid := ds.GetBid(1.93)
-		if bid != nil && bid.(depth_types.DepthItemType).Quantity != 455.4 {
+		if bid != nil && bid.(*depth_types.DepthItemType).Quantity != 455.4 {
 			t.Errorf("Failed to update bid")
 		}
 	}

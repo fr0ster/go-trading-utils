@@ -15,12 +15,12 @@ type (
 )
 
 // DepthItemType - тип для зберігання заявок в стакані
-func (i DepthItemType) Less(than btree.Item) bool {
-	return i.Price < than.(DepthItemType).Price
+func (i *DepthItemType) Less(than btree.Item) bool {
+	return i.Price < than.(*DepthItemType).Price
 }
 
-func (i DepthItemType) Equal(than btree.Item) bool {
-	return i.Price == than.(DepthItemType).Price
+func (i *DepthItemType) Equal(than btree.Item) bool {
+	return i.Price == than.(*DepthItemType).Price
 }
 
 func (i *DepthItemType) Parse(a common.PriceLevel) {
@@ -89,7 +89,7 @@ func (d *Depth) BidDescend(iter func(btree.Item) bool) {
 
 // GetAsk implements depth_interface.Depths.
 func (d *Depth) GetAsk(price float64) btree.Item {
-	item := d.asks.Get(DepthItemType{Price: price})
+	item := d.asks.Get(&DepthItemType{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -98,7 +98,7 @@ func (d *Depth) GetAsk(price float64) btree.Item {
 
 // GetBid implements depth_interface.Depths.
 func (d *Depth) GetBid(price float64) btree.Item {
-	item := d.bids.Get(DepthItemType{Price: price})
+	item := d.bids.Get(&DepthItemType{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -107,31 +107,31 @@ func (d *Depth) GetBid(price float64) btree.Item {
 
 // SetAsk implements depth_interface.Depths.
 func (d *Depth) SetAsk(price float64, quantity float64) {
-	d.asks.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity})
+	d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 }
 
 // SetBid implements depth_interface.Depths.
 func (d *Depth) SetBid(price float64, quantity float64) {
-	d.bids.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity})
+	d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 }
 
 // UpdateAsk implements depth_interface.Depths.
 func (d *Depth) UpdateAsk(price float64, quantity float64) {
-	old := d.asks.Get(DepthItemType{Price: price})
+	old := d.asks.Get(&DepthItemType{Price: price})
 	if old != nil {
-		d.asks.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity + old.(DepthItemType).Quantity})
+		d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity + old.(*DepthItemType).Quantity})
 	} else {
-		d.asks.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity})
+		d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 	}
 }
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) {
-	old := d.bids.Get(DepthItemType{Price: price})
+	old := d.bids.Get(&DepthItemType{Price: price})
 	if old != nil {
-		d.bids.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity + old.(DepthItemType).Quantity})
+		d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity + old.(*DepthItemType).Quantity})
 	} else {
-		d.bids.ReplaceOrInsert(DepthItemType{Price: price, Quantity: quantity})
+		d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 	}
 }
 

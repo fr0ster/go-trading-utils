@@ -56,7 +56,7 @@ func (d *Depth) GetLevels() *btree.BTree {
 		if a == nil {
 			return 0
 		}
-		return a.(depth_types.DepthItemType).Quantity
+		return a.(*depth_types.DepthItemType).Quantity
 	}
 	ascend := func(dataIn, dataOut *btree.BTree) (res *btree.BTree) {
 		var prev, current, next btree.Item

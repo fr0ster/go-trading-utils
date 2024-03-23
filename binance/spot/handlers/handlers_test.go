@@ -134,10 +134,10 @@ func getTestDepths() *depth_types.Depth {
 		{Price: 1.958, Quantity: 90.0},
 	}
 	for _, bid := range bidList {
-		bids.ReplaceOrInsert(bid)
+		bids.ReplaceOrInsert(&bid)
 	}
 	for _, ask := range askList {
-		asks.ReplaceOrInsert(ask)
+		asks.ReplaceOrInsert(&ask)
 	}
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
@@ -176,32 +176,3 @@ func TestDepthsUpdaterHandler(t *testing.T) {
 		}
 	}
 }
-
-// func TestTradesUpdaterHandler(t *testing.T) {
-// 	inChannel := make(chan *binance.WsTradeEvent, 1)
-// 	outChannel := handlers.GetTradesUpdateGuard(getTestDepths(), inChannel)
-// 	go func() {
-// 		for i := 0; i < 10; i++ {
-// 			inChannel <- &binance.WsTradeEvent{
-// 				Event: "trade",
-// 				Symbol: "BTCUSDT",
-// 				Price: utils.ConvFloat64ToStr(float64(i), 2),
-// 				Quantity: utils.ConvFloat64ToStr(float64(i), 2),
-// 			}
-// 		}
-// 	}()
-// 	res := false
-// 	for {
-// 		select {
-// 		case <-outChannel:
-// 			res = true
-// 		case <-time.After(1000 * time.Millisecond):
-// 			res = false
-// 		}
-// 		if !res {
-// 			t.Fatal("Error sending order event to channel")
-// 		} else {
-// 			break
-// 		}
-// 	}
-// }
