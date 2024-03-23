@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -20,19 +21,6 @@ type (
 		TakerBuyBaseAssetVolume  string `json:"takerBuyBaseAssetVolume"`
 		TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
 	}
-	// Kline struct {
-	// 	OpenTime                 int64  `json:"openTime"`
-	// 	Open                     string `json:"open"`
-	// 	High                     string `json:"high"`
-	// 	Low                      string `json:"low"`
-	// 	Close                    string `json:"close"`
-	// 	Volume                   string `json:"volume"`
-	// 	CloseTime                int64  `json:"closeTime"`
-	// 	QuoteAssetVolume         string `json:"quoteAssetVolume"`
-	// 	TradeNum                 int64  `json:"tradeNum"`
-	// 	TakerBuyBaseAssetVolume  string `json:"takerBuyBaseAssetVolume"`
-	// 	TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
-	// }
 	Kline struct {
 		tree   btree.BTree
 		mutex  sync.Mutex
@@ -41,12 +29,12 @@ type (
 )
 
 // Kline - тип для зберігання свічок
-func (i KlineItem) Less(than btree.Item) bool {
-	return i.OpenTime < than.(KlineItem).OpenTime
+func (i *KlineItem) Less(than btree.Item) bool {
+	return i.OpenTime < than.(*KlineItem).OpenTime
 }
 
-func (i KlineItem) Equal(than btree.Item) bool {
-	return i.OpenTime == than.(KlineItem).OpenTime
+func (i *KlineItem) Equal(than btree.Item) bool {
+	return i.OpenTime == than.(*KlineItem).OpenTime
 }
 
 func (d *Kline) Ascend(f func(btree.Item) bool) {
@@ -69,7 +57,7 @@ func (d *Kline) Unlock() {
 
 // GetItem implements depth_interface.Depths.
 func (d *Kline) Get(openTime int64) btree.Item {
-	return d.tree.Get(KlineItem{OpenTime: int64(openTime)})
+	return d.tree.Get(&KlineItem{OpenTime: int64(openTime)})
 }
 
 // SetItem implements depth_interface.Depths.
@@ -84,4 +72,13 @@ func New(degree int) *Kline {
 		mutex:  sync.Mutex{},
 		degree: degree,
 	}
+}
+
+func Binance2kline(binanceKline interface{}) (*KlineItem, error) {
+	var klineItem KlineItem
+	err := copier.Copy(&klineItem, binanceKline)
+	if err != nil {
+		return nil, err
+	}
+	return &klineItem, nil
 }

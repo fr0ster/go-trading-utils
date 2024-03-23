@@ -46,7 +46,7 @@ func TestKlineInterface(t *testing.T) {
 	// Create a sample Kline instance
 	k := getTestData()
 	for _, v := range k {
-		kline.Set(*v)
+		kline.Set(v)
 	}
 	test(kline)
 }
