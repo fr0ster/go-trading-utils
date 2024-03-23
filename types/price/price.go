@@ -5,6 +5,7 @@ import (
 
 	// prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -39,7 +40,7 @@ type (
 )
 
 // Less implements btree.Item.
-func (p PriceChangeStatsItem) Less(than btree.Item) bool {
+func (p *PriceChangeStatsItem) Less(than btree.Item) bool {
 	return p.OpenTime < than.(*PriceChangeStatsItem).OpenTime
 }
 
@@ -66,4 +67,13 @@ func NewPriceChangeStat(degree int) *PriceChangeStats {
 		mutex:  sync.Mutex{},
 		degree: degree,
 	}
+}
+
+func Binance2PriceChangeStats(binancePriceChangeStats interface{}) (*PriceChangeStatsItem, error) {
+	var pcs PriceChangeStatsItem
+	err := copier.Copy(&pcs, binancePriceChangeStats)
+	if err != nil {
+		return nil, err
+	}
+	return &pcs, nil
 }

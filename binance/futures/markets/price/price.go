@@ -8,15 +8,18 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func Init(d *price_types.PriceChangeStats, apt_key string, secret_key string, symbolname string, UseTestnet bool) {
+func Init(d *price_types.PriceChangeStats, apt_key string, secret_key string, symbolname string, UseTestnet bool) error {
 	binance.UseTestnet = UseTestnet
-	pcss, _ :=
+	pcss, err :=
 		futures.NewClient(apt_key, secret_key).
 			NewListPriceChangeStatsService().
 			Symbol(string(symbolname)).
 			Do(context.Background())
+	if err != nil {
+		return err
+	}
 	for _, pcs := range pcss {
-		d.Set(price_types.PriceChangeStatsItem{
+		d.Set(&price_types.PriceChangeStatsItem{
 			Symbol:             pcs.Symbol,
 			PriceChange:        pcs.PriceChange,
 			PriceChangePercent: pcs.PriceChangePercent,
@@ -36,4 +39,5 @@ func Init(d *price_types.PriceChangeStats, apt_key string, secret_key string, sy
 			Count:              pcs.Count,
 		})
 	}
+	return nil
 }
