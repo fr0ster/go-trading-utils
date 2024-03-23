@@ -22,7 +22,8 @@ func TestAggTradesInterface(t *testing.T) {
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(trade_types.AggTrade)
+				ht, err := trade_types.Binance2AggTrades(item)
+				assert.Nil(t, err)
 				assert.NotNil(t, ht)
 			}
 			return true

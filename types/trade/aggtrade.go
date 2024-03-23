@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -19,12 +20,12 @@ type (
 	}
 )
 
-func (i AggTrade) Less(than btree.Item) bool {
-	return i.AggTradeID < than.(AggTrade).AggTradeID
+func (i *AggTrade) Less(than btree.Item) bool {
+	return i.AggTradeID < than.(*AggTrade).AggTradeID
 }
 
-func (i AggTrade) Equal(than btree.Item) bool {
-	return i.AggTradeID == than.(AggTrade).AggTradeID
+func (i *AggTrade) Equal(than btree.Item) bool {
+	return i.AggTradeID == than.(*AggTrade).AggTradeID
 }
 
 type (
@@ -46,7 +47,7 @@ func (a *AggTrades) Descend(iter func(btree.Item) bool) {
 
 // Get implements trades.Trades.
 func (a *AggTrades) Get(id int64) btree.Item {
-	res := a.tree.Get(AggTrade{AggTradeID: id})
+	res := a.tree.Get(&AggTrade{AggTradeID: id})
 	if res == nil {
 		return nil
 	}
@@ -70,11 +71,21 @@ func (a *AggTrades) Unlock() {
 
 // Update implements trades.Trades.
 func (a *AggTrades) Update(val btree.Item) {
-	old := a.Get(val.(AggTrade).AggTradeID)
-	if old != nil {
-		a.Set(old.(AggTrade))
-	} else {
+	id := val.(*AggTrade).AggTradeID
+	old := a.Get(id)
+	if old == nil {
 		a.Set(val)
+	} else {
+		a.Set(&AggTrade{
+			AggTradeID:       id,
+			Price:            val.(*AggTrade).Price,
+			Quantity:         val.(*AggTrade).Quantity,
+			FirstTradeID:     val.(*AggTrade).FirstTradeID,
+			LastTradeID:      val.(*AggTrade).LastTradeID,
+			Timestamp:        val.(*AggTrade).Timestamp,
+			IsBuyerMaker:     val.(*AggTrade).IsBuyerMaker,
+			IsBestPriceMatch: val.(*AggTrade).IsBestPriceMatch,
+		})
 	}
 }
 
@@ -83,4 +94,13 @@ func NewAggTrades() *AggTrades {
 		tree: btree.New(2),
 		mu:   &sync.Mutex{},
 	}
+}
+
+func Binance2AggTrades(binanceTrades interface{}) (*AggTrade, error) {
+	var trade AggTrade
+	err := copier.Copy(&trade, binanceTrades)
+	if err != nil {
+		return nil, err
+	}
+	return &trade, nil
 }

@@ -9,7 +9,7 @@ import (
 
 func tradesInit(res []*futures.Trade, a *trade_types.Trades) (err error) {
 	for _, val := range res {
-		a.Update(trade_types.Trade{
+		a.Update(&trade_types.Trade{
 			ID:           val.ID,
 			Price:        val.Price,
 			Quantity:     val.Quantity,

@@ -22,7 +22,8 @@ func TestListTradeInterface(t *testing.T) {
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(trade_types.TradeV3)
+				ht, err := trade_types.Binance2TradesV3(item)
+				assert.Nil(t, err)
 				assert.NotNil(t, ht)
 			}
 			return true

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -25,12 +26,12 @@ type (
 	}
 )
 
-func (i TradeV3) Less(than btree.Item) bool {
-	return i.ID < than.(TradeV3).ID
+func (i *TradeV3) Less(than btree.Item) bool {
+	return i.ID < than.(*TradeV3).ID
 }
 
-func (i TradeV3) Equal(than btree.Item) bool {
-	return i.ID == than.(TradeV3).ID
+func (i *TradeV3) Equal(than btree.Item) bool {
+	return i.ID == than.(*TradeV3).ID
 }
 
 type (
@@ -52,7 +53,7 @@ func (a *TradesV3) Descend(iter func(btree.Item) bool) {
 
 // Get implements Trades.
 func (a *TradesV3) Get(id int64) btree.Item {
-	res := a.tree.Get(TradeV3{ID: id})
+	res := a.tree.Get(&TradeV3{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -76,11 +77,27 @@ func (a *TradesV3) Unlock() {
 
 // Update implements Trades.
 func (a *TradesV3) Update(val btree.Item) {
-	old := a.Get(val.(TradeV3).ID)
+	id := val.(*TradeV3).ID
+	old := a.Get(id)
 	if old == nil {
 		a.Set(val)
 	} else {
-		a.Set(old.(TradeV3))
+		a.Set(&TradeV3{
+			ID:              val.(*TradeV3).ID,
+			Symbol:          val.(*TradeV3).Symbol,
+			OrderID:         val.(*TradeV3).OrderID,
+			OrderListId:     val.(*TradeV3).OrderListId,
+			Price:           val.(*TradeV3).Price,
+			Quantity:        val.(*TradeV3).Quantity,
+			QuoteQuantity:   val.(*TradeV3).QuoteQuantity,
+			Commission:      val.(*TradeV3).Commission,
+			CommissionAsset: val.(*TradeV3).CommissionAsset,
+			Time:            val.(*TradeV3).Time,
+			IsBuyer:         val.(*TradeV3).IsBuyer,
+			IsMaker:         val.(*TradeV3).IsMaker,
+			IsBestMatch:     val.(*TradeV3).IsBestMatch,
+			IsIsolated:      val.(*TradeV3).IsIsolated,
+		})
 	}
 }
 
@@ -89,4 +106,13 @@ func NewTradesV3() *TradesV3 {
 		tree: btree.New(2),
 		mu:   &sync.Mutex{},
 	}
+}
+
+func Binance2TradesV3(binanceTrades interface{}) (*TradeV3, error) {
+	var trade TradeV3
+	err := copier.Copy(&trade, binanceTrades)
+	if err != nil {
+		return nil, err
+	}
+	return &trade, nil
 }

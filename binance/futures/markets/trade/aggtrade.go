@@ -19,7 +19,7 @@ func AggTradeInit(a *trade_types.AggTrades, apt_key, secret_key, symbolname stri
 		return err
 	}
 	for _, trade := range res {
-		a.Update(trade_types.AggTrade{
+		a.Update(&trade_types.AggTrade{
 			AggTradeID:   trade.AggTradeID,
 			Price:        trade.Price,
 			Quantity:     trade.Quantity,

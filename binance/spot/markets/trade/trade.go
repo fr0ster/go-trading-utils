@@ -9,7 +9,11 @@ import (
 
 func tradesInit(res []*binance.Trade, a *trade_types.Trades) (err error) {
 	for _, val := range res {
-		a.Update(trade_types.Trade(*val))
+		trade, err := trade_types.Binance2Trades(val)
+		if err != nil {
+			return err
+		}
+		a.Update(trade)
 	}
 	return nil
 }

@@ -22,7 +22,8 @@ func TestHistoricalTradesInterface(t *testing.T) {
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(trade_types.Trade)
+				ht, err := trade_types.Binance2Trades(item)
+				assert.Nil(t, err)
 				assert.NotNil(t, ht)
 			}
 			return true
@@ -44,7 +45,8 @@ func TestRecentTradesInterface(t *testing.T) {
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(trade_types.Trade)
+				ht, err := trade_types.Binance2Trades(item)
+				assert.Nil(t, err)
 				assert.NotNil(t, ht)
 			}
 			return true

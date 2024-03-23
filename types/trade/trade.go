@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -19,12 +20,12 @@ type (
 	}
 )
 
-func (i Trade) Less(than btree.Item) bool {
-	return i.ID < than.(Trade).ID
+func (i *Trade) Less(than btree.Item) bool {
+	return i.ID < than.(*Trade).ID
 }
 
-func (i Trade) Equal(than btree.Item) bool {
-	return i.ID == than.(Trade).ID
+func (i *Trade) Equal(than btree.Item) bool {
+	return i.ID == than.(*Trade).ID
 }
 
 type (
@@ -46,7 +47,7 @@ func (a *Trades) Descend(iter func(btree.Item) bool) {
 
 // Get implements Trades.
 func (a *Trades) Get(id int64) btree.Item {
-	res := a.tree.Get(Trade{ID: id})
+	res := a.tree.Get(&Trade{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -70,11 +71,21 @@ func (a *Trades) Unlock() {
 
 // Update implements Trades.
 func (a *Trades) Update(val btree.Item) {
-	old := a.Get(val.(Trade).ID)
+	id := val.(*Trade).ID
+	old := a.Get(id)
 	if old == nil {
 		a.Set(val)
 	} else {
-		a.Set(old.(Trade))
+		a.Set(&Trade{
+			ID:            id,
+			Price:         val.(*Trade).Price,
+			Quantity:      val.(*Trade).Quantity,
+			QuoteQuantity: val.(*Trade).QuoteQuantity,
+			Time:          val.(*Trade).Time,
+			IsBuyerMaker:  val.(*Trade).IsBuyerMaker,
+			IsBestMatch:   val.(*Trade).IsBestMatch,
+			IsIsolated:    val.(*Trade).IsIsolated,
+		})
 	}
 }
 
@@ -83,4 +94,13 @@ func NewTrades() *Trades {
 		tree: btree.New(2),
 		mu:   &sync.Mutex{},
 	}
+}
+
+func Binance2Trades(binanceTrades interface{}) (*Trade, error) {
+	var trade Trade
+	err := copier.Copy(&trade, binanceTrades)
+	if err != nil {
+		return nil, err
+	}
+	return &trade, nil
 }

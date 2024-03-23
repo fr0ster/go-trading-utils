@@ -18,8 +18,12 @@ func AggTradeInit(a *trade_types.AggTrades, apt_key, secret_key, symbolname stri
 	if err != nil {
 		return err
 	}
-	for _, trade := range res {
-		a.Update(trade_types.AggTrade(*trade))
+	for _, val := range res {
+		aggTrade, err := trade_types.Binance2AggTrades(val)
+		if err != nil {
+			return err
+		}
+		a.Update(aggTrade)
 	}
 	return nil
 }
