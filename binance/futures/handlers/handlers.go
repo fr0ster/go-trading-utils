@@ -49,7 +49,7 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker_types.BookTickerBTree, so
 	go func() {
 		for {
 			event := <-source
-			bookTickerUpdate := bookticker_types.BookTickerItem{
+			bookTickerUpdate := &bookticker_types.BookTickerItem{
 				Symbol:      event.Symbol,
 				BidPrice:    utils.ConvStrToFloat64(event.BestBidPrice),
 				BidQuantity: utils.ConvStrToFloat64(event.BestBidQty),

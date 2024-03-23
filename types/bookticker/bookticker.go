@@ -23,12 +23,12 @@ type (
 )
 
 // DepthItemType - тип для зберігання заявок в стакані
-func (i BookTickerItem) Less(than btree.Item) bool {
-	return i.Symbol < than.(BookTickerItem).Symbol
+func (i *BookTickerItem) Less(than btree.Item) bool {
+	return i.Symbol < than.(*BookTickerItem).Symbol
 }
 
-func (i BookTickerItem) Equal(than btree.Item) bool {
-	return i.Symbol == than.(BookTickerItem).Symbol
+func (i *BookTickerItem) Equal(than btree.Item) bool {
+	return i.Symbol == than.(*BookTickerItem).Symbol
 }
 
 func (btt *BookTickerBTree) Lock() {
@@ -48,7 +48,7 @@ func (btt *BookTickerBTree) Descend(f func(item btree.Item) bool) {
 }
 
 func (btt *BookTickerBTree) Get(symbol string) btree.Item {
-	item := btt.tree.Get(BookTickerItem{Symbol: symbol})
+	item := btt.tree.Get(&BookTickerItem{Symbol: symbol})
 	if item == nil {
 		return nil
 	}

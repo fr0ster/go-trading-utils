@@ -22,7 +22,7 @@ func Init(btt *bookticker_types.BookTickerBTree, api_key, secret_key, symbolname
 		if err != nil {
 			return err
 		}
-		btt.Set(*bookTicker)
+		btt.Set(bookTicker)
 	}
 	return nil
 }
