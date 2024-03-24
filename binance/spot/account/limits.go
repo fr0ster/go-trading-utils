@@ -2,6 +2,7 @@ package account
 
 import (
 	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
@@ -86,9 +87,16 @@ func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimi
 
 func Binance2AssetBalance(binanceAssetBalance interface{}) (*AssetBalance, error) {
 	var assetBalance AssetBalance
-	err := copier.Copy(&assetBalance, binanceAssetBalance)
+
+	val := reflect.ValueOf(binanceAssetBalance)
+	if val.Kind() != reflect.Ptr {
+		val = reflect.ValueOf(&binanceAssetBalance)
+	}
+
+	err := copier.Copy(&assetBalance, val.Interface())
 	if err != nil {
 		return nil, err
 	}
+
 	return &assetBalance, nil
 }
