@@ -1,6 +1,7 @@
 package account
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -32,15 +33,31 @@ func (a *AccountAsset) Equals(item btree.Item) bool {
 // GetQuantityLimits implements account.AccountLimits.
 func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
 	for symbol := range a.symbols {
-		item := a.accountAssets.Get(&AccountAsset{Asset: symbol})
-		if item == nil {
-			res = append(res, account.QuantityLimit{Symbol: symbol, MaxQty: 0})
-		} else {
-			symbolBalance, _ := Binance2AccountAsset(item)
-			res = append(res, account.QuantityLimit{Symbol: symbol, MaxQty: utils.ConvStrToFloat64(symbolBalance.AvailableBalance)})
-		}
+		item, _ := a.getValue(symbol)
+		symbolBalance, _ := Binance2AccountAsset(item)
+		res = append(res, account.QuantityLimit{Symbol: symbol, MaxQty: utils.ConvStrToFloat64(symbolBalance.AvailableBalance)})
 	}
 	return
+}
+
+func (a *AccountLimits) getValue(asset string) (float64, error) {
+	item := a.accountAssets.Get(&AccountAsset{Asset: asset})
+	if item == nil {
+		return 0, errors.New("item not found")
+	} else {
+		symbolBalance, _ := Binance2AccountAsset(item)
+		return utils.ConvStrToFloat64(symbolBalance.AvailableBalance), nil
+	}
+}
+
+// GetBalance implements account.AccountLimits.
+func (a *AccountLimits) GetBalance(asset string) (res float64, err error) {
+	return a.getValue(asset)
+}
+
+// GetQuantity implements account.AccountLimits.
+func (a *AccountLimits) GetQuantity(symbol string) (float64, error) {
+	return a.getValue(symbol)
 }
 
 func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimits) {
