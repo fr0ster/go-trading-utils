@@ -23,7 +23,7 @@ func TestAccountLimits_GetQuantityLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		quantityLimits := al.GetQuantityLimits()
+		quantityLimits := al.GetQuantities()
 		if quantityLimits == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
@@ -44,7 +44,7 @@ func TestAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		quantityLimits := al.GetQuantityLimits()
+		quantityLimits := al.GetQuantities()
 		if quantityLimits == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
@@ -65,7 +65,7 @@ func TestAccountLimits_GetQuantityUSDTLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		quantityLimits := al.GetQuantityLimits()
+		quantityLimits := al.GetQuantities()
 		if quantityLimits == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}

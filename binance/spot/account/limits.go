@@ -31,7 +31,7 @@ func (a *Balance) Equals(item btree.Item) bool {
 }
 
 // GetQuantityLimits implements account.AccountLimits.
-func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
+func (a *AccountLimits) GetQuantities() (res []account.QuantityLimit) {
 	a.assetBalances.Ascend(func(item btree.Item) bool {
 		val, _ := Binance2AssetBalance(item)
 		if _, exists := a.symbols[val.Asset]; exists || len(a.symbols) == 0 {

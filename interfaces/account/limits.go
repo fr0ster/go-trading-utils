@@ -2,7 +2,7 @@ package account
 
 type (
 	AccountLimits interface {
-		GetQuantityLimits() []QuantityLimit
+		GetQuantities() []QuantityLimit
 		GetQuantity(symbol string) (float64, error)
 		GetBalance(symbol string) (float64, error)
 	}
