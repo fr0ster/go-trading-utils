@@ -58,18 +58,22 @@ func (a *DepthAnalyzer) Update(dp depth_interface.Depth) error {
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
 		bid.Price = utils.RoundToDecimalPlace(bid.Price, a.round)
-		if bid.Price < a.bound {
-			a.bid.ReplaceOrInsert(bid)
+		old := a.bid.Get(&types.DepthLevels{Price: bid.Price})
+		if old != nil {
+			bid.Quantity += old.(*types.DepthLevels).Quantity
 		}
+		a.bid.ReplaceOrInsert(bid)
 		return true
 	})
 	a.ask.Clear(false)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
 		ask.Price = utils.RoundToDecimalPlace(ask.Price, a.round)
-		if ask.Price < a.bound {
-			a.ask.ReplaceOrInsert(ask)
+		old := a.ask.Get(&types.DepthLevels{Price: ask.Price})
+		if old != nil {
+			ask.Quantity += old.(*types.DepthLevels).Quantity
 		}
+		a.ask.ReplaceOrInsert(ask)
 		return true
 	})
 	return nil
