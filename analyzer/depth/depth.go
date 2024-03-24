@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
+	"github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/google/btree"
 )
@@ -51,21 +52,21 @@ func (d *Depth) Update(depth depth_interface.Depth) error {
 }
 
 // GetBidLocalMaxima implements depth_interface.Depths.
-func (d *Depth) GetLevels() *btree.BTree {
-	res := btree.New(d.degree)
+func (d *Depth) GetLevels(side types.DepthSide) *btree.BTree {
 	getQuantity := func(a btree.Item) float64 {
 		if a == nil {
 			return 0
 		}
 		return a.(*depth_types.DepthItemType).Quantity
 	}
-	ascend := func(dataIn, dataOut *btree.BTree) (res *btree.BTree) {
+	ascend := func(dataIn *btree.BTree) (res *btree.BTree) {
+		res = btree.New(d.degree)
 		var prev, current, next btree.Item
 		dataIn.Ascend(func(a btree.Item) bool {
 			next = a
 			if (current != nil && prev != nil && getQuantity(current) > getQuantity(prev) && getQuantity(current) > getQuantity(next)) ||
 				(current != nil && prev == nil && getQuantity(current) > getQuantity(next)) {
-				dataOut.ReplaceOrInsert(current)
+				res.ReplaceOrInsert(current)
 			}
 			prev = current
 			current = next
@@ -73,7 +74,9 @@ func (d *Depth) GetLevels() *btree.BTree {
 		})
 		return
 	}
-	ascend(d.asks, res)
-	ascend(d.bids, res)
-	return res
+	if side == types.DepthSideAsk {
+		return ascend(d.asks)
+	} else {
+		return ascend(d.bids)
+	}
 }

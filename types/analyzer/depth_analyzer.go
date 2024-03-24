@@ -64,22 +64,21 @@ func (a *DepthAnalyzer) Update(dp depth_interface.Depth) error {
 	return nil
 }
 
-func (a *DepthAnalyzer) GetLevels() *btree.BTree {
-
-	res := btree.New(a.degree)
+func (a *DepthAnalyzer) GetLevels(side types.DepthSide) *btree.BTree {
 	getQuantity := func(a btree.Item) float64 {
 		if a == nil {
 			return 0
 		}
 		return a.(*types.DepthLevels).Quantity
 	}
-	ascend := func(dataIn, dataOut *btree.BTree) (res *btree.BTree) {
+	ascend := func(dataIn *btree.BTree) (res *btree.BTree) {
+		res = btree.New(a.degree)
 		var prev, current, next btree.Item
 		dataIn.Ascend(func(a btree.Item) bool {
 			next = a
 			if (current != nil && prev != nil && getQuantity(current) > getQuantity(prev) && getQuantity(current) > getQuantity(next)) ||
 				(current != nil && prev == nil && getQuantity(current) > getQuantity(next)) {
-				dataOut.ReplaceOrInsert(current)
+				res.ReplaceOrInsert(current)
 			}
 			prev = current
 			current = next
@@ -87,9 +86,11 @@ func (a *DepthAnalyzer) GetLevels() *btree.BTree {
 		})
 		return
 	}
-	ascend(a.ask, res)
-	ascend(a.bid, res)
-	return res
+	if side == types.DepthSideAsk {
+		return ascend(a.ask)
+	} else {
+		return ascend(a.bid)
+	}
 }
 
 func NewDepthAnalyzer(degree int) *DepthAnalyzer {
