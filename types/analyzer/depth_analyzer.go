@@ -51,29 +51,43 @@ func (a *DepthAnalyzer) Set(side types.DepthSide, value btree.Item) {
 }
 
 // Update implements Analyzers.
-func (a *DepthAnalyzer) Update(dp depth_interface.Depth) error {
-	a.Lock()
-	defer a.Unlock()
-	a.bid.Clear(false)
+func (da *DepthAnalyzer) Update(dp depth_interface.Depth) error {
+	da.Lock()
+	defer da.Unlock()
+	da.bid.Clear(false)
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
-		bid.Price = utils.RoundToDecimalPlace(bid.Price, a.round)
-		old := a.bid.Get(&types.DepthLevels{Price: bid.Price})
+		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.round)
+		old := da.bid.Get(&types.DepthLevels{Price: bid.Price})
 		if old != nil {
 			bid.Quantity += old.(*types.DepthLevels).Quantity
 		}
-		a.bid.ReplaceOrInsert(bid)
+		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	a.ask.Clear(false)
+	da.bid.Ascend(func(item btree.Item) bool {
+		bid, _ := Binance2DepthLevels(item)
+		if bid.Quantity < da.bound {
+			da.bid.Delete(item)
+		}
+		return true
+	})
+	da.ask.Clear(false)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
-		ask.Price = utils.RoundToDecimalPlace(ask.Price, a.round)
-		old := a.ask.Get(&types.DepthLevels{Price: ask.Price})
+		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.round)
+		old := da.ask.Get(&types.DepthLevels{Price: ask.Price})
 		if old != nil {
 			ask.Quantity += old.(*types.DepthLevels).Quantity
 		}
-		a.ask.ReplaceOrInsert(ask)
+		da.ask.ReplaceOrInsert(ask)
+		return true
+	})
+	da.ask.Ascend(func(item btree.Item) bool {
+		ask, _ := Binance2DepthLevels(item)
+		if ask.Quantity < da.bound {
+			da.ask.Delete(item)
+		}
 		return true
 	})
 	return nil
