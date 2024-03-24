@@ -7,7 +7,9 @@ import (
 
 type (
 	DepthAnalyzer interface {
-		Update(depth_interface.Depth)
+		Update(depth_interface.Depth) error
 		GetLevels() *btree.BTree
+		Lock()
+		Unlock()
 	}
 )

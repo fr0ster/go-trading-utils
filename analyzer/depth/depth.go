@@ -34,7 +34,7 @@ func (d *Depth) Unlock() {
 	d.mu.Unlock()
 }
 
-func (d *Depth) Update(depth depth_interface.Depth) {
+func (d *Depth) Update(depth depth_interface.Depth) error {
 	d.Lock()
 	defer d.Unlock()
 	d.asks.Clear(false)
@@ -47,6 +47,7 @@ func (d *Depth) Update(depth depth_interface.Depth) {
 		d.bids.ReplaceOrInsert(a)
 		return true
 	})
+	return nil
 }
 
 // GetBidLocalMaxima implements depth_interface.Depths.

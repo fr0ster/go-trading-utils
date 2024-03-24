@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/google/btree"
 )
 
 type (
@@ -18,7 +19,6 @@ type (
 	NewOrderRespType string
 	DepthLevels      struct {
 		Price    float64
-		Side     DepthSide
 		Quantity float64
 	}
 	SpotCreateOrderService struct {
@@ -86,3 +86,13 @@ const (
 	OrderStatusTypeNewInsurance    OrderStatusType = "NEW_INSURANCE"
 	OrderStatusTypeNewADL          OrderStatusType = "NEW_ADL"
 )
+
+// Less implements btree.Item.
+func (d *DepthLevels) Less(than btree.Item) bool {
+	return d.Price < than.(*DepthLevels).Price
+}
+
+// Equal implements btree.Item.
+func (d *DepthLevels) Equal(than btree.Item) bool {
+	return d.Price == than.(*DepthLevels).Price
+}

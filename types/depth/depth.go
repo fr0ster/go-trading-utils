@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/common"
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -153,4 +154,13 @@ func NewDepth(degree int, symbol string) *Depth {
 		bids:   btree.New(degree),
 		mutex:  &sync.Mutex{},
 	}
+}
+
+func Binance2BookTicker(binanceDepth interface{}) (*DepthItemType, error) {
+	var bookTickerItem DepthItemType
+	err := copier.Copy(&bookTickerItem, binanceDepth)
+	if err != nil {
+		return nil, err
+	}
+	return &bookTickerItem, nil
 }
