@@ -62,3 +62,27 @@ type (
 		Message   string
 	}
 )
+
+const (
+	DepthSideAsk                   DepthSide       = "ASK"
+	DepthSideBid                   DepthSide       = "BID"
+	SideTypeBuy                    OrderSide       = "BUY"
+	SideTypeSell                   OrderSide       = "SELL"
+	OrderTypeLimit                 OrderType       = "LIMIT"
+	OrderTypeMarket                OrderType       = "MARKET"
+	OrderTypeLimitMaker            OrderType       = "LIMIT_MAKER"
+	OrderTypeStopLoss              OrderType       = "STOP_LOSS"
+	OrderTypeStopLossLimit         OrderType       = "STOP_LOSS_LIMIT"
+	OrderTypeTakeProfit            OrderType       = "TAKE_PROFIT"
+	OrderTypeTakeProfitLimit       OrderType       = "TAKE_PROFIT_LIMIT"
+	OrderStatusTypeNew             OrderStatusType = "NEW"
+	OrderStatusTypePartiallyFilled OrderStatusType = "PARTIALLY_FILLED"
+	OrderStatusTypeFilled          OrderStatusType = "FILLED"
+	OrderStatusTypeCanceled        OrderStatusType = "CANCELED"
+	OrderStatusTypePendingCancel   OrderStatusType = "PENDING_CANCEL"
+	OrderStatusTypeRejected        OrderStatusType = "REJECTED"
+	OrderStatusTypeExpired         OrderStatusType = "EXPIRED"
+	OrderStatusExpiredInMatch      OrderStatusType = "EXPIRED_IN_MATCH" // STP Expired
+	OrderStatusTypeNewInsurance    OrderStatusType = "NEW_INSURANCE"
+	OrderStatusTypeNewADL          OrderStatusType = "NEW_ADL"
+)
