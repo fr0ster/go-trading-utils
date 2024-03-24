@@ -54,8 +54,8 @@ func (a *AccountLimits) getValue(asset string) (float64, error) {
 }
 
 // GetBalance implements account.AccountLimits.
-func (a *AccountLimits) GetBalance(asset string) (res float64, err error) {
-	return a.getValue(asset)
+func (a *AccountLimits) GetBalance(symbol string) (res float64, err error) {
+	return a.getValue(symbol)
 }
 
 // GetQuantity implements account.AccountLimits.

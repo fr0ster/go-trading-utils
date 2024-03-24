@@ -14,7 +14,7 @@ import (
 )
 
 type (
-	AssetBalance  binance.AssetBalance
+	Balance       binance.Balance
 	AccountLimits struct {
 		assetBalances *btree.BTree
 		mu            sync.Mutex
@@ -22,12 +22,12 @@ type (
 	}
 )
 
-func (a *AssetBalance) Less(item btree.Item) bool {
-	return a.Asset < item.(*AssetBalance).Asset
+func (a *Balance) Less(item btree.Item) bool {
+	return a.Asset < item.(*Balance).Asset
 }
 
-func (a *AssetBalance) Equals(item btree.Item) bool {
-	return a.Asset == item.(*AssetBalance).Asset
+func (a *Balance) Equals(item btree.Item) bool {
+	return a.Asset == item.(*Balance).Asset
 }
 
 // GetQuantityLimits implements account.AccountLimits.
@@ -36,7 +36,7 @@ func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
 		val, _ := Binance2AssetBalance(item)
 		if _, exists := a.symbols[val.Asset]; exists || len(a.symbols) == 0 {
 			symbolBalance, _ := Binance2AssetBalance(item)
-			res = append(res, account.QuantityLimit{Symbol: val.Asset, MaxQty: symbolBalance.Free})
+			res = append(res, account.QuantityLimit{Symbol: val.Asset, MaxQty: utils.ConvStrToFloat64(symbolBalance.Free)})
 		}
 		return true
 	})
@@ -44,18 +44,18 @@ func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
 }
 
 func (a *AccountLimits) getValue(asset string) (float64, error) {
-	item := a.assetBalances.Get(&AssetBalance{Asset: asset})
+	item := a.assetBalances.Get(&Balance{Asset: asset})
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
 		symbolBalance, _ := Binance2AssetBalance(item)
-		return symbolBalance.Free, nil
+		return utils.ConvStrToFloat64(symbolBalance.Free), nil
 	}
 }
 
 // GetBalance implements account.AccountLimits.
-func (a *AccountLimits) GetBalance(asset string) (res float64, err error) {
-	return a.getValue(asset)
+func (a *AccountLimits) GetBalance(symbol string) (res float64, err error) {
+	return a.getValue(symbol)
 }
 
 // GetQuantity implements account.AccountLimits.
@@ -78,15 +78,15 @@ func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimi
 	}
 	for _, balance := range spotAccount.GetAccountInfo().Balances {
 		if _, exists := al.symbols[balance.Asset]; exists || len(al.symbols) == 0 {
-			val, _ := Binance2AssetBalance(&balance)
-			al.assetBalances.ReplaceOrInsert(val)
+			val := Balance(balance)
+			al.assetBalances.ReplaceOrInsert(&val)
 		}
 	}
 	return
 }
 
-func Binance2AssetBalance(binanceAssetBalance interface{}) (*AssetBalance, error) {
-	var assetBalance AssetBalance
+func Binance2AssetBalance(binanceAssetBalance interface{}) (*Balance, error) {
+	var assetBalance Balance
 
 	val := reflect.ValueOf(binanceAssetBalance)
 	if val.Kind() != reflect.Ptr {
