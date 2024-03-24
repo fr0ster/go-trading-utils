@@ -77,7 +77,7 @@ func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimi
 	}
 	for _, balance := range spotAccount.GetAccountInfo().Balances {
 		if _, exists := al.symbols[balance.Asset]; exists || len(al.symbols) == 0 {
-			val, _ := Binance2AssetBalance(balance)
+			val, _ := Binance2AssetBalance(&balance)
 			al.assetBalances.ReplaceOrInsert(val)
 		}
 	}
