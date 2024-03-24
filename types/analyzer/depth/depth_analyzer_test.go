@@ -18,13 +18,12 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	UseTestnet := false
 	limit := 10
 	degree := 3
-	rounded := 2
-	bound := 0.5
+	bound := 1.0
 	symbol := "BTCUSDT"
 	depth := depth_types.NewDepth(degree, symbol)
 	spot_depth.SpotDepthInit(depth, api_key, secret_key, symbol, limit, UseTestnet)
 
-	da := depth_analyzer.NewDepthAnalyzer(3, rounded, bound)
+	da := depth_analyzer.NewDepthAnalyzer(degree, limit, bound)
 	da.Update(depth)
 
 	test := func(da analyzer_interface.DepthAnalyzer) {
@@ -35,7 +34,7 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 		if askLevels == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}
-		bidLevels := da.GetLevels(types.DepthSideAsk)
+		bidLevels := da.GetLevels(types.DepthSideBid)
 		if bidLevels == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}

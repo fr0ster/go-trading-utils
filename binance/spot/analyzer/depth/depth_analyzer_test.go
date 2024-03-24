@@ -8,7 +8,7 @@ import (
 	analyzer_interface "github.com/fr0ster/go-trading-utils/interfaces/analyzer"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	"github.com/fr0ster/go-trading-utils/types"
-	depth_analyzer "github.com/fr0ster/go-trading-utils/types/analyzer"
+	depth_analyzer "github.com/fr0ster/go-trading-utils/types/analyzer/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 

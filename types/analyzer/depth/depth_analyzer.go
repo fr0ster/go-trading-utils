@@ -1,4 +1,4 @@
-package analyzer
+package depth_analyzer
 
 import (
 	"sync"
@@ -12,14 +12,12 @@ import (
 
 type (
 	DepthAnalyzer struct {
-		TargetPrice    float64
-		TargetQuantity float64
-		ask            *btree.BTree
-		bid            *btree.BTree
-		mu             sync.Mutex
-		degree         int
-		round          int
-		bound          float64
+		ask    *btree.BTree
+		bid    *btree.BTree
+		mu     sync.Mutex
+		degree int
+		round  int
+		bound  float64
 	}
 )
 

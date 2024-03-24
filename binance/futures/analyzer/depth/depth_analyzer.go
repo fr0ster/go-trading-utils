@@ -5,10 +5,10 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	types "github.com/fr0ster/go-trading-utils/types"
-	analyzer_types "github.com/fr0ster/go-trading-utils/types/analyzer"
+	depth_analyzer_types "github.com/fr0ster/go-trading-utils/types/analyzer/depth"
 )
 
-func Init(a *analyzer_types.DepthAnalyzer, api_key, secret_key, symbolname string, limits int, UseTestnet bool) error {
+func Init(a *depth_analyzer_types.DepthAnalyzer, api_key, secret_key, symbolname string, limits int, UseTestnet bool) error {
 	client := futures.NewClient(api_key, secret_key)
 	depth, err := client.NewDepthService().Symbol(symbolname).Limit(limits).Do(context.Background())
 	if err != nil {
