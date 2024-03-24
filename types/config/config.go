@@ -9,12 +9,13 @@ import (
 
 type (
 	Configs struct {
-		APIKey    string  `json:"api_key"`
-		APISecret string  `json:"api_secret"`
-		Symbol    string  `json:"symbol"`
-		Limit     float64 `json:"limit"`
-		Quantity  float64 `json:"quantity"`
-		Value     float64 `json:"value"`
+		APIKey     string  `json:"api_key"`
+		APISecret  string  `json:"api_secret"`
+		UseTestNet bool    `json:"use_test_net"`
+		Symbol     string  `json:"symbol"`
+		Limit      float64 `json:"limit"`
+		Quantity   float64 `json:"quantity"`
+		Value      float64 `json:"value"`
 	}
 	ConfigFile struct {
 		FilePath string   `json:"file_path"`
@@ -96,6 +97,10 @@ func (cr *Configs) GetAPIKey() string {
 
 func (cr *Configs) GetSecretKey() string {
 	return cr.APISecret
+}
+
+func (cr *Configs) GetUseTestNet() bool {
+	return cr.UseTestNet
 }
 
 func (cr *ConfigFile) GetConfigurations() config_types.Configuration {

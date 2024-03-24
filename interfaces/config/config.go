@@ -8,6 +8,7 @@ type (
 		GetValue() float64
 		GetAPIKey() string
 		GetSecretKey() string
+		GetUseTestNet() bool
 	}
 	ConfigurationFile interface {
 		Save() error

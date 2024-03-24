@@ -19,10 +19,11 @@ func TestConfigFile_Load(t *testing.T) {
 	testData := []byte(`{
 			"api_key": "your_api_key",
 			"api_secret": "your_api_secret",
+			"use_test_net": false,
 			"symbol": "BTCUSDT",
 			"limit": 10.0,
 			"quantity": 1.0,
-			"value": 100.0
+			"value": 100.0			
 		}`)
 	err = os.WriteFile(tmpFile.Name(), testData, 0644)
 	assert.NoError(t, err)
@@ -37,6 +38,7 @@ func TestConfigFile_Load(t *testing.T) {
 	// Assert that the loaded config matches the test data
 	assert.Equal(t, "your_api_key", config.Configs.APIKey)
 	assert.Equal(t, "your_api_secret", config.Configs.APISecret)
+	assert.Equal(t, false, config.Configs.UseTestNet)
 	assert.Equal(t, "BTCUSDT", config.Configs.Symbol)
 	assert.Equal(t, 10.0, config.Configs.Limit)
 	assert.Equal(t, 1.0, config.Configs.Quantity)
@@ -53,12 +55,13 @@ func TestConfigFile_Save(t *testing.T) {
 	config := &config_types.ConfigFile{
 		FilePath: tmpFile.Name(),
 		Configs: &config_types.Configs{
-			APIKey:    "your_api_key",
-			APISecret: "your_api_secret",
-			Symbol:    "BTCUSDT",
-			Limit:     10.0,
-			Quantity:  1.0,
-			Value:     100.0,
+			APIKey:     "your_api_key",
+			APISecret:  "your_api_secret",
+			UseTestNet: false,
+			Symbol:     "BTCUSDT",
+			Limit:      10.0,
+			Quantity:   1.0,
+			Value:      100.0,
 		},
 	}
 
@@ -78,6 +81,7 @@ func TestConfigFile_Save(t *testing.T) {
 	// Assert that the saved config matches the original config
 	assert.Equal(t, config.Configs.APIKey, savedConfig.APIKey)
 	assert.Equal(t, config.Configs.APISecret, savedConfig.APISecret)
+	assert.Equal(t, config.Configs.UseTestNet, savedConfig.UseTestNet)
 	assert.Equal(t, config.Configs.Symbol, savedConfig.Symbol)
 	assert.Equal(t, config.Configs.Limit, savedConfig.Limit)
 	assert.Equal(t, config.Configs.Quantity, savedConfig.Quantity)
