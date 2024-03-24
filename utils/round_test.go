@@ -9,7 +9,7 @@ import (
 func TestRoundToDecimalPlace(t *testing.T) {
 	tests := []struct {
 		num            float64
-		decimalPlaces  float64
+		decimalPlaces  int
 		expectedResult float64
 	}{
 		{3.14159, 2, 3.14},
@@ -28,7 +28,7 @@ func TestRoundToDecimalPlace(t *testing.T) {
 	for _, test := range tests {
 		result := utils.RoundToDecimalPlace(test.num, test.decimalPlaces)
 		if result != test.expectedResult {
-			t.Errorf("Expected %f, but got %f for input (%f, %f)", test.expectedResult, result, test.num, test.decimalPlaces)
+			t.Errorf("Expected %f, but got %f for input (%f, %f)", test.expectedResult, result, test.num, float64(test.decimalPlaces))
 		}
 	}
 }
