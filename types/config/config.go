@@ -9,13 +9,15 @@ import (
 
 type (
 	Configs struct {
-		APIKey     string  `json:"api_key"`
-		APISecret  string  `json:"api_secret"`
-		UseTestNet bool    `json:"use_test_net"`
-		Symbol     string  `json:"symbol"`
-		Limit      float64 `json:"limit"`
-		Quantity   float64 `json:"quantity"`
-		Value      float64 `json:"value"`
+		APIKey       string  `json:"api_key"`
+		APISecret    string  `json:"api_secret"`
+		UseTestNet   bool    `json:"use_test_net"`
+		Symbol       string  `json:"symbol"`
+		TargetSymbol string  `json:"target_symbol"`
+		BaseSymbol   string  `json:"base_symbol"`
+		Limit        float64 `json:"limit"`
+		Quantity     float64 `json:"quantity"`
+		Value        float64 `json:"value"`
 	}
 	ConfigFile struct {
 		FilePath string   `json:"file_path"`
@@ -28,11 +30,13 @@ func ConfigNew(file_path string) *ConfigFile {
 	return &ConfigFile{
 		FilePath: file_path,
 		Configs: &Configs{
-			APIKey:    "",
-			APISecret: "",
-			Symbol:    "BTCUSDT",
-			Quantity:  0,
-			Value:     0,
+			APIKey:       "",
+			APISecret:    "",
+			Symbol:       "BTCUSDT",
+			TargetSymbol: "BTC",
+			BaseSymbol:   "USDT",
+			Quantity:     0,
+			Value:        0,
 		},
 	}
 }
