@@ -8,6 +8,7 @@ import (
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	analyzer_interface "github.com/fr0ster/go-trading-utils/interfaces/analyzer"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
+	"github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
@@ -28,8 +29,12 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 		if da == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}
-		levels := da.GetLevels()
-		if levels == nil {
+		askLevels := da.GetLevels(types.DepthSideAsk)
+		if askLevels == nil {
+			t.Errorf("DepthAnalyzerLoad returned an empty map")
+		}
+		bidLevels := da.GetLevels(types.DepthSideBid)
+		if bidLevels == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}
 	}
