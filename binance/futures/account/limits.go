@@ -32,11 +32,14 @@ func (a *AccountAsset) Equals(item btree.Item) bool {
 
 // GetQuantityLimits implements account.AccountLimits.
 func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
-	for symbol := range a.symbols {
-		item, _ := a.getValue(symbol)
-		symbolBalance, _ := Binance2AccountAsset(item)
-		res = append(res, account.QuantityLimit{Symbol: symbol, MaxQty: utils.ConvStrToFloat64(symbolBalance.AvailableBalance)})
-	}
+	a.accountAssets.Ascend(func(item btree.Item) bool {
+		val, _ := Binance2AccountAsset(item)
+		if _, exists := a.symbols[val.Asset]; exists || len(a.symbols) == 0 {
+			symbolBalance, _ := Binance2AccountAsset(item)
+			res = append(res, account.QuantityLimit{Symbol: val.Asset, MaxQty: utils.ConvStrToFloat64(symbolBalance.AvailableBalance)})
+		}
+		return true
+	})
 	return
 }
 
@@ -74,7 +77,7 @@ func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimi
 		utils.HandleErr(err)
 	}
 	for _, asset := range spotAccount.GetAccountInfo().Assets {
-		if _, exists := al.symbols[asset.Asset]; exists {
+		if _, exists := al.symbols[asset.Asset]; exists || len(al.symbols) == 0 {
 			val, _ := Binance2AccountAsset(asset)
 			al.accountAssets.ReplaceOrInsert(val)
 		}

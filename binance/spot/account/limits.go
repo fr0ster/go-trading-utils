@@ -15,7 +15,6 @@ import (
 type (
 	AssetBalance  binance.AssetBalance
 	AccountLimits struct {
-		// binance.AssetBalance
 		assetBalances *btree.BTree
 		mu            sync.Mutex
 		symbols       map[string]bool
@@ -32,11 +31,14 @@ func (a *AssetBalance) Equals(item btree.Item) bool {
 
 // GetQuantityLimits implements account.AccountLimits.
 func (a *AccountLimits) GetQuantityLimits() (res []account.QuantityLimit) {
-	for symbol := range a.symbols {
-		item, _ := a.getValue(symbol)
-		symbolBalance, _ := Binance2AssetBalance(item)
-		res = append(res, account.QuantityLimit{Symbol: symbol, MaxQty: symbolBalance.Free})
-	}
+	a.assetBalances.Ascend(func(item btree.Item) bool {
+		val, _ := Binance2AssetBalance(item)
+		if _, exists := a.symbols[val.Asset]; exists || len(a.symbols) == 0 {
+			symbolBalance, _ := Binance2AssetBalance(item)
+			res = append(res, account.QuantityLimit{Symbol: val.Asset, MaxQty: symbolBalance.Free})
+		}
+		return true
+	})
 	return
 }
 
@@ -74,7 +76,7 @@ func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimi
 		utils.HandleErr(err)
 	}
 	for _, balance := range spotAccount.GetAccountInfo().Balances {
-		if _, exists := al.symbols[balance.Asset]; exists {
+		if _, exists := al.symbols[balance.Asset]; exists || len(al.symbols) == 0 {
 			val, _ := Binance2AssetBalance(balance)
 			al.assetBalances.ReplaceOrInsert(val)
 		}

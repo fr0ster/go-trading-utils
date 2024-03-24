@@ -29,3 +29,24 @@ func TestAccountLimits_GetQuantityLimits(t *testing.T) {
 
 	test(account)
 }
+
+func TestAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
+	api_key := os.Getenv("API_KEY")
+	secret_key := os.Getenv("SECRET_KEY")
+	futures.UseTestnet = false
+	symbols := []string{}
+	spot := futures.NewClient(api_key, secret_key)
+	account := futures_account.NewAccountLimits(spot, symbols)
+
+	test := func(al account_interface.AccountLimits) {
+		if al == nil {
+			t.Errorf("GetQuantityLimits returned an empty map")
+		}
+		quantityLimits := al.GetQuantityLimits()
+		if quantityLimits == nil {
+			t.Errorf("GetQuantityLimits returned an empty map")
+		}
+	}
+
+	test(account)
+}
