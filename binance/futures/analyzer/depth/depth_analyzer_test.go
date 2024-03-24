@@ -18,11 +18,13 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	UseTestnet := false
 	limit := 10
 	degree := 3
+	rounded := 2
+	bound := 0.5
 	symbol := "BTCUSDT"
 	depth := depth_types.NewDepth(degree, symbol)
 	spot_depth.SpotDepthInit(depth, api_key, secret_key, symbol, limit, UseTestnet)
 
-	da := depth_analyzer.NewDepthAnalyzer(3)
+	da := depth_analyzer.NewDepthAnalyzer(3, rounded, bound)
 	da.Update(depth)
 
 	test := func(da analyzer_interface.DepthAnalyzer) {
