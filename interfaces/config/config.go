@@ -3,6 +3,8 @@ package config
 type (
 	Configuration interface {
 		GetSymbol() string
+		GetTargetSymbol() string
+		GetBaseSymbol() string
 		GetLimit() float64
 		GetQuantity() float64
 		GetValue() float64

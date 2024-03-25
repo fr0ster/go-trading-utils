@@ -83,6 +83,16 @@ func (cr *Configs) GetSymbol() string {
 	return cr.Symbol
 }
 
+// GetBaseSymbol implements config.Configuration.
+func (cr *Configs) GetBaseSymbol() string {
+	return cr.BaseSymbol
+}
+
+// GetTargetSymbol implements config.Configuration.
+func (cr *Configs) GetTargetSymbol() string {
+	return cr.TargetSymbol
+}
+
 func (cr *Configs) GetLimit() float64 {
 	return cr.Limit
 }
