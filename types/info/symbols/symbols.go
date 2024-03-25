@@ -15,18 +15,6 @@ type (
 	}
 )
 
-func NewSymbols(degree int, symbols []interface{}) *Symbols {
-	s := Symbols{
-		degree:  degree,
-		symbols: *btree.New(degree),
-		mu:      sync.Mutex{},
-	}
-	for _, symbol := range symbols {
-		s.Insert(symbol_info.NewSymbol(symbol))
-	}
-	return &s
-}
-
 func (s *Symbols) Lock() {
 	s.mu.Lock()
 }
@@ -49,4 +37,16 @@ func (s *Symbols) GetSymbol(symbol string) *symbol_info.Symbol {
 		return nil
 	}
 	return item.(*symbol_info.Symbol)
+}
+
+func NewSymbols(degree int, symbols []interface{}) *Symbols {
+	s := Symbols{
+		degree:  degree,
+		symbols: *btree.New(degree),
+		mu:      sync.Mutex{},
+	}
+	for _, symbol := range symbols {
+		s.Insert(symbol_info.NewSymbol(symbol))
+	}
+	return &s
 }

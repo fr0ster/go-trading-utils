@@ -1,15 +1,15 @@
 package symbols
 
 import (
-	symbol_interface "github.com/fr0ster/go-trading-utils/interfaces/info/symbols/symbol"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
 )
 
 type (
 	Symbols interface {
 		Lock()
 		Unlock()
-		GetSymbol(symbol string) symbol_interface.Symbol
-		Insert(symbol symbol_interface.Symbol)
+		GetSymbol(symbol string) symbol_info.Symbol
+		Insert(symbol symbol_info.Symbol)
 		Len() int
 	}
 )
