@@ -13,7 +13,7 @@ type ExchangeInfo struct {
 	Symbols      *symbols_info.Symbols
 }
 
-func GetExchangeInfo(client *binance.Client) (*ExchangeInfo, error) {
+func NewExchangeInfo(client *binance.Client) (*ExchangeInfo, error) {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
 		return nil, err

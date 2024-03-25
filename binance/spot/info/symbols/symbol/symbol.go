@@ -24,12 +24,8 @@ func (s *Symbol) Equal(than btree.Item) bool {
 	return s.SymbolName == than.(*Symbol).SymbolName
 }
 
-func NewSymbol(degree int, symbol *binance.Symbol) *Symbol {
-	return &Symbol{
-		SymbolName: SymbolName(symbol.Symbol),
-		Symbol:     *symbol,
-		mu:         sync.Mutex{},
-	}
+func (s *Symbol) GetSymbol() string {
+	return s.Symbol.Symbol
 }
 
 func (s *Symbol) Lock() {
@@ -42,4 +38,21 @@ func (s *Symbol) TryLock() bool {
 
 func (s *Symbol) Unlock() {
 	s.mu.Unlock()
+}
+
+func (s *Symbol) GetFilter(filterType string) interface{} {
+	for _, filter := range s.Filters {
+		if _, exists := filter["filterType"]; exists && filter["filterType"] == filterType {
+			return &filter
+		}
+	}
+	return nil
+}
+
+func NewSymbol(degree int, symbol *binance.Symbol) *Symbol {
+	return &Symbol{
+		SymbolName: SymbolName(symbol.Symbol),
+		Symbol:     *symbol,
+		mu:         sync.Mutex{},
+	}
 }

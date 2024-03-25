@@ -18,7 +18,7 @@ type (
 	}
 )
 
-func GetExchangeInfo(client *futures.Client) (*ExchangeInfo, error) {
+func NewExchangeInfo(client *futures.Client) (*ExchangeInfo, error) {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
 		return nil, err
