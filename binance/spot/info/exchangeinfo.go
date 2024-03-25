@@ -8,6 +8,8 @@ import (
 	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
 )
 
+type ExchangeInfo exchange_types.ExchangeInfo
+
 func Init(val *exchange_types.ExchangeInfo, client *binance.Client) error {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {

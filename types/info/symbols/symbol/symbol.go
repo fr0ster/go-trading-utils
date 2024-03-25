@@ -153,12 +153,12 @@ func Symbol2Binance(val Symbol) (*binance.Symbol, error) {
 }
 
 func Symbol2Futures(val Symbol) (*futures.Symbol, error) {
-	var binanceSymbol futures.Symbol
-	err := copier.Copy(&binanceSymbol, val)
+	var futuresSymbol futures.Symbol
+	err := copier.Copy(&futuresSymbol, val)
 	if err != nil {
 		return nil, err
 	}
-	return &binanceSymbol, nil
+	return &futuresSymbol, nil
 }
 
 // LotSizeFilter return lot size filter of symbol
