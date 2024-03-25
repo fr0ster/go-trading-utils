@@ -43,7 +43,7 @@ func (a *AccountLimits) GetQuantities() (res []account.QuantityLimit) {
 	return
 }
 
-func (a *AccountLimits) getValue(asset string) (float64, error) {
+func (a *AccountLimits) GetAsset(asset string) (float64, error) {
 	item := a.assetBalances.Get(&Balance{Asset: asset})
 	if item == nil {
 		return 0, errors.New("item not found")
@@ -51,16 +51,6 @@ func (a *AccountLimits) getValue(asset string) (float64, error) {
 		symbolBalance, _ := Binance2AssetBalance(item)
 		return utils.ConvStrToFloat64(symbolBalance.Free), nil
 	}
-}
-
-// GetBalance implements account.AccountLimits.
-func (a *AccountLimits) GetBalance(symbol string) (res float64, err error) {
-	return a.getValue(symbol)
-}
-
-// GetQuantity implements account.AccountLimits.
-func (a *AccountLimits) GetQuantity(symbol string) (float64, error) {
-	return a.getValue(symbol)
 }
 
 func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimits) {

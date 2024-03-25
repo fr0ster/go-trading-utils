@@ -53,7 +53,7 @@ func TestAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 	test(account)
 }
 
-func TestAccountLimits_GetQuantityUSDTLimits(t *testing.T) {
+func TestAccountLimits_GetAssetUSDTLimits(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
 	binance.UseTestnet = false
@@ -80,7 +80,7 @@ func TestAccountLimits_GetQuantityUSDTLimits(t *testing.T) {
 				test = utils.ConvStrToFloat64(balance.Free)
 			}
 		}
-		quantity, _ := al.GetQuantity("USDT")
+		quantity, _ := al.GetAsset("USDT")
 		if quantity != test {
 			t.Errorf("GetQuantity returned 0")
 		}
