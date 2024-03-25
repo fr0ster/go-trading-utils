@@ -134,6 +134,16 @@ func NewSymbol(symbol interface{}) *Symbol {
 	return val
 }
 
+func (s *Symbol) GetSymbolSpotInfo() *binance.Symbol {
+	val, _ := Symbol2Binance(*s)
+	return val
+}
+
+func (s *Symbol) GetSymbolFuturesInfo() *futures.Symbol {
+	val, _ := Symbol2Futures(*s)
+	return val
+}
+
 func Binance2Symbol(binanceSymbol interface{}) (*Symbol, error) {
 	var symbol Symbol
 	err := copier.Copy(&symbol, binanceSymbol)
