@@ -23,22 +23,22 @@ type (
 
 // GetExchangeFilters implements info.ExchangeInfo.
 func (e *ExchangeInfo) GetExchangeFilters() []interface{} {
-	panic("unimplemented")
+	return e.ExchangeFilters
 }
 
 // GetRateLimits implements info.ExchangeInfo.
 func (e *ExchangeInfo) GetRateLimits() []RateLimit {
-	panic("unimplemented")
+	return e.RateLimits
 }
 
 // GetServerTime implements info.ExchangeInfo.
 func (e *ExchangeInfo) GetServerTime() int64 {
-	panic("unimplemented")
+	return e.ServerTime
 }
 
 // GetTimezone implements info.ExchangeInfo.
 func (e *ExchangeInfo) GetTimezone() string {
-	panic("unimplemented")
+	return e.Timezone
 }
 
 func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.Symbol {
