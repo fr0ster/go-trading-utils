@@ -15,7 +15,8 @@ import (
 type (
 	AccountAsset  futures.AccountAsset
 	AccountLimits struct {
-		// binance.AssetBalance
+		client        *futures.Client
+		account       *futuresAccount.AccountType
 		accountAssets *btree.BTree
 		mu            sync.Mutex
 		symbols       map[string]bool
@@ -53,8 +54,21 @@ func (a *AccountLimits) GetAsset(asset string) (float64, error) {
 	}
 }
 
+func (a *AccountLimits) Update() error {
+	for _, asset := range a.account.GetAccountInfo().Assets {
+		if _, exists := a.symbols[asset.Asset]; exists || len(a.symbols) == 0 {
+			val, _ := Binance2AccountAsset(asset)
+			a.accountAssets.ReplaceOrInsert(val)
+		}
+	}
+	return nil
+}
+
 func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimits) {
+	var err error
 	al = &AccountLimits{
+		client:        client,
+		account:       nil,
 		accountAssets: btree.New(2),
 		mu:            sync.Mutex{},
 		symbols:       make(map[string]bool), // Add the missing field "mapSymbols"
@@ -62,11 +76,11 @@ func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimi
 	for _, symbol := range symbols {
 		al.symbols[symbol] = true
 	}
-	spotAccount, err := futuresAccount.New(client, 3)
+	al.account, err = futuresAccount.New(al.client, 3)
 	if err != nil {
 		utils.HandleErr(err)
 	}
-	for _, asset := range spotAccount.GetAccountInfo().Assets {
+	for _, asset := range al.account.GetAccountInfo().Assets {
 		if _, exists := al.symbols[asset.Asset]; exists || len(al.symbols) == 0 {
 			val, _ := Binance2AccountAsset(asset)
 			al.accountAssets.ReplaceOrInsert(val)
