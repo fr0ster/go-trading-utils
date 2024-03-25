@@ -1,9 +1,7 @@
 package symbol
 
 import (
-	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
@@ -134,16 +132,6 @@ func NewSymbol(symbol interface{}) *Symbol {
 	return val
 }
 
-func (s *Symbol) GetSymbolSpotInfo() *binance.Symbol {
-	val, _ := Symbol2Binance(*s)
-	return val
-}
-
-func (s *Symbol) GetSymbolFuturesInfo() *futures.Symbol {
-	val, _ := Symbol2Futures(*s)
-	return val
-}
-
 func Binance2Symbol(binanceSymbol interface{}) (*Symbol, error) {
 	var symbol Symbol
 	err := copier.Copy(&symbol, binanceSymbol)
@@ -151,24 +139,6 @@ func Binance2Symbol(binanceSymbol interface{}) (*Symbol, error) {
 		return nil, err
 	}
 	return &symbol, nil
-}
-
-func Symbol2Binance(val Symbol) (*binance.Symbol, error) {
-	var binanceSymbol binance.Symbol
-	err := copier.Copy(&binanceSymbol, val)
-	if err != nil {
-		return nil, err
-	}
-	return &binanceSymbol, nil
-}
-
-func Symbol2Futures(val Symbol) (*futures.Symbol, error) {
-	var futuresSymbol futures.Symbol
-	err := copier.Copy(&futuresSymbol, val)
-	if err != nil {
-		return nil, err
-	}
-	return &futuresSymbol, nil
 }
 
 // LotSizeFilter return lot size filter of symbol
