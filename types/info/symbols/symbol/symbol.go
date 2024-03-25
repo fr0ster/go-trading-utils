@@ -1,8 +1,8 @@
 package symbol
 
 import (
-	"sync"
-
+	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
@@ -26,7 +26,6 @@ type (
 		IsMarginTradingAllowed     bool                     `json:"isMarginTradingAllowed"`
 		Filters                    []map[string]interface{} `json:"filters"`
 		Permissions                []string                 `json:"permissions"`
-		mu                         sync.Mutex
 	}
 )
 
@@ -40,18 +39,6 @@ func (s *Symbol) Equal(than btree.Item) bool {
 
 func (s *Symbol) GetSymbol() string {
 	return s.Symbol
-}
-
-func (s *Symbol) Lock() {
-	s.mu.Lock()
-}
-
-func (s *Symbol) TryLock() bool {
-	return s.mu.TryLock()
-}
-
-func (s *Symbol) Unlock() {
-	s.mu.Unlock()
 }
 
 func (s *Symbol) GetFilter(filterType string) interface{} {
@@ -75,4 +62,22 @@ func Binance2Symbol(binanceSymbol interface{}) (*Symbol, error) {
 		return nil, err
 	}
 	return &symbol, nil
+}
+
+func Symbol2Binance(val Symbol) (*binance.Symbol, error) {
+	var binanceSymbol binance.Symbol
+	err := copier.Copy(&binanceSymbol, val)
+	if err != nil {
+		return nil, err
+	}
+	return &binanceSymbol, nil
+}
+
+func Symbol2Futures(val Symbol) (*futures.Symbol, error) {
+	var binanceSymbol futures.Symbol
+	err := copier.Copy(&binanceSymbol, val)
+	if err != nil {
+		return nil, err
+	}
+	return &binanceSymbol, nil
 }
