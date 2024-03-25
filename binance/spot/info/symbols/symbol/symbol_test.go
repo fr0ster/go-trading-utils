@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/info"
-	symbol_info "github.com/fr0ster/go-trading-utils/binance/spot/info/symbols/symbol"
+	spotInfo "github.com/fr0ster/go-trading-utils/binance/spot/info"
+	exchange_info "github.com/fr0ster/go-trading-utils/types/info"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,10 +16,10 @@ func TestNewSymbol(t *testing.T) {
 		Symbol: "BTCUSDT",
 	}
 
-	s := symbol_info.NewSymbol(2, symbol)
+	s := symbol_info.NewSymbol(symbol)
 
-	if s.SymbolName != "BTCUSDT" {
-		t.Errorf("Expected SymbolName to be 'BTCUSDT', got %s", s.SymbolName)
+	if s.Symbol != "BTCUSDT" {
+		t.Errorf("Expected SymbolName to be 'BTCUSDT', got %s", s.Symbol)
 	}
 
 	// Add more assertions for other fields if needed
@@ -29,7 +30,8 @@ func TestInterface(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo, err := exchange_info.NewExchangeInfo(client)
+	exchangeInfo := exchange_info.NewExchangeInfo()
+	err := spotInfo.Init(exchangeInfo, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}

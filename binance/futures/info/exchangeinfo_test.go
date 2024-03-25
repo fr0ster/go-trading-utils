@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/fr0ster/go-trading-utils/binance/futures/info"
+	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/info"
+	"github.com/fr0ster/go-trading-utils/types/info"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,7 +16,8 @@ func TestGetExchangeInfo(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 
-	exchangeInfo, err := info.NewExchangeInfo(client)
+	exchangeInfo := info.NewExchangeInfo()
+	err := futuresInfo.Init(exchangeInfo, client)
 	// Check if the function returned an error
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
@@ -32,7 +34,8 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo, err := info.NewExchangeInfo(client)
+	exchangeInfo := info.NewExchangeInfo()
+	err := futuresInfo.Init(exchangeInfo, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}
@@ -51,7 +54,8 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo, err := info.NewExchangeInfo(client)
+	exchangeInfo := info.NewExchangeInfo()
+	err := futuresInfo.Init(exchangeInfo, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}

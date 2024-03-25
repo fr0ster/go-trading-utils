@@ -4,35 +4,39 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2/futures"
-	symbols_info "github.com/fr0ster/go-trading-utils/binance/futures/info/symbols"
-	symbol_info "github.com/fr0ster/go-trading-utils/binance/futures/info/symbols/symbol"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
+	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
 )
 
-type (
-	ExchangeInfo struct {
-		Timezone        string              `json:"timezone"`
-		ServerTime      int64               `json:"serverTime"`
-		RateLimits      []futures.RateLimit `json:"rateLimits"`
-		ExchangeFilters []interface{}       `json:"exchangeFilters"`
-		Symbols         *symbols_info.Symbols
-	}
-)
-
-func NewExchangeInfo(client *futures.Client) (*ExchangeInfo, error) {
+func Init(val *exchange_types.ExchangeInfo, client *futures.Client) error {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
-		return nil, err
+		return err
 	}
-	symbols := symbols_info.NewSymbols(2, exchangeInfo.Symbols)
-	return &ExchangeInfo{
-		Timezone:        exchangeInfo.Timezone,
-		ServerTime:      exchangeInfo.ServerTime,
-		RateLimits:      exchangeInfo.RateLimits,
-		ExchangeFilters: exchangeInfo.ExchangeFilters,
-		Symbols:         symbols,
-	}, nil
+	val.Timezone = exchangeInfo.Timezone
+	val.ServerTime = exchangeInfo.ServerTime
+	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
+	val.ExchangeFilters = exchangeInfo.ExchangeFilters
+	val.Symbols = symbols_info.NewSymbols(2, convertSymbols(exchangeInfo.Symbols))
+	return nil
 }
 
-func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.Symbol {
-	return exchangeInfo.Symbols.GetSymbol(symbol)
+func convertSymbols(symbols []futures.Symbol) []interface{} {
+	convertedSymbols := make([]interface{}, len(symbols))
+	for i, s := range symbols {
+		convertedSymbols[i] = s
+	}
+	return convertedSymbols
+}
+
+func convertRateLimits(rateLimits []futures.RateLimit) []exchange_types.RateLimit {
+	convertedRateLimits := make([]exchange_types.RateLimit, len(rateLimits))
+	for i, rl := range rateLimits {
+		convertedRateLimits[i] = exchange_types.RateLimit{
+			RateLimitType: rl.RateLimitType,
+			Interval:      rl.Interval,
+			Limit:         rl.Limit,
+		}
+	}
+	return convertedRateLimits
 }
