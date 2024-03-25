@@ -4,9 +4,6 @@ type (
 	FilterType string
 	Symbol     interface {
 		GetSymbolName() string
-		Lock()
-		TryLock() bool
-		Unlock()
 		GetFilter(filterType FilterType) interface{}
 	}
 )
