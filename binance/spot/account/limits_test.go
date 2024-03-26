@@ -17,7 +17,11 @@ func TestAccountLimits_GetQuantityLimits(t *testing.T) {
 	binance.UseTestnet = false
 	symbols := []string{"BTC", "ETH", "BNB", "USDT", "SUSHI", "CYBER"}
 	spot := binance.NewClient(api_key, secret_key)
-	account := spot_account.NewAccountLimits(spot, symbols)
+	account, err := spot_account.NewAccountLimits(spot, symbols)
+	if err != nil {
+		t.Errorf("Error creating account limits: %v", err)
+		return
+	}
 
 	test := func(al account_interface.AccountLimits) {
 		if al == nil {
@@ -38,7 +42,11 @@ func TestAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 	binance.UseTestnet = false
 	symbols := []string{}
 	spot := binance.NewClient(api_key, secret_key)
-	account := spot_account.NewAccountLimits(spot, symbols)
+	account, err := spot_account.NewAccountLimits(spot, symbols)
+	if err != nil {
+		t.Errorf("Error creating account limits: %v", err)
+		return
+	}
 
 	test := func(al account_interface.AccountLimits) {
 		if al == nil {
@@ -59,7 +67,11 @@ func TestAccountLimits_GetAssetUSDTLimits(t *testing.T) {
 	binance.UseTestnet = false
 	symbols := []string{"USDT"}
 	spot := binance.NewClient(api_key, secret_key)
-	account := spot_account.NewAccountLimits(spot, symbols)
+	account, err := spot_account.NewAccountLimits(spot, symbols)
+	if err != nil {
+		t.Errorf("Error creating account limits: %v", err)
+		return
+	}
 
 	test := func(al account_interface.AccountLimits) {
 		if al == nil {

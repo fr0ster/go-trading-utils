@@ -48,7 +48,7 @@ func TestSymbolsGetSymbol(t *testing.T) {
 	symbols :=
 		symbols_info.NewSymbols(2, append([]interface{}{}, func() []interface{} {
 			var symbols []interface{}
-			for _, symbol := range []binance.Symbol{binance.Symbol{Symbol: symbolName}} {
+			for _, symbol := range []binance.Symbol{{Symbol: symbolName}} {
 				symbols = append(symbols, symbol)
 			}
 			return symbols

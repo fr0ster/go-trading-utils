@@ -1,13 +1,11 @@
 package handlers_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	accounts "github.com/fr0ster/go-trading-utils/binance/futures/markets/account"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
@@ -49,13 +47,6 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	account, err := accounts.New(futures.NewClient(api_key, secret_key), 3)
-	if err != nil || account == nil {
-		t.Errorf("Error creating account: %v", err)
-	}
 
 	accountAsset := &futures.AccountAsset{
 		Asset:                  "BTC",

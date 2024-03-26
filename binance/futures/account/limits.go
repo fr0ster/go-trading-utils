@@ -1,11 +1,11 @@
 package account
 
 import (
+	"context"
 	"errors"
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
-	futuresAccount "github.com/fr0ster/go-trading-utils/binance/futures/markets/account"
 	"github.com/fr0ster/go-trading-utils/interfaces/account"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
@@ -15,11 +15,12 @@ import (
 type (
 	AccountAsset  futures.AccountAsset
 	AccountLimits struct {
-		client        *futures.Client
-		account       *futuresAccount.AccountType
-		accountAssets *btree.BTree
-		mu            sync.Mutex
-		symbols       map[string]bool
+		client           *futures.Client
+		account          *futures.Account
+		accountAssets    *btree.BTree
+		accountPositions *btree.BTree
+		mu               sync.Mutex
+		symbols          map[string]bool
 	}
 )
 
@@ -55,7 +56,7 @@ func (a *AccountLimits) GetAsset(asset string) (float64, error) {
 }
 
 func (a *AccountLimits) Update() error {
-	for _, asset := range a.account.GetAccountInfo().Assets {
+	for _, asset := range a.account.Assets {
 		if _, exists := a.symbols[asset.Asset]; exists || len(a.symbols) == 0 {
 			val, _ := Binance2AccountAsset(asset)
 			a.accountAssets.ReplaceOrInsert(val)
@@ -65,25 +66,31 @@ func (a *AccountLimits) Update() error {
 }
 
 func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimits) {
-	var err error
+	account, err := client.NewGetAccountService().Do(context.Background())
+	if err != nil {
+		return
+	}
 	al = &AccountLimits{
-		client:        client,
-		account:       nil,
-		accountAssets: btree.New(2),
-		mu:            sync.Mutex{},
-		symbols:       make(map[string]bool), // Add the missing field "mapSymbols"
+		client:           client,
+		account:          account,
+		accountAssets:    btree.New(2),
+		accountPositions: btree.New(2),
+		mu:               sync.Mutex{},
+		symbols:          make(map[string]bool), // Add the missing field "mapSymbols"
 	}
 	for _, symbol := range symbols {
 		al.symbols[symbol] = true
 	}
-	al.account, err = futuresAccount.New(al.client, 3)
-	if err != nil {
-		utils.HandleErr(err)
-	}
-	for _, asset := range al.account.GetAccountInfo().Assets {
+	for _, asset := range al.account.Assets {
 		if _, exists := al.symbols[asset.Asset]; exists || len(al.symbols) == 0 {
 			val, _ := Binance2AccountAsset(asset)
 			al.accountAssets.ReplaceOrInsert(val)
+		}
+	}
+	for _, position := range al.account.Positions {
+		if _, exists := al.symbols[position.Symbol]; exists || len(al.symbols) == 0 {
+			val, _ := Binance2AccountAsset(position)
+			al.accountPositions.ReplaceOrInsert(val)
 		}
 	}
 	return
