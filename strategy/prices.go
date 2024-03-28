@@ -57,7 +57,7 @@ func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_type
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}
-	balance, err := account.GetAsset(data.GetTargetSymbol())
+	balance, err := account.GetAsset(data.GetBaseSymbol())
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}
