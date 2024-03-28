@@ -12,12 +12,12 @@ import (
 )
 
 func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance.Client) (string, float64, string, string, string, string, string, string, error) {
-	symbols := append([]string{}, data.GetTargetSymbol())
+	symbols := append([]string{}, data.GetTargetSymbol(), data.GetBaseSymbol())
 	account, err := spot_account.NewAccountLimits(client, symbols)
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
-	balance, err := account.GetAsset(data.GetTargetSymbol())
+	balance, err := account.GetAsset(data.GetBaseSymbol())
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
@@ -52,7 +52,7 @@ func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_type
 	// Ціна ask, з іншого боку, - це найнижча ціна, за яку продавець готовий продати актив.
 	// Коли ви купуєте, ви хочете заплатити найнижчу можливу ціну,
 	// тому ви встановлюєте свій лімітний ордер на купівлю на рівні ціни ask або нижче.
-	symbols := append([]string{}, data.GetTargetSymbol())
+	symbols := append([]string{}, data.GetTargetSymbol(), data.GetBaseSymbol())
 	account, err := spot_account.NewAccountLimits(client, symbols)
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
