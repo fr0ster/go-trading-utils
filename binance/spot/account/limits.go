@@ -65,6 +65,10 @@ func (a *AccountLimits) Update() error {
 	return nil
 }
 
+func (a *AccountLimits) GetBalances() *btree.BTree {
+	return a.assetBalances
+}
+
 func NewAccountLimits(client *binance.Client, symbols []string) (al *AccountLimits, err error) {
 	account, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
