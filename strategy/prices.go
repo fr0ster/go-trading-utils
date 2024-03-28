@@ -5,13 +5,22 @@ import (
 	"errors"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/types"
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	"github.com/fr0ster/go-trading-utils/types/config"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
-func GetLimitPricesDumpWay(data types.Config, client *binance.Client) (string, float64, string, string, string, string, string, string) {
-	balance := data.Balance
+func GetLimitPricesDumpWay(data config.Configs, client *binance.Client) (string, float64, string, string, string, string, string, string) {
+	symbols := append([]string{}, data.GetTargetSymbol())
+	account, err := spot_account.NewAccountLimits(client, symbols)
+	if err != nil {
+		utils.HandleErr(err)
+	}
+	balance, err := account.GetAsset(data.GetTargetSymbol())
+	if err != nil {
+		utils.HandleErr(err)
+	}
 	symbolname := data.Symbol
 
 	priceF, _, err := GetMarketPrice(client, string(symbolname))
@@ -35,7 +44,7 @@ func GetLimitPricesDumpWay(data types.Config, client *binance.Client) (string, f
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
 
-func BidOrAsk(data types.Config, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data config.Configs, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,
@@ -43,8 +52,15 @@ func BidOrAsk(data types.Config, bookTickers *bookticker_types.BookTickerBTree, 
 	// Ціна ask, з іншого боку, - це найнижча ціна, за яку продавець готовий продати актив.
 	// Коли ви купуєте, ви хочете заплатити найнижчу можливу ціну,
 	// тому ви встановлюєте свій лімітний ордер на купівлю на рівні ціни ask або нижче.
-
-	balance := data.Balance
+	symbols := append([]string{}, data.GetTargetSymbol())
+	account, err := spot_account.NewAccountLimits(client, symbols)
+	if err != nil {
+		utils.HandleErr(err)
+	}
+	balance, err := account.GetAsset(data.GetTargetSymbol())
+	if err != nil {
+		utils.HandleErr(err)
+	}
 	symbolname := data.Symbol
 	targetPriceF := 0.0
 
