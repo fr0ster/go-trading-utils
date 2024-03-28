@@ -29,7 +29,12 @@ func (u *PartialDepthStream) GetStreamEvent() chan bool {
 
 func (u *PartialDepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsDepthEvent) {
-		u.DataChannel <- event
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsPartialDepthServe(u.symbol, u.levels, wsHandler, utils.HandleErr)
 }
@@ -61,7 +66,12 @@ func (u *PartialDepthServeWithRate) GetStreamEvent() (doneC, stopC chan struct{}
 
 func (u *PartialDepthServeWithRate) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsDepthEvent) {
-		u.DataChannel <- event
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsPartialDepthServeWithRate(u.symbol, u.levels, u.rate, wsHandler, utils.HandleErr)
 }
@@ -86,7 +96,12 @@ func (u *DiffDepthStream) GetStreamEvent() chan bool {
 
 func (u *DiffDepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsDepthEvent) {
-		u.DataChannel <- event
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsDiffDepthServe(u.symbol, wsHandler, utils.HandleErr)
 }
@@ -111,8 +126,12 @@ func (u *CombinedDepthStream) GetStreamEvent() chan bool {
 
 func (u *CombinedDepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsDepthEvent) {
-		u.DataChannel <- event
-		u.EventChannel <- true
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsCombinedDepthServe(u.symbolLevels, wsHandler, utils.HandleErr)
 }

@@ -65,6 +65,11 @@ func (a *AccountLimits) Update() error {
 	return nil
 }
 
+// GetBalances implements account.AccountLimits.
+func (a *AccountLimits) GetBalances() *btree.BTree {
+	return a.accountAssets
+}
+
 func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimits) {
 	account, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {

@@ -25,8 +25,12 @@ func (u *BookTickerStream) GetStreamEvent() chan bool {
 
 func (u *BookTickerStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsBookTickerEvent) {
-		u.DataChannel <- event
-		u.EventChannel <- true
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsBookTickerServe(u.symbol, wsHandler, utils.HandleErr)
 }

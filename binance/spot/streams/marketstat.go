@@ -25,8 +25,12 @@ func (u *CombinedMarketStatStream) GetStreamEvent() chan bool {
 
 func (u *CombinedMarketStatStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsMarketStatEvent) {
-		u.DataChannel <- event
-		u.EventChannel <- true
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return binance.WsCombinedMarketStatServe(u.symbols, wsHandler, utils.HandleErr)
 }

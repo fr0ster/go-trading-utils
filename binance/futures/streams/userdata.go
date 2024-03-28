@@ -25,8 +25,12 @@ func (u *UserDataStream) GetStreamEvent() chan bool {
 
 func (u *UserDataStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsUserDataEvent) {
-		u.DataChannel <- event
-		u.EventChannel <- true
+		go func() {
+			u.DataChannel <- event
+		}()
+		go func() {
+			u.EventChannel <- true
+		}()
 	}
 	return futures.WsUserDataServe(u.listenKey, wsHandler, utils.HandleErr)
 }
