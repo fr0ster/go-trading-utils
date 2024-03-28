@@ -11,21 +11,21 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
-func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance.Client) (string, float64, string, string, string, string, string, string) {
+func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance.Client) (string, float64, string, string, string, string, string, string, error) {
 	symbols := append([]string{}, data.GetTargetSymbol())
 	account, err := spot_account.NewAccountLimits(client, symbols)
 	if err != nil {
-		utils.HandleErr(err)
+		return "", 0, "", "", "", "", "", "", err
 	}
 	balance, err := account.GetAsset(data.GetTargetSymbol())
 	if err != nil {
-		utils.HandleErr(err)
+		return "", 0, "", "", "", "", "", "", err
 	}
 	symbolname := data.GetTargetSymbol()
 
 	priceF, _, err := GetMarketPrice(client, string(symbolname))
 	if err != nil {
-		utils.HandleErr(err)
+		return "", 0, "", "", "", "", "", "", err
 	}
 	targetQuantity := utils.ConvFloat64ToStr(balance*0.01/priceF, 8)
 
@@ -41,10 +41,10 @@ func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance
 	priceSL := utils.ConvFloat64ToStrDefault(priceSLF)
 	stopPriceTP := utils.ConvFloat64ToStrDefault(stopPriceTPF)
 	priceTP := utils.ConvFloat64ToStrDefault(priceTPF)
-	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
+	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta, nil
 }
 
-func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string, err error) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,
@@ -55,11 +55,11 @@ func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_type
 	symbols := append([]string{}, data.GetTargetSymbol())
 	account, err := spot_account.NewAccountLimits(client, symbols)
 	if err != nil {
-		utils.HandleErr(err)
+		return "", "", "", "", "", "", "", "", err
 	}
 	balance, err := account.GetAsset(data.GetTargetSymbol())
 	if err != nil {
-		utils.HandleErr(err)
+		return "", "", "", "", "", "", "", "", err
 	}
 	symbolname := data.GetTargetSymbol()
 	targetPriceF := 0.0
@@ -88,7 +88,7 @@ func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_type
 	stopPriceTP = utils.ConvFloat64ToStrDefault(targetPriceF * 1.05)
 	priceTP = utils.ConvFloat64ToStrDefault(targetPriceF * 1.10)
 
-	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
+	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta, nil
 }
 
 func GetMarketPrice(client *binance.Client, symbol string) (float64, string, error) {
