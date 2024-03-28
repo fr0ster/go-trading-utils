@@ -6,12 +6,12 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
-	"github.com/fr0ster/go-trading-utils/types/config"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
-func GetLimitPricesDumpWay(data config.Configs, client *binance.Client) (string, float64, string, string, string, string, string, string) {
+func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance.Client) (string, float64, string, string, string, string, string, string) {
 	symbols := append([]string{}, data.GetTargetSymbol())
 	account, err := spot_account.NewAccountLimits(client, symbols)
 	if err != nil {
@@ -21,7 +21,7 @@ func GetLimitPricesDumpWay(data config.Configs, client *binance.Client) (string,
 	if err != nil {
 		utils.HandleErr(err)
 	}
-	symbolname := data.Symbol
+	symbolname := data.GetTargetSymbol()
 
 	priceF, _, err := GetMarketPrice(client, string(symbolname))
 	if err != nil {
@@ -44,7 +44,7 @@ func GetLimitPricesDumpWay(data config.Configs, client *binance.Client) (string,
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta
 }
 
-func BidOrAsk(data config.Configs, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
+func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,
@@ -61,7 +61,7 @@ func BidOrAsk(data config.Configs, bookTickers *bookticker_types.BookTickerBTree
 	if err != nil {
 		utils.HandleErr(err)
 	}
-	symbolname := data.Symbol
+	symbolname := data.GetTargetSymbol()
 	targetPriceF := 0.0
 
 	bookTicker, err := bookticker_types.Binance2BookTicker(bookTickers.Get(symbolname))
