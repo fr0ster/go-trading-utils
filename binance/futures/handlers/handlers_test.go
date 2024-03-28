@@ -7,13 +7,13 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
-	"github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
-func TestGetFilledOrderHandler(t *testing.T) {
+func TestChangingOfOrdersHandler(t *testing.T) {
 	even := &futures.WsUserDataEvent{
 		Event: futures.UserDataEventTypeOrderTradeUpdate,
 		OrderTradeUpdate: futures.WsOrderTradeUpdate{
@@ -21,7 +21,11 @@ func TestGetFilledOrderHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	outChannel := handlers.GetFilledOrdersGuard(inChannel)
+	outChannel :=
+		handlers.GetChangingOfOrdersGuard(
+			inChannel,
+			futures.UserDataEventTypeOrderTradeUpdate,
+			append([]futures.OrderStatusType{futures.OrderStatusTypeFilled}, futures.OrderStatusTypePartiallyFilled))
 	inChannel <- even
 	res := false
 	for {
@@ -39,32 +43,15 @@ func TestGetFilledOrderHandler(t *testing.T) {
 	}
 }
 
-func TestGetBalanceTreeUpdateHandler(t *testing.T) {
+func TestBalanceTreeUpdateHandler(t *testing.T) {
 	even := &futures.WsUserDataEvent{
-		Event: futures.UserDataEventTypeAccountUpdate,
+		Event: futures.UserDataEventTypeOrderTradeUpdate,
 		OrderTradeUpdate: futures.WsOrderTradeUpdate{
 			Status: futures.OrderStatusTypeFilled,
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-
-	accountAsset := &futures.AccountAsset{
-		Asset:                  "BTC",
-		InitialMargin:          "0.0",
-		MaintMargin:            "0.0",
-		MarginBalance:          "0.0",
-		MaxWithdrawAmount:      "0.0",
-		OpenOrderInitialMargin: "0.0",
-		PositionInitialMargin:  "0.0",
-		UnrealizedProfit:       "0.0",
-		WalletBalance:          "0.0",
-		CrossWalletBalance:     "0.0",
-		CrossUnPnl:             "0.0",
-		AvailableBalance:       "0.0",
-		MarginAvailable:        false,
-		UpdateTime:             0,
-	}
-	bt := balances.New(3, append([]*futures.AccountAsset{}, accountAsset))
+	bt := balances.New(3, nil)
 	bt.SetItem(balances.BalanceItemType{
 		Asset:  "BTC",
 		Free:   0.0,
@@ -88,7 +75,7 @@ func TestGetBalanceTreeUpdateHandler(t *testing.T) {
 	}
 }
 
-func TestGetBookTickersUpdateHandler(t *testing.T) {
+func TestBookTickersUpdateHandler(t *testing.T) {
 	even := &futures.WsBookTickerEvent{
 		Symbol:       "BTCUSDT",
 		BestBidPrice: "10000.0",
@@ -123,9 +110,9 @@ func TestGetBookTickersUpdateHandler(t *testing.T) {
 	}
 }
 
-func getTestDepths() *depth.Depth {
+func getTestDepths() *depth_types.Depth {
 	bids := btree.New(3)
-	bidList := []depth.DepthItemType{
+	bidList := []depth_types.DepthItemType{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -136,7 +123,7 @@ func getTestDepths() *depth.Depth {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks := btree.New(3)
-	askList := []depth.DepthItemType{
+	askList := []depth_types.DepthItemType{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima
@@ -147,19 +134,19 @@ func getTestDepths() *depth.Depth {
 		{Price: 1.958, Quantity: 90.0},
 	}
 	for _, bid := range bidList {
-		bids.ReplaceOrInsert(bid)
+		bids.ReplaceOrInsert(&bid)
 	}
 	for _, ask := range askList {
-		asks.ReplaceOrInsert(ask)
+		asks.ReplaceOrInsert(&ask)
 	}
-	ds := depth.New(3, 2, 5, "SUSHIUSDT")
+	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 
 	return ds
 }
 
-func TestGetDepthsUpdaterHandler(t *testing.T) {
+func TestDepthsUpdaterHandler(t *testing.T) {
 	inChannel := make(chan *futures.WsDepthEvent, 1)
 	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
 	go func() {
