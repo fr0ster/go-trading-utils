@@ -21,7 +21,7 @@ func GetLimitPricesDumpWay(data config_interfaces.Configuration, client *binance
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
-	symbolname := data.GetTargetSymbol()
+	symbolname := data.GetPair()
 
 	priceF, _, err := GetMarketPrice(client, string(symbolname))
 	if err != nil {
@@ -61,7 +61,7 @@ func BidOrAsk(data config_interfaces.Configuration, bookTickers *bookticker_type
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}
-	symbolname := data.GetTargetSymbol()
+	symbolname := data.GetPair()
 	targetPriceF := 0.0
 
 	bookTicker, err := bookticker_types.Binance2BookTicker(bookTickers.Get(symbolname))

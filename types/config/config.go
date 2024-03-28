@@ -12,7 +12,7 @@ type (
 		APIKey       string  `json:"api_key"`
 		APISecret    string  `json:"api_secret"`
 		UseTestNet   bool    `json:"use_test_net"`
-		Symbol       string  `json:"symbol"`
+		Pair         string  `json:"symbol"`
 		TargetSymbol string  `json:"target_symbol"`
 		BaseSymbol   string  `json:"base_symbol"`
 		Limit        float64 `json:"limit"`
@@ -32,7 +32,7 @@ func ConfigNew(file_path string) *ConfigFile {
 		Configs: &Configs{
 			APIKey:       "",
 			APISecret:    "",
-			Symbol:       "BTCUSDT",
+			Pair:         "BTCUSDT",
 			TargetSymbol: "BTC",
 			BaseSymbol:   "USDT",
 			Quantity:     0,
@@ -79,8 +79,8 @@ func (cr *ConfigFile) Save() error {
 }
 
 // GetSymbol implements Configuration.
-func (cr *Configs) GetSymbol() string {
-	return cr.Symbol
+func (cr *Configs) GetPair() string {
+	return cr.Pair
 }
 
 // GetBaseSymbol implements config.Configuration.

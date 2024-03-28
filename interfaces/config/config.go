@@ -2,7 +2,7 @@ package config
 
 type (
 	Configuration interface {
-		GetSymbol() string
+		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string
 		GetLimit() float64
