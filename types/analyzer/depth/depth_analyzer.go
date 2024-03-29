@@ -9,6 +9,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
+	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -150,6 +151,7 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 
 func Binance2DepthLevels(binanceDepth interface{}) (*types.DepthLevels, error) {
 	var depthLevelItem types.DepthLevels
+	logrus.Debug(binanceDepth)
 	err := copier.Copy(&depthLevelItem, binanceDepth)
 	if err != nil {
 		return nil, err
