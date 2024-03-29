@@ -70,10 +70,9 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	var bid *depth_types.DepthItemType
 	if da.bid.Len() != 0 {
 		da.bid.Ascend(func(item btree.Item) bool {
-			bid, _ = Binance2DepthLevels(item)
+			bid, _ := Binance2DepthLevels(item)
 			if bid.Quantity < da.Bound {
 				da.bid.Delete(item)
 			}
@@ -91,10 +90,9 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	var ask *depth_types.DepthItemType
 	if da.ask.Len() != 0 {
 		da.ask.Ascend(func(item btree.Item) bool {
-			ask, _ = Binance2DepthLevels(item)
+			ask, _ := Binance2DepthLevels(item)
 			if ask.Quantity < da.Bound {
 				da.ask.Delete(item)
 			}
