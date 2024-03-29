@@ -93,20 +93,20 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	// var ask *types.DepthLevels
+	var ask *types.DepthLevels
 	if da.ask != nil {
-		logrus.Errorf("Ascend begin Ask item: %v", da.ask)
+		logrus.Errorf("Ascend begin Ask item: %v", da.ask.Len())
 		da.ask.Ascend(func(item btree.Item) bool {
 			logrus.Errorf("Ascend begin Ask item: %v", item)
-			// if item != nil {
-			// 	ask, err = Binance2DepthLevels(item)
-			// 	if err != nil {
-			// 		return false
-			// 	}
-			// 	if da.ask != nil && ask.Quantity < da.bound {
-			// 		da.ask.Delete(item)
-			// 	}
-			// }
+			if item != nil {
+				ask, err = Binance2DepthLevels(item)
+				if err != nil {
+					return false
+				}
+				if da.ask != nil && ask.Quantity < da.bound {
+					da.ask.Delete(item)
+				}
+			}
 			return true
 		})
 		logrus.Debug("Ascend end Ask item: ", da.ask)
