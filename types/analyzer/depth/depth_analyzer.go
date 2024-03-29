@@ -94,7 +94,6 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	var ask *types.DepthLevels
 	if da.ask.Len() != 0 {
 		da.ask.Ascend(func(item btree.Item) bool {
-			logrus.Errorf("Ascend begin Ask item: %v", item)
 			ask, _ = Binance2DepthLevels(item)
 			if da.ask.Len() != 0 && ask.Quantity < da.bound {
 				da.ask.Delete(item)
