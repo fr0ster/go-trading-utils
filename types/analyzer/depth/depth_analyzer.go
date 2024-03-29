@@ -57,6 +57,8 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	}
 	da.Lock()
 	defer da.Unlock()
+	dp.Lock()
+	defer dp.Unlock()
 	da.bid.Clear(false)
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
@@ -91,20 +93,20 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	var ask *types.DepthLevels
+	// var ask *types.DepthLevels
 	if da.ask != nil {
 		logrus.Debug("Ascend begin Ask item: ", da.ask)
 		da.ask.Ascend(func(item btree.Item) bool {
 			logrus.Debug("Ascend begin Ask item: ", item)
-			if item != nil {
-				ask, err = Binance2DepthLevels(item)
-				if err != nil {
-					return false
-				}
-				if da.ask != nil && ask.Quantity < da.bound {
-					da.ask.Delete(item)
-				}
-			}
+			// if item != nil {
+			// 	ask, err = Binance2DepthLevels(item)
+			// 	if err != nil {
+			// 		return false
+			// 	}
+			// 	if da.ask != nil && ask.Quantity < da.bound {
+			// 		da.ask.Delete(item)
+			// 	}
+			// }
 			return true
 		})
 		logrus.Debug("Ascend end Ask item: ", da.ask)
