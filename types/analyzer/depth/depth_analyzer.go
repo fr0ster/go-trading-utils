@@ -49,7 +49,7 @@ func (a *DepthAnalyzer) Set(side types.DepthSide, value btree.Item) {
 }
 
 // Update implements Analyzers.
-func (da *DepthAnalyzer) Update(dp depth_interface.Depth) error {
+func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	da.Lock()
 	defer da.Unlock()
 	da.bid.Clear(false)
@@ -63,8 +63,9 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) error {
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
+	var bid *types.DepthLevels
 	da.bid.Ascend(func(item btree.Item) bool {
-		bid, _ := Binance2DepthLevels(item)
+		bid, err = Binance2DepthLevels(item)
 		if bid.Quantity < da.bound {
 			da.bid.Delete(item)
 		}
@@ -81,8 +82,12 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) error {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
+	var ask *types.DepthLevels
 	da.ask.Ascend(func(item btree.Item) bool {
-		ask, _ := Binance2DepthLevels(item)
+		ask, err = Binance2DepthLevels(item)
+		if err != nil {
+			return false
+		}
 		if ask.Quantity < da.bound {
 			da.ask.Delete(item)
 		}
