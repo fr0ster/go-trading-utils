@@ -50,6 +50,38 @@ func (a *DepthAnalyzer) Set(side types.DepthSide, value btree.Item) {
 	}
 }
 
+// AskAscend implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) AskAscend(f func(a btree.Item) bool) *btree.BTree {
+	a.ask.Ascend(func(a btree.Item) bool {
+		return f(a)
+	})
+	return a.ask
+}
+
+// AskDescend implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) AskDescend(f func(item btree.Item) bool) *btree.BTree {
+	a.ask.Descend(func(a btree.Item) bool {
+		return f(a)
+	})
+	return a.ask
+}
+
+// BidAscend implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) BidAscend(f func(item btree.Item) bool) *btree.BTree {
+	a.bid.Ascend(func(a btree.Item) bool {
+		return f(a)
+	})
+	return a.bid
+}
+
+// BidDescend implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) BidDescend(f func(item btree.Item) bool) *btree.BTree {
+	a.bid.Descend(func(a btree.Item) bool {
+		return f(a)
+	})
+	return a.bid
+}
+
 // Update implements Analyzers.
 func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	if dp == nil {
@@ -141,13 +173,6 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 }
 
 func Binance2DepthLevels(binanceDepth interface{}) (*depth_types.DepthItemType, error) {
-	// switch val := binanceDepth.(type) {
-	// case *depth_types.DepthItemType:
-	// 	return val, nil
-	// case depth_types.DepthItemType:
-	// 	return &val, nil
-	// }
-	// return nil, errors.New("it's not a DepthLevels")
 	var val depth_types.DepthItemType
 	err := copier.Copy(&val, binanceDepth)
 	if err != nil {

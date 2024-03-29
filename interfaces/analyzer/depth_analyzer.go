@@ -10,6 +10,10 @@ type (
 	DepthAnalyzer interface {
 		Update(depth_interface.Depth) error
 		GetLevels(side types.DepthSide) *btree.BTree
+		AskAscend(func(item btree.Item) bool) *btree.BTree
+		BidAscend(func(item btree.Item) bool) *btree.BTree
+		AskDescend(func(item btree.Item) bool) *btree.BTree
+		BidDescend(func(item btree.Item) bool) *btree.BTree
 		Lock()
 		Unlock()
 	}
