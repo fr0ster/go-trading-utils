@@ -10,7 +10,6 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
-	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -60,51 +59,41 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	defer da.Unlock()
 	dp.Lock()
 	defer dp.Unlock()
-	da.bid.Clear(false)
+	newBids := btree.New(da.Degree)
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
 		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.Round)
-		old := da.bid.Get(&depth_types.DepthItemType{Price: bid.Price})
+		old := newBids.Get(&depth_types.DepthItemType{Price: bid.Price})
 		if old != nil {
 			bid.Quantity += old.(*depth_types.DepthItemType).Quantity
 		}
-		da.bid.ReplaceOrInsert(bid)
+		newBids.ReplaceOrInsert(bid)
 		return true
 	})
-	da.bid.Descend(func(item btree.Item) bool {
-		logrus.Error("item", item, "da.bid.Len()", da.bid.Len())
-		if da.bid.Len() > 1 {
-			bid, _ := Binance2DepthLevels(item)
-			if bid.Quantity < da.Bound {
-				da.bid.Delete(item)
-			}
-			return true
-		} else {
-			return false
+	newBids.Ascend(func(item btree.Item) bool {
+		bid, _ := Binance2DepthLevels(item)
+		if bid.Quantity > da.Bound {
+			da.bid.ReplaceOrInsert(bid)
 		}
+		return true
 	})
-	da.ask.Clear(false)
+	newAsks := btree.New(da.Degree)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
 		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.Round)
-		old := da.ask.Get(&depth_types.DepthItemType{Price: ask.Price})
+		old := newAsks.Get(&depth_types.DepthItemType{Price: ask.Price})
 		if old != nil {
 			ask.Quantity += old.(*depth_types.DepthItemType).Quantity
 		}
-		da.ask.ReplaceOrInsert(ask)
+		newAsks.ReplaceOrInsert(ask)
 		return true
 	})
-	da.ask.Descend(func(item btree.Item) bool {
-		if da.ask.Len() > 1 {
-			logrus.Error("item", item, "da.ask.Len()", da.bid.Len())
-			ask, _ := Binance2DepthLevels(item)
-			if ask.Quantity < da.Bound {
-				da.ask.Delete(item)
-			}
-			return true
-		} else {
-			return false
+	newAsks.Ascend(func(item btree.Item) bool {
+		ask, _ := Binance2DepthLevels(item)
+		if ask.Quantity > da.Bound {
+			da.ask.ReplaceOrInsert(item)
 		}
+		return true
 	})
 	return nil
 }
