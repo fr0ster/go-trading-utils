@@ -1,6 +1,7 @@
 package depth_analyzer
 
 import (
+	"errors"
 	"sync"
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
@@ -50,6 +51,9 @@ func (a *DepthAnalyzer) Set(side types.DepthSide, value btree.Item) {
 
 // Update implements Analyzers.
 func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
+	if dp == nil {
+		return errors.New("DepthAnalyzerLoad returned an empty map")
+	}
 	da.Lock()
 	defer da.Unlock()
 	da.bid.Clear(false)
