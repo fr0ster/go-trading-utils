@@ -8,7 +8,6 @@ import (
 	types "github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -69,14 +68,13 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	// var bid *types.DepthLevels
-	filteredBids := da.bid
+	var bid *types.DepthLevels
 	if da.bid.Len() != 0 {
 		da.bid.Ascend(func(item btree.Item) bool {
-			// bid, _ = Binance2DepthLevels(item)
-			// if bid.Quantity >= da.Bound {
-			// 	filteredBids.ReplaceOrInsert(bid)
-			// }
+			bid, _ = Binance2DepthLevels(item)
+			if bid.Quantity < da.Bound {
+				da.bid.Delete(item)
+			}
 			return true
 		})
 	}
@@ -91,19 +89,16 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	// var ask *types.DepthLevels
-	filteredAsks := da.ask
+	var ask *types.DepthLevels
 	if da.ask.Len() != 0 {
 		da.ask.Ascend(func(item btree.Item) bool {
-			// ask, _ = Binance2DepthLevels(item)
-			// if ask.Quantity > da.Bound {
-			// 	filteredAsks.ReplaceOrInsert(ask)
-			// }
+			ask, _ = Binance2DepthLevels(item)
+			if ask.Quantity < da.Bound {
+				da.ask.Delete(item)
+			}
 			return true
 		})
 	}
-	da.ask = filteredAsks
-	da.bid = filteredBids
 	return nil
 }
 
@@ -148,10 +143,9 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 }
 
 func Binance2DepthLevels(binanceDepth interface{}) (*types.DepthLevels, error) {
-	var depthLevelItem types.DepthLevels
-	err := copier.Copy(&depthLevelItem, binanceDepth)
-	if err != nil {
-		return nil, err
+	switch binanceDepth.(type) {
+	case *types.DepthLevels:
+		return binanceDepth.(*types.DepthLevels), nil
 	}
-	return &depthLevelItem, nil
+	return nil, errors.New("It's not a DepthLevels")
 }
