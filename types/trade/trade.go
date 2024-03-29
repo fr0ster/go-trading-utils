@@ -1,10 +1,10 @@
 package trade_types
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -97,10 +97,9 @@ func NewTrades() *Trades {
 }
 
 func Binance2Trades(binanceTrades interface{}) (*Trade, error) {
-	var trade Trade
-	err := copier.Copy(&trade, binanceTrades)
-	if err != nil {
-		return nil, err
+	switch binanceTrades := binanceTrades.(type) {
+	case *Trade:
+		return binanceTrades, nil
 	}
-	return &trade, nil
+	return nil, errors.New("it's not a Trade")
 }

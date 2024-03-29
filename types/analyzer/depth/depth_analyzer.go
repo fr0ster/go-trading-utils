@@ -6,6 +6,7 @@ import (
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	types "github.com/fr0ster/go-trading-utils/types"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
@@ -31,11 +32,11 @@ func (a *DepthAnalyzer) Unlock() {
 
 // Get implements Analyzers.
 func (a *DepthAnalyzer) Get(price float64) btree.Item {
-	ask := a.ask.Get(&types.DepthLevels{Price: price})
+	ask := a.ask.Get(&depth_types.DepthItemType{Price: price})
 	if ask != nil {
 		return ask
 	} else {
-		return a.bid.Get(&types.DepthLevels{Price: price})
+		return a.bid.Get(&depth_types.DepthItemType{Price: price})
 	}
 }
 
@@ -61,14 +62,14 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
 		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.Round)
-		old := da.bid.Get(&types.DepthLevels{Price: bid.Price})
+		old := da.bid.Get(&depth_types.DepthItemType{Price: bid.Price})
 		if old != nil {
-			bid.Quantity += old.(*types.DepthLevels).Quantity
+			bid.Quantity += old.(*depth_types.DepthItemType).Quantity
 		}
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	var bid *types.DepthLevels
+	var bid *depth_types.DepthItemType
 	if da.bid.Len() != 0 {
 		da.bid.Ascend(func(item btree.Item) bool {
 			bid, _ = Binance2DepthLevels(item)
@@ -82,14 +83,14 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
 		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.Round)
-		old := da.ask.Get(&types.DepthLevels{Price: ask.Price})
+		old := da.ask.Get(&depth_types.DepthItemType{Price: ask.Price})
 		if old != nil {
-			ask.Quantity += old.(*types.DepthLevels).Quantity
+			ask.Quantity += old.(*depth_types.DepthItemType).Quantity
 		}
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	var ask *types.DepthLevels
+	var ask *depth_types.DepthItemType
 	if da.ask.Len() != 0 {
 		da.ask.Ascend(func(item btree.Item) bool {
 			ask, _ = Binance2DepthLevels(item)
@@ -107,7 +108,7 @@ func (a *DepthAnalyzer) GetLevels(side types.DepthSide) *btree.BTree {
 		if a == nil {
 			return 0
 		}
-		return a.(*types.DepthLevels).Quantity
+		return a.(*depth_types.DepthItemType).Quantity
 	}
 	ascend := func(dataIn *btree.BTree) (res *btree.BTree) {
 		res = btree.New(a.Degree)
@@ -142,10 +143,10 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 	}
 }
 
-func Binance2DepthLevels(binanceDepth interface{}) (*types.DepthLevels, error) {
-	switch binanceDepth.(type) {
-	case *types.DepthLevels:
-		return binanceDepth.(*types.DepthLevels), nil
+func Binance2DepthLevels(binanceDepth interface{}) (*depth_types.DepthItemType, error) {
+	switch binanceDepth := binanceDepth.(type) {
+	case *depth_types.DepthItemType:
+		return binanceDepth, nil
 	}
-	return nil, errors.New("It's not a DepthLevels")
+	return nil, errors.New("it's not a DepthLevels")
 }

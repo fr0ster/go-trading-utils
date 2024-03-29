@@ -1,10 +1,10 @@
 package kline
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -75,10 +75,9 @@ func New(degree int) *Kline {
 }
 
 func Binance2kline(binanceKline interface{}) (*KlineItem, error) {
-	var klineItem KlineItem
-	err := copier.Copy(&klineItem, binanceKline)
-	if err != nil {
-		return nil, err
+	switch binanceKline := binanceKline.(type) {
+	case *KlineItem:
+		return binanceKline, nil
 	}
-	return &klineItem, nil
+	return nil, errors.New("it's not a KlineItem")
 }

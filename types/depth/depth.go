@@ -1,11 +1,11 @@
 package depth
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/adshao/go-binance/v2/common"
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -157,10 +157,9 @@ func NewDepth(degree int, symbol string) *Depth {
 }
 
 func Binance2BookTicker(binanceDepth interface{}) (*DepthItemType, error) {
-	var bookTickerItem DepthItemType
-	err := copier.Copy(&bookTickerItem, binanceDepth)
-	if err != nil {
-		return nil, err
+	switch binanceDepth := binanceDepth.(type) {
+	case *DepthItemType:
+		return binanceDepth, nil
 	}
-	return &bookTickerItem, nil
+	return nil, errors.New("it's not a DepthItemType")
 }
