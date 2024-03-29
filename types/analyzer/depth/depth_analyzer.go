@@ -94,6 +94,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	var ask *types.DepthLevels
 	if da.ask != nil {
 		da.ask.Ascend(func(item btree.Item) bool {
+			logrus.Debug("Ascend begin Ask item: ", item)
 			if item != nil {
 				ask, err = Binance2DepthLevels(item)
 				if err != nil {
@@ -103,6 +104,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 					da.ask.Delete(item)
 				}
 			}
+			logrus.Debug("Ascend end Ask item: ", item)
 			return true
 		})
 	}
@@ -151,7 +153,6 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 
 func Binance2DepthLevels(binanceDepth interface{}) (*types.DepthLevels, error) {
 	var depthLevelItem types.DepthLevels
-	logrus.Debug(binanceDepth)
 	err := copier.Copy(&depthLevelItem, binanceDepth)
 	if err != nil {
 		return nil, err
