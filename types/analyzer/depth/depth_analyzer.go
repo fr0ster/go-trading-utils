@@ -82,6 +82,16 @@ func (a *DepthAnalyzer) BidDescend(f func(item btree.Item) bool) *btree.BTree {
 	return a.bid
 }
 
+// GetAsks implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) GetAsks() *btree.BTree {
+	return a.ask
+}
+
+// GetBids implements analyzer.DepthAnalyzer.
+func (a *DepthAnalyzer) GetBids() *btree.BTree {
+	return a.bid
+}
+
 // Update implements Analyzers.
 func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	if dp == nil {
