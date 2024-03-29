@@ -16,7 +16,7 @@ type (
 	DepthAnalyzer struct {
 		ask    *btree.BTree
 		bid    *btree.BTree
-		mu     sync.Mutex
+		mu     *sync.Mutex
 		degree int
 		round  int
 		bound  float64
@@ -147,7 +147,7 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 	return &DepthAnalyzer{
 		ask:    btree.New(degree),
 		bid:    btree.New(degree),
-		mu:     sync.Mutex{},
+		mu:     &sync.Mutex{},
 		degree: degree,
 		round:  round,
 		bound:  bound,
