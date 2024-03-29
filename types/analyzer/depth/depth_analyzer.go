@@ -9,7 +9,6 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -145,15 +144,17 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 }
 
 func Binance2DepthLevels(binanceDepth interface{}) (*depth_types.DepthItemType, error) {
-	// switch val := binanceDepth.(type) {
-	// case *depth_types.DepthItemType:
-	// 	return val, nil
-	// }
-	// return nil, errors.New("it's not a DepthLevels")
-	var val *depth_types.DepthItemType
-	err := copier.Copy(&val, binanceDepth)
-	if err != nil {
-		return nil, err
+	switch val := binanceDepth.(type) {
+	case *depth_types.DepthItemType:
+		return val, nil
+	case depth_types.DepthItemType:
+		return &val, nil
 	}
-	return val, nil
+	return nil, errors.New("it's not a DepthLevels")
+	// var val *depth_types.DepthItemType
+	// err := copier.Copy(val, binanceDepth)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return val, nil
 }
