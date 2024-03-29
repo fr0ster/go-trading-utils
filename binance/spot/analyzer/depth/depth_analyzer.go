@@ -6,8 +6,8 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func Init(a *depth_analyzer_types.DepthAnalyzer, api_key, secret_key, symbolname string, rounded, limits int, UseTestnet bool) error {
-	depth := depth_types.NewDepth(3, symbolname)
+func Init(a *depth_analyzer_types.DepthAnalyzer, api_key, secret_key, symbolname string, limits int, UseTestnet bool) error {
+	depth := depth_types.NewDepth(a.Degree, symbolname)
 	err := spotDepth.SpotDepthInit(depth, api_key, secret_key, symbolname, limits, UseTestnet)
 	if err != nil {
 		return err

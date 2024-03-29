@@ -17,9 +17,9 @@ type (
 		ask    *btree.BTree
 		bid    *btree.BTree
 		mu     *sync.Mutex
-		degree int
-		round  int
-		bound  float64
+		Degree int
+		Round  int
+		Bound  float64
 	}
 )
 
@@ -62,7 +62,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	da.bid.Clear(false)
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
-		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.round)
+		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.Round)
 		old := da.bid.Get(&types.DepthLevels{Price: bid.Price})
 		if old != nil {
 			bid.Quantity += old.(*types.DepthLevels).Quantity
@@ -74,7 +74,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	if da.bid.Len() != 0 {
 		da.bid.Ascend(func(item btree.Item) bool {
 			bid, _ = Binance2DepthLevels(item)
-			if da.bid.Len() != 0 && bid.Quantity < da.bound {
+			if da.bid.Len() != 0 && bid.Quantity < da.Bound {
 				da.bid.Delete(item)
 			}
 			return true
@@ -83,7 +83,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	da.ask.Clear(false)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
-		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.round)
+		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.Round)
 		old := da.ask.Get(&types.DepthLevels{Price: ask.Price})
 		if old != nil {
 			ask.Quantity += old.(*types.DepthLevels).Quantity
@@ -95,7 +95,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	if da.ask.Len() != 0 {
 		da.ask.Ascend(func(item btree.Item) bool {
 			ask, _ = Binance2DepthLevels(item)
-			if da.ask.Len() != 0 && ask.Quantity < da.bound {
+			if da.ask.Len() != 0 && ask.Quantity < da.Bound {
 				da.ask.Delete(item)
 			}
 			return true
@@ -113,7 +113,7 @@ func (a *DepthAnalyzer) GetLevels(side types.DepthSide) *btree.BTree {
 		return a.(*types.DepthLevels).Quantity
 	}
 	ascend := func(dataIn *btree.BTree) (res *btree.BTree) {
-		res = btree.New(a.degree)
+		res = btree.New(a.Degree)
 		var prev, current, next btree.Item
 		dataIn.Ascend(func(a btree.Item) bool {
 			next = a
@@ -139,9 +139,9 @@ func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
 		ask:    btree.New(degree),
 		bid:    btree.New(degree),
 		mu:     &sync.Mutex{},
-		degree: degree,
-		round:  round,
-		bound:  bound,
+		Degree: degree,
+		Round:  round,
+		Bound:  bound,
 	}
 }
 
