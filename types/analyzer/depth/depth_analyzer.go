@@ -59,6 +59,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	defer da.Unlock()
 	dp.Lock()
 	defer dp.Unlock()
+	da.bid.Clear(false)
 	newBids := btree.New(da.Degree)
 	dp.BidDescend(func(item btree.Item) bool {
 		bid, _ := Binance2DepthLevels(item)
@@ -77,6 +78,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		}
 		return true
 	})
+	da.ask.Clear(false)
 	newAsks := btree.New(da.Degree)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
