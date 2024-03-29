@@ -9,7 +9,6 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
-	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -70,16 +69,16 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	var bid *types.DepthLevels
-	if da.bid.Len() != 0 {
-		da.bid.Ascend(func(item btree.Item) bool {
-			bid, _ = Binance2DepthLevels(item)
-			if da.bid.Len() != 0 && bid.Quantity < da.Bound {
-				da.bid.Delete(item)
-			}
-			return true
-		})
-	}
+	// var bid *types.DepthLevels
+	// if da.bid.Len() != 0 {
+	// 	da.bid.Ascend(func(item btree.Item) bool {
+	// 		bid, _ = Binance2DepthLevels(item)
+	// 		if da.bid.Len() != 0 && bid.Quantity < da.Bound {
+	// 			da.bid.Delete(item)
+	// 		}
+	// 		return true
+	// 	})
+	// }
 	da.ask.Clear(false)
 	dp.AskDescend(func(item btree.Item) bool {
 		ask, _ := Binance2DepthLevels(item)
@@ -91,17 +90,16 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-	var ask *types.DepthLevels
-	if da.ask.Len() != 0 {
-		da.ask.Ascend(func(item btree.Item) bool {
-			ask, _ = Binance2DepthLevels(item)
-			if da.ask.Len() != 0 && ask.Quantity < da.Bound {
-				da.ask.Delete(item)
-			}
-			return true
-		})
-		logrus.Debug("Ascend end Ask item: ", da.ask)
-	}
+	// var ask *types.DepthLevels
+	// if da.ask.Len() != 0 {
+	// 	da.ask.Ascend(func(item btree.Item) bool {
+	// 		ask, _ = Binance2DepthLevels(item)
+	// 		if da.ask.Len() != 0 && ask.Quantity < da.Bound {
+	// 			da.ask.Delete(item)
+	// 		}
+	// 		return true
+	// 	})
+	// }
 	return nil
 }
 
