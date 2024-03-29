@@ -10,6 +10,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
+	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -71,6 +72,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		return true
 	})
 	da.bid.Ascend(func(item btree.Item) bool {
+		logrus.Error("item", item, "da.bid.Len()", da.bid.Len())
 		if da.bid.Len() > 1 {
 			bid, _ := Binance2DepthLevels(item)
 			if bid.Quantity < da.Bound {
@@ -95,6 +97,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 
 	da.ask.Ascend(func(item btree.Item) bool {
 		if da.ask.Len() > 1 {
+			logrus.Error("item", item, "da.ask.Len()", da.bid.Len())
 			ask, _ := Binance2DepthLevels(item)
 			if ask.Quantity < da.Bound {
 				da.ask.Delete(item)
