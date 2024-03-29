@@ -71,7 +71,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.bid.ReplaceOrInsert(bid)
 		return true
 	})
-	da.bid.Ascend(func(item btree.Item) bool {
+	da.bid.Descend(func(item btree.Item) bool {
 		logrus.Error("item", item, "da.bid.Len()", da.bid.Len())
 		if da.bid.Len() > 1 {
 			bid, _ := Binance2DepthLevels(item)
@@ -94,8 +94,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		da.ask.ReplaceOrInsert(ask)
 		return true
 	})
-
-	da.ask.Ascend(func(item btree.Item) bool {
+	da.ask.Descend(func(item btree.Item) bool {
 		if da.ask.Len() > 1 {
 			logrus.Error("item", item, "da.ask.Len()", da.bid.Len())
 			ask, _ := Binance2DepthLevels(item)
