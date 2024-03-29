@@ -150,10 +150,10 @@ func Binance2DepthLevels(binanceDepth interface{}) (*depth_types.DepthItemType, 
 	// 	return val, nil
 	// }
 	// return nil, errors.New("it's not a DepthLevels")
-	var val depth_types.DepthItemType
+	var val *depth_types.DepthItemType
 	err := copier.Copy(&val, binanceDepth)
 	if err != nil {
 		return nil, err
 	}
-	return &val, nil
+	return val, nil
 }
