@@ -71,7 +71,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		return true
 	})
 	var bid *types.DepthLevels
-	if da.bid != nil {
+	if da.bid.Len() != 0 {
 		da.bid.Ascend(func(item btree.Item) bool {
 			if item != nil {
 				bid, err = Binance2DepthLevels(item)
@@ -94,7 +94,7 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 		return true
 	})
 	var ask *types.DepthLevels
-	if da.ask != nil {
+	if da.ask.Len() != 0 {
 		logrus.Errorf("Ascend begin Ask item: %v", da.ask.Len())
 		da.ask.Ascend(func(item btree.Item) bool {
 			logrus.Errorf("Ascend begin Ask item: %v", item)
