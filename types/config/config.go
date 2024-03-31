@@ -2,121 +2,82 @@ package config
 
 import (
 	"encoding/json"
-	"os"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
+	"github.com/google/btree"
 )
 
 type (
-	Configs struct {
-		APIKey       string  `json:"api_key"`
-		APISecret    string  `json:"api_secret"`
-		UseTestNet   bool    `json:"use_test_net"`
-		Pair         string  `json:"symbol"`
-		TargetSymbol string  `json:"target_symbol"`
-		BaseSymbol   string  `json:"base_symbol"`
-		Limit        float64 `json:"limit"`
-		Quantity     float64 `json:"quantity"`
-		Value        float64 `json:"value"`
-	}
-	ConfigFile struct {
-		FilePath string   `json:"file_path"`
-		Configs  *Configs `json:"configs"`
+	PairsSlice []*Pairs
+	Configs    struct {
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
+		Pairs      *btree.BTree
 	}
 )
 
-// New creates a new ConfigRecord with the provided API key, API secret, and symbols.
-func ConfigNew(file_path string) *ConfigFile {
-	return &ConfigFile{
-		FilePath: file_path,
-		Configs: &Configs{
-			APIKey:       "",
-			APISecret:    "",
-			Pair:         "BTCUSDT",
-			TargetSymbol: "BTC",
-			BaseSymbol:   "USDT",
-			Quantity:     0,
-			Value:        0,
-		},
-	}
+func (p *PairsSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]*Pairs(*p))
 }
 
-func (cr *ConfigFile) Load() error {
-	// Check if file exists
-	if _, err := os.Stat(cr.FilePath); os.IsNotExist(err) {
-		// File does not exist, create a new one with default config
+func (p *PairsSlice) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, (*[]*Pairs)(p))
+}
+
+func (cf Configs) GetAPIKey() string {
+	return cf.APIKey
+}
+
+func (cf Configs) GetSecretKey() string {
+	return cf.APISecret
+}
+
+func (cf Configs) GetUseTestNet() bool {
+	return cf.UseTestNet
+}
+
+func (cf Configs) GetPairs(pair string) config_types.Pairs {
+	// Implement the GetPair method
+	res := cf.Pairs.Get(&Pairs{Pair: pair})
+	return res.(*Pairs)
+}
+
+func (c *Configs) MarshalJSON() ([]byte, error) {
+	pairs := make(PairsSlice, 0)
+	c.Pairs.Ascend(func(a btree.Item) bool {
+		pairs = append(pairs, a.(*Pairs))
+		return true
+	})
+	return json.Marshal(&struct {
+		APIKey     string     `json:"api_key"`
+		APISecret  string     `json:"api_secret"`
+		UseTestNet bool       `json:"use_test_net"`
+		Pairs      PairsSlice `json:"pairs"`
+	}{
+		APIKey:     c.APIKey,
+		APISecret:  c.APISecret,
+		UseTestNet: c.UseTestNet,
+		Pairs:      pairs,
+	})
+}
+
+func (c *Configs) UnmarshalJSON(data []byte) error {
+	temp := &struct {
+		APIKey     string     `json:"api_key"`
+		APISecret  string     `json:"api_secret"`
+		UseTestNet bool       `json:"use_test_net"`
+		Pairs      PairsSlice `json:"pairs"`
+	}{}
+	if err := json.Unmarshal(data, temp); err != nil {
 		return err
 	}
-
-	// Open the file
-	file, err := os.Open(cr.FilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Decode the JSON config
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&cr.Configs)
-	if err != nil {
-		return err
+	c.APIKey = temp.APIKey
+	c.APISecret = temp.APISecret
+	c.UseTestNet = temp.UseTestNet
+	c.Pairs = btree.New(2)
+	for _, pair := range temp.Pairs {
+		c.Pairs.ReplaceOrInsert(pair)
 	}
 	return nil
-}
-
-func (cr *ConfigFile) Save() error {
-	formattedJSON, err := json.MarshalIndent(cr.Configs, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(cr.FilePath, formattedJSON, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// GetSymbol implements Configuration.
-func (cr *Configs) GetPair() string {
-	return cr.Pair
-}
-
-// GetBaseSymbol implements config.Configuration.
-func (cr *Configs) GetBaseSymbol() string {
-	return cr.BaseSymbol
-}
-
-// GetTargetSymbol implements config.Configuration.
-func (cr *Configs) GetTargetSymbol() string {
-	return cr.TargetSymbol
-}
-
-func (cr *Configs) GetLimit() float64 {
-	return cr.Limit
-}
-
-func (cr *Configs) GetQuantity() float64 {
-	return cr.Quantity
-}
-
-func (cr *Configs) GetValue() float64 {
-	return cr.Value
-}
-
-func (cr *Configs) GetAPIKey() string {
-	return cr.APIKey
-}
-
-func (cr *Configs) GetSecretKey() string {
-	return cr.APISecret
-}
-
-func (cr *Configs) GetUseTestNet() bool {
-	return cr.UseTestNet
-}
-
-func (cr *ConfigFile) GetConfigurations() config_types.Configuration {
-	return cr.Configs
 }
