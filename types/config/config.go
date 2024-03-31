@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	"github.com/google/btree"
@@ -34,14 +35,17 @@ func (cf Configs) GetPair(pair string) config_types.Pairs {
 	return res.(*Pairs)
 }
 
-func (cf Configs) GetPairs() []config_types.Pairs {
+func (cf Configs) GetPairs() ([]config_types.Pairs, error) {
 	// Implement the GetPairs method
 	pairs := make([]config_types.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
 		pairs = append(pairs, a.(*Pairs))
 		return true
 	})
-	return pairs
+	if len(pairs) == 0 {
+		return nil, errors.New("no pairs found in the configuration file")
+	}
+	return pairs, nil
 }
 
 func (c *Configs) MarshalJSON() ([]byte, error) {

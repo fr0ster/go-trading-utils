@@ -74,7 +74,8 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the loaded config matches the test data
-	checkingDate := configFile.Configs.GetPairs()
+	checkingDate, err := configFile.Configs.GetPairs()
+	assert.NoError(t, err)
 	assert.Equal(t, APIKey, configFile.Configs.APIKey)
 	assert.Equal(t, APISecret, configFile.Configs.APISecret)
 	assert.Equal(t, UseTestNet, configFile.Configs.UseTestNet)
@@ -139,7 +140,8 @@ func TestConfigFile_Save(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the saved config matches the original config
-	checkingDate := config.GetConfigurations().GetPairs()
+	checkingDate, err := config.GetConfigurations().GetPairs()
+	assert.NoError(t, err)
 	assert.Equal(t, config.GetConfigurations().GetAPIKey(), savedConfig.GetAPIKey())
 	assert.Equal(t, config.GetConfigurations().GetSecretKey(), savedConfig.GetSecretKey())
 	assert.Equal(t, config.GetConfigurations().GetUseTestNet(), savedConfig.GetUseTestNet())
