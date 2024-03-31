@@ -37,10 +37,20 @@ func (cf Configs) GetUseTestNet() bool {
 	return cf.UseTestNet
 }
 
-func (cf Configs) GetPairs(pair string) config_types.Pairs {
+func (cf Configs) GetPair(pair string) config_types.Pairs {
 	// Implement the GetPair method
 	res := cf.Pairs.Get(&Pairs{Pair: pair})
 	return res.(*Pairs)
+}
+
+func (cf Configs) GetPairs() []config_types.Pairs {
+	// Implement the GetPairs method
+	pairs := make([]config_types.Pairs, 0)
+	cf.Pairs.Ascend(func(a btree.Item) bool {
+		pairs = append(pairs, a.(*Pairs))
+		return true
+	})
+	return pairs
 }
 
 func (c *Configs) MarshalJSON() ([]byte, error) {

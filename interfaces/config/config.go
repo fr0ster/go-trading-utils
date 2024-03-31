@@ -13,7 +13,8 @@ type (
 		GetAPIKey() string
 		GetSecretKey() string
 		GetUseTestNet() bool
-		GetPairs(pair string) Pairs
+		GetPair(pair string) Pairs
+		GetPairs() []Pairs
 	}
 	ConfigurationFile interface {
 		Save() error

@@ -77,12 +77,12 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.Equal(t, APIKey, configFile.Configs.APIKey)
 	assert.Equal(t, APISecret, configFile.Configs.APISecret)
 	assert.Equal(t, UseTestNet, configFile.Configs.UseTestNet)
-	assert.Equal(t, Pair_1, configFile.Configs.GetPairs(Pair_1).GetPair())
-	assert.Equal(t, TargetSymbol_1, configFile.Configs.GetPairs(Pair_1).GetTargetSymbol())
-	assert.Equal(t, BaseSymbol_1, configFile.Configs.GetPairs(Pair_1).GetBaseSymbol())
-	assert.Equal(t, Limit_1, configFile.Configs.GetPairs(Pair_1).GetLimit())
-	assert.Equal(t, Quantity_1, configFile.Configs.GetPairs(Pair_1).GetQuantity())
-	assert.Equal(t, Value_1, configFile.Configs.GetPairs(Pair_1).GetValue())
+	assert.Equal(t, Pair_1, configFile.Configs.GetPair(Pair_1).GetPair())
+	assert.Equal(t, TargetSymbol_1, configFile.Configs.GetPair(Pair_1).GetTargetSymbol())
+	assert.Equal(t, BaseSymbol_1, configFile.Configs.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, Limit_1, configFile.Configs.GetPair(Pair_1).GetLimit())
+	assert.Equal(t, Quantity_1, configFile.Configs.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, Value_1, configFile.Configs.GetPair(Pair_1).GetValue())
 }
 
 func TestConfigFile_Save(t *testing.T) {
@@ -135,12 +135,12 @@ func TestConfigFile_Save(t *testing.T) {
 	assert.Equal(t, config.GetConfigurations().GetAPIKey(), savedConfig.GetAPIKey())
 	assert.Equal(t, config.GetConfigurations().GetSecretKey(), savedConfig.GetSecretKey())
 	assert.Equal(t, config.GetConfigurations().GetUseTestNet(), savedConfig.GetUseTestNet())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetPair(), savedConfig.GetPairs(Pair_1).GetPair())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetTargetSymbol(), savedConfig.GetPairs(Pair_1).GetTargetSymbol())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetBaseSymbol(), savedConfig.GetPairs(Pair_1).GetBaseSymbol())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetLimit(), savedConfig.GetPairs(Pair_1).GetLimit())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetQuantity(), savedConfig.GetPairs(Pair_1).GetQuantity())
-	assert.Equal(t, config.GetConfigurations().GetPairs(Pair_1).GetValue(), savedConfig.GetPairs(Pair_1).GetValue())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetPair(), savedConfig.GetPair(Pair_1).GetPair())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetTargetSymbol(), savedConfig.GetPair(Pair_1).GetTargetSymbol())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetBaseSymbol(), savedConfig.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetLimit(), savedConfig.GetPair(Pair_1).GetLimit())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetQuantity(), savedConfig.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, config.GetConfigurations().GetPair(Pair_1).GetValue(), savedConfig.GetPair(Pair_1).GetValue())
 }
 
 // Add more tests for other methods if needed
