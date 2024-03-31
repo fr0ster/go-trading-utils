@@ -54,8 +54,16 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 }
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
-func ConfigNew(file_path string, degree int) *ConfigFile {
-	return &ConfigFile{
+func ConfigNew(file_path string, degree int) (res *ConfigFile) {
+	pairBtcUsdt := &Pairs{
+		Pair:         "BTCUSDT",
+		TargetSymbol: "BTC",
+		BaseSymbol:   "USDT",
+		Limit:        10.0,
+		Quantity:     1.0,
+		Value:        100.0,
+	}
+	res = &ConfigFile{
 		FilePath: file_path,
 		Configs: Configs{
 			APIKey:     "",
@@ -63,4 +71,6 @@ func ConfigNew(file_path string, degree int) *ConfigFile {
 			UseTestNet: false,
 			Pairs:      btree.New(degree)},
 	}
+	res.Configs.Pairs.ReplaceOrInsert(pairBtcUsdt)
+	return
 }
