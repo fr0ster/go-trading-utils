@@ -36,6 +36,17 @@ func (cf *ConfigFile) Load() error {
 }
 
 func (cf *ConfigFile) Save() error {
+	if cf.Configs.Pairs == nil {
+		cf.Configs.Pairs.ReplaceOrInsert(&Pairs{
+			Pair:         "BTCUSDT",
+			TargetSymbol: "BTC",
+			BaseSymbol:   "USDT",
+			Limit:        10.0,
+			Quantity:     1.0,
+			Value:        100.0,
+		})
+	}
+
 	formattedJSON, err := cf.Configs.MarshalJSON()
 	if err != nil {
 		return err
@@ -69,7 +80,8 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 			APIKey:     "",
 			APISecret:  "",
 			UseTestNet: false,
-			Pairs:      btree.New(degree)},
+			Pairs:      btree.New(degree),
+		},
 	}
 	res.Configs.Pairs.ReplaceOrInsert(pairBtcUsdt)
 	return
