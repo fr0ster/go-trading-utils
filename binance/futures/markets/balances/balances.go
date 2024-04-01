@@ -13,7 +13,7 @@ func Init(balances *balances_types.BalanceBTree, futuresBalances *btree.BTree) {
 	}
 	futuresBalances.Ascend(func(i btree.Item) bool {
 		balance := i.(*futures_account.AccountAsset)
-		balances.ReplaceOrInsert(balances_types.BalanceItemType{
+		balances.ReplaceOrInsert(&balances_types.BalanceItemType{
 			Asset:  balances_types.AssetType(balance.Asset),
 			Free:   utils.ConvStrToFloat64(balance.AvailableBalance),
 			Locked: utils.ConvStrToFloat64(balance.WalletBalance) - utils.ConvStrToFloat64(balance.AvailableBalance),

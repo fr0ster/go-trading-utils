@@ -12,7 +12,7 @@ func GetBalancesUpdateGuard(bt *balances_types.BalanceBTree, source chan *binanc
 		for {
 			event := <-source
 			for _, item := range event.AccountUpdate.WsAccountUpdates {
-				balanceUpdate := balances_types.BalanceItemType{
+				balanceUpdate := &balances_types.BalanceItemType{
 					Asset:  balances_types.AssetType(item.Asset),
 					Free:   utils.ConvStrToFloat64(item.Free),
 					Locked: utils.ConvStrToFloat64(item.Locked),

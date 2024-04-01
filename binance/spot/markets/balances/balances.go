@@ -13,7 +13,7 @@ func Init(balances *balances_types.BalanceBTree, spotBalances *btree.BTree) {
 	}
 	spotBalances.Ascend(func(i btree.Item) bool {
 		balance := i.(*spot_account.Balance)
-		balances.ReplaceOrInsert(balances_types.BalanceItemType{
+		balances.ReplaceOrInsert(&balances_types.BalanceItemType{
 			Asset:  balances_types.AssetType(balance.Asset),
 			Free:   utils.ConvStrToFloat64(balance.Free),
 			Locked: utils.ConvStrToFloat64(balance.Locked),

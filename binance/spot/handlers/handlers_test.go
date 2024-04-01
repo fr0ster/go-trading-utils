@@ -52,7 +52,7 @@ func TestBalanceTreeUpdateHandler(t *testing.T) {
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
 	bt := balances_types.New(3)
-	bt.SetItem(balances_types.BalanceItemType{
+	bt.SetItem(&balances_types.BalanceItemType{
 		Asset:  "BTC",
 		Free:   0.0,
 		Locked: 0.0,
