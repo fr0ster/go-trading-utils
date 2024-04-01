@@ -1,6 +1,8 @@
 package info
 
 import (
+	"time"
+
 	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
 )
@@ -36,27 +38,72 @@ func (e *ExchangeInfo) GetExchangeFilters() []interface{} {
 	return e.ExchangeFilters
 }
 
-func (e *ExchangeInfo) GetRateLimits() *RateLimits {
-	res := &RateLimits{}
+func (e *ExchangeInfo) GetRateLimits() *[]RateLimit {
+	res := make([]RateLimit, 0)
+	for _, rateLimit := range e.RateLimits {
+		res = append(res, rateLimit)
+	}
+	return &res
+}
+
+func (e *ExchangeInfo) Get_Minute_Request_Limit() (time.Duration, int64, int64) {
+	var timeDuration time.Duration
+	var intervalNum int64
+	var limit int64
 	for _, rateLimit := range e.RateLimits {
 		if rateLimit.RateLimitType == "REQUEST_WEIGHT" || rateLimit.Interval == "MINUTE" {
-			res.RequestWeightMinuteIntervalNum = rateLimit.IntervalNum
-			res.RequestWeightMinuteLimit = rateLimit.Limit
-		}
-		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "MINUTE" {
-			res.OrdersMinuteIntervalNum = rateLimit.IntervalNum
-			res.OrdersMinuteLimit = rateLimit.Limit
-		}
-		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "DAY" {
-			res.OrdersDayIntervalNum = rateLimit.IntervalNum
-			res.OrdersDayLimit = rateLimit.Limit
-		}
-		if rateLimit.RateLimitType == "RAW_REQUESTS" || rateLimit.Interval == "MINUTE" {
-			res.RawRequestsMinuteNum = rateLimit.IntervalNum
-			res.RawRequestsMinuteLimit = rateLimit.Limit
+			timeDuration = time.Minute
+			intervalNum = rateLimit.IntervalNum
+			limit = rateLimit.Limit
+			break
 		}
 	}
-	return res
+	return timeDuration, intervalNum, limit
+}
+
+func (e *ExchangeInfo) Get_Minute_Order_Limit() (time.Duration, int64, int64) {
+	var timeDuration time.Duration
+	var intervalNum int64
+	var limit int64
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "MINUTE" {
+			timeDuration = time.Minute
+			intervalNum = rateLimit.IntervalNum
+			limit = rateLimit.Limit
+			break
+		}
+	}
+	return timeDuration, intervalNum, limit
+}
+
+func (e *ExchangeInfo) Get_Day_Order_Limit() (time.Duration, int64, int64) {
+	var timeDuration time.Duration
+	var intervalNum int64
+	var limit int64
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "DAY" {
+			timeDuration = time.Hour * 24
+			intervalNum = rateLimit.IntervalNum
+			limit = rateLimit.Limit
+			break
+		}
+	}
+	return timeDuration, intervalNum, limit
+}
+
+func (e *ExchangeInfo) Get_Minute_Raw_Request_Limit() (time.Duration, int64, int64) {
+	var timeDuration time.Duration
+	var intervalNum int64
+	var limit int64
+	for _, rateLimit := range e.RateLimits {
+		if rateLimit.RateLimitType == "RAW_REQUESTS" || rateLimit.Interval == "MINUTE" {
+			timeDuration = time.Minute
+			intervalNum = rateLimit.IntervalNum
+			limit = rateLimit.Limit
+			break
+		}
+	}
+	return timeDuration, intervalNum, limit
 }
 
 // GetServerTime implements info.ExchangeInfo.
