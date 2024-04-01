@@ -36,11 +36,6 @@ func (e *ExchangeInfo) GetExchangeFilters() []interface{} {
 	return e.ExchangeFilters
 }
 
-// // GetRateLimits implements info.ExchangeInfo.
-// func (e *ExchangeInfo) GetRateLimits() []RateLimit {
-// 	return e.RateLimits
-// }
-
 func (e *ExchangeInfo) GetRateLimits() *RateLimits {
 	res := &RateLimits{}
 	for _, rateLimit := range e.RateLimits {
