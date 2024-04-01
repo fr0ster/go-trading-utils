@@ -7,8 +7,10 @@ import (
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
-func tradesInit(res []*binance.Trade, a *trade_types.Trades) (err error) {
-	for _, val := range res {
+func tradesInit(trd []*binance.Trade, a *trade_types.Trades) (err error) {
+	a.Lock()         // Locking the trades
+	defer a.Unlock() // Unlocking the trades
+	for _, val := range trd {
 		trade, err := trade_types.Binance2Trades(val)
 		if err != nil {
 			return err

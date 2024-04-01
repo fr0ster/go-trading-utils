@@ -7,8 +7,10 @@ import (
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
-func tradesV3Init(res []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
-	for _, val := range res {
+func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
+	a.Lock()         // Locking the trades
+	defer a.Unlock() // Unlocking the trades
+	for _, val := range trd {
 		tradeV3, err := trade_types.Binance2TradesV3(val)
 		if err != nil {
 			return err

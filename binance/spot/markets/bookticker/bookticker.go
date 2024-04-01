@@ -8,6 +8,8 @@ import (
 )
 
 func Init(btt *bookticker_types.BookTickerBTree, pair string, client *binance.Client) (err error) {
+	btt.Lock()         // Locking the bookticker
+	defer btt.Unlock() // Unlocking the bookticker
 	bookTickerList, err :=
 		client.NewListBookTickersService().
 			Symbol(pair).

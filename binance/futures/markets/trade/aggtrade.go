@@ -7,7 +7,9 @@ import (
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
-func AggTradeInit(a *trade_types.AggTrades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+func AggTradeInit(at *trade_types.AggTrades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
+	at.Lock()         // Locking the aggTrades
+	defer at.Unlock() // Unlocking the aggTrades
 	futures.UseTestnet = UseTestnet
 	client := futures.NewClient(apt_key, secret_key)
 	res, err :=
@@ -19,7 +21,7 @@ func AggTradeInit(a *trade_types.AggTrades, apt_key, secret_key, symbolname stri
 		return err
 	}
 	for _, trade := range res {
-		a.Update(&trade_types.AggTrade{
+		at.Update(&trade_types.AggTrade{
 			AggTradeID:   trade.AggTradeID,
 			Price:        trade.Price,
 			Quantity:     trade.Quantity,

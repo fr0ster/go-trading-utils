@@ -7,7 +7,9 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func Init(d *kline_types.Kline, apt_key string, secret_key string, symbolname string, UseTestnet bool) (err error) {
+func Init(kl *kline_types.Kline, apt_key string, secret_key string, symbolname string, UseTestnet bool) (err error) {
+	kl.Lock()         // Locking the klines
+	defer kl.Unlock() // Unlocking the klines
 	futures.UseTestnet = UseTestnet
 	klines, _ :=
 		futures.NewClient(apt_key, secret_key).NewKlinesService().
@@ -18,7 +20,7 @@ func Init(d *kline_types.Kline, apt_key string, secret_key string, symbolname st
 		if err != nil {
 			return err
 		}
-		d.Set(klineItem)
+		kl.Set(klineItem)
 	}
 	return nil
 }

@@ -8,6 +8,8 @@ import (
 )
 
 func FuturesDepthInit(d *depth_types.Depth, client *futures.Client, limit int) (err error) {
+	d.Lock()         // Locking the depths
+	defer d.Unlock() // Unlocking the depths
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(d.Symbol())).

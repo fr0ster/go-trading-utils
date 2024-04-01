@@ -7,8 +7,10 @@ import (
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
-func tradesInit(res []*futures.Trade, a *trade_types.Trades) (err error) {
-	for _, val := range res {
+func tradesInit(trd []*futures.Trade, a *trade_types.Trades) (err error) {
+	a.Lock()         // Locking the trades
+	defer a.Unlock() // Unlocking the trades
+	for _, val := range trd {
 		a.Update(&trade_types.Trade{
 			ID:           val.ID,
 			Price:        val.Price,
