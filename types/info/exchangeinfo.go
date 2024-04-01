@@ -9,14 +9,9 @@ import (
 
 type (
 	RateLimits struct {
-		RequestWeightMinuteIntervalNum int64
-		RequestWeightMinuteLimit       int64
-		OrdersMinuteIntervalNum        int64
-		OrdersMinuteLimit              int64
-		OrdersDayIntervalNum           int64
-		OrdersDayLimit                 int64
-		RawRequestsMinuteNum           int64
-		RawRequestsMinuteLimit         int64
+		Interval    time.Duration
+		IntervalNum int64
+		Limit       int64
 	}
 	RateLimit struct {
 		RateLimitType string `json:"rateLimitType"`
@@ -39,71 +34,37 @@ func (e *ExchangeInfo) GetExchangeFilters() []interface{} {
 }
 
 func (e *ExchangeInfo) GetRateLimits() *[]RateLimit {
-	res := make([]RateLimit, 0)
-	for _, rateLimit := range e.RateLimits {
-		res = append(res, rateLimit)
-	}
+	res := append([]RateLimit{}, e.RateLimits...)
 	return &res
 }
 
-func (e *ExchangeInfo) Get_Minute_Request_Limit() (time.Duration, int64, int64) {
-	var timeDuration time.Duration
-	var intervalNum int64
-	var limit int64
+func (e *ExchangeInfo) get_limit(rateLimitType, interval string) *RateLimits {
 	for _, rateLimit := range e.RateLimits {
-		if rateLimit.RateLimitType == "REQUEST_WEIGHT" || rateLimit.Interval == "MINUTE" {
-			timeDuration = time.Minute
-			intervalNum = rateLimit.IntervalNum
-			limit = rateLimit.Limit
-			break
+		if rateLimit.RateLimitType == rateLimitType || rateLimit.Interval == interval {
+			return &RateLimits{
+				Interval:    time.Minute,
+				IntervalNum: rateLimit.IntervalNum,
+				Limit:       rateLimit.Limit,
+			}
 		}
 	}
-	return timeDuration, intervalNum, limit
+	return nil
 }
 
-func (e *ExchangeInfo) Get_Minute_Order_Limit() (time.Duration, int64, int64) {
-	var timeDuration time.Duration
-	var intervalNum int64
-	var limit int64
-	for _, rateLimit := range e.RateLimits {
-		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "MINUTE" {
-			timeDuration = time.Minute
-			intervalNum = rateLimit.IntervalNum
-			limit = rateLimit.Limit
-			break
-		}
-	}
-	return timeDuration, intervalNum, limit
+func (e *ExchangeInfo) Get_Minute_Request_Limit() *RateLimits {
+	return e.get_limit("REQUEST_WEIGHT", "MINUTE")
 }
 
-func (e *ExchangeInfo) Get_Day_Order_Limit() (time.Duration, int64, int64) {
-	var timeDuration time.Duration
-	var intervalNum int64
-	var limit int64
-	for _, rateLimit := range e.RateLimits {
-		if rateLimit.RateLimitType == "ORDERS" || rateLimit.Interval == "DAY" {
-			timeDuration = time.Hour * 24
-			intervalNum = rateLimit.IntervalNum
-			limit = rateLimit.Limit
-			break
-		}
-	}
-	return timeDuration, intervalNum, limit
+func (e *ExchangeInfo) Get_Minute_Order_Limit() *RateLimits {
+	return e.get_limit("ORDERS", "MINUTE")
 }
 
-func (e *ExchangeInfo) Get_Minute_Raw_Request_Limit() (time.Duration, int64, int64) {
-	var timeDuration time.Duration
-	var intervalNum int64
-	var limit int64
-	for _, rateLimit := range e.RateLimits {
-		if rateLimit.RateLimitType == "RAW_REQUESTS" || rateLimit.Interval == "MINUTE" {
-			timeDuration = time.Minute
-			intervalNum = rateLimit.IntervalNum
-			limit = rateLimit.Limit
-			break
-		}
-	}
-	return timeDuration, intervalNum, limit
+func (e *ExchangeInfo) Get_Day_Order_Limit() *RateLimits {
+	return e.get_limit("ORDERS", "DAY")
+}
+
+func (e *ExchangeInfo) Get_Minute_Raw_Request_Limit() *RateLimits {
+	return e.get_limit("RAW_REQUESTS", "MINUTE")
 }
 
 // GetServerTime implements info.ExchangeInfo.
