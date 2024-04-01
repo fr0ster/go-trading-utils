@@ -19,7 +19,8 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					}
 					// depths.Lock()
 					depths.SetBid(price, quantity)
-					depths.RestrictAsk(price, quantity)
+					depths.RestrictAsk(price)
+					depths.RestrictBid(price)
 					// depths.Unlock()
 				}
 			}
@@ -31,7 +32,8 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					}
 					// depths.Lock()
 					depths.SetAsk(price, quantity)
-					depths.RestrictBid(price, quantity)
+					depths.RestrictAsk(price)
+					depths.RestrictBid(price)
 					// depths.Unlock()
 				}
 			}

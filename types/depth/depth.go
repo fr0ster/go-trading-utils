@@ -137,7 +137,7 @@ func (d *Depth) SetBid(price float64, quantity float64) {
 }
 
 // RestrictAsk implements depth_interface.Depths.
-func (d *Depth) RestrictAsk(price float64, quantity float64) {
+func (d *Depth) RestrictAsk(price float64) {
 	d.asks.Ascend(func(i btree.Item) bool {
 		if i.(*DepthItemType).Price < price {
 			d.asks.Delete(i)
@@ -148,7 +148,7 @@ func (d *Depth) RestrictAsk(price float64, quantity float64) {
 }
 
 // RestrictBid implements depth_interface.Depths.
-func (d *Depth) RestrictBid(price float64, quantity float64) {
+func (d *Depth) RestrictBid(price float64) {
 	d.bids.Ascend(func(i btree.Item) bool {
 		if i.(*DepthItemType).Price > price {
 			d.bids.Delete(i)
