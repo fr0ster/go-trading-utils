@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
+	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	"github.com/google/btree"
 )
 
@@ -29,15 +29,15 @@ func (cf Configs) GetUseTestNet() bool {
 	return cf.UseTestNet
 }
 
-func (cf Configs) GetPair(pair string) config_types.Pairs {
+func (cf Configs) GetPair(pair string) config_interfaces.Pairs {
 	// Implement the GetPair method
 	res := cf.Pairs.Get(&Pairs{Pair: pair})
 	return res.(*Pairs)
 }
 
-func (cf Configs) GetPairs() ([]config_types.Pairs, error) {
+func (cf Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
 	// Implement the GetPairs method
-	pairs := make([]config_types.Pairs, 0)
+	pairs := make([]config_interfaces.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
 		pairs = append(pairs, a.(*Pairs))
 		return true
@@ -45,7 +45,15 @@ func (cf Configs) GetPairs() ([]config_types.Pairs, error) {
 	if len(pairs) == 0 {
 		return nil, errors.New("no pairs found in the configuration file")
 	}
-	return pairs, nil
+	return &pairs, nil
+}
+
+func (cf Configs) SetPairs(pairs []config_interfaces.Pairs) error {
+	// Implement the SetPairs method
+	for _, pair := range pairs {
+		cf.Pairs.ReplaceOrInsert(pair.(*Pairs))
+	}
+	return nil
 }
 
 func (c *Configs) MarshalJSON() ([]byte, error) {

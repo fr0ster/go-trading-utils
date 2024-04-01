@@ -17,7 +17,8 @@ type (
 		GetSecretKey() string
 		GetUseTestNet() bool
 		GetPair(pair string) Pairs
-		GetPairs() ([]Pairs, error)
+		GetPairs() (*[]Pairs, error)
+		SetPairs([]Pairs) error
 	}
 	ConfigurationFile interface {
 		Save() error

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -79,18 +80,18 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.Equal(t, APIKey, configFile.Configs.APIKey)
 	assert.Equal(t, APISecret, configFile.Configs.APISecret)
 	assert.Equal(t, UseTestNet, configFile.Configs.UseTestNet)
-	assert.Equal(t, Pair_1, checkingDate[0].GetPair())
-	assert.Equal(t, TargetSymbol_1, checkingDate[0].GetTargetSymbol())
-	assert.Equal(t, BaseSymbol_1, checkingDate[0].GetBaseSymbol())
-	assert.Equal(t, Limit_1, checkingDate[0].GetLimit())
-	assert.Equal(t, Quantity_1, checkingDate[0].GetQuantity())
-	assert.Equal(t, Value_1, checkingDate[0].GetValue())
-	assert.Equal(t, Pair_2, checkingDate[1].GetPair())
-	assert.Equal(t, TargetSymbol_2, checkingDate[1].GetTargetSymbol())
-	assert.Equal(t, BaseSymbol_2, checkingDate[1].GetBaseSymbol())
-	assert.Equal(t, Limit_2, checkingDate[1].GetLimit())
-	assert.Equal(t, Quantity_2, checkingDate[1].GetQuantity())
-	assert.Equal(t, Value_2, checkingDate[1].GetValue())
+	assert.Equal(t, Pair_1, (*checkingDate)[0].GetPair())
+	assert.Equal(t, TargetSymbol_1, (*checkingDate)[0].GetTargetSymbol())
+	assert.Equal(t, BaseSymbol_1, (*checkingDate)[0].GetBaseSymbol())
+	assert.Equal(t, Limit_1, (*checkingDate)[0].GetLimit())
+	assert.Equal(t, Quantity_1, (*checkingDate)[0].GetQuantity())
+	assert.Equal(t, Value_1, (*checkingDate)[0].GetValue())
+	assert.Equal(t, Pair_2, (*checkingDate)[1].GetPair())
+	assert.Equal(t, TargetSymbol_2, (*checkingDate)[1].GetTargetSymbol())
+	assert.Equal(t, BaseSymbol_2, (*checkingDate)[1].GetBaseSymbol())
+	assert.Equal(t, Limit_2, (*checkingDate)[1].GetLimit())
+	assert.Equal(t, Quantity_2, (*checkingDate)[1].GetQuantity())
+	assert.Equal(t, Value_2, (*checkingDate)[1].GetValue())
 }
 
 func TestConfigFile_Save(t *testing.T) {
@@ -145,18 +146,18 @@ func TestConfigFile_Save(t *testing.T) {
 	assert.Equal(t, config.GetConfigurations().GetAPIKey(), savedConfig.GetAPIKey())
 	assert.Equal(t, config.GetConfigurations().GetSecretKey(), savedConfig.GetSecretKey())
 	assert.Equal(t, config.GetConfigurations().GetUseTestNet(), savedConfig.GetUseTestNet())
-	assert.Equal(t, checkingDate[0].GetPair(), savedConfig.GetPair(Pair_1).GetPair())
-	assert.Equal(t, checkingDate[0].GetTargetSymbol(), savedConfig.GetPair(Pair_1).GetTargetSymbol())
-	assert.Equal(t, checkingDate[0].GetBaseSymbol(), savedConfig.GetPair(Pair_1).GetBaseSymbol())
-	assert.Equal(t, checkingDate[0].GetLimit(), savedConfig.GetPair(Pair_1).GetLimit())
-	assert.Equal(t, checkingDate[0].GetQuantity(), savedConfig.GetPair(Pair_1).GetQuantity())
-	assert.Equal(t, checkingDate[0].GetValue(), savedConfig.GetPair(Pair_1).GetValue())
-	assert.Equal(t, checkingDate[1].GetPair(), savedConfig.GetPair(Pair_2).GetPair())
-	assert.Equal(t, checkingDate[1].GetTargetSymbol(), savedConfig.GetPair(Pair_2).GetTargetSymbol())
-	assert.Equal(t, checkingDate[1].GetBaseSymbol(), savedConfig.GetPair(Pair_2).GetBaseSymbol())
-	assert.Equal(t, checkingDate[1].GetLimit(), savedConfig.GetPair(Pair_2).GetLimit())
-	assert.Equal(t, checkingDate[1].GetQuantity(), savedConfig.GetPair(Pair_2).GetQuantity())
-	assert.Equal(t, checkingDate[1].GetValue(), savedConfig.GetPair(Pair_2).GetValue())
+	assert.Equal(t, (*checkingDate)[0].GetPair(), savedConfig.GetPair(Pair_1).GetPair())
+	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), savedConfig.GetPair(Pair_1).GetTargetSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), savedConfig.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetLimit(), savedConfig.GetPair(Pair_1).GetLimit())
+	assert.Equal(t, (*checkingDate)[0].GetQuantity(), savedConfig.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, (*checkingDate)[0].GetValue(), savedConfig.GetPair(Pair_1).GetValue())
+	assert.Equal(t, (*checkingDate)[1].GetPair(), savedConfig.GetPair(Pair_2).GetPair())
+	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), savedConfig.GetPair(Pair_2).GetTargetSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), savedConfig.GetPair(Pair_2).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetLimit(), savedConfig.GetPair(Pair_2).GetLimit())
+	assert.Equal(t, (*checkingDate)[1].GetQuantity(), savedConfig.GetPair(Pair_2).GetQuantity())
+	assert.Equal(t, (*checkingDate)[1].GetValue(), savedConfig.GetPair(Pair_2).GetValue())
 }
 
 // Add more tests for other methods if needed
@@ -174,4 +175,78 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, Limit_2, pair.GetLimit())
 	assert.Equal(t, Quantity_2, pair.GetQuantity())
 	assert.Equal(t, Value_2, pair.GetValue())
+}
+
+func TestPairGetter(t *testing.T) {
+	pair := &config_types.Pairs{
+		Pair:     Pair_1,
+		Quantity: Quantity_1,
+		Value:    Value_1,
+	}
+	assert.Equal(t, Pair_1, pair.GetPair())
+	assert.Equal(t, Quantity_1, pair.GetQuantity())
+	assert.Equal(t, Value_1, pair.GetValue())
+}
+
+func TestConfigGetter(t *testing.T) {
+	config := &config_types.Configs{
+		APIKey:     APIKey,
+		APISecret:  APISecret,
+		UseTestNet: UseTestNet,
+		Pairs:      btree.New(2),
+	}
+	config.Pairs.ReplaceOrInsert(&config_types.Pairs{
+		Pair:     Pair_1,
+		Quantity: Quantity_1,
+		Value:    Value_1,
+	})
+	config.Pairs.ReplaceOrInsert(&config_types.Pairs{
+		Pair:     Pair_2,
+		Quantity: Quantity_2,
+		Value:    Value_2,
+	})
+
+	assert.Equal(t, APIKey, config.GetAPIKey())
+	assert.Equal(t, APISecret, config.GetSecretKey())
+	assert.Equal(t, UseTestNet, config.GetUseTestNet())
+	assert.Equal(t, Pair_1, config.GetPair(Pair_1).GetPair())
+	assert.Equal(t, Quantity_1, config.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, Value_1, config.GetPair(Pair_1).GetValue())
+	assert.Equal(t, Pair_2, config.GetPair(Pair_2).GetPair())
+	assert.Equal(t, Quantity_2, config.GetPair(Pair_2).GetQuantity())
+	assert.Equal(t, Value_2, config.GetPair(Pair_2).GetValue())
+}
+
+func TestConfigSetter(t *testing.T) {
+	config := &config_types.Configs{
+		APIKey:     APIKey,
+		APISecret:  APISecret,
+		UseTestNet: UseTestNet,
+		Pairs:      btree.New(2),
+	}
+	pairs := []config_interfaces.Pairs{
+		&config_types.Pairs{
+			Pair:     Pair_1,
+			Quantity: Quantity_1,
+			Value:    Value_1,
+		},
+		&config_types.Pairs{
+			Pair:     Pair_2,
+			Quantity: Quantity_2,
+			Value:    Value_2,
+		},
+	}
+	config.SetPairs(pairs)
+
+	checkingDate, err := config.GetPairs()
+	assert.NoError(t, err)
+	assert.Equal(t, APIKey, config.GetAPIKey())
+	assert.Equal(t, APISecret, config.GetSecretKey())
+	assert.Equal(t, UseTestNet, config.GetUseTestNet())
+	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
+	assert.Equal(t, (*checkingDate)[0].GetQuantity(), config.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, (*checkingDate)[0].GetValue(), config.GetPair(Pair_1).GetValue())
+	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
+	assert.Equal(t, (*checkingDate)[1].GetQuantity(), config.GetPair(Pair_2).GetQuantity())
+	assert.Equal(t, (*checkingDate)[1].GetValue(), config.GetPair(Pair_2).GetValue())
 }
