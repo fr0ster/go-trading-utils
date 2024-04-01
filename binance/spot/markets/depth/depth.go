@@ -7,12 +7,10 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func SpotDepthInit(d *depth_types.Depth, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	binance.UseTestnet = UseTestnet
-	client := binance.NewClient(apt_key, secret_key)
+func SpotDepthInit(d *depth_types.Depth, client *binance.Client, limit int) (err error) {
 	res, err :=
 		client.NewDepthService().
-			Symbol(string(symbolname)).
+			Symbol(string(d.Symbol())).
 			Limit(limit).
 			Do(context.Background())
 	if err != nil {

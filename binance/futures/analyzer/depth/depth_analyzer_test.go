@@ -4,10 +4,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/adshao/go-binance/v2/futures"
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-	analyzer_interface "github.com/fr0ster/go-trading-utils/interfaces/analyzer"
+	depth_analyzer_interface "github.com/fr0ster/go-trading-utils/interfaces/analyzer/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
-	"github.com/fr0ster/go-trading-utils/types"
+	types "github.com/fr0ster/go-trading-utils/types"
 	depth_analyzer "github.com/fr0ster/go-trading-utils/types/analyzer/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
@@ -15,19 +16,20 @@ import (
 func TestDepthAnalyzerLoad(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
+	futures.UseTestnet = false
+	futures := futures.NewClient(api_key, secret_key)
 	limit := 10
 	degree := 3
 	rounded := 2
 	bound := 0.5
 	symbol := "BTCUSDT"
 	depth := depth_types.NewDepth(degree, symbol)
-	futures_depth.FuturesDepthInit(depth, api_key, secret_key, symbol, limit, UseTestnet)
+	futures_depth.FuturesDepthInit(depth, futures, limit)
 
 	da := depth_analyzer.NewDepthAnalyzer(3, rounded, bound)
 	da.Update(depth)
 
-	test := func(da analyzer_interface.DepthAnalyzer) {
+	test := func(da depth_analyzer_interface.DepthAnalyzer) {
 		if da == nil {
 			t.Errorf("DepthAnalyzerLoad returned an empty map")
 		}

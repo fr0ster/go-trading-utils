@@ -146,6 +146,11 @@ func (d *Depth) Unlock() {
 	d.mutex.Unlock()
 }
 
+// Symbol implements depth_interface.Depths.
+func (d *Depth) Symbol() string {
+	return d.symbol
+}
+
 // DepthBTree - B-дерево для зберігання стакана заявок
 func NewDepth(degree int, symbol string) *Depth {
 	return &Depth{

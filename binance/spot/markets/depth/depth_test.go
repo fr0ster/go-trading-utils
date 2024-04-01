@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/adshao/go-binance/v2"
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
@@ -57,11 +58,12 @@ func TestGetDepthNew(t *testing.T) {
 func TestInitDepthTree(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
+	binance.UseTestnet = false
+	spot := binance.NewClient(api_key, secret_key)
 
 	// Add more test cases here
 	testDepthTree := depth_types.NewDepth(3, "SUSHIUSDT")
-	err := spot_depth.SpotDepthInit(testDepthTree, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	err := spot_depth.SpotDepthInit(testDepthTree, spot, 10)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}

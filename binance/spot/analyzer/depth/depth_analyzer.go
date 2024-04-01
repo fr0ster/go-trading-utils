@@ -1,14 +1,15 @@
 package depth_analyzer
 
 import (
+	"github.com/adshao/go-binance/v2"
 	spotDepth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_analyzer_types "github.com/fr0ster/go-trading-utils/types/analyzer/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func Init(a *depth_analyzer_types.DepthAnalyzer, api_key, secret_key, symbolname string, limits int, UseTestnet bool) error {
+func Init(a *depth_analyzer_types.DepthAnalyzer, client *binance.Client, symbolname string, limits int) error {
 	depth := depth_types.NewDepth(a.Degree, symbolname)
-	err := spotDepth.SpotDepthInit(depth, api_key, secret_key, symbolname, limits, UseTestnet)
+	err := spotDepth.SpotDepthInit(depth, client, limits)
 	if err != nil {
 		return err
 	}

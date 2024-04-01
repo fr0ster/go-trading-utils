@@ -7,12 +7,10 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func FuturesDepthInit(d *depth_types.Depth, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	futures.UseTestnet = UseTestnet
-	client := futures.NewClient(apt_key, secret_key)
+func FuturesDepthInit(d *depth_types.Depth, client *futures.Client, limit int) (err error) {
 	res, err :=
 		client.NewDepthService().
-			Symbol(string(symbolname)).
+			Symbol(string(d.Symbol())).
 			Limit(limit).
 			Do(context.Background())
 	if err != nil {
