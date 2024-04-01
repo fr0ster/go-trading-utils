@@ -103,7 +103,7 @@ func TestConfigFile_Save(t *testing.T) {
 	// Create a new ConfigFile instance
 	config := &config_types.ConfigFile{
 		FilePath: tmpFile.Name(),
-		Configs: config_types.Configs{
+		Configs: &config_types.Configs{
 			APIKey:     APIKey,
 			APISecret:  APISecret,
 			UseTestNet: UseTestNet,

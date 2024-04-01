@@ -10,8 +10,8 @@ import (
 
 type (
 	ConfigFile struct {
-		FilePath string  `json:"file_path"`
-		Configs  Configs `json:"symbols"`
+		FilePath string   `json:"file_path"`
+		Configs  *Configs `json:"symbols"`
 	}
 )
 
@@ -76,7 +76,7 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 	}
 	res = &ConfigFile{
 		FilePath: file_path,
-		Configs: Configs{
+		Configs: &Configs{
 			APIKey:     "",
 			APISecret:  "",
 			UseTestNet: false,

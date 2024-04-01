@@ -17,25 +17,25 @@ type (
 	}
 )
 
-func (cf Configs) GetAPIKey() string {
+func (cf *Configs) GetAPIKey() string {
 	return cf.APIKey
 }
 
-func (cf Configs) GetSecretKey() string {
+func (cf *Configs) GetSecretKey() string {
 	return cf.APISecret
 }
 
-func (cf Configs) GetUseTestNet() bool {
+func (cf *Configs) GetUseTestNet() bool {
 	return cf.UseTestNet
 }
 
-func (cf Configs) GetPair(pair string) config_interfaces.Pairs {
+func (cf *Configs) GetPair(pair string) config_interfaces.Pairs {
 	// Implement the GetPair method
 	res := cf.Pairs.Get(&Pairs{Pair: pair})
 	return res.(*Pairs)
 }
 
-func (cf Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
+func (cf *Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
 	// Implement the GetPairs method
 	pairs := make([]config_interfaces.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
@@ -48,7 +48,7 @@ func (cf Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
 	return &pairs, nil
 }
 
-func (cf Configs) SetPairs(pairs []config_interfaces.Pairs) error {
+func (cf *Configs) SetPairs(pairs []config_interfaces.Pairs) error {
 	// Implement the SetPairs method
 	for _, pair := range pairs {
 		cf.Pairs.ReplaceOrInsert(pair.(*Pairs))
