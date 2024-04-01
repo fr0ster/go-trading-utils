@@ -30,12 +30,11 @@ func (i *DepthItemType) Parse(a common.PriceLevel) {
 
 type (
 	Depth struct {
-		symbol          string
-		asks            *btree.BTree
-		bids            *btree.BTree
-		mutex           *sync.Mutex
-		AskLastUpdateID int64
-		BidLastUpdateID int64
+		symbol       string
+		asks         *btree.BTree
+		bids         *btree.BTree
+		mutex        *sync.Mutex
+		LastUpdateID int64
 	}
 )
 
