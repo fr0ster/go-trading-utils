@@ -12,7 +12,7 @@ type (
 		GetSymbols() *symbols_info.Symbols
 		GetTimezone() string
 		GetServerTime() int64
-		GetRateLimits() []exchange_types.RateLimit
+		GetRateLimits() *exchange_types.RateLimits
 		GetExchangeFilters() []interface{}
 	}
 )
