@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const degree = 3
+
 func TestGetExchangeInfo(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
@@ -17,7 +19,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	client := futures.NewClient(api_key, secret_key)
 
 	exchangeInfo := info.NewExchangeInfo()
-	err := futuresInfo.Init(exchangeInfo, client)
+	err := futuresInfo.Init(exchangeInfo, degree, client)
 	// Check if the function returned an error
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
@@ -35,7 +37,7 @@ func TestGetOrderTypes(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 	exchangeInfo := info.NewExchangeInfo()
-	err := futuresInfo.Init(exchangeInfo, client)
+	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}
@@ -55,7 +57,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 	exchangeInfo := info.NewExchangeInfo()
-	err := futuresInfo.Init(exchangeInfo, client)
+	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
 	}

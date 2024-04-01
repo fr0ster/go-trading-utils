@@ -8,7 +8,7 @@ import (
 	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
 )
 
-func Init(val *exchange_types.ExchangeInfo, client *futures.Client) error {
+func Init(val *exchange_types.ExchangeInfo, degree int, client *futures.Client) error {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
 		return err
@@ -17,7 +17,7 @@ func Init(val *exchange_types.ExchangeInfo, client *futures.Client) error {
 	val.ServerTime = exchangeInfo.ServerTime
 	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
 	val.ExchangeFilters = exchangeInfo.ExchangeFilters
-	val.Symbols = symbols_info.NewSymbols(2, convertSymbols(exchangeInfo.Symbols))
+	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
 	return nil
 }
 

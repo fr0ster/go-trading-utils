@@ -10,6 +10,8 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 )
 
+const degree = 3
+
 func TestGetExchangeInfo(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
@@ -17,7 +19,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, client)
+	info.Init(exchangeInfo, degree, client)
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -31,7 +33,7 @@ func TestGetOrderTypes(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, client)
+	info.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	orderTypes := exchangeInfo.GetSymbol("BTCUSDT").OrderTypes
@@ -48,7 +50,7 @@ func TestGetPermissions(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, client)
+	info.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	permissions := exchangeInfo.GetSymbol("BTCUSDT").Permissions
@@ -65,7 +67,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, client)
+	info.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")
@@ -83,7 +85,7 @@ func TestInterface(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, client)
+	info.Init(exchangeInfo, degree, client)
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
 		_ = exchangeInfo.GetSymbol("BTCUSDT")

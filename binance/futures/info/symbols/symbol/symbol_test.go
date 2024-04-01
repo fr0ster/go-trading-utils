@@ -25,13 +25,15 @@ func TestNewSymbol(t *testing.T) {
 	// Add more assertions for other fields if needed
 }
 
+const degree = 3
+
 func TestInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := futuresInfo.Init(exchangeInfo, client)
+	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}

@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const degree = 3
+
 func TestNewSymbol(t *testing.T) {
 	symbol := &binance.Symbol{
 		Symbol: "BTCUSDT",
@@ -31,7 +33,7 @@ func TestInterface(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -51,7 +53,7 @@ func TestLotSizeFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -66,7 +68,7 @@ func TestPriceFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -81,7 +83,7 @@ func TestNotionalFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -96,7 +98,7 @@ func TestPercentPriceBySideFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -111,7 +113,7 @@ func TestIcebergPartsFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -126,7 +128,7 @@ func TestMarketLotSizeFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -141,7 +143,7 @@ func TestMaxNumOrdersFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -156,7 +158,7 @@ func TestMaxNumAlgoOrdersFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
@@ -171,7 +173,7 @@ func TestTrailingDeltaFilter(t *testing.T) {
 	// binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_info.NewExchangeInfo()
-	err := spotInfo.Init(exchangeInfo, client)
+	err := spotInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}

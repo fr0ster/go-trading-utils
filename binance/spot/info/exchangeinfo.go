@@ -10,7 +10,7 @@ import (
 
 type ExchangeInfo exchange_types.ExchangeInfo
 
-func Init(val *exchange_types.ExchangeInfo, client *binance.Client) error {
+func Init(val *exchange_types.ExchangeInfo, degree int, client *binance.Client) error {
 	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
 		return err
@@ -19,7 +19,20 @@ func Init(val *exchange_types.ExchangeInfo, client *binance.Client) error {
 	val.ServerTime = exchangeInfo.ServerTime
 	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
 	val.ExchangeFilters = exchangeInfo.ExchangeFilters
-	val.Symbols = symbols_info.NewSymbols(2, convertSymbols(exchangeInfo.Symbols))
+	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
+	return nil
+}
+
+func RestrictedInit(val *exchange_types.ExchangeInfo, degree int, symbols []string, client *binance.Client) error {
+	exchangeInfo, err := client.NewExchangeInfoService().Symbols(symbols...).Do(context.Background())
+	if err != nil {
+		return err
+	}
+	val.Timezone = exchangeInfo.Timezone
+	val.ServerTime = exchangeInfo.ServerTime
+	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
+	val.ExchangeFilters = exchangeInfo.ExchangeFilters
+	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
 	return nil
 }
 
