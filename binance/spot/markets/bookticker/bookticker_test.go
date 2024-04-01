@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/adshao/go-binance/v2"
 	spotBookTicker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
@@ -26,11 +27,12 @@ func initBookTicker() *bookticker_types.BookTickerBTree {
 func TestInitPricesTree(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	binance.UseTestnet = true
+	spot := binance.NewClient(api_key, secret_key)
 
 	// Call the function under test
 	bookTicker := bookticker_types.New(3)
-	err := spotBookTicker.Init(bookTicker, api_key, secret_key, "BTCUSDT", false)
+	err := spotBookTicker.Init(bookTicker, "BTCUSDT", spot)
 
 	// Check if there was an error
 	if err != nil {

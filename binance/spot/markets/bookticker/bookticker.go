@@ -7,12 +7,10 @@ import (
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 )
 
-func Init(btt *bookticker_types.BookTickerBTree, api_key, secret_key, symbolname string, UseTestnet bool) (err error) {
-	binance.UseTestnet = UseTestnet
-	client := binance.NewClient(api_key, secret_key)
+func Init(btt *bookticker_types.BookTickerBTree, pair string, client *binance.Client) (err error) {
 	bookTickerList, err :=
 		client.NewListBookTickersService().
-			Symbol(string(symbolname)).
+			Symbol(pair).
 			Do(context.Background())
 	if err != nil {
 		return
