@@ -6,15 +6,13 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/fr0ster/go-trading-utils/interfaces/account"
-	"github.com/fr0ster/go-trading-utils/utils"
+	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
 
 type (
-	AccountAsset  futures.AccountAsset
-	AccountLimits struct {
+	Account struct {
 		client           *futures.Client
 		account          *futures.Account
 		accountAssets    *btree.BTree
@@ -24,38 +22,17 @@ type (
 	}
 )
 
-func (a *AccountAsset) Less(item btree.Item) bool {
-	return a.Asset < item.(*AccountAsset).Asset
-}
-
-func (a *AccountAsset) Equals(item btree.Item) bool {
-	return a.Asset == item.(*AccountAsset).Asset
-}
-
-// GetQuantityLimits implements account.AccountLimits.
-func (a *AccountLimits) GetQuantities() (res []account.QuantityLimit) {
-	a.accountAssets.Ascend(func(item btree.Item) bool {
-		val, _ := Binance2AccountAsset(item)
-		if _, exists := a.symbols[val.Asset]; exists || len(a.symbols) == 0 {
-			symbolBalance, _ := Binance2AccountAsset(item)
-			res = append(res, account.QuantityLimit{Symbol: val.Asset, MaxQty: utils.ConvStrToFloat64(symbolBalance.AvailableBalance)})
-		}
-		return true
-	})
-	return
-}
-
-func (a *AccountLimits) GetAsset(asset string) (float64, error) {
-	item := a.accountAssets.Get(&AccountAsset{Asset: asset})
+func (a *Account) GetAsset(asset string) (float64, error) {
+	item := a.accountAssets.Get(&balances_types.BalanceItemType{Asset: asset})
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
-		symbolBalance, _ := Binance2AccountAsset(item)
-		return utils.ConvStrToFloat64(symbolBalance.AvailableBalance), nil
+		symbolBalance := item.(*balances_types.BalanceItemType).Free
+		return symbolBalance, nil
 	}
 }
 
-func (a *AccountLimits) Update() error {
+func (a *Account) Update() error {
 	for _, asset := range a.account.Assets {
 		if _, exists := a.symbols[asset.Asset]; exists || len(a.symbols) == 0 {
 			val, _ := Binance2AccountAsset(asset)
@@ -66,16 +43,16 @@ func (a *AccountLimits) Update() error {
 }
 
 // GetBalances implements account.AccountLimits.
-func (a *AccountLimits) GetBalances() *btree.BTree {
+func (a *Account) GetBalances() *btree.BTree {
 	return a.accountAssets
 }
 
-func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimits) {
+func NewAccountLimits(client *futures.Client, symbols []string) (al *Account) {
 	account, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	al = &AccountLimits{
+	al = &Account{
 		client:           client,
 		account:          account,
 		accountAssets:    btree.New(2),
@@ -101,8 +78,8 @@ func NewAccountLimits(client *futures.Client, symbols []string) (al *AccountLimi
 	return
 }
 
-func Binance2AccountAsset(binanceAccountAsset interface{}) (*AccountAsset, error) {
-	var accountAsset AccountAsset
+func Binance2AccountAsset(binanceAccountAsset interface{}) (*balances_types.BalanceItemType, error) {
+	var accountAsset balances_types.BalanceItemType
 	err := copier.Copy(&accountAsset, binanceAccountAsset)
 	if err != nil {
 		return nil, err

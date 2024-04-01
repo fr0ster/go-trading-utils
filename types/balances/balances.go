@@ -78,7 +78,11 @@ func (tree *BalanceBTree) Update(spotBalances *btree.BTree) {
 		return
 	}
 	spotBalances.Ascend(func(i btree.Item) bool {
-		tree.ReplaceOrInsert(i)
+		tree.ReplaceOrInsert(
+			&BalanceItemType{
+				i.(*BalanceItemType).Asset,
+				i.(*BalanceItemType).Free,
+				i.(*BalanceItemType).Locked})
 		return true
 	})
 }
