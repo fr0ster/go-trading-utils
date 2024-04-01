@@ -6,7 +6,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	"github.com/fr0ster/go-trading-utils/binance/futures/markets/balances"
+	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -51,8 +51,8 @@ func TestBalanceTreeUpdateHandler(t *testing.T) {
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	bt := balances.New(3, nil)
-	bt.SetItem(balances.BalanceItemType{
+	bt := balances_types.New(3)
+	bt.SetItem(balances_types.BalanceItemType{
 		Asset:  "BTC",
 		Free:   0.0,
 		Locked: 0.0,
