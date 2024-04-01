@@ -49,3 +49,15 @@ func (cr *Pairs) GetQuantity() float64 {
 func (cr *Pairs) GetValue() float64 {
 	return cr.Value
 }
+
+func (cr *Pairs) SetLimit(limit float64) {
+	cr.Limit = limit
+}
+
+func (cr *Pairs) SetQuantity(quantity float64) {
+	cr.Quantity = quantity
+}
+
+func (cr *Pairs) SetValue(value float64) {
+	cr.Value = value
+}

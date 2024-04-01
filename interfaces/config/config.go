@@ -8,6 +8,9 @@ type (
 		GetLimit() float64
 		GetQuantity() float64
 		GetValue() float64
+		SetLimit(limit float64)
+		SetQuantity(quantity float64)
+		SetValue(value float64)
 	}
 	Configuration interface {
 		GetAPIKey() string

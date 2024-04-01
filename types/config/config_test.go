@@ -160,3 +160,18 @@ func TestConfigFile_Save(t *testing.T) {
 }
 
 // Add more tests for other methods if needed
+
+func TestPairSetter(t *testing.T) {
+	pair := &config_types.Pairs{
+		Pair:     Pair_1,
+		Quantity: Quantity_1,
+		Value:    Value_1,
+	}
+	pair.SetLimit(Limit_2)
+	pair.SetQuantity(Quantity_2)
+	pair.SetValue(Value_2)
+
+	assert.Equal(t, Limit_2, pair.GetLimit())
+	assert.Equal(t, Quantity_2, pair.GetQuantity())
+	assert.Equal(t, Value_2, pair.GetValue())
+}
