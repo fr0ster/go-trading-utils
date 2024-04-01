@@ -16,6 +16,8 @@ type (
 		GetBid(price float64) btree.Item
 		SetAsk(price float64, quantity float64)
 		SetBid(price float64, quantity float64)
+		RestrictAsk(price float64, quantity float64)
+		RestrictBid(price float64, quantity float64)
 		UpdateAsk(price float64, quantity float64)
 		UpdateBid(price float64, quantity float64)
 	}
