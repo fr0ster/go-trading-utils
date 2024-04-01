@@ -18,10 +18,12 @@ func SpotDepthInit(d *depth_types.Depth, client *binance.Client, limit int) (err
 	if err != nil {
 		return err
 	}
+	d.ClearBids()
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
 		d.SetBid(price, quantity)
 	}
+	d.ClearAsks()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
 		d.SetAsk(price, quantity)

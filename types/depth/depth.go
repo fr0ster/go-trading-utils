@@ -68,6 +68,26 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 }
 
+// DeleteAsk implements depth_interface.Depths.
+func (d *Depth) DeleteAsk(price float64) {
+	d.asks.Delete(&DepthItemType{Price: price})
+}
+
+// DeleteBid implements depth_interface.Depths.
+func (d *Depth) DeleteBid(price float64) {
+	d.bids.Delete(&DepthItemType{Price: price})
+}
+
+// ClearAsks implements depth_interface.Depths.
+func (d *Depth) ClearAsks() {
+	d.asks.Clear(false)
+}
+
+// ClearBids implements depth_interface.Depths.
+func (d *Depth) ClearBids() {
+	d.bids.Clear(false)
+}
+
 // AskAscend implements depth_interface.Depths.
 func (d *Depth) AskAscend(iter func(btree.Item) bool) {
 	d.asks.Ascend(iter)
