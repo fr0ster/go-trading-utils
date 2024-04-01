@@ -9,6 +9,7 @@ import (
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/google/btree"
+	"github.com/stretchr/testify/assert"
 )
 
 func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
@@ -121,9 +122,9 @@ func TestUpdateAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
-	if ask != nil && ask.(*depth_types.DepthItemType).Quantity != 517.9 {
-		t.Errorf("Failed to update ask")
-	}
+	assert.Equal(t, 300.0, ask.(*depth_types.DepthItemType).Quantity)
+	ds.UpdateAsk(1.000, 100.0)
+	assert.NotNil(t, ds.GetAsk(1.000))
 }
 
 func TestUpdateBid(t *testing.T) {
@@ -132,21 +133,23 @@ func TestUpdateBid(t *testing.T) {
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
-	if bid != nil && bid.(*depth_types.DepthItemType).Quantity != 455.4 {
-		t.Errorf("Failed to update bid")
-	}
+	assert.Equal(t, 300.0, bid.(*depth_types.DepthItemType).Quantity)
+	ds.UpdateBid(1.000, 100.0)
+	assert.NotNil(t, ds.GetBid(1.000))
 }
 
 func TestDepthInterface(t *testing.T) {
 	test := func(ds depth_interface.Depth) {
 		ds.UpdateBid(1.93, 300.0)
 		bid := ds.GetBid(1.93)
-		if bid != nil && bid.(*depth_types.DepthItemType).Quantity != 455.4 {
-			t.Errorf("Failed to update bid")
-		}
+		assert.Equal(t, 300.0, bid.(*depth_types.DepthItemType).Quantity)
+		ds.UpdateAsk(1.951, 300.0)
+		ask := ds.GetAsk(1.951)
+		assert.Equal(t, 300.0, ask.(*depth_types.DepthItemType).Quantity)
 	}
-	_, bids := getTestDepths()
+	asks, bids := getTestDepths()
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
+	ds.SetAsks(asks)
 	test(ds)
 }

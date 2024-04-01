@@ -21,30 +21,14 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					if err != nil {
 						continue
 					}
-					// depths.Lock()
-					if quantity == 0 {
-						depths.DeleteBid(price)
-						continue
-					}
-					depths.SetBid(price, quantity)
-					// depths.RestrictAsk(price)
-					// depths.RestrictBid(price)
-					// depths.Unlock()
+					depths.UpdateBid(price, quantity)
 				}
 				for _, ask := range event.Asks {
 					price, quantity, err := ask.Parse()
 					if err != nil {
 						continue
 					}
-					// depths.Lock()
-					if quantity == 0 {
-						depths.DeleteAsk(price)
-						continue
-					}
-					depths.SetAsk(price, quantity)
-					// depths.RestrictAsk(price)
-					// depths.RestrictBid(price)
-					// depths.Unlock()
+					depths.UpdateAsk(price, quantity)
 				}
 			}
 			depths.Unlock() // Unlocking the depths

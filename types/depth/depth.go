@@ -159,22 +159,20 @@ func (d *Depth) RestrictBid(price float64) {
 
 // UpdateAsk implements depth_interface.Depths.
 func (d *Depth) UpdateAsk(price float64, quantity float64) {
-	old := d.asks.Get(&DepthItemType{Price: price})
-	if old != nil {
-		d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity + old.(*DepthItemType).Quantity})
-	} else {
-		d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	if quantity == 0 {
+		d.asks.Delete(&DepthItemType{Price: price})
+		return
 	}
+	d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 }
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) {
-	old := d.bids.Get(&DepthItemType{Price: price})
-	if old != nil {
-		d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity + old.(*DepthItemType).Quantity})
-	} else {
-		d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	if quantity == 0 {
+		d.bids.Delete(&DepthItemType{Price: price})
+		return
 	}
+	d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
 }
 
 // Lock implements depth_interface.Depths.
