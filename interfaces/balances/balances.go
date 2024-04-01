@@ -8,7 +8,7 @@ type (
 	Balances interface {
 		Lock()
 		Unlock()
-		GetItem(asset balances_types.AssetType) (*balances_types.BalanceItemType, error)
+		GetItem(asset string) (*balances_types.BalanceItemType, error)
 		SetItem(item *balances_types.BalanceItemType) error
 		Show()
 		ShowByAsset(asset string)
