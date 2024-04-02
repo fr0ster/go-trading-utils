@@ -23,14 +23,14 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *futures.WsDept
 					if err != nil {
 						continue
 					}
-					res = res || depths.UpdateBid(price, quantity)
+					res = depths.UpdateBid(price, quantity) || res
 				}
 				for _, ask := range event.Asks {
 					price, quantity, err := ask.Parse()
 					if err != nil {
 						continue
 					}
-					res = res || depths.UpdateAsk(price, quantity)
+					res = depths.UpdateAsk(price, quantity) || res
 				}
 				depths.LastUpdateID = event.LastUpdateID
 			}
