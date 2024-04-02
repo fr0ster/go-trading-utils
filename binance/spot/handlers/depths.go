@@ -8,6 +8,7 @@ import (
 func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDepthEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
+		var res bool = false
 		for {
 			event := <-source
 			// Checking if the event is not outdated
@@ -21,18 +22,18 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					if err != nil {
 						continue
 					}
-					depths.UpdateBid(price, quantity)
+					res = res || depths.UpdateBid(price, quantity)
 				}
 				for _, ask := range event.Asks {
 					price, quantity, err := ask.Parse()
 					if err != nil {
 						continue
 					}
-					depths.UpdateAsk(price, quantity)
+					res = res || depths.UpdateAsk(price, quantity)
 				}
 			}
 			depths.Unlock() // Unlocking the depths
-			out <- true
+			out <- res
 		}
 	}()
 	return

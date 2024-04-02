@@ -22,7 +22,7 @@ type (
 		DeleteBid(price float64)
 		RestrictAsk(price float64)
 		RestrictBid(price float64)
-		UpdateAsk(price float64, quantity float64)
-		UpdateBid(price float64, quantity float64)
+		UpdateAsk(price float64, quantity float64) bool
+		UpdateBid(price float64, quantity float64) bool
 	}
 )
