@@ -107,9 +107,5 @@ func (cr *Pairs) GetMiddlePrice() float64 {
 }
 
 func (cr *Pairs) GetProfit(currentPrice float64) float64 {
-	if cr.BuyQuantity == 0 && cr.SellQuantity == 0 {
-		return 0
-	}
-
-	return (currentPrice - cr.GetMiddlePrice()) * (cr.BuyQuantity - cr.SellQuantity)
+	return currentPrice*(cr.BuyQuantity-cr.SellQuantity) - (cr.BuyValue - cr.SellValue)
 }
