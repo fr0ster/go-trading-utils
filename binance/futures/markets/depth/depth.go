@@ -26,5 +26,6 @@ func FuturesDepthInit(d *depth_types.Depth, client *futures.Client, limit int) (
 		price, quantity, _ := ask.Parse()
 		d.SetAsk(price, quantity)
 	}
+	d.LastUpdateID = res.LastUpdateID
 	return nil
 }
