@@ -173,7 +173,7 @@ func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) bool {
-	old := d.asks.Get(&DepthItemType{Price: price})
+	old := d.bids.Get(&DepthItemType{Price: price})
 	if old != nil && old.(*DepthItemType).Quantity == quantity {
 		return false
 	}
