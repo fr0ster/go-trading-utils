@@ -18,6 +18,7 @@ type (
 		SetSellQuantity(quantity float64)
 		SetBuyValue(value float64)
 		SetSellValue(value float64)
+		GetMiddlePrice() float64
 	}
 	Configuration interface {
 		GetAPIKey() string

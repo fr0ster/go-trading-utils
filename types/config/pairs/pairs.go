@@ -97,3 +97,11 @@ func (cr *Pairs) SetBuyValue(value float64) {
 func (cr *Pairs) SetSellValue(value float64) {
 	cr.SellValue = value
 }
+
+func (cr *Pairs) GetMiddlePrice() float64 {
+	if cr.BuyQuantity == 0 && cr.SellQuantity == 0 {
+		return 0
+	}
+
+	return (cr.BuyValue - cr.SellValue) / (cr.BuyQuantity - cr.SellQuantity)
+}
