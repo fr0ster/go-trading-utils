@@ -35,7 +35,9 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 				depths.LastUpdateID = event.LastUpdateID
 			}
 			depths.Unlock() // Unlocking the depths
-			out <- res
+			if res {
+				out <- res
+			}
 		}
 	}()
 	return
