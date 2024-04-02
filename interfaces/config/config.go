@@ -20,7 +20,7 @@ type (
 		GetSecretKey() string
 		GetUseTestNet() bool
 		GetPair(pair string) Pairs
-		GetPairs() (*[]Pairs, error)
+		GetPairs(account_type ...pairs_types.AccountType) (*[]Pairs, error)
 		SetPairs([]Pairs) error
 	}
 	ConfigurationFile interface {

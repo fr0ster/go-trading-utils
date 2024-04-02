@@ -36,11 +36,21 @@ func (cf *Configs) GetPair(pair string) config_interfaces.Pairs {
 	return res.(*pairs_types.Pairs)
 }
 
-func (cf *Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
+func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]config_interfaces.Pairs, error) {
 	// Implement the GetPairs method
+	isExist := func(a pairs_types.AccountType) bool {
+		for _, at := range account_type {
+			if at == a {
+				return true
+			}
+		}
+		return false
+	}
 	pairs := make([]config_interfaces.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
-		pairs = append(pairs, a.(*pairs_types.Pairs))
+		if len(account_type) == 0 || isExist(a.(*pairs_types.Pairs).AccountType) {
+			pairs = append(pairs, a.(*pairs_types.Pairs))
+		}
 		return true
 	})
 	if len(pairs) == 0 {

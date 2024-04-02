@@ -270,3 +270,51 @@ func TestConfigSetter(t *testing.T) {
 	assert.Equal(t, (*checkingDate)[1].GetQuantity(), config.GetPair(Pair_2).GetQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetValue(), config.GetPair(Pair_2).GetValue())
 }
+
+func TestConfigGetPairs(t *testing.T) {
+	config := &config_types.Configs{
+		APIKey:     APIKey,
+		APISecret:  APISecret,
+		UseTestNet: UseTestNet,
+		Pairs:      btree.New(2),
+	}
+	pairs := []config_interfaces.Pairs{
+		&pairs_types.Pairs{
+			AccountType:  AccountType_1,
+			Pair:         Pair_1,
+			TargetSymbol: TargetSymbol_1,
+			BaseSymbol:   BaseSymbol_1,
+			Quantity:     Quantity_1,
+			Value:        Value_1,
+		},
+		&pairs_types.Pairs{
+			AccountType:  AccountType_2,
+			Pair:         Pair_2,
+			TargetSymbol: TargetSymbol_2,
+			BaseSymbol:   BaseSymbol_2,
+			Quantity:     Quantity_2,
+			Value:        Value_2,
+		},
+	}
+	config.SetPairs(pairs)
+
+	checkingDate, err := config.GetPairs()
+	assert.NoError(t, err)
+	assert.Equal(t, APIKey, config.GetAPIKey())
+	assert.Equal(t, APISecret, config.GetSecretKey())
+	assert.Equal(t, UseTestNet, config.GetUseTestNet())
+
+	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
+	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
+	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetQuantity(), config.GetPair(Pair_1).GetQuantity())
+	assert.Equal(t, (*checkingDate)[0].GetValue(), config.GetPair(Pair_1).GetValue())
+
+	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
+	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
+	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetQuantity(), config.GetPair(Pair_2).GetQuantity())
+	assert.Equal(t, (*checkingDate)[1].GetValue(), config.GetPair(Pair_2).GetValue())
+}
