@@ -3,6 +3,7 @@ package config
 import (
 	"io"
 	"os"
+	"sync"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
@@ -13,8 +14,17 @@ type (
 	ConfigFile struct {
 		FilePath string   `json:"file_path"`
 		Configs  *Configs `json:"symbols"`
+		mu       sync.Mutex
 	}
 )
+
+func (cf *ConfigFile) Lock() {
+	cf.mu.Lock()
+}
+
+func (cf *ConfigFile) Unlock() {
+	cf.mu.Unlock()
+}
 
 func (cf *ConfigFile) Load() error {
 	file, err := os.Open(cf.FilePath)

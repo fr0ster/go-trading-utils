@@ -27,6 +27,8 @@ type (
 	ConfigurationFile interface {
 		Save() error
 		Load() error
+		Lock()
+		Unlock()
 		GetConfigurations() Configuration
 	}
 )
