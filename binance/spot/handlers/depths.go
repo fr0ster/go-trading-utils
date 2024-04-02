@@ -16,7 +16,8 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 				continue
 			}
 			depths.Lock() // Locking the depths
-			if int64(depths.LastUpdateID)+1 > event.FirstUpdateID && int64(depths.LastUpdateID)+1 < event.LastUpdateID {
+			if (int64(depths.LastUpdateID)+1 > event.FirstUpdateID && int64(depths.LastUpdateID)+1 < event.LastUpdateID) ||
+				int64(depths.LastUpdateID)+1 < event.LastUpdateID {
 				for _, bid := range event.Bids {
 					price, quantity, err := bid.Parse()
 					if err != nil {
@@ -31,6 +32,7 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					}
 					res = res || depths.UpdateAsk(price, quantity)
 				}
+				depths.LastUpdateID = event.LastUpdateID
 			}
 			depths.Unlock() // Unlocking the depths
 			out <- res

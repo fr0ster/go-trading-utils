@@ -13,6 +13,10 @@ import (
 	"github.com/google/btree"
 )
 
+const (
+	LastUpdateID = int64(2369068)
+)
+
 func TestChangingOfOrdersHandler(t *testing.T) {
 	even := &binance.WsUserDataEvent{
 		Event: binance.UserDataEventTypeExecutionReport,
@@ -140,6 +144,7 @@ func getTestDepths() *depth_types.Depth {
 		asks.ReplaceOrInsert(&ask)
 	}
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")
+	ds.LastUpdateID = LastUpdateID
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 
@@ -154,8 +159,8 @@ func TestDepthsUpdaterHandler(t *testing.T) {
 			inChannel <- &binance.WsDepthEvent{
 				Event:         "depthUpdate",
 				Symbol:        "BTCUSDT",
-				FirstUpdateID: 2369068,
-				LastUpdateID:  2369068,
+				FirstUpdateID: LastUpdateID - 1 + 10,
+				LastUpdateID:  LastUpdateID + 1 + 10,
 				Bids:          []binance.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
 				Asks:          []binance.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
 			}
