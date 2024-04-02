@@ -47,17 +47,17 @@ func (cf *ConfigFile) Load() error {
 }
 
 func (cf *ConfigFile) Save() error {
-	if cf.Configs.Pairs == nil {
+	if cf.Configs.Pairs.Len() == 0 {
 		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
 			Pair:         "BTCUSDT",
 			TargetSymbol: "BTC",
 			BaseSymbol:   "USDT",
 			Limit:        0.01,
 			Delta:        0.0,
-			BuyQuantity:  1.0,
-			BuyValue:     100.0,
-			SellQuantity: 1.0,
-			SellValue:    100.0,
+			BuyQuantity:  0.0,
+			BuyValue:     0.0,
+			SellQuantity: 0.0,
+			SellValue:    0.0,
 		})
 	}
 

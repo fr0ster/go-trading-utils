@@ -19,6 +19,7 @@ type (
 		SetBuyValue(value float64)
 		SetSellValue(value float64)
 		GetMiddlePrice() float64
+		GetProfit(currentPrice float64) float64
 	}
 	Configuration interface {
 		GetAPIKey() string
