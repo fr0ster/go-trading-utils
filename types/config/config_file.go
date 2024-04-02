@@ -52,9 +52,12 @@ func (cf *ConfigFile) Save() error {
 			Pair:         "BTCUSDT",
 			TargetSymbol: "BTC",
 			BaseSymbol:   "USDT",
-			Limit:        10.0,
-			Quantity:     1.0,
-			Value:        100.0,
+			Limit:        0.01,
+			Delta:        0.0,
+			BuyQuantity:  1.0,
+			BuyValue:     100.0,
+			SellQuantity: 1.0,
+			SellValue:    100.0,
 		})
 	}
 
@@ -83,9 +86,11 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 		TargetSymbol: "BTC",
 		BaseSymbol:   "USDT",
 		Limit:        0.01,
-		Delta:        0.01,
-		Quantity:     0.0,
-		Value:        0.0,
+		Delta:        0.0,
+		BuyQuantity:  0.0,
+		BuyValue:     0.0,
+		SellQuantity: 0.0,
+		SellValue:    0.0,
 	}
 	res = &ConfigFile{
 		FilePath: file_path,

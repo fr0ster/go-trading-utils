@@ -10,11 +10,14 @@ type (
 		GetBaseSymbol() string
 		GetLimit() float64
 		GetDelta() float64
-		GetQuantity() float64
-		GetValue() float64
-		SetLimit(limit float64)
-		SetQuantity(quantity float64)
-		SetValue(value float64)
+		GetBuyQuantity() float64
+		GetSellQuantity() float64
+		GetBuyValue() float64
+		GetSellValue() float64
+		SetBuyQuantity(quantity float64)
+		SetSellQuantity(quantity float64)
+		SetBuyValue(value float64)
+		SetSellValue(value float64)
 	}
 	Configuration interface {
 		GetAPIKey() string

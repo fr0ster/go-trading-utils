@@ -23,8 +23,10 @@ type (
 		BaseSymbol   string      `json:"base_symbol"`
 		Limit        float64     `json:"limit"`
 		Delta        float64     `json:"delta"`
-		Quantity     float64     `json:"quantity"`
-		Value        float64     `json:"value"`
+		BuyQuantity  float64     `json:"buy_quantity"`
+		BuyValue     float64     `json:"buy_value"`
+		SellQuantity float64     `json:"sell_quantity"`
+		SellValue    float64     `json:"sell_value"`
 	}
 )
 
@@ -64,22 +66,34 @@ func (cr *Pairs) GetDelta() float64 {
 	return cr.Delta
 }
 
-func (cr *Pairs) GetQuantity() float64 {
-	return cr.Quantity
+func (cr *Pairs) GetBuyQuantity() float64 {
+	return cr.BuyQuantity
 }
 
-func (cr *Pairs) GetValue() float64 {
-	return cr.Value
+func (cr *Pairs) GetSellQuantity() float64 {
+	return cr.SellQuantity
 }
 
-func (cr *Pairs) SetLimit(limit float64) {
-	cr.Limit = limit
+func (cr *Pairs) GetBuyValue() float64 {
+	return cr.BuyValue
 }
 
-func (cr *Pairs) SetQuantity(quantity float64) {
-	cr.Quantity = quantity
+func (cr *Pairs) GetSellValue() float64 {
+	return cr.SellValue
 }
 
-func (cr *Pairs) SetValue(value float64) {
-	cr.Value = value
+func (cr *Pairs) SetBuyQuantity(quantity float64) {
+	cr.BuyQuantity = quantity
+}
+
+func (cr *Pairs) SetSellQuantity(quantity float64) {
+	cr.SellQuantity = quantity
+}
+
+func (cr *Pairs) SetBuyValue(value float64) {
+	cr.BuyValue = value
+}
+
+func (cr *Pairs) SetSellValue(value float64) {
+	cr.SellValue = value
 }
