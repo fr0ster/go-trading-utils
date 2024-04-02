@@ -73,6 +73,7 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 		TargetSymbol: "BTC",
 		BaseSymbol:   "USDT",
 		Limit:        0.01,
+		Delta:        0.01,
 		Quantity:     0.0,
 		Value:        0.0,
 	}

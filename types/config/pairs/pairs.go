@@ -22,6 +22,7 @@ type (
 		TargetSymbol string      `json:"target_symbol"`
 		BaseSymbol   string      `json:"base_symbol"`
 		Limit        float64     `json:"limit"`
+		Delta        float64     `json:"delta"`
 		Quantity     float64     `json:"quantity"`
 		Value        float64     `json:"value"`
 	}
@@ -57,6 +58,10 @@ func (cr *Pairs) GetTargetSymbol() string {
 
 func (cr *Pairs) GetLimit() float64 {
 	return cr.Limit
+}
+
+func (cr *Pairs) GetDelta() float64 {
+	return cr.Delta
 }
 
 func (cr *Pairs) GetQuantity() float64 {

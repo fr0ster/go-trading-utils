@@ -9,6 +9,7 @@ type (
 		GetTargetSymbol() string
 		GetBaseSymbol() string
 		GetLimit() float64
+		GetDelta() float64
 		GetQuantity() float64
 		GetValue() float64
 		SetLimit(limit float64)
