@@ -4,14 +4,26 @@ import (
 	"github.com/google/btree"
 )
 
+const (
+	// SpotAccountType is a constant for spot account type.
+	// SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE
+	SpotAccountType    AccountType = "SPOT"
+	MarginAccountType  AccountType = "MARGIN"
+	IsolatedMarginType AccountType = "ISOLATED_MARGIN"
+	USDTFutureType     AccountType = "USDT_FUTURE"
+	CoinFutureType     AccountType = "COIN_FUTURE"
+)
+
 type (
-	Pairs struct {
-		Pair         string  `json:"symbol"`
-		TargetSymbol string  `json:"target_symbol"`
-		BaseSymbol   string  `json:"base_symbol"`
-		Limit        float64 `json:"limit"`
-		Quantity     float64 `json:"quantity"`
-		Value        float64 `json:"value"`
+	AccountType string
+	Pairs       struct {
+		AccountType  AccountType `json:"account_type"`
+		Pair         string      `json:"symbol"`
+		TargetSymbol string      `json:"target_symbol"`
+		BaseSymbol   string      `json:"base_symbol"`
+		Limit        float64     `json:"limit"`
+		Quantity     float64     `json:"quantity"`
+		Value        float64     `json:"value"`
 	}
 )
 
@@ -21,6 +33,11 @@ func (cr *Pairs) Less(item btree.Item) bool {
 
 func (cr *Pairs) Equals(item btree.Item) bool {
 	return cr.Pair == item.(*Pairs).Pair
+}
+
+// Get AccountType implements Configuration.
+func (cr *Pairs) GetAccountType() AccountType {
+	return cr.AccountType
 }
 
 // GetSymbol implements Configuration.

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	"github.com/google/btree"
 )
 
@@ -31,15 +32,15 @@ func (cf *Configs) GetUseTestNet() bool {
 
 func (cf *Configs) GetPair(pair string) config_interfaces.Pairs {
 	// Implement the GetPair method
-	res := cf.Pairs.Get(&Pairs{Pair: pair})
-	return res.(*Pairs)
+	res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair})
+	return res.(*pairs_types.Pairs)
 }
 
 func (cf *Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
 	// Implement the GetPairs method
 	pairs := make([]config_interfaces.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
-		pairs = append(pairs, a.(*Pairs))
+		pairs = append(pairs, a.(*pairs_types.Pairs))
 		return true
 	})
 	if len(pairs) == 0 {
@@ -51,22 +52,22 @@ func (cf *Configs) GetPairs() (*[]config_interfaces.Pairs, error) {
 func (cf *Configs) SetPairs(pairs []config_interfaces.Pairs) error {
 	// Implement the SetPairs method
 	for _, pair := range pairs {
-		cf.Pairs.ReplaceOrInsert(pair.(*Pairs))
+		cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
 	}
 	return nil
 }
 
 func (c *Configs) MarshalJSON() ([]byte, error) {
-	pairs := make([]*Pairs, 0)
+	pairs := make([]*pairs_types.Pairs, 0)
 	c.Pairs.Ascend(func(a btree.Item) bool {
-		pairs = append(pairs, a.(*Pairs))
+		pairs = append(pairs, a.(*pairs_types.Pairs))
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		APIKey     string   `json:"api_key"`
-		APISecret  string   `json:"api_secret"`
-		UseTestNet bool     `json:"use_test_net"`
-		Pairs      []*Pairs `json:"pairs"`
+		APIKey     string               `json:"api_key"`
+		APISecret  string               `json:"api_secret"`
+		UseTestNet bool                 `json:"use_test_net"`
+		Pairs      []*pairs_types.Pairs `json:"pairs"`
 	}{
 		APIKey:     c.APIKey,
 		APISecret:  c.APISecret,
@@ -77,10 +78,10 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		APIKey     string   `json:"api_key"`
-		APISecret  string   `json:"api_secret"`
-		UseTestNet bool     `json:"use_test_net"`
-		Pairs      []*Pairs `json:"pairs"`
+		APIKey     string               `json:"api_key"`
+		APISecret  string               `json:"api_secret"`
+		UseTestNet bool                 `json:"use_test_net"`
+		Pairs      []*pairs_types.Pairs `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err

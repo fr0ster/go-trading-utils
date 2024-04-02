@@ -5,6 +5,7 @@ import (
 	"os"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	"github.com/google/btree"
 )
 
@@ -37,7 +38,7 @@ func (cf *ConfigFile) Load() error {
 
 func (cf *ConfigFile) Save() error {
 	if cf.Configs.Pairs == nil {
-		cf.Configs.Pairs.ReplaceOrInsert(&Pairs{
+		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
 			Pair:         "BTCUSDT",
 			TargetSymbol: "BTC",
 			BaseSymbol:   "USDT",
@@ -66,7 +67,8 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
 func ConfigNew(file_path string, degree int) (res *ConfigFile) {
-	pairBtcUsdt := &Pairs{
+	pairBtcUsdt := &pairs_types.Pairs{
+		AccountType:  pairs_types.SpotAccountType,
 		Pair:         "BTCUSDT",
 		TargetSymbol: "BTC",
 		BaseSymbol:   "USDT",

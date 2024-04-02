@@ -1,7 +1,10 @@
 package config
 
+import pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+
 type (
 	Pairs interface {
+		GetAccountType() pairs_types.AccountType
 		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string
