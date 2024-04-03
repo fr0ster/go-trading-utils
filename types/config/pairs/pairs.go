@@ -22,9 +22,10 @@ type (
 		TargetSymbol string      `json:"target_symbol"`
 		BaseSymbol   string      `json:"base_symbol"`
 		Limit        float64     `json:"limit"`
-		Delta        float64     `json:"delta"`
+		BuyDelta     float64     `json:"buy_delta"`
 		BuyQuantity  float64     `json:"buy_quantity"`
 		BuyValue     float64     `json:"buy_value"`
+		SellDelta    float64     `json:"sell_delta"`
 		SellQuantity float64     `json:"sell_quantity"`
 		SellValue    float64     `json:"sell_value"`
 	}
@@ -62,8 +63,12 @@ func (cr *Pairs) GetLimit() float64 {
 	return cr.Limit
 }
 
-func (cr *Pairs) GetDelta() float64 {
-	return cr.Delta
+func (cr *Pairs) GetBuyDelta() float64 {
+	return cr.BuyDelta
+}
+
+func (cr *Pairs) GetSellDelta() float64 {
+	return cr.SellDelta
 }
 
 func (cr *Pairs) GetBuyQuantity() float64 {
