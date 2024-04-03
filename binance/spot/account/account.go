@@ -33,6 +33,30 @@ func (a *Account) GetAsset(asset string) (float64, error) {
 	}
 }
 
+func (a *Account) GetLockedAsset(asset string) (float64, error) {
+	item := a.assetBalances.Get(&balances_types.BalanceItemType{Asset: asset})
+	if item == nil {
+		return 0, errors.New("item not found")
+	} else {
+		symbolBalance, _ := Binance2AssetBalance(item)
+		return symbolBalance.Locked, nil
+	}
+}
+
+func (a *Account) GetTotalAsset(asset string) (float64, error) {
+	item := a.assetBalances.Get(&balances_types.BalanceItemType{Asset: asset})
+	if item == nil {
+		return 0, errors.New("item not found")
+	} else {
+		symbolBalance, _ := Binance2AssetBalance(item)
+		return symbolBalance.Free + symbolBalance.Locked, nil
+	}
+}
+
+func (a *Account) GetPermissions() []string {
+	return a.account.Permissions
+}
+
 func (a *Account) Update() error {
 	for _, balance := range a.account.Balances {
 		if _, exists := a.symbols[balance.Asset]; exists || len(a.symbols) == 0 {

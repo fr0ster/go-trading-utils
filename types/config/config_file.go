@@ -27,6 +27,8 @@ func (cf *ConfigFile) Unlock() {
 }
 
 func (cf *ConfigFile) Load() error {
+	cf.Lock()
+	defer cf.Unlock()
 	file, err := os.Open(cf.FilePath)
 	if err != nil {
 		return err
@@ -47,6 +49,8 @@ func (cf *ConfigFile) Load() error {
 }
 
 func (cf *ConfigFile) Save() error {
+	cf.Lock()
+	defer cf.Unlock()
 	if cf.Configs.Pairs.Len() == 0 {
 		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
 			Pair:         "BTCUSDT",
@@ -80,18 +84,18 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
 func ConfigNew(file_path string, degree int) (res *ConfigFile) {
-	pairBtcUsdt := &pairs_types.Pairs{
-		AccountType:  pairs_types.SpotAccountType,
-		Pair:         "BTCUSDT",
-		TargetSymbol: "BTC",
-		BaseSymbol:   "USDT",
-		Limit:        0.01,
-		BuyDelta:     0.0,
-		BuyQuantity:  0.0,
-		BuyValue:     0.0,
-		SellQuantity: 0.0,
-		SellValue:    0.0,
-	}
+	// pairBtcUsdt := &pairs_types.Pairs{
+	// 	AccountType:  pairs_types.SpotAccountType,
+	// 	Pair:         "BTCUSDT",
+	// 	TargetSymbol: "BTC",
+	// 	BaseSymbol:   "USDT",
+	// 	Limit:        0.01,
+	// 	BuyDelta:     0.0,
+	// 	BuyQuantity:  0.0,
+	// 	BuyValue:     0.0,
+	// 	SellQuantity: 0.0,
+	// 	SellValue:    0.0,
+	// }
 	res = &ConfigFile{
 		FilePath: file_path,
 		Configs: &Configs{
@@ -101,6 +105,6 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 			Pairs:      btree.New(degree),
 		},
 	}
-	res.Configs.Pairs.ReplaceOrInsert(pairBtcUsdt)
+	// res.Configs.Pairs.ReplaceOrInsert(pairBtcUsdt)
 	return
 }
