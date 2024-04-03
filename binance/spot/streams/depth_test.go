@@ -7,14 +7,14 @@ import (
 )
 
 func TestNewDepthStream(t *testing.T) {
-	stream := streams.NewDepthStream("BTCUSDT")
+	stream := streams.NewDepthStream("BTCUSDT", true)
 	if stream == nil {
 		t.Error("Expected not nil")
 	}
 }
 
 func TestDepthStream_Start(t *testing.T) {
-	stream := streams.NewDepthStream("BTCUSDT")
+	stream := streams.NewDepthStream("BTCUSDT", true)
 	doneC, stopC, err := stream.Start()
 	if err != nil {
 		t.Error(err)

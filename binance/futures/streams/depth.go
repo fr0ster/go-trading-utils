@@ -7,12 +7,14 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
-type PartialDepthStream struct {
-	DataChannel  chan *futures.WsDepthEvent
-	EventChannel chan bool
-	levels       int
-	symbol       string
-}
+type (
+	PartialDepthStream struct {
+		DataChannel  chan *futures.WsDepthEvent
+		EventChannel chan bool
+		levels       int
+		symbol       string
+	}
+)
 
 func NewPartialDepthStream(symbol string, levels int) *PartialDepthStream {
 	return &PartialDepthStream{
@@ -38,6 +40,14 @@ func (u *PartialDepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	}
 	return futures.WsPartialDepthServe(u.symbol, u.levels, wsHandler, utils.HandleErr)
 }
+
+type Rate time.Duration
+
+const (
+	Rate100Ms Rate = Rate(100 * time.Millisecond)
+	Rate250Ms Rate = Rate(250 * time.Millisecond)
+	Rate500Ms Rate = Rate(500 * time.Millisecond)
+)
 
 type PartialDepthServeWithRate struct {
 	DataChannel  chan *futures.WsDepthEvent

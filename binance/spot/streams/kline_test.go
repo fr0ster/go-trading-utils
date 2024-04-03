@@ -7,14 +7,14 @@ import (
 )
 
 func TestNewKlineStream(t *testing.T) {
-	stream := streams.NewDepthStream("BTCUSDT")
+	stream := streams.NewDepthStream("BTCUSDT", false)
 	if stream == nil {
 		t.Error("Expected not nil")
 	}
 }
 
 func TestKlineStream_Start(t *testing.T) {
-	stream := streams.NewDepthStream("BTCUSDT")
+	stream := streams.NewDepthStream("BTCUSDT", false)
 	doneC, stopC, err := stream.Start()
 	if err != nil {
 		t.Error(err)

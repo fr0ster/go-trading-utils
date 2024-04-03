@@ -9,13 +9,15 @@ type DepthStream struct {
 	DataChannel  chan *binance.WsDepthEvent
 	EventChannel chan bool
 	symbol       string
+	use100Ms     bool
 }
 
-func NewDepthStream(symbol string) *DepthStream {
+func NewDepthStream(symbol string, use100Ms bool) *DepthStream {
 	return &DepthStream{
 		DataChannel:  make(chan *binance.WsDepthEvent),
 		EventChannel: make(chan bool),
 		symbol:       symbol,
+		use100Ms:     use100Ms,
 	}
 }
 
@@ -32,5 +34,9 @@ func (u *DepthStream) Start() (doneC, stopC chan struct{}, err error) {
 			u.EventChannel <- true
 		}()
 	}
-	return binance.WsDepthServe(u.symbol, wsHandler, utils.HandleErr)
+	if u.use100Ms {
+		return binance.WsDepthServe100Ms(u.symbol, wsHandler, utils.HandleErr)
+	} else {
+		return binance.WsDepthServe(u.symbol, wsHandler, utils.HandleErr)
+	}
 }
