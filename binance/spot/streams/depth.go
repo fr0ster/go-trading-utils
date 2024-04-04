@@ -12,10 +12,10 @@ type DepthStream struct {
 	use100Ms     bool
 }
 
-func NewDepthStream(symbol string, use100Ms bool) *DepthStream {
+func NewDepthStream(symbol string, use100Ms bool, size int) *DepthStream {
 	return &DepthStream{
-		DataChannel:  make(chan *binance.WsDepthEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsDepthEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 		use100Ms:     use100Ms,
 	}

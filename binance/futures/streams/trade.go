@@ -11,10 +11,10 @@ type AggTradeStream struct {
 	symbol       string
 }
 
-func NewTradeStream(symbol string) *AggTradeStream {
+func NewTradeStream(symbol string, size int) *AggTradeStream {
 	return &AggTradeStream{
-		DataChannel:  make(chan *futures.WsAggTradeEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsAggTradeEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }
@@ -41,10 +41,10 @@ type CombinedAggTradeServe struct {
 	symbols      []string
 }
 
-func NewCombinedAggTradeServe(symbols []string) *CombinedAggTradeServe {
+func NewCombinedAggTradeServe(symbols []string, size int) *CombinedAggTradeServe {
 	return &CombinedAggTradeServe{
-		DataChannel:  make(chan *futures.WsAggTradeEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsAggTradeEvent, size),
+		EventChannel: make(chan bool, size),
 		symbols:      symbols,
 	}
 }

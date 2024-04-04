@@ -12,10 +12,10 @@ type KlineStream struct {
 	symbol       string
 }
 
-func NewKlineStream(symbol, interval string) *KlineStream {
+func NewKlineStream(symbol, interval string, size int) *KlineStream {
 	return &KlineStream{
-		DataChannel:  make(chan *binance.WsKlineEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsKlineEvent, size),
+		EventChannel: make(chan bool, size),
 		interval:     interval,
 		symbol:       symbol,
 	}

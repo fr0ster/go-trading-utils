@@ -11,10 +11,10 @@ type BookTickerStream struct {
 	symbol       string
 }
 
-func NewBookTickerStream(symbol string) *BookTickerStream {
+func NewBookTickerStream(symbol string, size int) *BookTickerStream {
 	return &BookTickerStream{
-		DataChannel:  make(chan *futures.WsBookTickerEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsBookTickerEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }

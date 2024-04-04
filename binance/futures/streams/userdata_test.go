@@ -14,7 +14,7 @@ func TestNewUserDataStream(t *testing.T) {
 	secret_key := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
 	listenKey, err := listenkey.New(api_key, secret_key, true).GetListenKey()
 	assert.Nil(t, err)
-	stream := streams.NewUserDataStream(listenKey)
+	stream := streams.NewUserDataStream(listenKey, 1)
 
 	if stream == nil {
 		t.Error("Expected non-nil UserDataStream, got nil")
@@ -26,7 +26,7 @@ func TestUserDataStream_Start(t *testing.T) {
 	secret_key := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
 	listenKey, err := listenkey.New(api_key, secret_key, true).GetListenKey()
 	assert.Nil(t, err)
-	stream := streams.NewUserDataStream(listenKey)
+	stream := streams.NewUserDataStream(listenKey, 1)
 	doneC, stopC, err := stream.Start()
 
 	if err != nil {

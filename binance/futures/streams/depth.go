@@ -16,10 +16,10 @@ type (
 	}
 )
 
-func NewPartialDepthStream(symbol string, levels int) *PartialDepthStream {
+func NewPartialDepthStream(symbol string, levels int, size int) *PartialDepthStream {
 	return &PartialDepthStream{
-		DataChannel:  make(chan *futures.WsDepthEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsDepthEvent, size),
+		EventChannel: make(chan bool, size),
 		levels:       levels,
 		symbol:       symbol,
 	}
@@ -57,13 +57,13 @@ type PartialDepthServeWithRate struct {
 	symbol       string
 }
 
-func NewPartialDepthStreamWithRate(symbol string, levels int, rate time.Duration) *PartialDepthServeWithRate {
+func NewPartialDepthStreamWithRate(symbol string, levels int, rate Rate, size int) *PartialDepthServeWithRate {
 	return &PartialDepthServeWithRate{
-		DataChannel:  make(chan *futures.WsDepthEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsDepthEvent, size),
+		EventChannel: make(chan bool, size),
 		levels:       levels,
 		symbol:       symbol,
-		rate:         rate,
+		rate:         time.Duration(rate),
 	}
 }
 
@@ -92,10 +92,10 @@ type DiffDepthStream struct {
 	symbol       string
 }
 
-func NewDiffDepthStream(symbol string) *DiffDepthStream {
+func NewDiffDepthStream(symbol string, size int) *DiffDepthStream {
 	return &DiffDepthStream{
-		DataChannel:  make(chan *futures.WsDepthEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsDepthEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }
@@ -122,10 +122,10 @@ type CombinedDepthStream struct {
 	symbolLevels map[string]string
 }
 
-func NewCombinedDepthStream(symbolLevels map[string]string) *CombinedDepthStream {
+func NewCombinedDepthStream(symbolLevels map[string]string, size int) *CombinedDepthStream {
 	return &CombinedDepthStream{
-		DataChannel:  make(chan *futures.WsDepthEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsDepthEvent, size),
+		EventChannel: make(chan bool, size),
 		symbolLevels: symbolLevels,
 	}
 }

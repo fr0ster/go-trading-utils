@@ -11,10 +11,10 @@ type UserDataStream struct {
 	listenKey    string
 }
 
-func NewUserDataStream(listenKey string) *UserDataStream {
+func NewUserDataStream(listenKey string, size int) *UserDataStream {
 	return &UserDataStream{
-		DataChannel:  make(chan *futures.WsUserDataEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *futures.WsUserDataEvent, size),
+		EventChannel: make(chan bool, size),
 		listenKey:    listenKey,
 	}
 }
