@@ -11,10 +11,10 @@ type CombinedMarketStatStream struct {
 	symbols      []string
 }
 
-func NewCombinedMarketStatStream(symbols []string) *CombinedMarketStatStream {
+func NewCombinedMarketStatStream(symbols []string, size int) *CombinedMarketStatStream {
 	return &CombinedMarketStatStream{
-		DataChannel:  make(chan *binance.WsMarketStatEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsMarketStatEvent, size),
+		EventChannel: make(chan bool, size),
 		symbols:      symbols,
 	}
 }
@@ -41,10 +41,10 @@ type AllMiniMarketsStaStream struct {
 	symbols      []string
 }
 
-func NewAllMiniMarketsStaStream(symbols []string) *AllMiniMarketsStaStream {
+func NewAllMiniMarketsStaStream(symbols []string, size int) *AllMiniMarketsStaStream {
 	return &AllMiniMarketsStaStream{
-		DataChannel:  make(chan binance.WsAllMiniMarketsStatEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan binance.WsAllMiniMarketsStatEvent, size),
+		EventChannel: make(chan bool, size),
 		symbols:      symbols,
 	}
 }

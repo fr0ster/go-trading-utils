@@ -11,10 +11,10 @@ type TradeStream struct {
 	symbol       string
 }
 
-func NewTradeStream(symbol string) *TradeStream {
+func NewTradeStream(symbol string, size int) *TradeStream {
 	return &TradeStream{
-		DataChannel:  make(chan *binance.WsTradeEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsTradeEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }
@@ -41,10 +41,10 @@ type AggTradeStream struct {
 	symbol       string
 }
 
-func NewAggTradeStream(symbol string) *AggTradeStream {
+func NewAggTradeStream(symbol string, size int) *AggTradeStream {
 	return &AggTradeStream{
-		DataChannel:  make(chan *binance.WsAggTradeEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsAggTradeEvent, size),
+		EventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }
@@ -66,10 +66,10 @@ type CombinedTradeStream struct {
 	symbols      []string
 }
 
-func NewCombinedTradeStream(symbols []string) *CombinedTradeStream {
+func NewCombinedTradeStream(symbols []string, size int) *CombinedTradeStream {
 	return &CombinedTradeStream{
-		DataChannel:  make(chan *binance.WsCombinedTradeEvent),
-		EventChannel: make(chan bool),
+		DataChannel:  make(chan *binance.WsCombinedTradeEvent, size),
+		EventChannel: make(chan bool, size),
 		symbols:      symbols,
 	}
 }
