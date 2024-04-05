@@ -17,17 +17,18 @@ const (
 type (
 	AccountType string
 	Pairs       struct {
-		AccountType  AccountType `json:"account_type"`
-		Pair         string      `json:"symbol"`
-		TargetSymbol string      `json:"target_symbol"`
-		BaseSymbol   string      `json:"base_symbol"`
-		Limit        float64     `json:"limit"`
-		BuyDelta     float64     `json:"buy_delta"`
-		BuyQuantity  float64     `json:"buy_quantity"`
-		BuyValue     float64     `json:"buy_value"`
-		SellDelta    float64     `json:"sell_delta"`
-		SellQuantity float64     `json:"sell_quantity"`
-		SellValue    float64     `json:"sell_value"`
+		AccountType        AccountType `json:"account_type"`
+		Pair               string      `json:"symbol"`
+		TargetSymbol       string      `json:"target_symbol"`
+		BaseSymbol         string      `json:"base_symbol"`
+		Limit              float64     `json:"limit"`
+		LimitOnTransaction float64     `json:"limit_on_transaction"`
+		BuyDelta           float64     `json:"buy_delta"`
+		BuyQuantity        float64     `json:"buy_quantity"`
+		BuyValue           float64     `json:"buy_value"`
+		SellDelta          float64     `json:"sell_delta"`
+		SellQuantity       float64     `json:"sell_quantity"`
+		SellValue          float64     `json:"sell_value"`
 	}
 )
 
@@ -61,6 +62,10 @@ func (cr *Pairs) GetTargetSymbol() string {
 
 func (cr *Pairs) GetLimit() float64 {
 	return cr.Limit
+}
+
+func (cr *Pairs) GetLimitOnTransaction() float64 {
+	return cr.LimitOnTransaction
 }
 
 func (cr *Pairs) GetBuyDelta() float64 {

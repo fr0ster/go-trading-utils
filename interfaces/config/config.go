@@ -9,6 +9,7 @@ type (
 		GetTargetSymbol() string
 		GetBaseSymbol() string
 		GetLimit() float64
+		GetLimitOnTransaction() float64
 		GetBuyDelta() float64
 		GetSellDelta() float64
 		GetBuyQuantity() float64
