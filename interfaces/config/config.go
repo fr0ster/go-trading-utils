@@ -8,7 +8,8 @@ type (
 		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string
-		GetLimit() float64
+		GetLimitValue() float64
+		GetInPositionLimit() float64
 		GetLimitOnTransaction() float64
 		GetBuyDelta() float64
 		GetSellDelta() float64

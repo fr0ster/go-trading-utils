@@ -56,7 +56,7 @@ func (cf *ConfigFile) Save() error {
 			Pair:         "BTCUSDT",
 			TargetSymbol: "BTC",
 			BaseSymbol:   "USDT",
-			Limit:        0.01,
+			LimitValue:   0.01,
 			BuyDelta:     0.0,
 			BuyQuantity:  0.0,
 			BuyValue:     0.0,

@@ -21,7 +21,8 @@ const (
 	Pair_1               = "BTCUSDT"
 	TargetSymbol_1       = "BTC"
 	BaseSymbol_1         = "USDT"
-	Limit_1              = 2000.0
+	LimitValue_1         = 2000.0
+	InPositionLimit_1    = 0.01
 	LimitOnTransaction_1 = 0.01
 	BuyDelta_1           = 0.01
 	SellDelta_1          = 0.01
@@ -33,7 +34,8 @@ const (
 	Pair_2               = "ETHUSDT"
 	TargetSymbol_2       = "ETH"
 	BaseSymbol_2         = "USDT"
-	Limit_2              = 1000.0
+	LimitValue_2         = 1000.0
+	InPositionLimit_2    = 1.0
 	LimitOnTransaction_2 = 0.01
 	BuyDelta_2           = 0.01
 	SellDelta_2          = 0.01
@@ -49,7 +51,8 @@ var (
 		Pair:               Pair_1,
 		TargetSymbol:       TargetSymbol_1,
 		BaseSymbol:         BaseSymbol_1,
-		Limit:              Limit_1,
+		LimitValue:         LimitValue_1,
+		InPositionLimit:    InPositionLimit_1,
 		LimitOnTransaction: LimitOnTransaction_1,
 		BuyDelta:           BuyDelta_1,
 		BuyQuantity:        BuyQuantity_1,
@@ -63,7 +66,8 @@ var (
 		Pair:               Pair_2,
 		TargetSymbol:       TargetSymbol_2,
 		BaseSymbol:         BaseSymbol_2,
-		Limit:              Limit_2,
+		LimitValue:         LimitValue_2,
+		InPositionLimit:    InPositionLimit_2,
 		LimitOnTransaction: LimitOnTransaction_2,
 		BuyDelta:           BuyDelta_2,
 		BuyQuantity:        BuyQuantity_2,
@@ -85,7 +89,8 @@ func getTestData() []byte {
 				"symbol": "` + Pair_1 + `",
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
-				"limit": ` + json.Number(strconv.FormatFloat(Limit_1, 'f', -1, 64)).String() + `,
+				"limit_value": ` + json.Number(strconv.FormatFloat(LimitValue_1, 'f', -1, 64)).String() + `,
+				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
 				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
@@ -99,7 +104,8 @@ func getTestData() []byte {
 				"symbol": "` + Pair_2 + `",
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
-				"limit": ` + json.Number(strconv.FormatFloat(Limit_2, 'f', -1, 64)).String() + `,
+				"limit_value": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
+				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
 				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
@@ -122,7 +128,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
-	assert.Equal(t, (*checkingDate)[0].GetLimit(), config.GetPair(Pair_1).GetLimit())
+	assert.Equal(t, (*checkingDate)[0].GetLimitValue(), config.GetPair(Pair_1).GetLimitValue())
+	assert.Equal(t, (*checkingDate)[0].GetInPositionLimit(), config.GetPair(Pair_1).GetInPositionLimit())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnTransaction(), config.GetPair(Pair_1).GetLimitOnTransaction())
 	assert.Equal(t, (*checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[0].GetBuyQuantity(), config.GetPair(Pair_1).GetBuyQuantity())
@@ -133,7 +140,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
-	assert.Equal(t, (*checkingDate)[1].GetLimit(), config.GetPair(Pair_2).GetLimit())
+	assert.Equal(t, (*checkingDate)[1].GetLimitValue(), config.GetPair(Pair_2).GetLimitValue())
+	assert.Equal(t, (*checkingDate)[1].GetInPositionLimit(), config.GetPair(Pair_2).GetInPositionLimit())
 	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnTransaction(), config.GetPair(Pair_2).GetLimitOnTransaction())
@@ -231,7 +239,8 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())
-	assert.Equal(t, Limit_1, pair.GetLimit())
+	assert.Equal(t, LimitValue_1, pair.GetLimitValue())
+	assert.Equal(t, InPositionLimit_1, pair.GetInPositionLimit())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
 	assert.Equal(t, BuyDelta_1, pair.GetBuyDelta())
 	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
@@ -251,31 +260,7 @@ func TestConfigGetter(t *testing.T) {
 	config.Pairs.ReplaceOrInsert(pair_1)
 	config.Pairs.ReplaceOrInsert(pair_2)
 
-	assert.Equal(t, APIKey, config.GetAPIKey())
-	assert.Equal(t, APISecret, config.GetSecretKey())
-	assert.Equal(t, UseTestNet, config.GetUseTestNet())
-
-	assert.Equal(t, AccountType_1, config.GetPair(Pair_1).GetAccountType())
-	assert.Equal(t, Pair_1, config.GetPair(Pair_1).GetPair())
-	assert.Equal(t, Limit_1, config.GetPair(Pair_1).GetLimit())
-	assert.Equal(t, LimitOnTransaction_1, config.GetPair(Pair_1).GetLimitOnTransaction())
-	assert.Equal(t, BuyDelta_1, config.GetPair(Pair_1).GetBuyDelta())
-	assert.Equal(t, BuyQuantity_1, config.GetPair(Pair_1).GetBuyQuantity())
-	assert.Equal(t, BuyValue_1, config.GetPair(Pair_1).GetBuyValue())
-	assert.Equal(t, SellDelta_1, config.GetPair(Pair_1).GetSellDelta())
-	assert.Equal(t, SellQuantity_1, config.GetPair(Pair_1).GetSellQuantity())
-	assert.Equal(t, SellValue_1, config.GetPair(Pair_1).GetSellValue())
-
-	assert.Equal(t, AccountType_2, config.GetPair(Pair_2).GetAccountType())
-	assert.Equal(t, Pair_2, config.GetPair(Pair_2).GetPair())
-	assert.Equal(t, Limit_2, config.GetPair(Pair_2).GetLimit())
-	assert.Equal(t, LimitOnTransaction_2, config.GetPair(Pair_2).GetLimitOnTransaction())
-	assert.Equal(t, BuyDelta_2, config.GetPair(Pair_2).GetBuyDelta())
-	assert.Equal(t, BuyQuantity_2, config.GetPair(Pair_2).GetBuyQuantity())
-	assert.Equal(t, BuyValue_2, config.GetPair(Pair_2).GetBuyValue())
-	assert.Equal(t, SellDelta_2, config.GetPair(Pair_2).GetSellDelta())
-	assert.Equal(t, SellQuantity_2, config.GetPair(Pair_2).GetSellQuantity())
-	assert.Equal(t, SellValue_2, config.GetPair(Pair_2).GetSellValue())
+	assertTest(t, nil, config, &[]config_interfaces.Pairs{pair_1, pair_2})
 }
 
 func TestConfigSetter(t *testing.T) {

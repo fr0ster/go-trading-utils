@@ -20,8 +20,9 @@ type (
 		AccountType        AccountType `json:"account_type"`
 		Pair               string      `json:"symbol"`
 		TargetSymbol       string      `json:"target_symbol"`
+		InPositionLimit    float64     `json:"in_position_limit"`
 		BaseSymbol         string      `json:"base_symbol"`
-		Limit              float64     `json:"limit"`
+		LimitValue         float64     `json:"limit_value"`
 		LimitOnTransaction float64     `json:"limit_on_transaction"`
 		BuyDelta           float64     `json:"buy_delta"`
 		BuyQuantity        float64     `json:"buy_quantity"`
@@ -60,8 +61,12 @@ func (cr *Pairs) GetTargetSymbol() string {
 	return cr.TargetSymbol
 }
 
-func (cr *Pairs) GetLimit() float64 {
-	return cr.Limit
+func (cr *Pairs) GetLimitValue() float64 {
+	return cr.LimitValue
+}
+
+func (cr *Pairs) GetInPositionLimit() float64 {
+	return cr.InPositionLimit
 }
 
 func (cr *Pairs) GetLimitOnTransaction() float64 {
