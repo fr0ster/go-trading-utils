@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	_ "net/http/pprof"
+	"time"
 
 	"os"
 
@@ -150,6 +151,7 @@ func getData4Analysis(
 	baseBalance float64,
 	targetBalance float64,
 	limitBalance float64,
+	InPositionLimit float64,
 	ask float64,
 	bid float64,
 	boundAsk float64,
@@ -181,6 +183,7 @@ func getData4Analysis(
 		return
 	}
 	limitBalance = (*pair).GetLimitValue()
+	InPositionLimit = (*pair).GetInPositionLimit()
 
 	getAskAndBid := func(depths *depth_types.Depth) (ask float64, bid float64, err error) {
 		getPrice := func(val btree.Item) float64 {
@@ -253,7 +256,7 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				_, _, _, _, _, boundAsk, boundBid, _, sellQuantity, buyQuantity, err := getData4Analysis(account, depths, pair)
+				_, _, _, _, _, _, boundAsk, boundBid, _, sellQuantity, buyQuantity, err := getData4Analysis(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
@@ -279,53 +282,58 @@ func InPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
+	timeFrame time.Duration,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType) {
-	buyEvent = make(chan *depth_types.DepthItemType, 1)
+	triggerEvent chan bool) (inPositionEvent chan *depth_types.DepthItemType) {
+	inPositionEvent = make(chan *depth_types.DepthItemType, 1)
 	go func() {
 		for {
 			select {
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				baseBalance,
-					_, //targetBalance,
-					limitBalance,
-					ask,
-					bid,
-					boundAsk,
-					_,
-					_, //limitValue,
-					_,
-					buyQuantity,
-					err := getData4Analysis(account, depths, pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// If quantity for one BUY transaction is less than available
-				if buyQuantity*boundAsk < baseBalance &&
-					// And middle price is higher than low bound price
-					((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) {
-					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-					buyEvent <- &depth_types.DepthItemType{
-						Price:    boundAsk,
-						Quantity: buyQuantity}
-				} else {
-					targetAsk := (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
-					targetBid := (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
-					if baseBalance < limitBalance {
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for bid increase to %f", targetBid)
-					} else {
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", targetAsk, targetBid)
-					}
-				}
-				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
-				logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
-				logrus.Infof("Middle price: %f, available USDT: %f, Bid: %f", (*pair).GetMiddlePrice(), baseBalance, bid)
+			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+			default:
+				continue
 			}
+			baseBalance,
+				targetBalance,
+				limitBalance,
+				InPositionLimit,
+				ask,
+				bid,
+				boundAsk,
+				_,
+				_, //limitValue,
+				_,
+				buyQuantity,
+				err := getData4Analysis(account, depths, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// If quantity for one BUY transaction is less than available
+			if targetBalance < InPositionLimit &&
+				// And middle price is higher than low bound price
+				((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) {
+				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
+				inPositionEvent <- &depth_types.DepthItemType{
+					Price:    boundAsk,
+					Quantity: buyQuantity}
+			} else {
+				targetAsk := (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
+				targetBid := (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
+				if baseBalance < limitBalance {
+					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+					logrus.Infof("Waiting for bid increase to %f", targetBid)
+				} else {
+					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+					logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", targetAsk, targetBid)
+				}
+			}
+			logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
+			logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
+			logrus.Infof("Middle price: %f, available USDT: %f, Bid: %f", (*pair).GetMiddlePrice(), baseBalance, bid)
 		}
 	}()
 	return
