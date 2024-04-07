@@ -20,9 +20,9 @@ type (
 		AccountType        AccountType `json:"account_type"`
 		Pair               string      `json:"symbol"`
 		TargetSymbol       string      `json:"target_symbol"`
-		InPositionLimit    float64     `json:"in_position_limit"`
 		BaseSymbol         string      `json:"base_symbol"`
 		LimitValue         float64     `json:"limit_value"`
+		InPositionLimit    float64     `json:"in_position_limit"`
 		LimitOnTransaction float64     `json:"limit_on_transaction"`
 		BuyDelta           float64     `json:"buy_delta"`
 		BuyQuantity        float64     `json:"buy_quantity"`
