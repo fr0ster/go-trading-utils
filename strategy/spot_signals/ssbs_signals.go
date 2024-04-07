@@ -261,7 +261,7 @@ func BuyOrSellSignal(
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
 				}
-				if (*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk { // And middle price is higher than low bound price
+				if (*pair).GetMiddlePrice() >= boundAsk { // And middle price is higher than low bound price
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
