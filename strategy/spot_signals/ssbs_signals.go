@@ -23,8 +23,6 @@ func Spot_depth_buy_sell_signals(
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
-	// var boundAsk float64
-	// var boundBid float64
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
 	go func() {
