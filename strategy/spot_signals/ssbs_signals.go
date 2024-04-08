@@ -65,7 +65,7 @@ func Spot_depth_buy_sell_signals(
 					(*pair).GetMiddlePrice(), baseBalance, (*pair).GetTargetSymbol(), targetBalance)
 				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
 				logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
-				time.Sleep(1 * time.Second)
+				time.Sleep(5 * time.Second)
 			}
 		}
 	}()
