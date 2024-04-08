@@ -29,17 +29,17 @@ func Spot_depth_buy_sell_signals(
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 				baseBalance, // Кількість базової валюти
-					_,            //targetBalance,   // Кількість торгової валюти
-					_,            // limitBalance, // Ліміт на купівлю повний у одиницях базової валюти
-					_,            // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-					_,            //LimitInPosition, // Ліміт базової валюти на одну позицію купівлі або продажу
-					ask,          // Ціна купівлі
-					bid,          // Ціна продажу
-					boundAsk,     // Верхня межа ціни купівлі
-					boundBid,     // Нижня межа ціни продажу
-					_,            //transactionValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-					sellQuantity, // Кількість торгової валюти для продажу
-					buyQuantity,  // Кількість торгової валюти для купівлі
+					targetBalance, // Кількість торгової валюти
+					_,             // limitBalance, // Ліміт на купівлю повний у одиницях базової валюти
+					_,             // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+					_,             //LimitInPosition, // Ліміт базової валюти на одну позицію купівлі або продажу
+					ask,           // Ціна купівлі
+					bid,           // Ціна продажу
+					boundAsk,      // Верхня межа ціни купівлі
+					boundBid,      // Нижня межа ціни продажу
+					_,             //transactionValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+					sellQuantity,  // Кількість торгової валюти для продажу
+					buyQuantity,   // Кількість торгової валюти для купівлі
 					err := getData4Analysis(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
@@ -62,7 +62,7 @@ func Spot_depth_buy_sell_signals(
 				logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 				logrus.Infof("Current Ask bound: %f, Bid bound: %f", boundAsk, boundBid)
 				logrus.Infof("Middle price: %f, available USDT: %f, available %s: %f",
-					(*pair).GetMiddlePrice(), baseBalance, (*pair).GetTargetSymbol(), sellQuantity)
+					(*pair).GetMiddlePrice(), baseBalance, (*pair).GetTargetSymbol(), targetBalance)
 				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
 				logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
 				time.Sleep(1 * time.Second)
