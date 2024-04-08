@@ -2,11 +2,13 @@ package spot_signals
 
 import (
 	"context"
+	"errors"
 	_ "net/http/pprof"
 	"time"
 
 	"os"
 
+	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2"
@@ -86,4 +88,33 @@ func GetPrice(client *binance.Client, symbol string) (float64, error) {
 		return 0, err
 	}
 	return utils.ConvStrToFloat64(price[0].Price), nil
+}
+
+func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err error) {
+	getPrice := func(val btree.Item) (float64, error) {
+		if val == nil {
+			err = errors.New("value is nil")
+			return 0, err
+		}
+		return val.(*depth_types.DepthItemType).Price, nil
+	}
+	ask, err = getPrice(depths.GetAsks().Min())
+	if err != nil {
+		logrus.Warnf("Can't get ask: %v", err)
+		return
+	}
+	bid, err = getPrice(depths.GetBids().Max())
+	if err != nil {
+		logrus.Warnf("Can't get bid: %v", err)
+		return
+	}
+	return
+}
+
+func GetBound(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
+	boundAsk = (*pair).GetMiddlePrice() * (1 + (*pair).GetBuyDelta())
+	logrus.Debugf("Ask bound: %f", boundAsk)
+	boundBid = (*pair).GetMiddlePrice() * (1 - (*pair).GetSellDelta())
+	logrus.Debugf("Bid bound: %f", boundBid)
+	return
 }

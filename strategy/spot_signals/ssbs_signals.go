@@ -1,13 +1,11 @@
 package spot_signals
 
 import (
-	"errors"
 	_ "net/http/pprof"
 	"time"
 
 	"os"
 
-	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
@@ -61,7 +59,8 @@ func Spot_depth_buy_sell_signals(
 						Price:    boundBid,
 						Quantity: sellQuantity}
 				} else {
-					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+					if (*pair).GetMiddlePrice() > boundBid && bid < boundBid &&
+						(*pair).GetMiddlePrice() < boundAsk && ask > boundAsk {
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
@@ -128,46 +127,13 @@ func getData4Analysis(
 	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
 	transactionValue = LimitOnTransaction * LimitInPosition * baseBalance
 
-	getAskAndBid := func(depths *depth_types.Depth) (ask float64, bid float64, err error) {
-		getPrice := func(val btree.Item) (float64, error) {
-			if val == nil {
-				err = errors.New("value is nil")
-				return 0, err
-			}
-			return val.(*depth_types.DepthItemType).Price, nil
-		}
-		ask, err = getPrice(depths.GetAsks().Min())
-		if err != nil {
-			logrus.Warnf("Can't get ask: %v", err)
-			return
-		}
-		bid, err = getPrice(depths.GetBids().Max())
-		if err != nil {
-			logrus.Warnf("Can't get bid: %v", err)
-			return
-		}
-		return
-	}
-
-	ask, bid, err = getAskAndBid(depths)
+	ask, bid, err = GetAskAndBid(depths)
 	if err != nil {
 		logrus.Warnf("Can't get ask and bid: %v", err)
 		return
 	}
 
-	getBound := func(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
-		if boundAsk == ask*(1+(*pair).GetBuyDelta()) &&
-			boundBid == bid*(1-(*pair).GetSellDelta()) {
-			err = errors.New("bounds are the same")
-		} else {
-			boundAsk = ask * (1 + (*pair).GetBuyDelta())
-			logrus.Debugf("Ask bound: %f", boundAsk)
-			boundBid = bid * (1 - (*pair).GetSellDelta())
-			logrus.Debugf("Bid bound: %f", boundBid)
-		}
-		return
-	}
-	boundAsk, boundBid, err = getBound(pair)
+	boundAsk, boundBid, err = GetBound(pair)
 	if err != nil {
 		logrus.Warnf("Can't get bounds: %v", err)
 		return
