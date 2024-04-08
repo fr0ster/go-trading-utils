@@ -229,7 +229,7 @@ func InPositionSignal(
 			baseBalance, // Кількість базової валюти
 				targetBalance,          // Кількість торгової валюти
 				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-				_,                      // LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
 				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
 				ask,                    // Ціна купівлі
 				bid,                    // Ціна продажу
@@ -243,17 +243,14 @@ func InPositionSignal(
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію - віходимо з накопичування
-			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition {
+			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition*LimitInPosition {
 				positionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
 					Quantity: buyQuantity}
 				return
-				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію
-			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition &&
-				// Та якшо середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли - купуємо
-				((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) &&
-				buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
+				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
+			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition {
 				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 				collectionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
