@@ -218,7 +218,11 @@ func BuyOrSellSignal(
 						Quantity: sellQuantity}
 					// Чекаємо на зміну ціни
 				} else {
-					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+					if buyQuantity == 0 || sellQuantity == 0 {
+						logrus.Info("Wait for buy signal")
+						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						logrus.Infof("Waiting for ask decrease to %f", boundAsk)
+					} else if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
