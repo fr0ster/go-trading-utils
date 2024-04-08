@@ -2,7 +2,6 @@ package spot_signals
 
 import (
 	"errors"
-	"math"
 	_ "net/http/pprof"
 	"time"
 
@@ -31,45 +30,38 @@ func Spot_depth_buy_sell_signals(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				baseBalance,
-					targetBalance,
-					limitBalance,
-					InPositionLimit,
-					ask,
-					bid,
-					boundAsk,
-					boundBid,
-					_, //limitValue,
-					sellQuantity,
-					buyQuantity,
+				baseBalance, // Кількість базової валюти
+					_,            //targetBalance,   // Кількість торгової валюти
+					_,            // limitBalance, // Ліміт на купівлю повний у одиницях базової валюти
+					_,            // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+					_,            //LimitInPosition, // Ліміт базової валюти на одну позицію купівлі або продажу
+					ask,          // Ціна купівлі
+					bid,          // Ціна продажу
+					boundAsk,     // Верхня межа ціни купівлі
+					boundBid,     // Нижня межа ціни продажу
+					_,            //transactionValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+					sellQuantity, // Кількість торгової валюти для продажу
+					buyQuantity,  // Кількість торгової валюти для купівлі
 					err := getData4Analysis(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
 				}
-				if buyQuantity*boundAsk < baseBalance && // If quantity for one BUY transaction is less than available
-					((*pair).GetMiddlePrice() == 0 ||
-						targetBalance < InPositionLimit ||
-						(*pair).GetMiddlePrice() >= boundAsk) { // And middle price is higher than low bound price
+				if (*pair).GetMiddlePrice() == 0 || // Якшо середня ціна купівли котирувальної валюти дорівнює нулю
+					(*pair).GetMiddlePrice() >= boundAsk { // Та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
-				} else if sellQuantity <= targetBalance && // If quantity for one SELL transaction is less than available
-					(*pair).GetMiddlePrice() <= boundBid { // And middle price is lower than low bound price
+				} else if (*pair).GetMiddlePrice() <= boundBid { // Якшо середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
 				} else {
-					targetAsk := (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
-					targetBid := (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
-					if baseBalance < limitBalance {
+					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for bid increase to %f", targetBid)
-					} else {
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", targetAsk, targetBid)
+						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
 				}
 				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
@@ -85,17 +77,18 @@ func getData4Analysis(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs) (
-	baseBalance float64,
-	targetBalance float64,
-	limitBalance float64,
-	InPositionLimit float64,
-	ask float64,
-	bid float64,
-	boundAsk float64,
-	boundBid float64,
-	limitValue float64,
-	sellQuantity float64,
-	buyQuantity float64,
+	baseBalance float64, // Кількість базової валюти
+	targetBalance float64, // Кількість торгової валюти
+	LimitInputIntoPosition float64, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitInPosition float64, // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction float64, // Ліміт на транзакцію, відсоток від ліміту на позицію
+	ask float64, // Ціна купівлі
+	bid float64, // Ціна продажу
+	boundAsk float64, // Верхня межа ціни купівлі
+	boundBid float64, // Нижня межа ціни продажу
+	transactionValue float64, // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
+	sellQuantity float64, // Кількість торгової валюти для продажу
+	buyQuantity float64, // Кількість торгової валюти для купівлі
 	err error) {
 	getBaseBalance := func(pair *config_interfaces.Pairs) (
 		baseBalance float64,
@@ -119,8 +112,19 @@ func getData4Analysis(
 		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
 		return
 	}
-	limitBalance = (*pair).GetLimitValue()
-	InPositionLimit = (*pair).GetInPositionLimit()
+
+	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
+	// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
+	// Режим входу - накопичуємо цільовий токен
+	// Режим спекуляції - купуємо/продаемо цільовий токен за базовий
+	// Режим виходу - продаемо цільовий токен
+	LimitInputIntoPosition = (*pair).GetLimitInputIntoPosition()
+	// Ліміт на позицію, відсоток від балансу базової валюти
+	LimitInPosition = (*pair).GetLimitInPosition()
+	// Ліміт на транзакцію, відсоток від ліміту на позицію
+	LimitOnTransaction = (*pair).GetLimitOnTransaction()
+	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
+	transactionValue = LimitOnTransaction * LimitInPosition * baseBalance
 
 	getAskAndBid := func(depths *depth_types.Depth) (ask float64, bid float64, err error) {
 		getPrice := func(val btree.Item) float64 {
@@ -157,25 +161,15 @@ func getData4Analysis(
 		logrus.Warnf("Can't get bounds: %v", err)
 		return
 	}
-	// Value for BUY and SELL transactions
-	limitValue = (*pair).GetLimitOnTransaction() * limitBalance // Value for one transaction
-	// Correct value for BUY transaction
-	if limitValue > math.Min(limitBalance, baseBalance) {
-		limitValue = math.Min(limitBalance, baseBalance)
-	}
 
-	// SELL Quantity for one transaction
-	sellQuantity = limitValue / bid // Quantity for one SELL transaction
+	// Кількість торгової валюти для продажу
+	sellQuantity = transactionValue / bid
 	if sellQuantity > targetBalance {
-		sellQuantity = targetBalance // Quantity for one SELL transaction if it's more than available
+		sellQuantity = targetBalance // Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
 	}
 
-	// Correct value for BUY transaction
-	if limitValue > math.Min(limitBalance, baseBalance) {
-		limitValue = math.Min(limitBalance, baseBalance)
-	}
-	// BUY Quantity for one transaction
-	buyQuantity = limitValue / boundAsk
+	// Кількість торгової валюти для купівлі
+	buyQuantity = transactionValue / boundAsk
 	return
 }
 
@@ -193,21 +187,37 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				_, _, _, _, _, _, boundAsk, boundBid, _, sellQuantity, buyQuantity, err := getData4Analysis(account, depths, pair)
+				_, _, _, _, _,
+					ask,      // Ціна купівлі
+					bid,      // Ціна продажу
+					boundAsk, // Верхня межа ціни купівлі
+					boundBid, // Нижня межа ціни продажу
+					_,
+					sellQuantity, // Кількість торгової валюти для продажу
+					buyQuantity,  // Кількість торгової валюти для купівлі
+					err := getData4Analysis(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
 				}
-				if (*pair).GetMiddlePrice() >= boundAsk { // And middle price is higher than low bound price
+				// Середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли
+				if (*pair).GetMiddlePrice() >= boundAsk {
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
+					// Середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
 				} else if (*pair).GetMiddlePrice() <= boundBid { // And middle price is lower than low bound price
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
+					// Чекаємо на зміну ціни
+				} else {
+					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
+					}
 				}
 			}
 		}
@@ -221,8 +231,10 @@ func InPositionSignal(
 	pair *config_interfaces.Pairs,
 	timeFrame time.Duration,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (inPositionEvent chan *depth_types.DepthItemType) {
-	inPositionEvent = make(chan *depth_types.DepthItemType, 1)
+	triggerEvent chan bool) (
+	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
+	positionEvent chan *depth_types.DepthItemType) { // Переходимо в режим спекуляції
+	collectionEvent = make(chan *depth_types.DepthItemType, 1)
 	go func() {
 		for {
 			select {
@@ -233,39 +245,42 @@ func InPositionSignal(
 			default:
 				continue
 			}
-			baseBalance,
-				targetBalance,
-				limitBalance,
-				InPositionLimit,
-				ask,
-				bid,
-				boundAsk,
-				_,
-				_, //limitValue,
-				_,
-				buyQuantity,
+			baseBalance, // Кількість базової валюти
+				targetBalance,          // Кількість торгової валюти
+				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+				_,                      // LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
+				ask,                    // Ціна купівлі
+				bid,                    // Ціна продажу
+				boundAsk,               // Верхня межа ціни купівлі
+				_,                      // Нижня межа ціни продажу
+				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+				_,                      // Кількість торгової валюти для продажу
+				buyQuantity,            // Кількість торгової валюти для купівлі
 				err := getData4Analysis(account, depths, pair)
 			if err != nil {
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// If quantity for one BUY transaction is less than available
-			if targetBalance < InPositionLimit &&
-				// And middle price is higher than low bound price
+			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію - віходимо з накопичування
+			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition {
+				positionEvent <- &depth_types.DepthItemType{
+					Price:    boundAsk,
+					Quantity: buyQuantity}
+				return
+				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію
+			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition &&
+				// Та якшо середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли - купуємо
 				((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) {
 				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-				inPositionEvent <- &depth_types.DepthItemType{
+				collectionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
 					Quantity: buyQuantity}
 			} else {
 				targetAsk := (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
-				targetBid := (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
-				if baseBalance < limitBalance {
+				if ask > targetAsk {
 					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-					logrus.Infof("Waiting for bid increase to %f", targetBid)
-				} else {
-					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-					logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", targetAsk, targetBid)
+					logrus.Infof("Waiting for ask decrease to %f", targetAsk)
 				}
 			}
 			logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))

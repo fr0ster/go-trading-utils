@@ -17,19 +17,26 @@ const (
 type (
 	AccountType string
 	Pairs       struct {
-		AccountType        AccountType `json:"account_type"`
-		Pair               string      `json:"symbol"`
-		TargetSymbol       string      `json:"target_symbol"`
-		BaseSymbol         string      `json:"base_symbol"`
-		LimitValue         float64     `json:"limit_value"`
-		InPositionLimit    float64     `json:"in_position_limit"`
-		LimitOnTransaction float64     `json:"limit_on_transaction"`
-		BuyDelta           float64     `json:"buy_delta"`
-		BuyQuantity        float64     `json:"buy_quantity"`
-		BuyValue           float64     `json:"buy_value"`
-		SellDelta          float64     `json:"sell_delta"`
-		SellQuantity       float64     `json:"sell_quantity"`
-		SellValue          float64     `json:"sell_value"`
+		AccountType  AccountType `json:"account_type"`  // Тип акаунта
+		Pair         string      `json:"symbol"`        // Пара
+		TargetSymbol string      `json:"target_symbol"` // Цільовий токен
+		BaseSymbol   string      `json:"base_symbol"`   // Базовий токен
+
+		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
+		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
+		// Режим входу - накопичуємо цільовий токен
+		// Режим спекуляції - купуємо/продаемо цільовий токен за базовий
+		// Режим виходу - продаемо цільовий токен
+		LimitInputIntoPosition float64 `json:"limit_input_into_position"`
+		LimitInPosition        float64 `json:"limit_in_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
+		LimitOnTransaction     float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+		BuyDelta     float64 `json:"buy_delta"`     // Дельта для купівлі
+		BuyQuantity  float64 `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
+		BuyValue     float64 `json:"buy_value"`     // Вартість для купівлі, суммарно по позиції
+		SellDelta    float64 `json:"sell_delta"`    // Дельта для продажу, суммарно по позиції
+		SellQuantity float64 `json:"sell_quantity"` // Кількість для продажу, суммарно по позиції
+		SellValue    float64 `json:"sell_value"`    // Вартість для продажу, суммарно по позиції
 	}
 )
 
@@ -61,12 +68,12 @@ func (cr *Pairs) GetTargetSymbol() string {
 	return cr.TargetSymbol
 }
 
-func (cr *Pairs) GetLimitValue() float64 {
-	return cr.LimitValue
+func (cr *Pairs) GetLimitInputIntoPosition() float64 {
+	return cr.LimitInputIntoPosition
 }
 
-func (cr *Pairs) GetInPositionLimit() float64 {
-	return cr.InPositionLimit
+func (cr *Pairs) GetLimitInPosition() float64 {
+	return cr.LimitInPosition
 }
 
 func (cr *Pairs) GetLimitOnTransaction() float64 {

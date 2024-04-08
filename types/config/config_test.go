@@ -14,67 +14,69 @@ import (
 )
 
 const (
-	APIKey               = "your_api_key"
-	APISecret            = "your_api_secret"
-	UseTestNet           = false
-	AccountType_1        = pairs_types.SpotAccountType
-	Pair_1               = "BTCUSDT"
-	TargetSymbol_1       = "BTC"
-	BaseSymbol_1         = "USDT"
-	LimitValue_1         = 2000.0
-	InPositionLimit_1    = 0.01
-	LimitOnTransaction_1 = 0.01
-	BuyDelta_1           = 0.01
-	SellDelta_1          = 0.01
-	BuyQuantity_1        = 1.0
-	SellQuantity_1       = 1.0
-	BuyValue_1           = 100.0
-	SellValue_1          = 100.0
-	AccountType_2        = pairs_types.USDTFutureType
-	Pair_2               = "ETHUSDT"
-	TargetSymbol_2       = "ETH"
-	BaseSymbol_2         = "USDT"
-	LimitValue_2         = 1000.0
-	InPositionLimit_2    = 1.0
-	LimitOnTransaction_2 = 0.01
-	BuyDelta_2           = 0.01
-	SellDelta_2          = 0.01
-	BuyQuantity_2        = 1.0
-	SellQuantity_2       = 1.0
-	BuyValue_2           = 100.0
-	SellValue_2          = 100.0
+	APIKey                   = "your_api_key"
+	APISecret                = "your_api_secret"
+	UseTestNet               = false
+	AccountType_1            = pairs_types.SpotAccountType
+	Pair_1                   = "BTCUSDT"                  // Пара
+	TargetSymbol_1           = "BTC"                      // Котирувальна валюта
+	BaseSymbol_1             = "USDT"                     // Базова валюта
+	BaseBalance_1            = 2000.0                     // Баланс базової валюти
+	LimitInputIntoPosition_1 = 0.01                       // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitInPosition_1        = 0.50                       // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_1     = 0.10                       // Ліміт на транзакцію, відсоток від ліміту на позицію
+	BuyDelta_1               = 0.01                       // Дельта для купівлі
+	SellDelta_1              = 0.01                       // Дельта для продажу
+	BuyQuantity_1            = 1.0                        // Кількість для купівлі, суммарно по позиції
+	SellQuantity_1           = 1.0                        // Кількість для продажу, суммарно по позиції
+	BuyValue_1               = 100.0                      // Вартість для купівлі, суммарно по позиції
+	SellValue_1              = 100.0                      // Вартість для продажу, суммарно по позиції
+	AccountType_2            = pairs_types.USDTFutureType // Тип акаунта
+	Pair_2                   = "ETHUSDT"                  // Пара
+	TargetSymbol_2           = "ETH"                      // Котирувальна валюта
+	BaseSymbol_2             = "USDT"                     // Базова валюта
+	LimitValue_2             = 2000.0                     // Баланс базової валюти
+	LimitInputIntoPosition_2 = 0.10                       // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitInPosition_2        = 0.50                       // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2     = 0.01                       // Ліміт на транзакцію, відсоток від ліміту на позицію
+	BuyDelta_2               = 0.01                       // Дельта для купівлі
+	SellDelta_2              = 0.01                       // Дельта для продажу
+	BuyQuantity_2            = 1.0                        // Кількість для купівлі, суммарно по позиції
+	SellQuantity_2           = 1.0                        // Кількість для продажу, суммарно по позиції
+	BuyValue_2               = 100.0                      // Вартість для купівлі, суммарно по позиції
+	SellValue_2              = 100.0                      // Вартість для продажу, суммарно по позиції
 )
 
 var (
 	pair_1 = &pairs_types.Pairs{
-		AccountType:        AccountType_1,
-		Pair:               Pair_1,
-		TargetSymbol:       TargetSymbol_1,
-		BaseSymbol:         BaseSymbol_1,
-		LimitValue:         LimitValue_1,
-		InPositionLimit:    InPositionLimit_1,
-		LimitOnTransaction: LimitOnTransaction_1,
-		BuyDelta:           BuyDelta_1,
-		BuyQuantity:        BuyQuantity_1,
-		BuyValue:           BuyValue_1,
-		SellDelta:          SellDelta_1,
-		SellQuantity:       SellQuantity_1,
-		SellValue:          SellValue_1,
+		AccountType:            AccountType_1,
+		Pair:                   Pair_1,
+		TargetSymbol:           TargetSymbol_1,
+		BaseSymbol:             BaseSymbol_1,
+		LimitInputIntoPosition: LimitInputIntoPosition_1,
+		LimitInPosition:        LimitInPosition_1,
+		LimitOnTransaction:     LimitOnTransaction_1,
+		BuyDelta:               BuyDelta_1,
+		BuyQuantity:            BuyQuantity_1,
+		BuyValue:               BuyValue_1,
+		SellDelta:              SellDelta_1,
+		SellQuantity:           SellQuantity_1,
+		SellValue:              SellValue_1,
 	}
 	pair_2 = &pairs_types.Pairs{
-		AccountType:        AccountType_2,
-		Pair:               Pair_2,
-		TargetSymbol:       TargetSymbol_2,
-		BaseSymbol:         BaseSymbol_2,
-		LimitValue:         LimitValue_2,
-		InPositionLimit:    InPositionLimit_2,
-		LimitOnTransaction: LimitOnTransaction_2,
-		BuyDelta:           BuyDelta_2,
-		BuyQuantity:        BuyQuantity_2,
-		BuyValue:           BuyValue_2,
-		SellDelta:          SellDelta_2,
-		SellQuantity:       SellQuantity_2,
-		SellValue:          SellValue_2,
+		AccountType:            AccountType_2,
+		Pair:                   Pair_2,
+		TargetSymbol:           TargetSymbol_2,
+		BaseSymbol:             BaseSymbol_2,
+		LimitInputIntoPosition: LimitInputIntoPosition_2,
+		LimitInPosition:        LimitInPosition_2,
+		LimitOnTransaction:     LimitOnTransaction_2,
+		BuyDelta:               BuyDelta_2,
+		BuyQuantity:            BuyQuantity_2,
+		BuyValue:               BuyValue_2,
+		SellDelta:              SellDelta_2,
+		SellQuantity:           SellQuantity_2,
+		SellValue:              SellValue_2,
 	}
 )
 
@@ -89,8 +91,8 @@ func getTestData() []byte {
 				"symbol": "` + Pair_1 + `",
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
-				"limit_value": ` + json.Number(strconv.FormatFloat(LimitValue_1, 'f', -1, 64)).String() + `,
-				"in_position_limit": ` + json.Number(strconv.FormatFloat(InPositionLimit_1, 'f', -1, 64)).String() + `,
+				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
+				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitInPosition_1, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
 				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
@@ -104,8 +106,8 @@ func getTestData() []byte {
 				"symbol": "` + Pair_2 + `",
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
-				"limit_value": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
-				"in_position_limit": ` + json.Number(strconv.FormatFloat(InPositionLimit_2, 'f', -1, 64)).String() + `,
+				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
+				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitInPosition_2, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
 				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
@@ -128,8 +130,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
-	assert.Equal(t, (*checkingDate)[0].GetLimitValue(), config.GetPair(Pair_1).GetLimitValue())
-	assert.Equal(t, (*checkingDate)[0].GetInPositionLimit(), config.GetPair(Pair_1).GetInPositionLimit())
+	assert.Equal(t, (*checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
+	assert.Equal(t, (*checkingDate)[0].GetLimitInPosition(), config.GetPair(Pair_1).GetLimitInPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnTransaction(), config.GetPair(Pair_1).GetLimitOnTransaction())
 	assert.Equal(t, (*checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[0].GetBuyQuantity(), config.GetPair(Pair_1).GetBuyQuantity())
@@ -140,8 +142,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
-	assert.Equal(t, (*checkingDate)[1].GetLimitValue(), config.GetPair(Pair_2).GetLimitValue())
-	assert.Equal(t, (*checkingDate)[1].GetInPositionLimit(), config.GetPair(Pair_2).GetInPositionLimit())
+	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
+	assert.Equal(t, (*checkingDate)[1].GetLimitInPosition(), config.GetPair(Pair_2).GetLimitInPosition())
 	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnTransaction(), config.GetPair(Pair_2).GetLimitOnTransaction())
@@ -239,8 +241,8 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())
-	assert.Equal(t, LimitValue_1, pair.GetLimitValue())
-	assert.Equal(t, InPositionLimit_1, pair.GetInPositionLimit())
+	assert.Equal(t, LimitInputIntoPosition_1, pair.GetLimitInputIntoPosition())
+	assert.Equal(t, LimitInPosition_1, pair.GetLimitInPosition())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
 	assert.Equal(t, BuyDelta_1, pair.GetBuyDelta())
 	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())

@@ -53,15 +53,17 @@ func (cf *ConfigFile) Save() error {
 	defer cf.Unlock()
 	if cf.Configs.Pairs.Len() == 0 {
 		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
-			Pair:         "BTCUSDT",
-			TargetSymbol: "BTC",
-			BaseSymbol:   "USDT",
-			LimitValue:   0.01,
-			BuyDelta:     0.0,
-			BuyQuantity:  0.0,
-			BuyValue:     0.0,
-			SellQuantity: 0.0,
-			SellValue:    0.0,
+			Pair:                   "BTCUSDT",
+			TargetSymbol:           "BTC",
+			BaseSymbol:             "USDT",
+			LimitInputIntoPosition: 0.01,
+			LimitInPosition:        0.01,
+			LimitOnTransaction:     0.01,
+			BuyDelta:               0.0,
+			BuyQuantity:            0.0,
+			BuyValue:               0.0,
+			SellQuantity:           0.0,
+			SellValue:              0.0,
 		})
 	}
 
