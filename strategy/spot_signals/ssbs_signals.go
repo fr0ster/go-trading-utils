@@ -59,10 +59,18 @@ func Spot_depth_buy_sell_signals(
 						Price:    boundBid,
 						Quantity: sellQuantity}
 				} else {
-					if (*pair).GetMiddlePrice() > boundBid && bid < boundBid &&
-						(*pair).GetMiddlePrice() < boundAsk && ask > boundAsk {
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
+					if (*pair).GetMiddlePrice() > boundBid &&
+						(*pair).GetMiddlePrice() < boundAsk {
+						if bid < boundBid && ask > boundAsk {
+							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+							logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
+						} else if bid < boundBid {
+							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+							logrus.Infof("Waiting for bid increase to %f", boundBid)
+						} else if ask > boundAsk {
+							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+							logrus.Infof("Waiting for ask decrease to %f", boundAsk)
+						}
 					}
 				}
 				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
