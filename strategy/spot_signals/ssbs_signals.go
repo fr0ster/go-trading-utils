@@ -244,7 +244,7 @@ func InPositionSignal(
 				continue
 			}
 			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition {
+			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition*LimitInPosition {
 				positionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
 					Quantity: buyQuantity}
