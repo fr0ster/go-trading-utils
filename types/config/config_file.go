@@ -53,6 +53,7 @@ func (cf *ConfigFile) Save() error {
 	defer cf.Unlock()
 	if cf.Configs.Pairs.Len() == 0 {
 		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
+			AccountType:            "SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE",
 			Pair:                   "BTCUSDT",
 			TargetSymbol:           "BTC",
 			BaseSymbol:             "USDT",
@@ -88,16 +89,18 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
 func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 	// pairBtcUsdt := &pairs_types.Pairs{
-	// 	AccountType:  pairs_types.SpotAccountType,
-	// 	Pair:         "BTCUSDT",
-	// 	TargetSymbol: "BTC",
-	// 	BaseSymbol:   "USDT",
-	// 	Limit:        0.01,
-	// 	BuyDelta:     0.0,
-	// 	BuyQuantity:  0.0,
-	// 	BuyValue:     0.0,
-	// 	SellQuantity: 0.0,
-	// 	SellValue:    0.0,
+	// 	AccountType:            pairs_types.SpotAccountType,
+	// 	Pair:                   "BTCUSDT",
+	// 	TargetSymbol:           "BTC",
+	// 	BaseSymbol:             "USDT",
+	// 	LimitInputIntoPosition: 0.1,
+	// 	LimitInPosition:        1.0,
+	// 	LimitOnTransaction:     0.01,
+	// 	BuyDelta:               0.0,
+	// 	BuyQuantity:            0.0,
+	// 	BuyValue:               0.0,
+	// 	SellQuantity:           0.0,
+	// 	SellValue:              0.0,
 	// }
 	res = &ConfigFile{
 		FilePath: file_path,
