@@ -47,13 +47,15 @@ func Spot_depth_buy_sell_signals(
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
 				}
-				if (*pair).GetMiddlePrice() == 0 || // Якшо середня ціна купівли котирувальної валюти дорівнює нулю
-					(*pair).GetMiddlePrice() >= boundAsk { // Та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
+				if ((*pair).GetMiddlePrice() == 0 || // Якшо середня ціна купівли котирувальної валюти дорівнює нулю
+					(*pair).GetMiddlePrice() >= boundAsk) && // Та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
+					buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
-				} else if (*pair).GetMiddlePrice() <= boundBid { // Якшо середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
+				} else if (*pair).GetMiddlePrice() <= boundBid && // Якшо середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
+					sellQuantity > 0 { // Та кількість цільової валюти для продажу більша за нуль
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
@@ -201,13 +203,15 @@ func BuyOrSellSignal(
 					continue
 				}
 				// Середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли
-				if (*pair).GetMiddlePrice() >= boundAsk {
+				if (*pair).GetMiddlePrice() >= boundAsk &&
+					buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
 					// Середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
-				} else if (*pair).GetMiddlePrice() <= boundBid { // And middle price is lower than low bound price
+				} else if (*pair).GetMiddlePrice() <= boundBid &&
+					sellQuantity > 0 { // Та кількість цільової валюти для продажу більша за нуль
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
