@@ -58,24 +58,14 @@ func Spot_depth_buy_sell_signals(
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
-				} else {
-					if (*pair).GetMiddlePrice() > boundBid &&
-						(*pair).GetMiddlePrice() < boundAsk {
-						if bid < boundBid && ask > boundAsk {
-							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-							logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
-						} else if bid < boundBid {
-							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-							logrus.Infof("Waiting for bid increase to %f", boundBid)
-						} else if ask > boundAsk {
-							logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-							logrus.Infof("Waiting for ask decrease to %f", boundAsk)
-						}
-					}
 				}
+				logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+				logrus.Infof("Current Ask bound: %f, Bid bound: %f", boundAsk, boundBid)
+				logrus.Infof("Middle price: %f, available USDT: %f, available %s: %f",
+					(*pair).GetMiddlePrice(), baseBalance, (*pair).GetTargetSymbol(), sellQuantity)
 				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
 				logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
-				logrus.Infof("Middle price: %f, available USDT: %f, Bid: %f", (*pair).GetMiddlePrice(), baseBalance, bid)
+				time.Sleep(1 * time.Second)
 			}
 		}
 	}()
