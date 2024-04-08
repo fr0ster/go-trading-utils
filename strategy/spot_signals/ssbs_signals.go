@@ -129,14 +129,23 @@ func getData4Analysis(
 	transactionValue = LimitOnTransaction * LimitInPosition * baseBalance
 
 	getAskAndBid := func(depths *depth_types.Depth) (ask float64, bid float64, err error) {
-		getPrice := func(val btree.Item) float64 {
+		getPrice := func(val btree.Item) (float64, error) {
 			if val == nil {
 				err = errors.New("value is nil")
+				return 0, err
 			}
-			return val.(*depth_types.DepthItemType).Price
+			return val.(*depth_types.DepthItemType).Price, nil
 		}
-		ask = getPrice(depths.GetAsks().Min())
-		bid = getPrice(depths.GetBids().Max())
+		ask, err = getPrice(depths.GetAsks().Min())
+		if err != nil {
+			logrus.Warnf("Can't get ask: %v", err)
+			return
+		}
+		bid, err = getPrice(depths.GetBids().Max())
+		if err != nil {
+			logrus.Warnf("Can't get bid: %v", err)
+			return
+		}
 		return
 	}
 
