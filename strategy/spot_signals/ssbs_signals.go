@@ -279,7 +279,8 @@ func InPositionSignal(
 				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію
 			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition &&
 				// Та якшо середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли - купуємо
-				((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) {
+				((*pair).GetMiddlePrice() == 0 || (*pair).GetMiddlePrice() >= boundAsk) &&
+				buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
 				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 				collectionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
