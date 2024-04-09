@@ -38,6 +38,8 @@ func ProcessBuyOrder(
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
 	)
 	go func() {
+		var order *binance.CreateOrderResponse
+		var err error
 		for {
 			select {
 			case <-stopEvent:
@@ -47,14 +49,18 @@ func ProcessBuyOrder(
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
 					continue
 				}
-				order, err :=
+				service :=
 					client.NewCreateOrderService().
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
 						Type(orderType).
 						Side(binance.SideTypeBuy).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound))
+				if orderType == binance.OrderTypeMarket {
+					order, err = service.Do(context.Background())
+				} else if orderType == binance.OrderTypeLimit {
+					order, err = service.TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+				}
 				if err != nil {
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
@@ -96,6 +102,8 @@ func ProcessSellOrder(
 	)
 	startSellOrderEvent = make(chan *binance.CreateOrderResponse)
 	go func() {
+		var order *binance.CreateOrderResponse
+		var err error
 		for {
 			select {
 			case <-stopEvent:
@@ -105,14 +113,18 @@ func ProcessSellOrder(
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
 					continue
 				}
-				order, err :=
+				service :=
 					client.NewCreateOrderService().
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
 						Type(binance.OrderTypeLimit).
 						Side(binance.SideTypeSell).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound))
+				if orderType == binance.OrderTypeMarket {
+					order, err = service.Do(context.Background())
+				} else if orderType == binance.OrderTypeLimit {
+					order, err = service.TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+				}
 				if err != nil {
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
