@@ -244,20 +244,10 @@ func Run(
 		}
 		(*pair).SetBuyQuantity(targetFree)
 		(*pair).SetBuyValue(targetFree * price)
+		config.Save()
 	}
-	config.Save()
 
-	buyEvent, sellEvent := Spot_depth_buy_sell_signals(account, depth, pair, stopEvent, bookTickerEvent)
-
-	ProcessBuyOrder(
-		config, client, pair, pairInfo, binance.OrderTypeMarket,
-		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, stopEvent, orderStatusEvent)
-	ProcessSellOrder(
-		config, client, pair, pairInfo, binance.OrderTypeMarket,
-		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		sellEvent, stopEvent, orderStatusEvent)
-
+	// Виводимо інформацію про позицію
 	go func() {
 		for {
 			baseBalance, err := account.GetAsset((*pair).GetBaseSymbol())
@@ -278,4 +268,48 @@ func Run(
 			time.Sleep(updateTime)
 		}
 	}()
+
+	// Відпрацьовуємо  Holding стратегію
+	if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
+		collectionEvent, collectionOutEvent := HoldingSignal(account, depth, pair, (3 * time.Second), stopEvent, bookTickerEvent)
+
+		_ = ProcessBuyOrder(
+			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+			collectionEvent, stopEvent, orderStatusEvent)
+
+		<-collectionOutEvent
+		(*pair).SetStage(pairs_types.WorkInPositionStage)
+		config.Save()
+		return
+		// Відпрацьовуємо Trading стратегію
+	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
+		collectionEvent, collectionOutEvent := TradingInPositionSignal(account, depth, pair, (3 * time.Second), stopEvent, bookTickerEvent)
+
+		_ = ProcessBuyOrder(
+			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+			collectionEvent, stopEvent, orderStatusEvent)
+
+		<-collectionOutEvent
+		(*pair).SetStage(pairs_types.WorkInPositionStage)
+		config.Save()
+		buyEvent, sellEvent := BuyOrSellSignal(account, depth, pair, stopEvent, bookTickerEvent)
+
+		_ = ProcessBuyOrder(
+			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+			buyEvent, stopEvent, orderStatusEvent)
+		_ = ProcessSellOrder(
+			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+			sellEvent, stopEvent, orderStatusEvent)
+		// Відпрацьовуємо Arbitrage стратегію
+	} else if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
+		// Відпрацьовуємо Scalping стратегію
+	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
+		// Невідома стратегія, виводимо попередження та завершуємо програму
+	} else {
+		logrus.Warnf("Unknown strategy: %v", (*pair).GetStrategy())
+	}
 }
