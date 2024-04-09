@@ -11,6 +11,7 @@ import (
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 
+	pair_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
@@ -219,7 +220,62 @@ func BuyOrSellSignal(
 	return
 }
 
-func InPositionSignal(
+func collection(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs,
+	timeFrame time.Duration,
+	stopEvent chan os.Signal,
+	triggerEvent chan bool,
+	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
+	collectionOutEvent chan *depth_types.DepthItemType) { // Виходимо з накопичення)
+	var isTimerEvent bool
+	for {
+		select {
+		case <-stopEvent:
+			return
+		case <-triggerEvent: // Чекаємо на спрацювання тригера
+			isTimerEvent = false
+		case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+			isTimerEvent = true
+		default:
+			continue
+		}
+		baseBalance, // Кількість базової валюти
+			targetBalance,          // Кількість торгової валюти
+			LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+			LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+			_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
+			_,                      //ask,                    // Ціна купівлі
+			_,                      //bid,                    // Ціна продажу
+			boundAsk,               // Верхня межа ціни купівлі
+			_,                      // Нижня межа ціни продажу
+			_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+			_,                      // Кількість торгової валюти для продажу
+			buyQuantity,            // Кількість торгової валюти для купівлі
+			err := getData4Analysis(account, depths, pair)
+		if err != nil {
+			logrus.Warnf("Can't get data for analysis: %v", err)
+			continue
+		}
+		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
+			collectionOutEvent <- &depth_types.DepthItemType{
+				Price:    boundAsk,
+				Quantity: buyQuantity}
+			return
+			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
+		} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
+			((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
+			logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
+			collectionEvent <- &depth_types.DepthItemType{
+				Price:    boundAsk,
+				Quantity: buyQuantity}
+		}
+	}
+}
+
+func HoldingSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
@@ -227,18 +283,23 @@ func InPositionSignal(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-	positionEvent chan *depth_types.DepthItemType, // Переходимо в режим спекуляції
-	passEvent chan *TokenInfo) { // Чекаємо на зміну ціни та віддамо інформацію про ціну
+	collectionOutEvent chan *depth_types.DepthItemType) { // Виходимо з накопичення
 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
-	positionEvent = make(chan *depth_types.DepthItemType, 1)
-	passEvent = make(chan *TokenInfo, 1)
+	collectionOutEvent = make(chan *depth_types.DepthItemType, 1)
+	if (*pair).GetStrategy() != pair_types.HoldingStrategyType {
+		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.HoldingStrategyType)
+		return
+	}
 	go func() {
+		var isTimerEvent bool
 		for {
 			select {
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
+				isTimerEvent = false
 			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+				isTimerEvent = true
 			default:
 				continue
 			}
@@ -247,8 +308,8 @@ func InPositionSignal(
 				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
 				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
 				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-				ask,                    // Ціна купівлі
-				bid,                    // Ціна продажу
+				_,                      // ask,                    // Ціна купівлі
+				_,                      // bid,                    // Ціна продажу
 				boundAsk,               // Верхня межа ціни купівлі
 				_,                      // Нижня межа ціни продажу
 				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
@@ -259,35 +320,85 @@ func InPositionSignal(
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
-				positionEvent <- &depth_types.DepthItemType{
-					Price:    boundAsk,
-					Quantity: buyQuantity}
-				return
-				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
-			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition {
+			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
+			if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
+				// та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
+				((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
 				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 				collectionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
 					Quantity: buyQuantity}
-			} else {
-				targetAsk := (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
-				if ask > targetAsk {
-					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-					logrus.Infof("Waiting for ask decrease to %f", targetAsk)
-				}
-				passEvent <- &TokenInfo{
-					CurrentProfit:   (*pair).GetProfit(bid),
-					PredictedProfit: (*pair).GetProfit((*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())),
-					MiddlePrice:     (*pair).GetMiddlePrice(),
-					AvailableUSDT:   baseBalance,
-					Ask:             ask,
-					Bid:             bid,
-					BoundAsk:        boundAsk,
-					BoundBid:        boundAsk}
 			}
 		}
 	}()
+	return
+}
+
+func TradingInPositionSignal(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs,
+	timeFrame time.Duration,
+	stopEvent chan os.Signal,
+	triggerEvent chan bool) (
+	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
+	collectionOutEvent chan *depth_types.DepthItemType) { // Переходимо в режим спекуляції
+	collectionEvent = make(chan *depth_types.DepthItemType, 1)
+	collectionOutEvent = make(chan *depth_types.DepthItemType, 1)
+	if (*pair).GetStrategy() != pair_types.TradingStrategyType {
+		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.TradingStrategyType)
+		return
+	}
+	if (*pair).GetStage() != pair_types.InputIntoPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.InputIntoPositionStage)
+		return
+	}
+	go collection(account, depths, pair, timeFrame, stopEvent, triggerEvent, collectionEvent, collectionOutEvent)
+	// go func() {
+	// 	var isTimerEvent bool
+	// 	for {
+	// 		select {
+	// 		case <-stopEvent:
+	// 			return
+	// 		case <-triggerEvent: // Чекаємо на спрацювання тригера
+	// 			isTimerEvent = false
+	// 		case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+	// 			isTimerEvent = true
+	// 		default:
+	// 			continue
+	// 		}
+	// 		baseBalance, // Кількість базової валюти
+	// 			targetBalance,          // Кількість торгової валюти
+	// 			LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	// 			LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+	// 			_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
+	// 			_,                      //ask,                    // Ціна купівлі
+	// 			_,                      //bid,                    // Ціна продажу
+	// 			boundAsk,               // Верхня межа ціни купівлі
+	// 			_,                      // Нижня межа ціни продажу
+	// 			_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+	// 			_,                      // Кількість торгової валюти для продажу
+	// 			buyQuantity,            // Кількість торгової валюти для купівлі
+	// 			err := getData4Analysis(account, depths, pair)
+	// 		if err != nil {
+	// 			logrus.Warnf("Can't get data for analysis: %v", err)
+	// 			continue
+	// 		}
+	// 		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+	// 		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
+	// 			collectionOutEvent <- &depth_types.DepthItemType{
+	// 				Price:    boundAsk,
+	// 				Quantity: buyQuantity}
+	// 			return
+	// 			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
+	// 		} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
+	// 			((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
+	// 			logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
+	// 			collectionEvent <- &depth_types.DepthItemType{
+	// 				Price:    boundAsk,
+	// 				Quantity: buyQuantity}
+	// 		}
+	// 	}
+	// }()
 	return
 }
