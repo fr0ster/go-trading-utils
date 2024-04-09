@@ -15,6 +15,7 @@ import (
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
@@ -39,6 +40,12 @@ func RunHolding(
 		depth      *depth_types.Depth
 		bookTicker *bookTicker_types.BookTickerBTree
 	)
+
+	if (*pair).GetStrategy() != pairs_types.HoldingStrategyType {
+		logrus.Errorf("Strategy is not Holding")
+		stopEvent <- os.Interrupt
+		return
+	}
 
 	depth = depth_types.NewDepth(degree, (*pair).GetPair())
 
@@ -118,6 +125,12 @@ func RunTrading(
 		depth      *depth_types.Depth
 		bookTicker *bookTicker_types.BookTickerBTree
 	)
+
+	if (*pair).GetStrategy() != pairs_types.TradingStrategyType {
+		logrus.Errorf("Strategy is not Trading")
+		stopEvent <- os.Interrupt
+		return
+	}
 
 	depth = depth_types.NewDepth(degree, (*pair).GetPair())
 
