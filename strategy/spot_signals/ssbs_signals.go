@@ -14,6 +14,19 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
+type (
+	TokenInfo struct {
+		CurrentProfit   float64
+		PredictedProfit float64
+		MiddlePrice     float64
+		AvailableUSDT   float64
+		Ask             float64
+		Bid             float64
+		BoundAsk        float64
+		BoundBid        float64
+	}
+)
+
 func Spot_depth_buy_sell_signals(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
@@ -214,8 +227,11 @@ func InPositionSignal(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-	positionEvent chan *depth_types.DepthItemType) { // Переходимо в режим спекуляції
+	positionEvent chan *depth_types.DepthItemType, // Переходимо в режим спекуляції
+	passEvent chan *TokenInfo) { // Чекаємо на зміну ціни та віддамо інформацію про ціну
 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
+	positionEvent = make(chan *depth_types.DepthItemType, 1)
+	passEvent = make(chan *TokenInfo, 1)
 	go func() {
 		for {
 			select {
@@ -244,7 +260,7 @@ func InPositionSignal(
 				continue
 			}
 			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-			if targetBalance*boundAsk > baseBalance*LimitInputIntoPosition*LimitInPosition {
+			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
 				positionEvent <- &depth_types.DepthItemType{
 					Price:    boundAsk,
 					Quantity: buyQuantity}
@@ -261,10 +277,16 @@ func InPositionSignal(
 					logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 					logrus.Infof("Waiting for ask decrease to %f", targetAsk)
 				}
+				passEvent <- &TokenInfo{
+					CurrentProfit:   (*pair).GetProfit(bid),
+					PredictedProfit: (*pair).GetProfit((*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())),
+					MiddlePrice:     (*pair).GetMiddlePrice(),
+					AvailableUSDT:   baseBalance,
+					Ask:             ask,
+					Bid:             bid,
+					BoundAsk:        boundAsk,
+					BoundBid:        boundAsk}
 			}
-			logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
-			logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
-			logrus.Infof("Middle price: %f, available USDT: %f, Bid: %f", (*pair).GetMiddlePrice(), baseBalance, bid)
 		}
 	}()
 	return
