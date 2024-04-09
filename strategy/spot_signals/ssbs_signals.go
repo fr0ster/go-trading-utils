@@ -237,7 +237,7 @@ func collection(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool,
 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-	collectionOutEvent chan *depth_types.DepthItemType) { // Виходимо з накопичення)
+	collectionOutEvent chan bool) { // Виходимо з накопичення)
 	var isTimerEvent bool
 	for {
 		select {
@@ -268,9 +268,7 @@ func collection(
 		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
 			(*pair).SetStage(pair_types.WorkInPositionStage)
-			collectionOutEvent <- &depth_types.DepthItemType{
-				Price:    boundAsk,
-				Quantity: buyQuantity}
+			collectionOutEvent <- true
 			return
 			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
 		} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
@@ -291,9 +289,9 @@ func HoldingSignal(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-	collectionOutEvent chan *depth_types.DepthItemType) { // Виходимо з накопичення
+	collectionOutEvent chan bool) { // Виходимо з накопичення
 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
-	collectionOutEvent = make(chan *depth_types.DepthItemType, 1)
+	collectionOutEvent = make(chan bool, 1)
 	if (*pair).GetStrategy() != pair_types.HoldingStrategyType {
 		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.HoldingStrategyType)
 		return
@@ -310,9 +308,9 @@ func TradingInPositionSignal(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-	collectionOutEvent chan *depth_types.DepthItemType) { // Переходимо в режим спекуляції
+	collectionOutEvent chan bool) { // Переходимо в режим спекуляції
 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
-	collectionOutEvent = make(chan *depth_types.DepthItemType, 1)
+	collectionOutEvent = make(chan bool, 1)
 	if (*pair).GetStrategy() != pair_types.TradingStrategyType {
 		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.TradingStrategyType)
 		return
