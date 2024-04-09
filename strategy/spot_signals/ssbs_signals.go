@@ -211,13 +211,14 @@ func BuyOrSellSignal(
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
-					// Чекаємо на зміну ціни
 				} else {
+					// Чекаємо на зміну ціни
 					if buyQuantity == 0 || sellQuantity == 0 {
 						logrus.Info("Wait for buy signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f", boundAsk)
 					} else if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+						logrus.Info("Wait for buy or sell signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
@@ -268,6 +269,7 @@ func collection(
 		}
 		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
+			(*pair).SetStage(pair_types.WorkInPositionStage)
 			collectionOutEvent <- &depth_types.DepthItemType{
 				Price:    boundAsk,
 				Quantity: buyQuantity}
