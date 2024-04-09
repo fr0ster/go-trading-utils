@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
@@ -29,7 +31,11 @@ type (
 	AccountType  string
 	StrategyType string
 	StageType    string
-	Pairs        struct {
+	Commission   struct {
+		Commission      float64 `json:"commission"`
+		CommissionAsset string  `json:"commission_asset"`
+	}
+	Pairs struct {
 		InitialBalance float64      `json:"initial_balance"` // Початковий баланс
 		AccountType    AccountType  `json:"account_type"`    // Тип акаунта
 		StrategyType   StrategyType `json:"strategy_type"`   // Тип стратегії
@@ -47,12 +53,13 @@ type (
 		LimitOnPosition        float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction     float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		BuyDelta     float64 `json:"buy_delta"`     // Дельта для купівлі
-		BuyQuantity  float64 `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
-		BuyValue     float64 `json:"buy_value"`     // Вартість для купівлі, суммарно по позиції
-		SellDelta    float64 `json:"sell_delta"`    // Дельта для продажу, суммарно по позиції
-		SellQuantity float64 `json:"sell_quantity"` // Кількість для продажу, суммарно по позиції
-		SellValue    float64 `json:"sell_value"`    // Вартість для продажу, суммарно по позиції
+		BuyDelta     float64      `json:"buy_delta"`     // Дельта для купівлі
+		BuyQuantity  float64      `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
+		BuyValue     float64      `json:"buy_value"`     // Вартість для купівлі, суммарно по позиції
+		SellDelta    float64      `json:"sell_delta"`    // Дельта для продажу, суммарно по позиції
+		SellQuantity float64      `json:"sell_quantity"` // Кількість для продажу, суммарно по позиції
+		SellValue    float64      `json:"sell_value"`    // Вартість для продажу, суммарно по позиції
+		Commission   []Commission `json:"commission"`    // Комісія
 	}
 )
 
@@ -161,6 +168,22 @@ func (cr *Pairs) SetBuyValue(value float64) {
 
 func (cr *Pairs) SetSellValue(value float64) {
 	cr.SellValue = value
+}
+
+func (cr *Pairs) AddCommission(commission binance.Fill) {
+	cr.Commission = append(
+		cr.Commission,
+		Commission{
+			utils.ConvStrToFloat64(commission.Commission),
+			commission.CommissionAsset})
+}
+
+func (cr *Pairs) GetCommission() []Commission {
+	return cr.Commission
+}
+
+func (cr *Pairs) SetCommission(commission []Commission) {
+	cr.Commission = commission
 }
 
 func (cr *Pairs) GetMiddlePrice() float64 {

@@ -75,8 +75,19 @@ func ProcessBuyOrder(
 				if order.Status == binance.OrderStatusTypeNew {
 					startBuyOrderEvent <- order
 				} else {
-					(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + utils.ConvStrToFloat64(order.ExecutedQuantity))
-					(*pair).SetBuyValue((*pair).GetBuyValue() + utils.ConvStrToFloat64(order.ExecutedQuantity)*utils.ConvStrToFloat64(order.Price))
+					for _, fill := range order.Fills {
+						// TradeID         int64  `json:"tradeId"`
+						// Price           string `json:"price"`
+						// Quantity        string `json:"qty"`
+						// Commission      string `json:"commission"`
+						// CommissionAsset string `json:"commissionAsset"`
+						fillPrice := utils.ConvStrToFloat64(fill.Price)
+						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
+						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
+					}
+					// (*pair).SetBuyQuantity((*pair).GetBuyQuantity() + utils.ConvStrToFloat64(order.ExecutedQuantity))
+					// (*pair).SetBuyValue((*pair).GetBuyValue() + utils.ConvStrToFloat64(order.ExecutedQuantity)*utils.ConvStrToFloat64(order.Price))
 					config.Save()
 				}
 			}

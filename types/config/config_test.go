@@ -53,7 +53,10 @@ const (
 )
 
 var (
-	pair_1 = &pairs_types.Pairs{
+	Commission_1 = pairs_types.Commission{Commission: 0.1, CommissionAsset: "BNB"}
+	Commission_2 = pairs_types.Commission{Commission: 0.1, CommissionAsset: "USDT"}
+	Commission   = []pairs_types.Commission{Commission_1, Commission_2}
+	pair_1       = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
 		AccountType:            AccountType_1,
 		StrategyType:           StrategyType_1,
@@ -70,6 +73,7 @@ var (
 		SellDelta:              SellDelta_1,
 		SellQuantity:           SellQuantity_1,
 		SellValue:              SellValue_1,
+		Commission:             Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
@@ -88,11 +92,13 @@ var (
 		SellDelta:              SellDelta_2,
 		SellQuantity:           SellQuantity_2,
 		SellValue:              SellValue_2,
+		Commission:             Commission,
 	}
 )
 
 func getTestData() []byte {
-	return []byte(`{
+	return []byte(
+		`{
 		"api_key": "` + APIKey + `",
 		"api_secret": "` + APISecret + `",
 		"use_test_net": ` + strconv.FormatBool(UseTestNet) + `,
@@ -113,7 +119,17 @@ func getTestData() []byte {
 				"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
 				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
-				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `
+				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
+				"commission": [
+					{
+						"commission": ` + json.Number(strconv.FormatFloat(Commission_1.Commission, 'f', -1, 64)).String() + `,
+						"commission_asset": "` + Commission_1.CommissionAsset + `"
+					},
+					{
+						"commission": ` + json.Number(strconv.FormatFloat(Commission_2.Commission, 'f', -1, 64)).String() + `,
+						"commission_asset": "` + Commission_2.CommissionAsset + `"
+					}
+				]
 			},
 			{
 				"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -131,10 +147,20 @@ func getTestData() []byte {
 				"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
 				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
-				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `
-				}
-			]
-		}`)
+				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
+				"commission": [
+					{
+						"commission": ` + json.Number(strconv.FormatFloat(Commission_1.Commission, 'f', -1, 64)).String() + `,
+						"commission_asset": "` + Commission_1.CommissionAsset + `"
+					},
+					{
+						"commission": ` + json.Number(strconv.FormatFloat(Commission_2.Commission, 'f', -1, 64)).String() + `,
+						"commission_asset": "` + Commission_2.CommissionAsset + `"
+					}
+				]
+			}
+		]
+	}`)
 }
 
 func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate *[]config_interfaces.Pairs) {
@@ -159,6 +185,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetSellDelta(), config.GetPair(Pair_1).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[0].GetSellQuantity(), config.GetPair(Pair_1).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
+	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), InitialBalance)
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
@@ -176,6 +203,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetSellDelta(), config.GetPair(Pair_2).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[1].GetSellQuantity(), config.GetPair(Pair_2).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetSellValue(), config.GetPair(Pair_2).GetSellValue())
+	assert.Equal(t, (*checkingDate)[1].GetCommission(), Commission)
 
 }
 
@@ -246,6 +274,13 @@ func TestPairSetter(t *testing.T) {
 		Pair:        Pair_1,
 		BuyQuantity: BuyQuantity_1,
 		BuyValue:    BuyValue_1,
+		Commission:  Commission,
+	}
+	newCommission := []pairs_types.Commission{
+		{
+			Commission:      0.1,
+			CommissionAsset: "USDT",
+		},
 	}
 	pair.SetInitialBalance(3000)
 	pair.SetStage(StageType_2)
@@ -253,6 +288,7 @@ func TestPairSetter(t *testing.T) {
 	pair.SetBuyValue(BuyValue_2)
 	pair.SetSellQuantity(SellQuantity_2)
 	pair.SetSellValue(SellValue_2)
+	pair.SetCommission(newCommission)
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
 	assert.Equal(t, StageType_2, pair.GetStage())
@@ -260,6 +296,7 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, BuyValue_2, pair.GetBuyValue())
 	assert.Equal(t, SellQuantity_2, pair.GetSellQuantity())
 	assert.Equal(t, SellValue_2, pair.GetSellValue())
+	assert.Equal(t, newCommission, pair.GetCommission())
 }
 
 func TestPairGetter(t *testing.T) {
@@ -280,6 +317,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, SellDelta_1, pair.GetSellDelta())
 	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
 	assert.Equal(t, SellValue_1, pair.GetSellValue())
+	assert.Equal(t, Commission, pair.GetCommission())
 }
 
 func TestConfigGetter(t *testing.T) {

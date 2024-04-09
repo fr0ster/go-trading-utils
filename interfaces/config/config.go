@@ -1,6 +1,9 @@
 package config
 
-import pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+import (
+	"github.com/adshao/go-binance/v2"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+)
 
 type (
 	Pairs interface {
@@ -26,6 +29,9 @@ type (
 		SetSellQuantity(quantity float64)
 		SetBuyValue(value float64)
 		SetSellValue(value float64)
+		AddCommission(commission binance.Fill)
+		GetCommission() []pairs_types.Commission
+		SetCommission(commission []pairs_types.Commission)
 		GetMiddlePrice() float64
 		GetProfit(currentPrice float64) float64
 	}

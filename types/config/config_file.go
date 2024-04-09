@@ -69,6 +69,7 @@ func (cf *ConfigFile) Save() error {
 			SellDelta:              0.05,
 			SellQuantity:           0.0,
 			SellValue:              0.0,
+			Commission:             []pairs_types.Commission{},
 		})
 	}
 
