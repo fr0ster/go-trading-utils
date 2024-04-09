@@ -30,7 +30,6 @@ func ProcessBuyOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
 	var (
@@ -86,7 +85,6 @@ func ProcessSellOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent) (startSellOrderEvent chan *binance.CreateOrderResponse) {
@@ -145,7 +143,6 @@ func ProcessAfterBuyOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,
 	startBuyOrderEvent chan *binance.CreateOrderResponse) {
@@ -183,7 +180,6 @@ func ProcessAfterSellOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,

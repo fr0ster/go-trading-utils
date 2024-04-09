@@ -71,11 +71,11 @@ func Run(
 	ProcessBuyOrder(
 		config, client, pair, pairInfo,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, sellEvent, stopEvent, orderStatusEvent)
+		buyEvent, stopEvent, orderStatusEvent)
 	ProcessSellOrder(
 		config, client, pair, pairInfo,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, sellEvent, stopEvent, orderStatusEvent)
+		sellEvent, stopEvent, orderStatusEvent)
 
 	go func() {
 		for {
