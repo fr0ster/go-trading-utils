@@ -53,10 +53,12 @@ const (
 )
 
 var (
-	Commission_1 = pairs_types.Commission{Commission: 0.1, CommissionAsset: "BNB"}
-	Commission_2 = pairs_types.Commission{Commission: 0.1, CommissionAsset: "USDT"}
-	Commission   = []pairs_types.Commission{Commission_1, Commission_2}
-	pair_1       = &pairs_types.Pairs{
+	CommissionAsset_1 = "BNB"
+	CommissionAsset_2 = "USDT"
+	Commission_1      = 0.00001
+	Commission_2      = 0.02
+	Commission        = pairs_types.Commission{CommissionAsset_1: Commission_1, CommissionAsset_2: Commission_2}
+	pair_1            = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
 		AccountType:            AccountType_1,
 		StrategyType:           StrategyType_1,
@@ -120,16 +122,10 @@ func getTestData() []byte {
 				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
 				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
-				"commission": [
-					{
-						"commission": ` + json.Number(strconv.FormatFloat(Commission_1.Commission, 'f', -1, 64)).String() + `,
-						"commission_asset": "` + Commission_1.CommissionAsset + `"
-					},
-					{
-						"commission": ` + json.Number(strconv.FormatFloat(Commission_2.Commission, 'f', -1, 64)).String() + `,
-						"commission_asset": "` + Commission_2.CommissionAsset + `"
-					}
-				]
+				"commission": {
+					"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
+					"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
+				}
 			},
 			{
 				"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -148,16 +144,10 @@ func getTestData() []byte {
 				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
 				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
-				"commission": [
-					{
-						"commission": ` + json.Number(strconv.FormatFloat(Commission_1.Commission, 'f', -1, 64)).String() + `,
-						"commission_asset": "` + Commission_1.CommissionAsset + `"
-					},
-					{
-						"commission": ` + json.Number(strconv.FormatFloat(Commission_2.Commission, 'f', -1, 64)).String() + `,
-						"commission_asset": "` + Commission_2.CommissionAsset + `"
-					}
-				]
+				"commission": {
+					"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
+					"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
+				}
 			}
 		]
 	}`)
@@ -276,12 +266,7 @@ func TestPairSetter(t *testing.T) {
 		BuyValue:    BuyValue_1,
 		Commission:  Commission,
 	}
-	newCommission := []pairs_types.Commission{
-		{
-			Commission:      0.1,
-			CommissionAsset: "USDT",
-		},
-	}
+	newCommission := pairs_types.Commission{"USDT": 0.1}
 	pair.SetInitialBalance(3000)
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)

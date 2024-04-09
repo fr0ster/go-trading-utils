@@ -30,8 +30,8 @@ type (
 		SetBuyValue(value float64)
 		SetSellValue(value float64)
 		AddCommission(commission binance.Fill)
-		GetCommission() []pairs_types.Commission
-		SetCommission(commission []pairs_types.Commission)
+		GetCommission() pairs_types.Commission
+		SetCommission(commission pairs_types.Commission)
 		GetMiddlePrice() float64
 		GetProfit(currentPrice float64) float64
 	}
