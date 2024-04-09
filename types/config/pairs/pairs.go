@@ -71,6 +71,11 @@ func (cr *Pairs) GetInitialBalance() float64 {
 	return cr.InitialBalance
 }
 
+// SetInitialBalance implements Configuration.
+func (cr *Pairs) SetInitialBalance(balance float64) {
+	cr.InitialBalance = balance
+}
+
 // Get AccountType implements Configuration.
 func (cr *Pairs) GetAccountType() AccountType {
 	return cr.AccountType

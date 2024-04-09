@@ -247,12 +247,14 @@ func TestPairSetter(t *testing.T) {
 		BuyQuantity: BuyQuantity_1,
 		BuyValue:    BuyValue_1,
 	}
+	pair.SetInitialBalance(3000)
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)
 	pair.SetBuyValue(BuyValue_2)
 	pair.SetSellQuantity(SellQuantity_2)
 	pair.SetSellValue(SellValue_2)
 
+	assert.Equal(t, 3000.0, pair.GetInitialBalance())
 	assert.Equal(t, StageType_2, pair.GetStage())
 	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
 	assert.Equal(t, BuyValue_2, pair.GetBuyValue())
