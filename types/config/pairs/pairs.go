@@ -30,12 +30,13 @@ type (
 	StrategyType string
 	StageType    string
 	Pairs        struct {
-		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
-		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
-		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
-		Pair         string       `json:"symbol"`        // Пара
-		TargetSymbol string       `json:"target_symbol"` // Цільовий токен
-		BaseSymbol   string       `json:"base_symbol"`   // Базовий токен
+		InitialBalance float64      `json:"initial_balance"` // Початковий баланс
+		AccountType    AccountType  `json:"account_type"`    // Тип акаунта
+		StrategyType   StrategyType `json:"strategy_type"`   // Тип стратегії
+		StageType      StageType    `json:"stage_type"`      // Cтадія стратегії
+		Pair           string       `json:"symbol"`          // Пара
+		TargetSymbol   string       `json:"target_symbol"`   // Цільовий токен
+		BaseSymbol     string       `json:"base_symbol"`     // Базовий токен
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -55,12 +56,19 @@ type (
 	}
 )
 
+// Less implements btree.Item.
 func (cr *Pairs) Less(item btree.Item) bool {
 	return cr.Pair < item.(*Pairs).Pair
 }
 
+// Equals implements btree.Item.
 func (cr *Pairs) Equals(item btree.Item) bool {
 	return cr.Pair == item.(*Pairs).Pair
+}
+
+// GetInitialBalance implements Configuration.
+func (cr *Pairs) GetInitialBalance() float64 {
+	return cr.InitialBalance
 }
 
 // Get AccountType implements Configuration.
