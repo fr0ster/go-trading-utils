@@ -91,6 +91,7 @@ func RunHolding(
 			}
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			default:
 				if val := (*pair).GetMiddlePrice(); val != 0 {
@@ -189,6 +190,7 @@ func RunTrading(
 			}
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			default:
 				if val := (*pair).GetMiddlePrice(); val != 0 {
@@ -258,6 +260,7 @@ func Run(
 			}
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			default:
 				if val := (*pair).GetMiddlePrice(); val != 0 {
