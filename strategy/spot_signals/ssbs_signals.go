@@ -268,7 +268,8 @@ func collection(
 			continue
 		}
 		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
+		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
+			targetBalance*boundAsk >= baseBalance*LimitInPosition {
 			(*pair).SetStage(pair_types.WorkInPositionStage)
 			collectionOutEvent <- true
 			return
