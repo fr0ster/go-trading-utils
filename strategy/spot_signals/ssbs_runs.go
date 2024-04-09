@@ -69,11 +69,11 @@ func Run(
 	buyEvent, sellEvent := Spot_depth_buy_sell_signals(account, depth, pair, stopEvent, bookTickerEvent)
 
 	ProcessBuyOrder(
-		config, client, pair, pairInfo,
+		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 		buyEvent, stopEvent, orderStatusEvent)
 	ProcessSellOrder(
-		config, client, pair, pairInfo,
+		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 		sellEvent, stopEvent, orderStatusEvent)
 

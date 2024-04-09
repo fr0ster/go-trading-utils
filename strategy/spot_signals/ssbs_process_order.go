@@ -26,6 +26,7 @@ func ProcessBuyOrder(
 	client *binance.Client,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
+	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
@@ -49,7 +50,7 @@ func ProcessBuyOrder(
 				order, err :=
 					client.NewCreateOrderService().
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
-						Type(binance.OrderTypeLimit).
+						Type(orderType).
 						Side(binance.SideTypeBuy).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
 						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
@@ -82,6 +83,7 @@ func ProcessSellOrder(
 	client *binance.Client,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
+	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
