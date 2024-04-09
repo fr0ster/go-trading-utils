@@ -54,12 +54,13 @@ func ProcessBuyOrder(
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
 						Type(orderType).
 						Side(binance.SideTypeBuy).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound))
+						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
 				if orderType == binance.OrderTypeMarket {
 					order, err = service.Do(context.Background())
 				} else if orderType == binance.OrderTypeLimit {
-					order, err = service.TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+					order, err = service.
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
 				}
 				if err != nil {
 					logrus.Errorf("Can't create order: %v", err)
@@ -118,12 +119,13 @@ func ProcessSellOrder(
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
 						Type(binance.OrderTypeLimit).
 						Side(binance.SideTypeSell).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound))
+						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
 				if orderType == binance.OrderTypeMarket {
 					order, err = service.Do(context.Background())
 				} else if orderType == binance.OrderTypeLimit {
-					order, err = service.TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+					order, err = service.
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
 				}
 				if err != nil {
 					logrus.Errorf("Can't create order: %v", err)
