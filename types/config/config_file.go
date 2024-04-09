@@ -54,6 +54,8 @@ func (cf *ConfigFile) Save() error {
 	if cf.Configs.Pairs.Len() == 0 {
 		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
 			AccountType:            "SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE",
+			StrategyType:           "HOLDING/SCALPING/ARBITRAGE/TRADING",
+			StageType:              "INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION",
 			Pair:                   "BTCUSDT",
 			TargetSymbol:           "BTC",
 			BaseSymbol:             "USDT",

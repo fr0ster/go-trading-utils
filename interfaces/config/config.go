@@ -7,6 +7,7 @@ type (
 		GetAccountType() pairs_types.AccountType
 		GetStrategy() pairs_types.StrategyType
 		GetStage() pairs_types.StageType
+		SetStage(stage pairs_types.StageType)
 		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string

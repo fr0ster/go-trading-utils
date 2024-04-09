@@ -78,6 +78,11 @@ func (cr *Pairs) GetStage() StageType {
 	return cr.StageType
 }
 
+// SetStage implements Configuration.
+func (cr *Pairs) SetStage(stage StageType) {
+	cr.StageType = stage
+}
+
 // GetSymbol implements Configuration.
 func (cr *Pairs) GetPair() string {
 	return cr.Pair

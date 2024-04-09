@@ -170,6 +170,14 @@ func BuyOrSellSignal(
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
+	if (*pair).GetStrategy() != pair_types.TradingStrategyType {
+		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.TradingStrategyType)
+		return
+	}
+	if (*pair).GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		return
+	}
 	go func() {
 		for {
 			select {
@@ -290,47 +298,7 @@ func HoldingSignal(
 		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.HoldingStrategyType)
 		return
 	}
-	go func() {
-		var isTimerEvent bool
-		for {
-			select {
-			case <-stopEvent:
-				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				isTimerEvent = false
-			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
-				isTimerEvent = true
-			default:
-				continue
-			}
-			baseBalance, // Кількість базової валюти
-				targetBalance,          // Кількість торгової валюти
-				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
-				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-				_,                      // ask,                    // Ціна купівлі
-				_,                      // bid,                    // Ціна продажу
-				boundAsk,               // Верхня межа ціни купівлі
-				_,                      // Нижня межа ціни продажу
-				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-				_,                      // Кількість торгової валюти для продажу
-				buyQuantity,            // Кількість торгової валюти для купівлі
-				err := getData4Analysis(account, depths, pair)
-			if err != nil {
-				logrus.Warnf("Can't get data for analysis: %v", err)
-				continue
-			}
-			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
-			if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
-				// та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
-				((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
-				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-				collectionEvent <- &depth_types.DepthItemType{
-					Price:    boundAsk,
-					Quantity: buyQuantity}
-			}
-		}
-	}()
+	go collection(account, depths, pair, timeFrame, stopEvent, triggerEvent, collectionEvent, collectionOutEvent)
 	return
 }
 
@@ -354,51 +322,5 @@ func TradingInPositionSignal(
 		return
 	}
 	go collection(account, depths, pair, timeFrame, stopEvent, triggerEvent, collectionEvent, collectionOutEvent)
-	// go func() {
-	// 	var isTimerEvent bool
-	// 	for {
-	// 		select {
-	// 		case <-stopEvent:
-	// 			return
-	// 		case <-triggerEvent: // Чекаємо на спрацювання тригера
-	// 			isTimerEvent = false
-	// 		case <-time.After(timeFrame): // Або просто чекаємо якийсь час
-	// 			isTimerEvent = true
-	// 		default:
-	// 			continue
-	// 		}
-	// 		baseBalance, // Кількість базової валюти
-	// 			targetBalance,          // Кількість торгової валюти
-	// 			LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	// 			LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
-	// 			_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-	// 			_,                      //ask,                    // Ціна купівлі
-	// 			_,                      //bid,                    // Ціна продажу
-	// 			boundAsk,               // Верхня межа ціни купівлі
-	// 			_,                      // Нижня межа ціни продажу
-	// 			_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-	// 			_,                      // Кількість торгової валюти для продажу
-	// 			buyQuantity,            // Кількість торгової валюти для купівлі
-	// 			err := getData4Analysis(account, depths, pair)
-	// 		if err != nil {
-	// 			logrus.Warnf("Can't get data for analysis: %v", err)
-	// 			continue
-	// 		}
-	// 		// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-	// 		if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition*LimitInPosition {
-	// 			collectionOutEvent <- &depth_types.DepthItemType{
-	// 				Price:    boundAsk,
-	// 				Quantity: buyQuantity}
-	// 			return
-	// 			// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
-	// 		} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
-	// 			((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
-	// 			logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-	// 			collectionEvent <- &depth_types.DepthItemType{
-	// 				Price:    boundAsk,
-	// 				Quantity: buyQuantity}
-	// 		}
-	// 	}
-	// }()
 	return
 }
