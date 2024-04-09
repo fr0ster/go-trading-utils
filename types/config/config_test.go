@@ -14,42 +14,48 @@ import (
 )
 
 const (
-	APIKey                   = "your_api_key"
-	APISecret                = "your_api_secret"
-	UseTestNet               = false
-	AccountType_1            = pairs_types.SpotAccountType
-	Pair_1                   = "BTCUSDT"                  // Пара
-	TargetSymbol_1           = "BTC"                      // Котирувальна валюта
-	BaseSymbol_1             = "USDT"                     // Базова валюта
-	BaseBalance_1            = 2000.0                     // Баланс базової валюти
-	LimitInputIntoPosition_1 = 0.01                       // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitInPosition_1        = 0.50                       // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_1     = 0.10                       // Ліміт на транзакцію, відсоток від ліміту на позицію
-	BuyDelta_1               = 0.01                       // Дельта для купівлі
-	SellDelta_1              = 0.01                       // Дельта для продажу
-	BuyQuantity_1            = 1.0                        // Кількість для купівлі, суммарно по позиції
-	SellQuantity_1           = 1.0                        // Кількість для продажу, суммарно по позиції
-	BuyValue_1               = 100.0                      // Вартість для купівлі, суммарно по позиції
-	SellValue_1              = 100.0                      // Вартість для продажу, суммарно по позиції
-	AccountType_2            = pairs_types.USDTFutureType // Тип акаунта
-	Pair_2                   = "ETHUSDT"                  // Пара
-	TargetSymbol_2           = "ETH"                      // Котирувальна валюта
-	BaseSymbol_2             = "USDT"                     // Базова валюта
-	LimitValue_2             = 2000.0                     // Баланс базової валюти
-	LimitInputIntoPosition_2 = 0.10                       // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitInPosition_2        = 0.50                       // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_2     = 0.01                       // Ліміт на транзакцію, відсоток від ліміту на позицію
-	BuyDelta_2               = 0.01                       // Дельта для купівлі
-	SellDelta_2              = 0.01                       // Дельта для продажу
-	BuyQuantity_2            = 1.0                        // Кількість для купівлі, суммарно по позиції
-	SellQuantity_2           = 1.0                        // Кількість для продажу, суммарно по позиції
-	BuyValue_2               = 100.0                      // Вартість для купівлі, суммарно по позиції
-	SellValue_2              = 100.0                      // Вартість для продажу, суммарно по позиції
+	APIKey                   = "your_api_key"                     // Ключ API
+	APISecret                = "your_api_secret"                  // Секретний ключ API
+	UseTestNet               = false                              // Використовувати тестову мережу
+	AccountType_1            = pairs_types.SpotAccountType        // Тип акаунта
+	StrategyType_1           = pairs_types.HoldingStrategyType    // Тип стратегії
+	StageType_1              = pairs_types.InputIntoPositionStage // Стадія стратегії
+	Pair_1                   = "BTCUSDT"                          // Пара
+	TargetSymbol_1           = "BTC"                              // Котирувальна валюта
+	BaseSymbol_1             = "USDT"                             // Базова валюта
+	BaseBalance_1            = 2000.0                             // Баланс базової валюти
+	LimitInputIntoPosition_1 = 0.01                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitInPosition_1        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
+	BuyDelta_1               = 0.01                               // Дельта для купівлі
+	SellDelta_1              = 0.01                               // Дельта для продажу
+	BuyQuantity_1            = 1.0                                // Кількість для купівлі, суммарно по позиції
+	SellQuantity_1           = 1.0                                // Кількість для продажу, суммарно по позиції
+	BuyValue_1               = 100.0                              // Вартість для купівлі, суммарно по позиції
+	SellValue_1              = 100.0                              // Вартість для продажу, суммарно по позиції
+	AccountType_2            = pairs_types.USDTFutureType         // Тип акаунта
+	StrategyType_2           = pairs_types.TradingStrategyType    // Тип стратегії
+	StageType_2              = pairs_types.WorkInPositionStage    // Тип стадії
+	Pair_2                   = "ETHUSDT"                          // Пара
+	TargetSymbol_2           = "ETH"                              // Котирувальна валюта
+	BaseSymbol_2             = "USDT"                             // Базова валюта
+	LimitValue_2             = 2000.0                             // Баланс базової валюти
+	LimitInputIntoPosition_2 = 0.10                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitInPosition_2        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
+	BuyDelta_2               = 0.01                               // Дельта для купівлі
+	SellDelta_2              = 0.01                               // Дельта для продажу
+	BuyQuantity_2            = 1.0                                // Кількість для купівлі, суммарно по позиції
+	SellQuantity_2           = 1.0                                // Кількість для продажу, суммарно по позиції
+	BuyValue_2               = 100.0                              // Вартість для купівлі, суммарно по позиції
+	SellValue_2              = 100.0                              // Вартість для продажу, суммарно по позиції
 )
 
 var (
 	pair_1 = &pairs_types.Pairs{
 		AccountType:            AccountType_1,
+		StrategyType:           StrategyType_1,
+		StageType:              StageType_1,
 		Pair:                   Pair_1,
 		TargetSymbol:           TargetSymbol_1,
 		BaseSymbol:             BaseSymbol_1,
@@ -65,6 +71,8 @@ var (
 	}
 	pair_2 = &pairs_types.Pairs{
 		AccountType:            AccountType_2,
+		StrategyType:           StrategyType_2,
+		StageType:              StageType_2,
 		Pair:                   Pair_2,
 		TargetSymbol:           TargetSymbol_2,
 		BaseSymbol:             BaseSymbol_2,
@@ -88,6 +96,8 @@ func getTestData() []byte {
 		"pairs": [
 			{
 				"account_type": "` + string(AccountType_1) + `",
+				"strategy_type": "` + string(StrategyType_1) + `",
+				"stage_type": "` + string(StageType_1) + `",
 				"symbol": "` + Pair_1 + `",
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
@@ -103,6 +113,8 @@ func getTestData() []byte {
 			},
 			{
 				"account_type": "` + string(AccountType_2) + `",
+				"strategy_type": "` + string(StrategyType_2) + `",
+				"stage_type": "` + string(StageType_2) + `",
 				"symbol": "` + Pair_2 + `",
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
@@ -127,6 +139,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, UseTestNet, config.GetUseTestNet())
 
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
+	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
+	assert.Equal(t, (*checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
 	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
@@ -141,6 +155,8 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
 
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
+	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
+	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInPosition(), config.GetPair(Pair_2).GetLimitInPosition())
@@ -238,6 +254,8 @@ func TestPairSetter(t *testing.T) {
 func TestPairGetter(t *testing.T) {
 	pair := pair_1
 	assert.Equal(t, AccountType_1, pair.GetAccountType())
+	assert.Equal(t, StrategyType_1, pair.GetStrategy())
+	assert.Equal(t, StageType_1, pair.GetStage())
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())

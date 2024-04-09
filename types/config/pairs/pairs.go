@@ -12,15 +12,30 @@ const (
 	IsolatedMarginType AccountType = "ISOLATED_MARGIN"
 	USDTFutureType     AccountType = "USDT_FUTURE"
 	CoinFutureType     AccountType = "COIN_FUTURE"
+	// SpotStrategyType is a constant for spot strategy type.
+	// HOLDING/SCALPING/ARBITRAGE/TRADING
+	HoldingStrategyType   StrategyType = "HOLDING"
+	ScalpingStrategyType  StrategyType = "SCALPING"
+	ArbitrageStrategyType StrategyType = "ARBITRAGE"
+	TradingStrategyType   StrategyType = "TRADING"
+	// SpotStageType is a constant for spot stage type.
+	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION
+	InputIntoPositionStage StageType = "INPUT_INTO_POSITION"
+	WorkInPositionStage    StageType = "WORK_IN_POSITION"
+	OutputOfPositionStage  StageType = "OUTPUT_OF_POSITION"
 )
 
 type (
-	AccountType string
-	Pairs       struct {
-		AccountType  AccountType `json:"account_type"`  // Тип акаунта
-		Pair         string      `json:"symbol"`        // Пара
-		TargetSymbol string      `json:"target_symbol"` // Цільовий токен
-		BaseSymbol   string      `json:"base_symbol"`   // Базовий токен
+	AccountType  string
+	StrategyType string
+	StageType    string
+	Pairs        struct {
+		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
+		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
+		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
+		Pair         string       `json:"symbol"`        // Пара
+		TargetSymbol string       `json:"target_symbol"` // Цільовий токен
+		BaseSymbol   string       `json:"base_symbol"`   // Базовий токен
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -51,6 +66,16 @@ func (cr *Pairs) Equals(item btree.Item) bool {
 // Get AccountType implements Configuration.
 func (cr *Pairs) GetAccountType() AccountType {
 	return cr.AccountType
+}
+
+// GetStrategy implements Configuration.
+func (cr *Pairs) GetStrategy() StrategyType {
+	return cr.StrategyType
+}
+
+// GetStage implements Configuration.
+func (cr *Pairs) GetStage() StageType {
+	return cr.StageType
 }
 
 // GetSymbol implements Configuration.

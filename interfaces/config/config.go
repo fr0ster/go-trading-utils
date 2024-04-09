@@ -5,6 +5,8 @@ import pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 type (
 	Pairs interface {
 		GetAccountType() pairs_types.AccountType
+		GetStrategy() pairs_types.StrategyType
+		GetStage() pairs_types.StageType
 		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string
