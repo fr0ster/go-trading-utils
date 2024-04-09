@@ -60,7 +60,7 @@ func (cf *ConfigFile) Save() error {
 			TargetSymbol:           "BTC",
 			BaseSymbol:             "USDT",
 			LimitInputIntoPosition: 0.1,
-			LimitInPosition:        1.0,
+			LimitOnPosition:        1.0,
 			LimitOnTransaction:     0.01,
 			BuyDelta:               0.01,
 			BuyQuantity:            0.0,

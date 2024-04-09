@@ -133,7 +133,7 @@ func getData4Analysis(
 	// Режим виходу - продаемо цільовий токен
 	LimitInputIntoPosition = (*pair).GetLimitInputIntoPosition()
 	// Ліміт на позицію, відсоток від балансу базової валюти
-	LimitInPosition = (*pair).GetLimitInPosition()
+	LimitInPosition = (*pair).GetLimitOnPosition()
 	// Ліміт на транзакцію, відсоток від ліміту на позицію
 	LimitOnTransaction = (*pair).GetLimitOnTransaction()
 	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію

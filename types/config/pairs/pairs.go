@@ -43,7 +43,7 @@ type (
 		// Режим спекуляції - купуємо/продаемо цільовий токен за базовий
 		// Режим виходу - продаемо цільовий токен
 		LimitInputIntoPosition float64 `json:"limit_input_into_position"`
-		LimitInPosition        float64 `json:"limit_in_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
+		LimitOnPosition        float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction     float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
 		BuyDelta     float64 `json:"buy_delta"`     // Дельта для купівлі
@@ -102,8 +102,8 @@ func (cr *Pairs) GetLimitInputIntoPosition() float64 {
 	return cr.LimitInputIntoPosition
 }
 
-func (cr *Pairs) GetLimitInPosition() float64 {
-	return cr.LimitInPosition
+func (cr *Pairs) GetLimitOnPosition() float64 {
+	return cr.LimitOnPosition
 }
 
 func (cr *Pairs) GetLimitOnTransaction() float64 {

@@ -12,7 +12,7 @@ type (
 		GetTargetSymbol() string
 		GetBaseSymbol() string
 		GetLimitInputIntoPosition() float64
-		GetLimitInPosition() float64
+		GetLimitOnPosition() float64
 		GetLimitOnTransaction() float64
 		GetBuyDelta() float64
 		GetSellDelta() float64
