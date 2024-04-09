@@ -210,6 +210,7 @@ func Run(
 	limit int,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
+	timeFrame time.Duration,
 	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,
@@ -274,7 +275,7 @@ func Run(
 
 	// Відпрацьовуємо  Holding стратегію
 	if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
-		collectionEvent, collectionOutEvent := HoldingSignal(account, depth, pair, (3 * time.Second), stopEvent, bookTickerEvent)
+		collectionEvent, collectionOutEvent := HoldingSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 		_ = ProcessBuyOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
@@ -287,7 +288,7 @@ func Run(
 		return
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
-		collectionEvent, collectionOutEvent := TradingInPositionSignal(account, depth, pair, (3 * time.Second), stopEvent, bookTickerEvent)
+		collectionEvent, collectionOutEvent := TradingInPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 		_ = ProcessBuyOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
