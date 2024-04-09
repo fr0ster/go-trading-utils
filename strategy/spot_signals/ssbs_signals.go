@@ -247,8 +247,6 @@ func collection(
 			isTimerEvent = false
 		case <-time.After(timeFrame): // Або просто чекаємо якийсь час
 			isTimerEvent = true
-		default:
-			continue
 		}
 		baseBalance, // Кількість базової валюти
 			targetBalance,          // Кількість торгової валюти
