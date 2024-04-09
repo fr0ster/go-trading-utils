@@ -167,8 +167,8 @@ func (cr *Pairs) SetSellValue(value float64) {
 	cr.SellValue = value
 }
 
-func (cr *Pairs) AddCommission(commission binance.Fill) {
-	cr.Commission[commission.CommissionAsset] = float64(utils.ConvStrToFloat64(commission.Commission))
+func (cr *Pairs) AddCommission(commission *binance.Fill) {
+	cr.Commission[commission.CommissionAsset] += float64(utils.ConvStrToFloat64(commission.Commission))
 }
 
 func (cr *Pairs) GetCommission() Commission {
