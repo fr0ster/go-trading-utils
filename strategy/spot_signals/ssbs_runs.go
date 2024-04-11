@@ -270,8 +270,10 @@ func Run(
 		}
 	}()
 
-	// Відпрацьовуємо  Holding стратегію
-	if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
+	// Відпрацьовуємо Arbitrage стратегію
+	if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
+		// Відпрацьовуємо  Holding стратегію
+	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
 		collectionEvent, collectionOutEvent := InPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 		_ = ProcessBuyOrder(
@@ -305,10 +307,8 @@ func Run(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 			sellEvent, stopEvent)
-		// Відпрацьовуємо Arbitrage стратегію
-	} else if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
-		// Відпрацьовуємо Scalping стратегію
-	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
+		// Відпрацьовуємо Trading стратегію
+	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
 		logrus.Warnf("Unknown strategy: %v", (*pair).GetStrategy())
