@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
@@ -37,13 +39,14 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		InitialBalance float64      `json:"initial_balance"` // Початковий баланс
-		AccountType    AccountType  `json:"account_type"`    // Тип акаунта
-		StrategyType   StrategyType `json:"strategy_type"`   // Тип стратегії
-		StageType      StageType    `json:"stage_type"`      // Cтадія стратегії
-		Pair           string       `json:"symbol"`          // Пара
-		TargetSymbol   string       `json:"target_symbol"`   // Цільовий токен
-		BaseSymbol     string       `json:"base_symbol"`     // Базовий токен
+		InitialBalance float64       `json:"initial_balance"` // Початковий баланс
+		AccountType    AccountType   `json:"account_type"`    // Тип акаунта
+		StrategyType   StrategyType  `json:"strategy_type"`   // Тип стратегії
+		StageType      StageType     `json:"stage_type"`      // Cтадія стратегії
+		Pair           string        `json:"symbol"`          // Пара
+		TargetSymbol   string        `json:"target_symbol"`   // Цільовий токен
+		BaseSymbol     string        `json:"base_symbol"`     // Базовий токен
+		SleepingTime   time.Duration `json:"sleeping_time"`   // Час сплячки, хвилини
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -112,14 +115,19 @@ func (cr *Pairs) GetPair() string {
 	return cr.Pair
 }
 
+// GetTargetSymbol implements config.Configuration.
+func (cr *Pairs) GetTargetSymbol() string {
+	return cr.TargetSymbol
+}
+
 // GetBaseSymbol implements config.Configuration.
 func (cr *Pairs) GetBaseSymbol() string {
 	return cr.BaseSymbol
 }
 
-// GetTargetSymbol implements config.Configuration.
-func (cr *Pairs) GetTargetSymbol() string {
-	return cr.TargetSymbol
+// GetSleepingTime implements Configuration.
+func (cr *Pairs) GetSleepingTime() time.Duration {
+	return cr.SleepingTime * time.Minute
 }
 
 func (cr *Pairs) GetLimitInputIntoPosition() float64 {

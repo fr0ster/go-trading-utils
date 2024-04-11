@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -24,6 +25,7 @@ const (
 	Pair_1                   = "BTCUSDT"                          // Пара
 	TargetSymbol_1           = "BTC"                              // Котирувальна валюта
 	BaseSymbol_1             = "USDT"                             // Базова валюта
+	SleepingTime_1           = 5                                  // Час сплячки
 	BaseBalance_1            = 2000.0                             // Баланс базової валюти
 	LimitInputIntoPosition_1 = 0.01                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
 	LimitOutputOfPosition_1  = 0.05                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
@@ -41,6 +43,7 @@ const (
 	Pair_2                   = "ETHUSDT"                          // Пара
 	TargetSymbol_2           = "ETH"                              // Котирувальна валюта
 	BaseSymbol_2             = "USDT"                             // Базова валюта
+	SleepingTime_2           = 5                                  // Час сплячки
 	LimitValue_2             = 2000.0                             // Баланс базової валюти
 	LimitInputIntoPosition_2 = 0.10                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
 	LimitOutputOfPosition_2  = 0.15                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
@@ -68,6 +71,7 @@ var (
 		Pair:                   Pair_1,
 		TargetSymbol:           TargetSymbol_1,
 		BaseSymbol:             BaseSymbol_1,
+		SleepingTime:           SleepingTime_1,
 		LimitInputIntoPosition: LimitInputIntoPosition_1,
 		LimitOutputOfPosition:  LimitOutputOfPosition_1,
 		LimitOnPosition:        LimitOnPosition_1,
@@ -88,6 +92,7 @@ var (
 		Pair:                   Pair_2,
 		TargetSymbol:           TargetSymbol_2,
 		BaseSymbol:             BaseSymbol_2,
+		SleepingTime:           SleepingTime_2,
 		LimitInputIntoPosition: LimitInputIntoPosition_2,
 		LimitOutputOfPosition:  LimitOutputOfPosition_2,
 		LimitOnPosition:        LimitOnPosition_2,
@@ -117,6 +122,7 @@ func getTestData() []byte {
 				"symbol": "` + Pair_1 + `",
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
+				"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
 				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
 				"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
@@ -140,6 +146,7 @@ func getTestData() []byte {
 				"symbol": "` + Pair_2 + `",
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
+				"sleeping_time": ` + strconv.Itoa(SleepingTime_2) + `,
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
 				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
@@ -165,13 +172,14 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, APISecret, config.GetSecretKey())
 	assert.Equal(t, UseTestNet, config.GetUseTestNet())
 
-	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), InitialBalance)
+	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
 	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
 	assert.Equal(t, (*checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
 	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetSleepingTime(), config.GetPair(Pair_1).GetSleepingTime())
 	assert.Equal(t, (*checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnPosition(), config.GetPair(Pair_1).GetLimitOnPosition())
@@ -184,11 +192,14 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
 	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
 
-	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), InitialBalance)
+	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
 	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
+	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[1].GetSleepingTime(), config.GetPair(Pair_1).GetSleepingTime())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnPosition(), config.GetPair(Pair_2).GetLimitOnPosition())
@@ -301,6 +312,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())
+	assert.Equal(t, SleepingTime_1*time.Minute, pair.GetSleepingTime())
 	assert.Equal(t, LimitInputIntoPosition_1, pair.GetLimitInputIntoPosition())
 	assert.Equal(t, LimitOutputOfPosition_1, pair.GetLimitOutputOfPosition())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())

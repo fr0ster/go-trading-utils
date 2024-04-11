@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/adshao/go-binance/v2"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 )
@@ -16,6 +18,7 @@ type (
 		GetPair() string
 		GetTargetSymbol() string
 		GetBaseSymbol() string
+		GetSleepingTime() time.Duration
 		GetLimitInputIntoPosition() float64
 		GetLimitOutputOfPosition() float64
 		GetLimitOnPosition() float64

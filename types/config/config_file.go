@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
@@ -60,6 +61,7 @@ func (cf *ConfigFile) Save() error {
 			Pair:                   "BTCUSDT",
 			TargetSymbol:           "BTC",
 			BaseSymbol:             "USDT",
+			SleepingTime:           3 * time.Minute,
 			LimitInputIntoPosition: 0.1,
 			LimitOutputOfPosition:  0.5,
 			LimitOnPosition:        1.0,
