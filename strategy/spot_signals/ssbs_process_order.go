@@ -251,3 +251,39 @@ func ProcessAfterSellOrder(
 		}
 	}()
 }
+
+func ProcessAfterOrder(
+	config *config_types.ConfigFile,
+	client *binance.Client,
+	pair *config_interfaces.Pairs,
+	pairInfo *symbol_info_types.Symbol,
+	minuteOrderLimit *exchange_types.RateLimits,
+	dayOrderLimit *exchange_types.RateLimits,
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	sellEvent chan *depth_types.DepthItemType,
+	stopProcess chan bool,
+	stopEvent chan os.Signal,
+	orderStatusEvent chan *binance.WsUserDataEvent,
+	order *binance.CreateOrderResponse) {
+	go func() {
+		for {
+			select {
+			case <-stopProcess:
+				return
+			case <-stopEvent:
+				return
+			case orderEvent := <-orderStatusEvent:
+				logrus.Debug("Order status changed")
+				if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
+					if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
+						orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
+						(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+						(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+						config.Save()
+						break
+					}
+				}
+			}
+		}
+	}()
+}

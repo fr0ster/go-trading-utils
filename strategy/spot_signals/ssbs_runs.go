@@ -1,6 +1,8 @@
 package spot_signals
 
 import (
+	"context"
+	"math"
 	_ "net/http/pprof"
 	"time"
 
@@ -12,9 +14,11 @@ import (
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
@@ -62,13 +66,15 @@ func Run(
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits) {
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	orderStatusEvent chan *binance.WsUserDataEvent) {
 	var (
-		depth        *depth_types.Depth
-		bookTicker   *bookTicker_types.BookTickerBTree
-		stopBuy      = make(chan bool)
-		stopSell     = make(chan bool)
-		stopByOrSell = make(chan bool)
+		depth            *depth_types.Depth
+		bookTicker       *bookTicker_types.BookTickerBTree
+		stopBuy          = make(chan bool)
+		stopSell         = make(chan bool)
+		stopByOrSell     = make(chan bool)
+		stopAfterProcess = make(chan bool)
 	)
 
 	depth = depth_types.NewDepth(degree, (*pair).GetPair())
@@ -110,72 +116,91 @@ func Run(
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
-		collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
+		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
 
-		_ = ProcessBuyOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopBuy, stopEvent)
+			_ = ProcessBuyOrder(
+				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+				buyEvent, stopBuy, stopEvent)
 
-		<-collectionOutEvent
-		(*pair).SetStage(pairs_types.WorkInPositionStage)
-		config.Save()
-		stopBuy <- true
-		stopByOrSell <- true
-		return
+			<-collectionOutEvent
+			(*pair).SetStage(pairs_types.WorkInPositionStage)
+			config.Save()
+			stopBuy <- true
+			stopByOrSell <- true
+		}
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
-		collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
+		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
 
-		_ = ProcessBuyOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopBuy, stopEvent)
+			_ = ProcessBuyOrder(
+				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+				buyEvent, stopBuy, stopEvent)
 
-		<-collectionOutEvent
-		(*pair).SetStage(pairs_types.WorkInPositionStage)
-		config.Save()
-		_ = ProcessSellOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			sellEvent, stopSell, stopEvent)
-
-		// positionOutEvent := StartOutputOfPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
-
-		// <-positionOutEvent
-		// stopBuy <- true
-		// (*pair).SetStage(pairs_types.OutputOfPositionStage)
-		// config.Save()
-
-		// StopWorking := StopWorkingSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
-		// <-StopWorking
-		// stopSell <- true
+			<-collectionOutEvent
+			(*pair).SetStage(pairs_types.WorkInPositionStage)
+			config.Save()
+		}
+		if (*pair).GetStage() != pairs_types.WorkInPositionStage {
+			_ = ProcessSellOrder(
+				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+				sellEvent, stopSell, stopEvent)
+		}
 
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
-		collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
+		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
 
-		_ = ProcessBuyOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopBuy, stopEvent)
+			_ = ProcessBuyOrder(
+				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+				buyEvent, stopBuy, stopEvent)
 
-		<-collectionOutEvent
-		stopBuy <- true
-		(*pair).SetStage(pairs_types.OutputOfPositionStage)
-		config.Save()
-
-		_ = ProcessSellOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			sellEvent, stopSell, stopEvent)
-
-		positionOutEvent := StartOutputOfPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
-
-		<-positionOutEvent
-		stopSell <- true
-		return
+			<-collectionOutEvent
+			stopBuy <- true
+			(*pair).SetStage(pairs_types.OutputOfPositionStage)
+			config.Save()
+		}
+		if (*pair).GetStage() != pairs_types.OutputOfPositionStage {
+			quantityRound := int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
+			priceRound := int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
+			sellQuantity, _ := GetTargetBalance(account, pair)
+			order, err :=
+				client.NewCreateOrderService().
+					Symbol(string(binance.SymbolType((*pair).GetPair()))).
+					Type(binance.OrderTypeTakeProfit).
+					Side(binance.SideTypeSell).
+					Quantity(utils.ConvFloat64ToStr(sellQuantity, quantityRound)).
+					Price(utils.ConvFloat64ToStr(price, priceRound)).
+					TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+			if err != nil {
+				logrus.Errorf("Can't create order: %v", err)
+				// logrus.Errorf("Order params: %v", params)
+				logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+					(*pair).GetPair(), binance.SideTypeSell, sellQuantity, price)
+				stopEvent <- os.Interrupt
+				return
+			}
+			ProcessAfterOrder(
+				config,
+				client,
+				pair,
+				pairInfo,
+				minuteOrderLimit,
+				dayOrderLimit,
+				minuteRawRequestLimit,
+				sellEvent,
+				stopAfterProcess,
+				stopEvent,
+				orderStatusEvent,
+				order)
+		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

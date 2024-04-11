@@ -50,9 +50,11 @@ type (
 
 		// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
 		// як тільки наберемо цей ліміт, мусимо вийти з режиму спекуляціі
+		// LimitOutputOfPosition > LimitInputIntoPosition
 		LimitOutputOfPosition float64 `json:"limit_output_of_position"`
-		LimitOnPosition       float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
-		LimitOnTransaction    float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
+		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
 		BuyDelta     float64            `json:"buy_delta"`     // Дельта для купівлі
 		BuyQuantity  float64            `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
