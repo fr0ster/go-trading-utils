@@ -189,7 +189,6 @@ func StartWorkInPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
-	sleepingTime time.Duration,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	collectionOutEvent chan bool) { // Виходимо з накопичення
@@ -206,7 +205,7 @@ func StartWorkInPositionSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-			case <-time.After(sleepingTime): // Або просто чекаємо якийсь час
+			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(account, pair)
@@ -250,7 +249,6 @@ func StartOutputOfPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
-	sleepingTime time.Duration,
 	stopEvent chan os.Signal,
 	buyEvent chan *depth_types.DepthItemType) (
 	positionOutEvent chan bool) { // Виходимо з накопичення)
@@ -267,7 +265,7 @@ func StartOutputOfPositionSignal(
 			case <-stopEvent:
 				return
 			case <-buyEvent: // Чекаємо на спрацювання тригера
-			case <-time.After(sleepingTime): // Або просто чекаємо якийсь час
+			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(account, pair)
@@ -309,7 +307,6 @@ func StopWorkingSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
-	sleepingTime time.Duration,
 	stopEvent chan os.Signal,
 	buyEvent chan *depth_types.DepthItemType) (
 	stopWorkingEvent chan bool) { // Виходимо з накопичення)
@@ -326,7 +323,7 @@ func StopWorkingSignal(
 			case <-stopEvent:
 				return
 			case <-buyEvent: // Чекаємо на спрацювання тригера
-			case <-time.After(sleepingTime): // Або просто чекаємо якийсь час
+			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
