@@ -16,6 +16,7 @@ import (
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
@@ -279,6 +280,7 @@ func ProcessAfterOrder(
 						orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
 						(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
 						(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+						(*pair).SetStage(pairs_types.PositionClosedStage)
 						config.Save()
 						break
 					}

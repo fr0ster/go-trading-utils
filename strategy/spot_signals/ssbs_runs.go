@@ -26,7 +26,7 @@ import (
 )
 
 // Виводимо інформацію про позицію
-func positionInfoOut(
+func PositionInfoOut(
 	account account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -92,20 +92,8 @@ func Run(
 		return
 	}
 
-	if (*pair).GetBuyQuantity() == 0 && (*pair).GetSellQuantity() == 0 {
-		targetFree, err := account.GetAsset((*pair).GetTargetSymbol())
-		if err != nil {
-			logrus.Errorf("Can't get %s asset: %v", (*pair).GetTargetSymbol(), err)
-			stopEvent <- os.Interrupt
-			return
-		}
-		(*pair).SetBuyQuantity(targetFree)
-		(*pair).SetBuyValue(targetFree * price)
-		config.Save()
-	}
-
 	// Виводимо інформацію про позицію
-	go positionInfoOut(account, pair, stopEvent, updateTime, price)
+	go PositionInfoOut(account, pair, stopEvent, updateTime, price)
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent := BuyOrSellSignal(account, depth, pair, stopEvent, stopByOrSell, bookTickerEvent)
@@ -116,7 +104,7 @@ func Run(
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
-		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
@@ -133,13 +121,13 @@ func Run(
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
+		_ = ProcessBuyOrder(
+			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+			buyEvent, stopBuy, stopEvent)
+
 		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, timeFrame, stopEvent, buyEvent)
-
-			_ = ProcessBuyOrder(
-				config, client, pair, pairInfo, binance.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				buyEvent, stopBuy, stopEvent)
 
 			<-collectionOutEvent
 			(*pair).SetStage(pairs_types.WorkInPositionStage)

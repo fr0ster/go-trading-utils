@@ -232,7 +232,9 @@ func StartWorkInPositionSignal(
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// Якшо вартість купівлі цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+			// Якшо вартість купівлі цільової валюти більша
+			// за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію
+			// - переходимо в режим спекуляції
 			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
 				targetBalance*boundAsk >= baseBalance*LimitOnPosition {
 				(*pair).SetStage(pair_types.WorkInPositionStage)

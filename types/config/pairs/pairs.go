@@ -24,10 +24,11 @@ const (
 	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
 	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
 	// SpotStageType is a constant for spot stage type.
-	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION
+	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION/CLOSED
 	InputIntoPositionStage StageType = "INPUT_INTO_POSITION"
 	WorkInPositionStage    StageType = "WORK_IN_POSITION"
 	OutputOfPositionStage  StageType = "OUTPUT_OF_POSITION"
+	PositionClosedStage    StageType = "CLOSED"
 )
 
 type (
