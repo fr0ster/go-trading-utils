@@ -19,6 +19,7 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
+	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
@@ -116,5 +117,88 @@ func GetBound(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64
 	logrus.Debugf("Ask bound: %f", boundAsk)
 	boundBid = (*pair).GetMiddlePrice() * (1 - (*pair).GetSellDelta())
 	logrus.Debugf("Bid bound: %f", boundBid)
+	return
+}
+
+func GetBaseBalance(
+	account account_interfaces.Accounts,
+	pair *config_interfaces.Pairs) (
+	baseBalance float64, // Кількість базової валюти
+	err error) {
+	baseBalance, err = func(pair *config_interfaces.Pairs) (
+		baseBalance float64,
+		err error) {
+		baseBalance, err = account.GetAsset((*pair).GetBaseSymbol())
+		return
+	}(pair)
+
+	if err != nil {
+		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+		return
+	}
+	return
+}
+
+func GetTargetBalance(
+	account account_interfaces.Accounts,
+	pair *config_interfaces.Pairs) (
+	targetBalance float64, // Кількість торгової валюти
+	err error) {
+	targetBalance, err = func(pair *config_interfaces.Pairs) (
+		targetBalance float64,
+		err error) {
+		targetBalance, err = account.GetAsset((*pair).GetTargetSymbol())
+		return
+	}(pair)
+
+	if err != nil {
+		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+		return
+	}
+	return
+}
+
+func GetTransactionValue(
+	account account_interfaces.Accounts,
+	pair *config_interfaces.Pairs,
+	baseBalance float64) (
+	TransactionValue float64) { // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
+	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
+	TransactionValue = (*pair).GetLimitOnTransaction() * (*pair).GetLimitOnPosition() * baseBalance
+	return
+}
+
+func GetBuyAndSellQuantity(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs) (
+	sellQuantity float64, // Кількість торгової валюти для продажу
+	buyQuantity float64, // Кількість торгової валюти для купівлі
+	err error) {
+
+	baseBalance, err := GetBaseBalance(account, pair)
+	if err != nil {
+		return
+	}
+	targetBalance, err := GetTargetBalance(account, pair)
+	if err != nil {
+		return
+	}
+	bid, _, err := GetAskAndBid(depths)
+	if err != nil {
+		return
+	}
+	boundAsk, _, err := GetBound(pair)
+	if err != nil {
+		return
+	}
+	// Кількість торгової валюти для продажу
+	sellQuantity = GetTransactionValue(account, pair, baseBalance) / bid
+	if sellQuantity > targetBalance {
+		sellQuantity = targetBalance // Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
+	}
+
+	// Кількість торгової валюти для купівлі
+	buyQuantity = GetTransactionValue(account, pair, baseBalance) / boundAsk
 	return
 }

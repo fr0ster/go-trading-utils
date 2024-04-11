@@ -42,19 +42,38 @@ func Spot_depth_buy_sell_signals(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				baseBalance, // Кількість базової валюти
-					targetBalance, // Кількість торгової валюти
-					_,             // limitBalance, // Ліміт на купівлю повний у одиницях базової валюти
-					_,             // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-					_,             //LimitInPosition, // Ліміт базової валюти на одну позицію купівлі або продажу
-					ask,           // Ціна купівлі
-					bid,           // Ціна продажу
-					boundAsk,      // Верхня межа ціни купівлі
-					boundBid,      // Нижня межа ціни продажу
-					_,             //transactionValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-					sellQuantity,  // Кількість торгової валюти для продажу
-					buyQuantity,   // Кількість торгової валюти для купівлі
-					err := getData4Analysis(account, depths, pair)
+				// Кількість базової валюти
+				baseBalance, err := GetBaseBalance(account, pair)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Кількість торгової валюти
+				targetBalance, err := GetTargetBalance(account, pair)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Ціна купівлі
+				ask,
+					// Ціна продажу
+					bid, err := GetAskAndBid(depths)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Верхня межа ціни купівлі
+				boundAsk,
+					// Нижня межа ціни продажу
+					boundBid, err := GetBound(pair)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Кількість торгової валюти для продажу
+				sellQuantity,
+					// Кількість торгової валюти для купівлі
+					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
@@ -86,82 +105,6 @@ func Spot_depth_buy_sell_signals(
 	return
 }
 
-func getData4Analysis(
-	account account_interfaces.Accounts,
-	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs) (
-	baseBalance float64, // Кількість базової валюти
-	targetBalance float64, // Кількість торгової валюти
-	LimitInputIntoPosition float64, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitInPosition float64, // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction float64, // Ліміт на транзакцію, відсоток від ліміту на позицію
-	ask float64, // Ціна купівлі
-	bid float64, // Ціна продажу
-	boundAsk float64, // Верхня межа ціни купівлі
-	boundBid float64, // Нижня межа ціни продажу
-	transactionValue float64, // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
-	sellQuantity float64, // Кількість торгової валюти для продажу
-	buyQuantity float64, // Кількість торгової валюти для купівлі
-	err error) {
-	getBaseBalance := func(pair *config_interfaces.Pairs) (
-		baseBalance float64,
-		err error) {
-		baseBalance, err = account.GetAsset((*pair).GetBaseSymbol())
-		return
-	}
-	getTargetBalance := func(pair *config_interfaces.Pairs) (
-		targetBalance float64,
-		err error) {
-		targetBalance, err = account.GetAsset((*pair).GetTargetSymbol())
-		return
-	}
-	baseBalance, err = getBaseBalance(pair)
-	if err != nil {
-		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
-		return
-	}
-	targetBalance, err = getTargetBalance(pair)
-	if err != nil {
-		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
-		return
-	}
-
-	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
-	// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
-	// Режим входу - накопичуємо цільовий токен
-	// Режим спекуляції - купуємо/продаемо цільовий токен за базовий
-	// Режим виходу - продаемо цільовий токен
-	LimitInputIntoPosition = (*pair).GetLimitInputIntoPosition()
-	// Ліміт на позицію, відсоток від балансу базової валюти
-	LimitInPosition = (*pair).GetLimitOnPosition()
-	// Ліміт на транзакцію, відсоток від ліміту на позицію
-	LimitOnTransaction = (*pair).GetLimitOnTransaction()
-	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
-	transactionValue = LimitOnTransaction * LimitInPosition * baseBalance
-
-	ask, bid, err = GetAskAndBid(depths)
-	if err != nil {
-		logrus.Warnf("Can't get ask and bid: %v", err)
-		return
-	}
-
-	boundAsk, boundBid, err = GetBound(pair)
-	if err != nil {
-		logrus.Warnf("Can't get bounds: %v", err)
-		return
-	}
-
-	// Кількість торгової валюти для продажу
-	sellQuantity = transactionValue / bid
-	if sellQuantity > targetBalance {
-		sellQuantity = targetBalance // Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
-	}
-
-	// Кількість торгової валюти для купівлі
-	buyQuantity = transactionValue / boundAsk
-	return
-}
-
 func BuyOrSellSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
@@ -184,15 +127,26 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				_, _, _, _, _,
-					ask,      // Ціна купівлі
-					bid,      // Ціна продажу
-					boundAsk, // Верхня межа ціни купівлі
-					boundBid, // Нижня межа ціни продажу
-					_,
-					sellQuantity, // Кількість торгової валюти для продажу
-					buyQuantity,  // Кількість торгової валюти для купівлі
-					err := getData4Analysis(account, depths, pair)
+
+				ask,
+					// Ціна продажу
+					bid, err := GetAskAndBid(depths)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Верхня межа ціни купівлі
+				boundAsk,
+					// Нижня межа ціни продажу
+					boundBid, err := GetBound(pair)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Кількість торгової валюти для продажу
+				sellQuantity,
+					// Кількість торгової валюти для купівлі
+					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair)
 				if err != nil {
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
@@ -238,7 +192,7 @@ func StartWorkInPositionSignal(
 	timeFrame time.Duration,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
-	collectionOutEvent chan bool) { // Виходимо з накопичення)
+	collectionOutEvent chan bool) { // Виходимо з накопичення
 	if (*pair).GetStage() != pair_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.InputIntoPositionStage)
 		return
@@ -248,33 +202,39 @@ func StartWorkInPositionSignal(
 
 	go func() {
 		for {
-			// Remove the declaration of the unused variable isTimerEvent
 			select {
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
 			}
-			baseBalance, // Кількість базової валюти
-				targetBalance,          // Кількість торгової валюти
-				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
-				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-				_,                      //ask,                    // Ціна купівлі
-				_,                      //bid,                    // Ціна продажу
-				boundAsk,               // Верхня межа ціни купівлі
-				_,                      // Нижня межа ціни продажу
-				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-				_,                      // Кількість торгової валюти для продажу
-				_,                      //buyQuantity,            // Кількість торгової валюти для купівлі
-				err := getData4Analysis(account, depths, pair)
+			// Кількість базової валюти
+			baseBalance, err := GetBaseBalance(account, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Кількість торгової валюти
+			targetBalance, err := GetTargetBalance(account, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Ліміт на вхід в позицію, відсоток від балансу базової валюти
+			LimitInputIntoPosition := (*pair).GetLimitInputIntoPosition()
+			// Ліміт на позицію, відсоток від балансу базової валюти
+			LimitOnPosition := (*pair).GetLimitOnPosition()
+			// Верхня межа ціни купівлі
+			boundAsk,
+				// Нижня межа ціни продажу
+				_, err := GetBound(pair)
 			if err != nil {
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
 			// Якшо вартість купівлі цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
-				targetBalance*boundAsk >= baseBalance*LimitInPosition {
+				targetBalance*boundAsk >= baseBalance*LimitOnPosition {
 				(*pair).SetStage(pair_types.WorkInPositionStage)
 				collectionOutEvent <- true
 				return
@@ -307,26 +267,33 @@ func StartOutputOfPositionSignal(
 			case <-buyEvent: // Чекаємо на спрацювання тригера
 			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
 			}
-			baseBalance, // Кількість базової валюти
-				targetBalance,          // Кількість торгової валюти
-				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
-				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-				_,                      //ask,                    // Ціна купівлі
-				_,                      //bid,                    // Ціна продажу
-				_,                      // boundAsk,               // Верхня межа ціни купівлі
-				boundBid,               // Нижня межа ціни продажу
-				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-				_,                      // Кількість торгової валюти для продажу
-				_,                      //buyQuantity,            // Кількість торгової валюти для купівлі
-				err := getData4Analysis(account, depths, pair)
+			// Кількість базової валюти
+			baseBalance, err := GetBaseBalance(account, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Кількість торгової валюти
+			targetBalance, err := GetTargetBalance(account, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Ліміт на вхід в позицію, відсоток від балансу базової валюти
+			LimitInputIntoPosition := (*pair).GetLimitInputIntoPosition()
+			// Ліміт на позицію, відсоток від балансу базової валюти
+			LimitOnPosition := (*pair).GetLimitOnPosition()
+			// Верхня межа ціни купівлі
+			_,
+				// Нижня межа ціни продажу
+				boundBid, err := GetBound(pair)
 			if err != nil {
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
 			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 			if targetBalance*boundBid >= baseBalance*LimitInputIntoPosition ||
-				targetBalance*boundBid >= baseBalance*LimitInPosition {
+				targetBalance*boundBid >= baseBalance*LimitOnPosition {
 				(*pair).SetStage(pair_types.OutputOfPositionStage)
 				positionOutEvent <- true
 				return
@@ -359,19 +326,8 @@ func StopWorkingSignal(
 			case <-buyEvent: // Чекаємо на спрацювання тригера
 			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
 			}
-			_, // baseBalance, // Кількість базової валюти
-				targetBalance, // Кількість торгової валюти
-				_,             // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-				_,             // LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
-				_,             // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
-				_,             //ask,                    // Ціна купівлі
-				_,             //bid,                    // Ціна продажу
-				_,             // boundAsk,               // Верхня межа ціни купівлі
-				_,             // boundBid,               // Нижня межа ціни продажу
-				_,             // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
-				_,             // Кількість торгової валюти для продажу
-				_,             //buyQuantity,            // Кількість торгової валюти для купівлі
-				err := getData4Analysis(account, depths, pair)
+			// Кількість торгової валюти
+			targetBalance, err := GetTargetBalance(account, pair)
 			if err != nil {
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
