@@ -20,6 +20,9 @@ const (
 	ScalpingStrategyType  StrategyType = "SCALPING"
 	ArbitrageStrategyType StrategyType = "ARBITRAGE"
 	TradingStrategyType   StrategyType = "TRADING"
+	// INPUT_INTO_POSITION - Режим входу - накопичуємо цільовий токен
+	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
+	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
 	// SpotStageType is a constant for spot stage type.
 	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION
 	InputIntoPositionStage StageType = "INPUT_INTO_POSITION"
@@ -43,12 +46,13 @@ type (
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
-		// Режим входу - накопичуємо цільовий токен
-		// Режим спекуляції - купуємо/продаемо цільовий токен за базовий
-		// Режим виходу - продаемо цільовий токен
 		LimitInputIntoPosition float64 `json:"limit_input_into_position"`
-		LimitOnPosition        float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
-		LimitOnTransaction     float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+		// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
+		// як тільки наберемо цей ліміт, мусимо вийти з режиму спекуляціі
+		LimitOutputOfPosition float64 `json:"limit_output_of_position"`
+		LimitOnPosition       float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
+		LimitOnTransaction    float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
 		BuyDelta     float64            `json:"buy_delta"`     // Дельта для купівлі
 		BuyQuantity  float64            `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
@@ -117,6 +121,10 @@ func (cr *Pairs) GetTargetSymbol() string {
 
 func (cr *Pairs) GetLimitInputIntoPosition() float64 {
 	return cr.LimitInputIntoPosition
+}
+
+func (cr *Pairs) GetLimitOutputOfPosition() float64 {
+	return cr.LimitOutputOfPosition
 }
 
 func (cr *Pairs) GetLimitOnPosition() float64 {

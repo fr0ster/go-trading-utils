@@ -31,6 +31,7 @@ func ProcessBuyOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	buyEvent chan *depth_types.DepthItemType,
+	stopBuy chan bool,
 	stopEvent chan os.Signal) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
 	var (
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
@@ -41,6 +42,8 @@ func ProcessBuyOrder(
 		var err error
 		for {
 			select {
+			case <-stopBuy:
+				return
 			case <-stopEvent:
 				return
 			case params := <-buyEvent:
@@ -99,6 +102,7 @@ func ProcessSellOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	sellEvent chan *depth_types.DepthItemType,
+	stopSell chan bool,
 	stopEvent chan os.Signal) (startSellOrderEvent chan *binance.CreateOrderResponse) {
 	var (
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
@@ -110,6 +114,8 @@ func ProcessSellOrder(
 		var err error
 		for {
 			select {
+			case <-stopSell:
+				return
 			case <-stopEvent:
 				return
 			case params := <-sellEvent:
@@ -169,10 +175,16 @@ func ProcessAfterBuyOrder(
 	buyEvent chan *depth_types.DepthItemType,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,
+	stopBuy chan bool,
+	stopSell chan bool,
 	startBuyOrderEvent chan *binance.CreateOrderResponse) {
 	go func() {
 		for {
 			select {
+			case <-stopBuy:
+				return
+			case <-stopSell:
+				return
 			case <-stopEvent:
 				return
 			case order := <-startBuyOrderEvent:
@@ -205,12 +217,18 @@ func ProcessAfterSellOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	sellEvent chan *depth_types.DepthItemType,
+	stopBuy chan bool,
+	stopSell chan bool,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,
 	startSellOrderEvent chan *binance.CreateOrderResponse) {
 	go func() {
 		for {
 			select {
+			case <-stopBuy:
+				return
+			case <-stopSell:
+				return
 			case <-stopEvent:
 				return
 			case order := <-startSellOrderEvent:

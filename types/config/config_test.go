@@ -26,6 +26,7 @@ const (
 	BaseSymbol_1             = "USDT"                             // Базова валюта
 	BaseBalance_1            = 2000.0                             // Баланс базової валюти
 	LimitInputIntoPosition_1 = 0.01                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitOutputOfPosition_1  = 0.05                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
 	LimitOnPosition_1        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	BuyDelta_1               = 0.01                               // Дельта для купівлі
@@ -42,6 +43,7 @@ const (
 	BaseSymbol_2             = "USDT"                             // Базова валюта
 	LimitValue_2             = 2000.0                             // Баланс базової валюти
 	LimitInputIntoPosition_2 = 0.10                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitOutputOfPosition_2  = 0.15                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
 	LimitOnPosition_2        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	BuyDelta_2               = 0.01                               // Дельта для купівлі
@@ -67,6 +69,7 @@ var (
 		TargetSymbol:           TargetSymbol_1,
 		BaseSymbol:             BaseSymbol_1,
 		LimitInputIntoPosition: LimitInputIntoPosition_1,
+		LimitOutputOfPosition:  LimitOutputOfPosition_1,
 		LimitOnPosition:        LimitOnPosition_1,
 		LimitOnTransaction:     LimitOnTransaction_1,
 		BuyDelta:               BuyDelta_1,
@@ -86,6 +89,7 @@ var (
 		TargetSymbol:           TargetSymbol_2,
 		BaseSymbol:             BaseSymbol_2,
 		LimitInputIntoPosition: LimitInputIntoPosition_2,
+		LimitOutputOfPosition:  LimitOutputOfPosition_2,
 		LimitOnPosition:        LimitOnPosition_2,
 		LimitOnTransaction:     LimitOnTransaction_2,
 		BuyDelta:               BuyDelta_2,
@@ -114,6 +118,7 @@ func getTestData() []byte {
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
+				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
 				"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
@@ -136,6 +141,7 @@ func getTestData() []byte {
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
+				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
 				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
 				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
@@ -167,6 +173,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
+	assert.Equal(t, (*checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnPosition(), config.GetPair(Pair_1).GetLimitOnPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnTransaction(), config.GetPair(Pair_1).GetLimitOnTransaction())
 	assert.Equal(t, (*checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
@@ -183,6 +190,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
+	assert.Equal(t, (*checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnPosition(), config.GetPair(Pair_2).GetLimitOnPosition())
 	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
@@ -294,6 +302,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())
 	assert.Equal(t, LimitInputIntoPosition_1, pair.GetLimitInputIntoPosition())
+	assert.Equal(t, LimitOutputOfPosition_1, pair.GetLimitOutputOfPosition())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
 	assert.Equal(t, BuyDelta_1, pair.GetBuyDelta())

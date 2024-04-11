@@ -167,6 +167,7 @@ func BuyOrSellSignal(
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
+	stopByOrSell chan bool,
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
@@ -176,6 +177,9 @@ func BuyOrSellSignal(
 	}
 	go func() {
 		for {
+			if (*pair).GetMiddlePrice() == 0 {
+				continue
+			}
 			select {
 			case <-stopEvent:
 				return
@@ -227,33 +231,29 @@ func BuyOrSellSignal(
 	return
 }
 
-func InPositionSignal(
+func StartWorkInPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	timeFrame time.Duration,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (
-	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
+	triggerEvent chan *depth_types.DepthItemType) (
 	collectionOutEvent chan bool) { // Виходимо з накопичення)
 	if (*pair).GetStage() != pair_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.InputIntoPositionStage)
 		return
 	}
 
-	isTimerEvent := false
-	collectionEvent = make(chan *depth_types.DepthItemType, 1)
 	collectionOutEvent = make(chan bool, 1)
 
 	go func() {
 		for {
+			// Remove the declaration of the unused variable isTimerEvent
 			select {
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				isTimerEvent = false
 			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
-				isTimerEvent = true
 			}
 			baseBalance, // Кількість базової валюти
 				targetBalance,          // Кількість торгової валюти
@@ -266,63 +266,123 @@ func InPositionSignal(
 				_,                      // Нижня межа ціни продажу
 				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
 				_,                      // Кількість торгової валюти для продажу
-				buyQuantity,            // Кількість торгової валюти для купівлі
+				_,                      //buyQuantity,            // Кількість торгової валюти для купівлі
 				err := getData4Analysis(account, depths, pair)
 			if err != nil {
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// Якшо вартість цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+			// Якшо вартість купівлі цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
 				targetBalance*boundAsk >= baseBalance*LimitInPosition {
 				(*pair).SetStage(pair_types.WorkInPositionStage)
 				collectionOutEvent <- true
 				return
-				// Якшо вартість цільової валюти менша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - накопичуємо
-			} else if targetBalance*boundAsk < baseBalance*LimitInputIntoPosition*LimitInPosition &&
-				((*pair).GetMiddlePrice() >= boundAsk || isTimerEvent) {
-				logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-				collectionEvent <- &depth_types.DepthItemType{
-					Price:    boundAsk,
-					Quantity: buyQuantity}
 			}
 		}
 	}()
 	return
 }
 
-// func HoldingSignal(
-// 	account account_interfaces.Accounts,
-// 	depths *depth_types.Depth,
-// 	pair *config_interfaces.Pairs,
-// 	timeFrame time.Duration,
-// 	stopEvent chan os.Signal,
-// 	triggerEvent chan bool) (
-// 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-// 	collectionOutEvent chan bool) { // Виходимо з накопичення
-// 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
-// 	collectionOutEvent = make(chan bool, 1)
-// 	if (*pair).GetStrategy() != pair_types.HoldingStrategyType {
-// 		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.HoldingStrategyType)
-// 		return
-// 	}
-// 	return InPositionSignal(account, depths, pair, timeFrame, stopEvent, triggerEvent)
-// }
+func StartOutputOfPositionSignal(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs,
+	timeFrame time.Duration,
+	stopEvent chan os.Signal,
+	buyEvent chan *depth_types.DepthItemType) (
+	positionOutEvent chan bool) { // Виходимо з накопичення)
+	if (*pair).GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		return
+	}
 
-// func ScalpingInPositionSignal(
-// 	account account_interfaces.Accounts,
-// 	depths *depth_types.Depth,
-// 	pair *config_interfaces.Pairs,
-// 	timeFrame time.Duration,
-// 	stopEvent chan os.Signal,
-// 	triggerEvent chan bool) (
-// 	collectionEvent chan *depth_types.DepthItemType, // Накопичуемо цільову валюту
-// 	collectionOutEvent chan bool) { // Переходимо в режим спекуляції
-// 	collectionEvent = make(chan *depth_types.DepthItemType, 1)
-// 	collectionOutEvent = make(chan bool, 1)
-// 	if (*pair).GetStrategy() != pair_types.ScalpingStrategyType {
-// 		logrus.Errorf("Strategy %s is not %s", (*pair).GetStrategy(), pair_types.ScalpingStrategyType)
-// 		return
-// 	}
-// 	return InPositionSignal(account, depths, pair, timeFrame, stopEvent, triggerEvent)
-// }
+	positionOutEvent = make(chan bool, 1)
+
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				return
+			case <-buyEvent: // Чекаємо на спрацювання тригера
+			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+			}
+			baseBalance, // Кількість базової валюти
+				targetBalance,          // Кількість торгової валюти
+				LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+				LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+				_,                      // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
+				_,                      //ask,                    // Ціна купівлі
+				_,                      //bid,                    // Ціна продажу
+				_,                      // boundAsk,               // Верхня межа ціни купівлі
+				boundBid,               // Нижня межа ціни продажу
+				_,                      // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+				_,                      // Кількість торгової валюти для продажу
+				_,                      //buyQuantity,            // Кількість торгової валюти для купівлі
+				err := getData4Analysis(account, depths, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+			if targetBalance*boundBid >= baseBalance*LimitInputIntoPosition ||
+				targetBalance*boundBid >= baseBalance*LimitInPosition {
+				(*pair).SetStage(pair_types.OutputOfPositionStage)
+				positionOutEvent <- true
+				return
+			}
+		}
+	}()
+	return
+}
+
+func StopWorkingSignal(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs,
+	timeFrame time.Duration,
+	stopEvent chan os.Signal,
+	buyEvent chan *depth_types.DepthItemType) (
+	stopWorkingEvent chan bool) { // Виходимо з накопичення)
+	if (*pair).GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		return
+	}
+
+	stopWorkingEvent = make(chan bool, 1)
+
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				return
+			case <-buyEvent: // Чекаємо на спрацювання тригера
+			case <-time.After(timeFrame): // Або просто чекаємо якийсь час
+			}
+			_, // baseBalance, // Кількість базової валюти
+				targetBalance, // Кількість торгової валюти
+				_,             // LimitInputIntoPosition, // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+				_,             // LimitInPosition,        // Ліміт на позицію, відсоток від балансу базової валюти
+				_,             // LimitOnTransaction,     // Ліміт на транзакцію, відсоток від ліміту на позицію
+				_,             //ask,                    // Ціна купівлі
+				_,             //bid,                    // Ціна продажу
+				_,             // boundAsk,               // Верхня межа ціни купівлі
+				_,             // boundBid,               // Нижня межа ціни продажу
+				_,             // limitValue, // Ліміт на купівлю на одну позицію купівлі або продажу
+				_,             // Кількість торгової валюти для продажу
+				_,             //buyQuantity,            // Кількість торгової валюти для купівлі
+				err := getData4Analysis(account, depths, pair)
+			if err != nil {
+				logrus.Warnf("Can't get data for analysis: %v", err)
+				continue
+			}
+			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
+			if targetBalance == 0 {
+				(*pair).SetStage(pair_types.WorkInPositionStage)
+				stopWorkingEvent <- true
+				return
+			}
+		}
+	}()
+	return
+}
