@@ -31,8 +31,7 @@ func ProcessBuyOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	buyEvent chan *depth_types.DepthItemType,
-	stopEvent chan os.Signal,
-	orderStatusEvent chan *binance.WsUserDataEvent) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
+	stopEvent chan os.Signal) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
 	var (
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
@@ -100,8 +99,7 @@ func ProcessSellOrder(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	sellEvent chan *depth_types.DepthItemType,
-	stopEvent chan os.Signal,
-	orderStatusEvent chan *binance.WsUserDataEvent) (startSellOrderEvent chan *binance.CreateOrderResponse) {
+	stopEvent chan os.Signal) (startSellOrderEvent chan *binance.CreateOrderResponse) {
 	var (
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))

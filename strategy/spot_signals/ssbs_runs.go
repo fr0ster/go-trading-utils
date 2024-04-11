@@ -31,7 +31,6 @@ func RunHolding(
 	timeFrame time.Duration,
 	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
-	orderStatusEvent chan *binance.WsUserDataEvent,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -74,12 +73,12 @@ func RunHolding(
 	}
 	config.Save()
 
-	collectionEvent, collectionOutEvent := HoldingSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
+	collectionEvent, collectionOutEvent := InPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		collectionEvent, stopEvent, orderStatusEvent)
+		collectionEvent, stopEvent)
 
 	go func() {
 		for {
@@ -107,7 +106,7 @@ func RunHolding(
 	logrus.Infof("Holding strategy is finished")
 }
 
-func RunTrading(
+func RunScalping(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	degree int,
@@ -117,7 +116,6 @@ func RunTrading(
 	timeFrame time.Duration,
 	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
-	orderStatusEvent chan *binance.WsUserDataEvent,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -127,7 +125,7 @@ func RunTrading(
 		bookTicker *bookTicker_types.BookTickerBTree
 	)
 
-	if (*pair).GetStrategy() != pairs_types.TradingStrategyType {
+	if (*pair).GetStrategy() != pairs_types.ScalpingStrategyType {
 		logrus.Errorf("Strategy is not Trading")
 		stopEvent <- os.Interrupt
 		return
@@ -160,12 +158,12 @@ func RunTrading(
 	}
 	config.Save()
 
-	collectionEvent, collectionOutEvent := TradingInPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
+	collectionEvent, collectionOutEvent := InPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 	ProcessBuyOrder(
 		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		collectionEvent, stopEvent, orderStatusEvent)
+		collectionEvent, stopEvent)
 
 	<-collectionOutEvent
 
@@ -174,11 +172,11 @@ func RunTrading(
 	_ = ProcessBuyOrder(
 		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, stopEvent, orderStatusEvent)
+		buyEvent, stopEvent)
 	_ = ProcessSellOrder(
 		config, client, pair, pairInfo, binance.OrderTypeMarket,
 		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		sellEvent, stopEvent, orderStatusEvent)
+		sellEvent, stopEvent)
 
 	go func() {
 		for {
@@ -213,7 +211,6 @@ func Run(
 	timeFrame time.Duration,
 	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
-	orderStatusEvent chan *binance.WsUserDataEvent,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -275,25 +272,25 @@ func Run(
 
 	// Відпрацьовуємо  Holding стратегію
 	if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
-		collectionEvent, collectionOutEvent := HoldingSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
+		collectionEvent, collectionOutEvent := InPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 		_ = ProcessBuyOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			collectionEvent, stopEvent, orderStatusEvent)
+			collectionEvent, stopEvent)
 
 		<-collectionOutEvent
 		(*pair).SetStage(pairs_types.WorkInPositionStage)
 		config.Save()
 		return
-		// Відпрацьовуємо Trading стратегію
-	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
-		collectionEvent, collectionOutEvent := TradingInPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
+		// Відпрацьовуємо Scalping стратегію
+	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
+		collectionEvent, collectionOutEvent := InPositionSignal(account, depth, pair, timeFrame, stopEvent, bookTickerEvent)
 
 		_ = ProcessBuyOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			collectionEvent, stopEvent, orderStatusEvent)
+			collectionEvent, stopEvent)
 
 		<-collectionOutEvent
 		(*pair).SetStage(pairs_types.WorkInPositionStage)
@@ -303,11 +300,11 @@ func Run(
 		_ = ProcessBuyOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopEvent, orderStatusEvent)
+			buyEvent, stopEvent)
 		_ = ProcessSellOrder(
 			config, client, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			sellEvent, stopEvent, orderStatusEvent)
+			sellEvent, stopEvent)
 		// Відпрацьовуємо Arbitrage стратегію
 	} else if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
 		// Відпрацьовуємо Scalping стратегію
