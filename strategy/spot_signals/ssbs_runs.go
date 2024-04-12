@@ -107,7 +107,6 @@ func Run(
 		depth           *depth_types.Depth
 		stopBuy         = make(chan bool)
 		stopSell        = make(chan bool)
-		stopByOrSell    = make(chan bool)
 		stopProfitOrder = make(chan bool)
 	)
 	depth, buyEvent, sellEvent :=
@@ -133,7 +132,6 @@ func Run(
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 			stopBuy <- true
-			stopByOrSell <- true
 		}
 
 		// Відпрацьовуємо Scalping стратегію
