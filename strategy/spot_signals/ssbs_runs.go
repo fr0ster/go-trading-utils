@@ -160,6 +160,10 @@ func Run(
 
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
+		if (*pair).GetStage() == pairs_types.WorkInPositionStage {
+			stopEvent <- os.Interrupt
+			return
+		}
 		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
@@ -172,7 +176,8 @@ func Run(
 			stopBuy <- true
 			(*pair).SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
-		} else if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
+		}
+		if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
 			orderExecutionGuard := ProcessSellTakeProfitOrder(
 				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -180,8 +185,6 @@ func Run(
 			<-orderExecutionGuard
 			(*pair).SetStage(pairs_types.PositionClosedStage)
 			config.Save()
-			stopEvent <- os.Interrupt
-		} else {
 			stopEvent <- os.Interrupt
 		}
 
