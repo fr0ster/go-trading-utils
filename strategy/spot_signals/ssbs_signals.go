@@ -121,14 +121,6 @@ func BuyOrSellSignal(
 						logrus.Info("Wait for buy or sell signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
-						// } else if ask < boundAsk {
-						// 	logrus.Info("Wait for buy signal")
-						// 	logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						// 	logrus.Infof("Waiting for ask decrease to %f", boundAsk)
-						// } else if bid > boundBid {
-						// 	logrus.Info("Wait for sell signal")
-						// 	logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						// 	logrus.Infof("Waiting for bid increase to %f", boundBid)
 					}
 				}
 			}
