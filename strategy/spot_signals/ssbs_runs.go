@@ -12,6 +12,8 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
+	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -53,6 +55,56 @@ func PositionInfoOut(
 	}
 }
 
+func Initialization(
+	config *config_types.ConfigFile,
+	client *binance.Client,
+	degree int,
+	limit int,
+	pair *config_interfaces.Pairs,
+	pairInfo *symbol_info_types.Symbol,
+	account account_interfaces.Accounts,
+	stopEvent chan os.Signal,
+	updateTime time.Duration,
+	minuteOrderLimit *exchange_types.RateLimits,
+	dayOrderLimit *exchange_types.RateLimits,
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	orderStatusEvent chan *binance.WsUserDataEvent) (
+	depth *depth_types.Depth,
+	price float64,
+	stopBuy chan bool,
+	stopSell chan bool,
+	stopByOrSell chan bool,
+	stopAfterProcess chan bool,
+	buyEvent chan *depth_types.DepthItemType,
+	sellEvent chan *depth_types.DepthItemType) {
+	depth = depth_types.NewDepth(degree, (*pair).GetPair())
+
+	bookTicker := bookTicker_types.New(degree)
+
+	// Запускаємо потік для отримання оновлення bookTickers
+	bookTickerStream := spot_streams.NewBookTickerStream((*pair).GetPair(), 1)
+	bookTickerStream.Start()
+
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
+
+	RestUpdate(client, stopEvent, pair, depth, limit, bookTicker, updateTime)
+
+	price, err := GetPrice(client, (*pair).GetPair())
+	if err != nil {
+		logrus.Errorf("Can't get price: %v", err)
+		stopEvent <- os.Interrupt
+		return
+	}
+
+	// Виводимо інформацію про позицію
+	go PositionInfoOut(account, pair, stopEvent, updateTime, price)
+
+	// Запускаємо потік для отримання сигналів на купівлю та продаж
+	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, stopByOrSell, triggerEvent)
+
+	return
+}
+
 func Run(
 	config *config_types.ConfigFile,
 	client *binance.Client,
@@ -68,34 +120,17 @@ func Run(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) {
 	var (
-		depth            *depth_types.Depth
-		bookTicker       *bookTicker_types.BookTickerBTree
+		depth *depth_types.Depth
+		// bookTicker       *bookTicker_types.BookTickerBTree
 		stopBuy          = make(chan bool)
 		stopSell         = make(chan bool)
 		stopByOrSell     = make(chan bool)
 		stopAfterProcess = make(chan bool)
 	)
-
-	depth = depth_types.NewDepth(degree, (*pair).GetPair())
-
-	bookTicker = bookTicker_types.New(degree)
-
-	_, bookTickerEvent := StartPairStreams((*pair).GetPair(), bookTicker, depth)
-
-	RestUpdate(client, stopEvent, pair, depth, limit, bookTicker, updateTime)
-
-	price, err := GetPrice(client, (*pair).GetPair())
-	if err != nil {
-		logrus.Errorf("Can't get price: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
-
-	// Виводимо інформацію про позицію
-	go PositionInfoOut(account, pair, stopEvent, updateTime, price)
-
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent := BuyOrSellSignal(account, depth, pair, stopEvent, stopByOrSell, bookTickerEvent)
+	depth, price, stopBuy, stopSell, stopByOrSell, stopAfterProcess, buyEvent, sellEvent :=
+		Initialization(
+			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
+			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
