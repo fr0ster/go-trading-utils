@@ -26,12 +26,12 @@ import (
 
 // Виводимо інформацію про позицію
 func PositionInfoOut(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) {
 	for {
-		baseBalance, err := account.GetAsset((*pair).GetBaseSymbol())
+		baseBalance, err := (*account).GetAsset((*pair).GetBaseSymbol())
 		if err != nil {
 			logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
 			stopEvent <- os.Interrupt
@@ -58,7 +58,7 @@ func Initialization(
 	limit int,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -96,7 +96,7 @@ func Run(
 	limit int,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -124,7 +124,7 @@ func Run(
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
-				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 				buyEvent, stopBuy, stopEvent)
 
@@ -140,7 +140,7 @@ func Run(
 		// Відпрацьовуємо Scalping стратегію
 	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
 		_ = ProcessBuyOrder(
-			config, client, pair, pairInfo, binance.OrderTypeMarket,
+			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 			buyEvent, stopBuy, stopEvent)
 
@@ -153,7 +153,7 @@ func Run(
 		}
 		if (*pair).GetStage() == pairs_types.WorkInPositionStage {
 			_ = ProcessSellOrder(
-				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 				sellEvent, stopSell, stopEvent)
 		}
@@ -164,7 +164,7 @@ func Run(
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
-				config, client, pair, pairInfo, binance.OrderTypeMarket,
+				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 				buyEvent, stopBuy, stopEvent)
 

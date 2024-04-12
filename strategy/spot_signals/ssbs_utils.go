@@ -119,14 +119,14 @@ func GetBound(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64
 }
 
 func GetBaseBalance(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	pair *config_interfaces.Pairs) (
 	baseBalance float64, // Кількість базової валюти
 	err error) {
 	baseBalance, err = func(pair *config_interfaces.Pairs) (
 		baseBalance float64,
 		err error) {
-		baseBalance, err = account.GetAsset((*pair).GetBaseSymbol())
+		baseBalance, err = (*account).GetAsset((*pair).GetBaseSymbol())
 		return
 	}(pair)
 
@@ -137,14 +137,14 @@ func GetBaseBalance(
 }
 
 func GetTargetBalance(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	pair *config_interfaces.Pairs) (
 	targetBalance float64, // Кількість торгової валюти
 	err error) {
 	targetBalance, err = func(pair *config_interfaces.Pairs) (
 		targetBalance float64,
 		err error) {
-		targetBalance, err = account.GetAsset((*pair).GetTargetSymbol())
+		targetBalance, err = (*account).GetAsset((*pair).GetTargetSymbol())
 		return
 	}(pair)
 
@@ -164,7 +164,7 @@ func GetTransactionValue(
 }
 
 func GetBuyAndSellQuantity(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	baseBalance float64,
@@ -197,10 +197,10 @@ func GetBuyAndSellQuantity(
 }
 
 func EvaluateMiddlePrice(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs) (middlePrice float64, err error) {
-	err = account.Update()
+	err = (*account).Update()
 	if err != nil {
 		return
 	}

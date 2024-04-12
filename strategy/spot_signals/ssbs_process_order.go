@@ -14,6 +14,7 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
+	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -26,6 +27,7 @@ import (
 func ProcessBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
+	account *account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
@@ -41,7 +43,6 @@ func ProcessBuyOrder(
 	)
 	go func() {
 		var order *binance.CreateOrderResponse
-		var err error
 		for {
 			select {
 			case <-stopBuy:
@@ -56,6 +57,17 @@ func ProcessBuyOrder(
 					continue
 				}
 				if params.Price == 0 || params.Quantity == 0 {
+					continue
+				}
+				targetBalance, err := GetTargetBalance(account, pair)
+				if err != nil {
+					logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				if targetBalance > (*pair).GetLimitInputIntoPosition() || targetBalance > (*pair).GetLimitOutputOfPosition() {
+					logrus.Warnf("We'd buy %s lots of %s, but we have not enough %s",
+						(*pair).GetPair(), (*pair).GetBaseSymbol(), (*pair).GetBaseSymbol())
 					continue
 				}
 				service :=
@@ -104,6 +116,7 @@ func ProcessBuyOrder(
 func ProcessSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
+	account *account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
@@ -120,7 +133,7 @@ func ProcessSellOrder(
 	startSellOrderEvent = make(chan *binance.CreateOrderResponse)
 	go func() {
 		var order *binance.CreateOrderResponse
-		var err error
+		// var err error
 		for {
 			select {
 			case <-stopSell:
@@ -135,6 +148,17 @@ func ProcessSellOrder(
 					continue
 				}
 				if params.Price == 0 || params.Quantity == 0 {
+					continue
+				}
+				targetBalance, err := GetTargetBalance(account, pair)
+				if err != nil {
+					logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				if targetBalance < params.Price*params.Quantity {
+					logrus.Warnf("We don't have enough %s to sell %s lots of %s",
+						(*pair).GetPair(), (*pair).GetBaseSymbol(), (*pair).GetBaseSymbol())
 					continue
 				}
 				service :=

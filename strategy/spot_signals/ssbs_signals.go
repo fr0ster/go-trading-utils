@@ -32,7 +32,7 @@ type (
 )
 
 func BuyOrSellSignal(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -49,7 +49,7 @@ func BuyOrSellSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				err := account.Update()
+				err := (*account).Update()
 				if err != nil {
 					logrus.Errorf("Can't update account: %v", err)
 					stopEvent <- os.Interrupt
@@ -149,7 +149,7 @@ func InitMiddlePrice(
 }
 
 func StartWorkInPositionSignal(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -165,7 +165,7 @@ func StartWorkInPositionSignal(
 
 	go func() {
 		for {
-			err := account.Update()
+			err := (*account).Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
@@ -218,7 +218,7 @@ func StartWorkInPositionSignal(
 }
 
 func StartOutputOfPositionSignal(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -234,7 +234,7 @@ func StartOutputOfPositionSignal(
 
 	go func() {
 		for {
-			err := account.Update()
+			err := (*account).Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
@@ -285,7 +285,7 @@ func StartOutputOfPositionSignal(
 }
 
 func StopWorkingSignal(
-	account account_interfaces.Accounts,
+	account *account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -301,7 +301,7 @@ func StopWorkingSignal(
 
 	go func() {
 		for {
-			err := account.Update()
+			err := (*account).Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
