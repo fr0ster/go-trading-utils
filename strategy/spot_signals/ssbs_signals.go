@@ -103,13 +103,13 @@ func BuyOrSellSignal(
 				}
 				// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
 				if ask <= boundAsk {
-					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
+					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), ask, boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
 				} else if bid >= boundBid {
-					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
+					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), bid, boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
