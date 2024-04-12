@@ -57,7 +57,11 @@ func (a *Account) GetPermissions() []string {
 	return a.account.Permissions
 }
 
-func (a *Account) Update() error {
+func (a *Account) Update() (err error) {
+	a.account, err = a.client.NewGetAccountService().Do(context.Background())
+	if err != nil {
+		return
+	}
 	for _, balance := range a.account.Balances {
 		if _, exists := a.symbols[balance.Asset]; exists || len(a.symbols) == 0 {
 			val := balances_types.BalanceItemType{
@@ -75,7 +79,7 @@ func (a *Account) GetBalances() *btree.BTree {
 	return a.assetBalances
 }
 
-func NewAccountLimits(client *binance.Client, symbols []string) (al *Account, err error) {
+func New(client *binance.Client, symbols []string) (al *Account, err error) {
 	account, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
 		return

@@ -12,7 +12,7 @@ import (
 
 func GetLimitPricesDumpWay(symbolname, target_symbol, base_symbol string, client *binance.Client) (string, float64, string, string, string, string, string, string, error) {
 	symbols := append([]string{}, target_symbol, base_symbol)
-	account, err := spot_account.NewAccountLimits(client, symbols)
+	account, err := spot_account.New(client, symbols)
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
@@ -51,7 +51,7 @@ func BidOrAsk(symbolname, target_symbol, base_symbol string, bookTickers *bookti
 	// Коли ви купуєте, ви хочете заплатити найнижчу можливу ціну,
 	// тому ви встановлюєте свій лімітний ордер на купівлю на рівні ціни ask або нижче.
 	symbols := append([]string{}, target_symbol, base_symbol)
-	account, err := spot_account.NewAccountLimits(client, symbols)
+	account, err := spot_account.New(client, symbols)
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}
