@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	_ "net/http/pprof"
+	"time"
 
 	"os"
 
@@ -91,6 +92,7 @@ func ProcessBuyOrder(
 					config.Save()
 				}
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
@@ -166,6 +168,7 @@ func ProcessSellOrder(
 					config.Save()
 				}
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
@@ -247,6 +250,7 @@ func ProcessSellTakeProfitOrder(
 					config.Save()
 				}
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
