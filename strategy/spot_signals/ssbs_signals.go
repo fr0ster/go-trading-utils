@@ -117,11 +117,6 @@ func BuyOrSellSignal(
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
-	if (*pair).GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
-		stopEvent <- os.Interrupt
-		return
-	}
 	go func() {
 		for {
 			if (*pair).GetMiddlePrice() == 0 {
