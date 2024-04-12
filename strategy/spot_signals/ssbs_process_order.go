@@ -55,6 +55,9 @@ func ProcessBuyOrder(
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
 					continue
 				}
+				if params.Price == 0 || params.Quantity == 0 {
+					continue
+				}
 				service :=
 					client.NewCreateOrderService().
 						Symbol(string(binance.SymbolType((*pair).GetPair()))).
@@ -129,6 +132,9 @@ func ProcessSellOrder(
 			case params := <-sellEvent:
 				if minuteOrderLimit.Limit == 0 || dayOrderLimit.Limit == 0 || minuteRawRequestLimit.Limit == 0 {
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
+					continue
+				}
+				if params.Price == 0 || params.Quantity == 0 {
 					continue
 				}
 				service :=
