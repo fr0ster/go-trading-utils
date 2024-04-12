@@ -144,14 +144,14 @@ func Run(
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 			buyEvent, stopBuy, stopEvent)
 
-		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			<-collectionOutEvent
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 		}
-		if (*pair).GetStage() != pairs_types.WorkInPositionStage {
+		if (*pair).GetStage() == pairs_types.WorkInPositionStage {
 			_ = ProcessSellOrder(
 				config, client, pair, pairInfo, binance.OrderTypeMarket,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -160,7 +160,7 @@ func Run(
 
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
-		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
+		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
@@ -173,7 +173,7 @@ func Run(
 			(*pair).SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
 		}
-		if (*pair).GetStage() != pairs_types.OutputOfPositionStage {
+		if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
 			orderExecutionGuard := ProcessSellTakeProfitOrder(
 				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
