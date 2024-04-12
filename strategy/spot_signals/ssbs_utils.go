@@ -182,12 +182,17 @@ func GetBuyAndSellQuantity(
 	}
 	// Кількість торгової валюти для продажу
 	sellQuantity = GetTransactionValue(pair, baseBalance) / bid
+	// Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
 	if sellQuantity > targetBalance {
-		sellQuantity = targetBalance // Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
+		sellQuantity = targetBalance
 	}
 
 	// Кількість торгової валюти для купівлі
 	buyQuantity = GetTransactionValue(pair, baseBalance) / boundAsk
+	// Якщо закуплено торгової валюти більше за ліміт на позицію, то не купуємо
+	if targetBalance > (*pair).GetLimitInputIntoPosition() {
+		buyQuantity = 0
+	}
 	return
 }
 
