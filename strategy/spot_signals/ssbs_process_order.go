@@ -83,6 +83,7 @@ func ProcessBuyOrder(
 						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
 						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
 						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
+						(*pair).CalcMiddlePrice()
 						(*pair).AddCommission(fill)
 					}
 					config.Save()
@@ -155,6 +156,7 @@ func ProcessSellOrder(
 						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
 						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
 						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
+						(*pair).CalcMiddlePrice()
 						(*pair).AddCommission(fill)
 					}
 					config.Save()
@@ -198,6 +200,7 @@ func ProcessAfterBuyOrder(
 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
 								(*pair).SetBuyQuantity((*pair).GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
 								(*pair).SetBuyValue((*pair).GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								(*pair).CalcMiddlePrice()
 								config.Save()
 								break
 							}
@@ -242,6 +245,7 @@ func ProcessAfterSellOrder(
 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
 								(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
 								(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								(*pair).CalcMiddlePrice()
 								config.Save()
 								break
 							}
@@ -280,6 +284,7 @@ func ProcessAfterOrder(
 						orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
 						(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
 						(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+						(*pair).CalcMiddlePrice()
 						(*pair).SetStage(pairs_types.PositionClosedStage)
 						config.Save()
 						break

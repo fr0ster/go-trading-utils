@@ -130,12 +130,6 @@ func Run(
 		Initialization(
 			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
-	err := InitMiddlePrice(client, pair, pairInfo)
-	if err != nil {
-		logrus.Errorf("Can't get middle price: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
@@ -208,7 +202,6 @@ func Run(
 					TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
 			if err != nil {
 				logrus.Errorf("Can't create order: %v", err)
-				// logrus.Errorf("Order params: %v", params)
 				logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 					(*pair).GetPair(), binance.SideTypeSell, sellQuantity, price)
 				stopEvent <- os.Interrupt

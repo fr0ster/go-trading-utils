@@ -17,7 +17,7 @@ func TestNewLimitOrder(t *testing.T) {
 	binance.UseTestnet = true
 	client := binance.NewClient(api_key, secret_key)
 	// Create a new limit order
-	order, err := orders.NewLimitOrder(client, "SUSHIUSDT", binance.SideTypeBuy, "5.0", "1.5", binance.TimeInForceTypeGTC)
+	order, err := orders.NewLimitOrder(client, "SUSHIUSDT", binance.SideTypeBuy, "5.0", "1.0", binance.TimeInForceTypeGTC)
 	if err != nil {
 		if apiErr, _ := err.(*common.APIError); apiErr.Code == 0 {
 			log.Printf("Error with code 0: %v", err)
@@ -34,11 +34,11 @@ func TestNewLimitOrder(t *testing.T) {
 	if order.Side != binance.SideTypeBuy {
 		t.Errorf("Expected side to be Buy, got %s", order.Side)
 	}
-	if order.ExecutedQuantity != "5.0" && order.Status == binance.OrderStatusTypeFilled {
-		t.Errorf("Expected quantity to be 5.0, got %s", order.ExecutedQuantity)
+	if utils.ConvFloat64ToStr(utils.ConvStrToFloat64(order.ExecutedQuantity), 1) != "5.0" && order.Status == binance.OrderStatusTypeFilled {
+		t.Errorf("Expected quantity to be 5.00000000, got %s", order.ExecutedQuantity)
 	}
-	if utils.ConvFloat64ToStr(utils.ConvStrToFloat64(order.Price), 1) != "1.5" {
-		t.Errorf("Expected price to be 1.5, got %s", order.Price)
+	if utils.ConvFloat64ToStr(utils.ConvStrToFloat64(order.Price), 1) != "1.0" {
+		t.Errorf("Expected price to be 1.0, got %s", order.Price)
 	}
 	_, err = orders.CancelOrder(client, order)
 	if err != nil {
