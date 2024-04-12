@@ -31,83 +31,6 @@ type (
 	}
 )
 
-func Spot_depth_buy_sell_signals(
-	account account_interfaces.Accounts,
-	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs,
-	stopEvent chan os.Signal,
-	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
-	buyEvent = make(chan *depth_types.DepthItemType, 1)
-	sellEvent = make(chan *depth_types.DepthItemType, 1)
-	go func() {
-		for {
-			select {
-			case <-stopEvent:
-				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				// Кількість базової валюти
-				baseBalance, err := GetBaseBalance(account, pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Кількість торгової валюти
-				targetBalance, err := GetTargetBalance(account, pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Ціна купівлі
-				ask,
-					// Ціна продажу
-					bid, err := GetAskAndBid(depths)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Верхня межа ціни купівлі
-				boundAsk,
-					// Нижня межа ціни продажу
-					boundBid, err := GetBound(pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Кількість торгової валюти для продажу
-				sellQuantity,
-					// Кількість торгової валюти для купівлі
-					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				if ((*pair).GetMiddlePrice() == 0 || // Якшо середня ціна купівли котирувальної валюти дорівнює нулю
-					(*pair).GetMiddlePrice() >= boundAsk) && // Та середня ціна купівли котирувальної валюти більша або дорівнює верхній межі ціни купівли
-					buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
-					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
-					buyEvent <- &depth_types.DepthItemType{
-						Price:    boundAsk,
-						Quantity: buyQuantity}
-				} else if (*pair).GetMiddlePrice() <= boundBid && // Якшо середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
-					sellQuantity > 0 { // Та кількість цільової валюти для продажу більша за нуль
-					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
-					sellEvent <- &depth_types.DepthItemType{
-						Price:    boundBid,
-						Quantity: sellQuantity}
-				}
-				logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-				logrus.Infof("Current Ask bound: %f, Bid bound: %f", boundAsk, boundBid)
-				logrus.Infof("Middle price: %f, available USDT: %f, available %s: %f",
-					(*pair).GetMiddlePrice(), baseBalance, (*pair).GetTargetSymbol(), targetBalance)
-				logrus.Infof("Current profit: %f", (*pair).GetProfit(bid))
-				logrus.Infof("Predicable profit: %f", (*pair).GetProfit((*pair).GetMiddlePrice()*(1+(*pair).GetSellDelta())))
-				time.Sleep(5 * time.Second)
-			}
-		}
-	}()
-	return
-}
-
 func BuyOrSellSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
@@ -126,12 +49,25 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-
+				// Кількість базової валюти
+				baseBalance, err := GetBaseBalance(account, pair)
+				if err != nil {
+					logrus.Errorf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				// Кількість торгової валюти
+				targetBalance, err := GetTargetBalance(account, pair)
+				if err != nil {
+					logrus.Errorf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+					stopEvent <- os.Interrupt
+					return
+				}
 				ask,
 					// Ціна продажу
 					bid, err := GetAskAndBid(depths)
 				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
+					logrus.Errorf("Can't get data for analysis: %v", err)
 					continue
 				}
 				// Верхня межа ціни купівлі
@@ -139,27 +75,34 @@ func BuyOrSellSignal(
 					// Нижня межа ціни продажу
 					boundBid, err := GetBound(pair)
 				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					stopEvent <- os.Interrupt
+					return
 				}
 				// Кількість торгової валюти для продажу
 				sellQuantity,
 					// Кількість торгової валюти для купівлі
-					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair)
+					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair, baseBalance, targetBalance)
 				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					stopEvent <- os.Interrupt
+					return
 				}
-				// Середня ціна купівли котирувальної валюти дорівнює нулю або більша за верхню межу ціни купівли
-				if (*pair).GetMiddlePrice() >= boundAsk &&
-					buyQuantity > 0 { // Та кількість цільової валюти для купівлі більша за нуль
+
+				if buyQuantity == 0 && sellQuantity == 0 {
+					logrus.Errorf("We don't have any %s for buy and don't have any %s for sell",
+						(*pair).GetBaseSymbol(), (*pair).GetTargetSymbol())
+					stopEvent <- os.Interrupt
+					return
+				}
+				// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
+				if (*pair).GetMiddlePrice() >= boundAsk {
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
-					// Середня ціна купівли котирувальної валюти менша або дорівнює нижній межі ціни продажу
-				} else if (*pair).GetMiddlePrice() <= boundBid &&
-					sellQuantity > 0 { // Та кількість цільової валюти для продажу більша за нуль
+					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
+				} else if (*pair).GetMiddlePrice() <= boundBid {
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
@@ -168,14 +111,18 @@ func BuyOrSellSignal(
 					// Чекаємо на зміну ціни
 					logrus.Infof("Middle price is %f, bound Bid price %f, bound Ask price %f",
 						(*pair).GetMiddlePrice(), boundBid, boundAsk)
-					if buyQuantity == 0 || sellQuantity == 0 {
-						logrus.Info("Wait for buy signal")
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f", boundAsk)
-					} else if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
 						logrus.Info("Wait for buy or sell signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
+					} else if (*pair).GetMiddlePrice() < boundAsk {
+						logrus.Info("Wait for buy signal")
+						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						logrus.Infof("Waiting for ask decrease to %f", boundAsk)
+					} else if (*pair).GetMiddlePrice() > boundBid {
+						logrus.Info("Wait for sell signal")
+						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						logrus.Infof("Waiting for bid increase to %f", boundBid)
 					}
 				}
 			}

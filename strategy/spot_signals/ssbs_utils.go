@@ -3,6 +3,7 @@ package spot_signals
 import (
 	"context"
 	"errors"
+	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -94,20 +95,17 @@ func GetPrice(client *binance.Client, symbol string) (float64, error) {
 func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err error) {
 	getPrice := func(val btree.Item) (float64, error) {
 		if val == nil {
-			err = errors.New("value is nil")
-			return 0, err
+			return 0, errors.New("value is nil")
 		}
 		return val.(*depth_types.DepthItemType).Price, nil
 	}
 	ask, err = getPrice(depths.GetAsks().Min())
 	if err != nil {
-		logrus.Warnf("Can't get ask: %v", err)
-		return
+		return 0, 0, fmt.Errorf("value is nil, can't get ask: %v", err)
 	}
 	bid, err = getPrice(depths.GetBids().Max())
 	if err != nil {
-		logrus.Warnf("Can't get bid: %v", err)
-		return
+		return 0, 0, fmt.Errorf("value is nil, can't get bid: %v", err)
 	}
 	return
 }
@@ -133,8 +131,7 @@ func GetBaseBalance(
 	}(pair)
 
 	if err != nil {
-		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
-		return
+		return 0, err
 	}
 	return
 }
@@ -152,14 +149,12 @@ func GetTargetBalance(
 	}(pair)
 
 	if err != nil {
-		logrus.Warnf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
-		return
+		return 0, err
 	}
 	return
 }
 
 func GetTransactionValue(
-	account account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	baseBalance float64) (
 	TransactionValue float64) { // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
@@ -171,19 +166,12 @@ func GetTransactionValue(
 func GetBuyAndSellQuantity(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs) (
+	pair *config_interfaces.Pairs,
+	baseBalance float64,
+	targetBalance float64) (
 	sellQuantity float64, // Кількість торгової валюти для продажу
 	buyQuantity float64, // Кількість торгової валюти для купівлі
 	err error) {
-
-	baseBalance, err := GetBaseBalance(account, pair)
-	if err != nil {
-		return
-	}
-	targetBalance, err := GetTargetBalance(account, pair)
-	if err != nil {
-		return
-	}
 	bid, _, err := GetAskAndBid(depths)
 	if err != nil {
 		return
@@ -193,12 +181,12 @@ func GetBuyAndSellQuantity(
 		return
 	}
 	// Кількість торгової валюти для продажу
-	sellQuantity = GetTransactionValue(account, pair, baseBalance) / bid
+	sellQuantity = GetTransactionValue(pair, baseBalance) / bid
 	if sellQuantity > targetBalance {
 		sellQuantity = targetBalance // Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
 	}
 
 	// Кількість торгової валюти для купівлі
-	buyQuantity = GetTransactionValue(account, pair, baseBalance) / boundAsk
+	buyQuantity = GetTransactionValue(pair, baseBalance) / boundAsk
 	return
 }

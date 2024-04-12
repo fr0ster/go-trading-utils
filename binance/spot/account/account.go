@@ -2,7 +2,7 @@ package account
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"reflect"
 	"sync"
 
@@ -26,7 +26,7 @@ type (
 func (a *Account) GetAsset(asset string) (float64, error) {
 	item := a.assetBalances.Get(&balances_types.BalanceItemType{Asset: asset})
 	if item == nil {
-		return 0, errors.New("item not found")
+		return 0, fmt.Errorf("%s not found", asset)
 	} else {
 		symbolBalance, _ := Binance2AssetBalance(item)
 		return symbolBalance.Free, nil
@@ -36,7 +36,7 @@ func (a *Account) GetAsset(asset string) (float64, error) {
 func (a *Account) GetLockedAsset(asset string) (float64, error) {
 	item := a.assetBalances.Get(&balances_types.BalanceItemType{Asset: asset})
 	if item == nil {
-		return 0, errors.New("item not found")
+		return 0, fmt.Errorf("%s not found", asset)
 	} else {
 		symbolBalance, _ := Binance2AssetBalance(item)
 		return symbolBalance.Locked, nil
@@ -46,7 +46,7 @@ func (a *Account) GetLockedAsset(asset string) (float64, error) {
 func (a *Account) GetTotalAsset(asset string) (float64, error) {
 	item := a.assetBalances.Get(&balances_types.BalanceItemType{Asset: asset})
 	if item == nil {
-		return 0, errors.New("item not found")
+		return 0, fmt.Errorf("%s not found", asset)
 	} else {
 		symbolBalance, _ := Binance2AssetBalance(item)
 		return symbolBalance.Free + symbolBalance.Locked, nil
