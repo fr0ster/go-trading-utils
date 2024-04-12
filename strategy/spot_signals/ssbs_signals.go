@@ -88,7 +88,7 @@ func BuyOrSellSignal(
 				// Кількість торгової валюти для продажу
 				sellQuantity,
 					// Кількість торгової валюти для купівлі
-					buyQuantity, err := GetBuyAndSellQuantity(account, depths, pair, baseBalance, targetBalance)
+					buyQuantity, err := GetBuyAndSellQuantity(pair, baseBalance, targetBalance, ask, bid)
 				if err != nil {
 					logrus.Errorf("Can't get data for analysis: %v", err)
 					stopEvent <- os.Interrupt
@@ -102,13 +102,15 @@ func BuyOrSellSignal(
 					return
 				}
 				// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
-				if ask <= boundAsk {
+				if ask <= boundAsk &&
+					targetBalance*ask < (*pair).GetLimitInputIntoPosition()*baseBalance &&
+					targetBalance*ask < (*pair).GetLimitOutputOfPosition()*baseBalance {
 					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), ask, boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
-						Price:    boundAsk,
+						Price:    ask,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
-				} else if bid >= boundBid {
+				} else if bid >= boundBid && sellQuantity < targetBalance {
 					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), bid, boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,

@@ -164,22 +164,14 @@ func GetTransactionValue(
 }
 
 func GetBuyAndSellQuantity(
-	account *account_interfaces.Accounts,
-	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	baseBalance float64,
-	targetBalance float64) (
+	targetBalance float64,
+	ask float64,
+	bid float64) (
 	sellQuantity float64, // Кількість торгової валюти для продажу
 	buyQuantity float64, // Кількість торгової валюти для купівлі
 	err error) {
-	bid, _, err := GetAskAndBid(depths)
-	if err != nil {
-		return
-	}
-	boundAsk, _, err := GetBound(pair)
-	if err != nil {
-		return
-	}
 	// Кількість торгової валюти для продажу
 	sellQuantity = GetTransactionValue(pair, baseBalance) / bid
 	// Якщо кількість торгової валюти для продажу більша за доступну, то продаємо доступну
@@ -188,7 +180,7 @@ func GetBuyAndSellQuantity(
 	}
 
 	// Кількість торгової валюти для купівлі
-	buyQuantity = GetTransactionValue(pair, baseBalance) / boundAsk
+	buyQuantity = GetTransactionValue(pair, baseBalance) / ask
 	// Якщо закуплено торгової валюти більше за ліміт на позицію, то не купуємо
 	if targetBalance > (*pair).GetLimitInputIntoPosition() {
 		buyQuantity = 0
