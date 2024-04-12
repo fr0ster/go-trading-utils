@@ -132,6 +132,8 @@ func Run(
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 			stopBuy <- true
+		} else {
+			stopEvent <- os.Interrupt
 		}
 
 		// Відпрацьовуємо Scalping стратегію
@@ -176,7 +178,9 @@ func Run(
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 				sellEvent, stopProfitOrder, stopEvent, orderStatusEvent)
 			<-orderExecutionGuard
-
+			(*pair).SetStage(pairs_types.PositionClosedStage)
+			config.Save()
+			stopEvent <- os.Interrupt
 		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
