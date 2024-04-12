@@ -1,8 +1,6 @@
 package spot_signals
 
 import (
-	"context"
-	"math"
 	_ "net/http/pprof"
 	"time"
 
@@ -16,7 +14,6 @@ import (
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
-	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -32,8 +29,7 @@ func PositionInfoOut(
 	account account_interfaces.Accounts,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	price float64) {
+	updateTime time.Duration) {
 	for {
 		baseBalance, err := account.GetAsset((*pair).GetBaseSymbol())
 		if err != nil {
@@ -47,8 +43,8 @@ func PositionInfoOut(
 			return
 		default:
 			if val := (*pair).GetMiddlePrice(); val != 0 {
-				logrus.Infof("Middle %s price: %f, available USDT: %f, Price: %f",
-					(*pair).GetPair(), val, baseBalance, price)
+				logrus.Infof("Middle %s price: %f, available USDT: %f",
+					(*pair).GetPair(), val, baseBalance)
 			}
 		}
 		time.Sleep(updateTime)
@@ -70,11 +66,9 @@ func Initialization(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) (
 	depth *depth_types.Depth,
-	price float64,
 	stopBuy chan bool,
 	stopSell chan bool,
 	stopByOrSell chan bool,
-	stopAfterProcess chan bool,
 	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType) {
 	depth = depth_types.NewDepth(degree, (*pair).GetPair())
@@ -89,15 +83,8 @@ func Initialization(
 
 	RestUpdate(client, stopEvent, pair, depth, limit, bookTicker, updateTime)
 
-	price, err := GetPrice(client, (*pair).GetPair())
-	if err != nil {
-		logrus.Errorf("Can't get price: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
-
 	// Виводимо інформацію про позицію
-	go PositionInfoOut(account, pair, stopEvent, updateTime, price)
+	go PositionInfoOut(account, pair, stopEvent, updateTime)
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, stopByOrSell, triggerEvent)
@@ -120,13 +107,13 @@ func Run(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) {
 	var (
-		depth            *depth_types.Depth
-		stopBuy          = make(chan bool)
-		stopSell         = make(chan bool)
-		stopByOrSell     = make(chan bool)
-		stopAfterProcess = make(chan bool)
+		depth           *depth_types.Depth
+		stopBuy         = make(chan bool)
+		stopSell        = make(chan bool)
+		stopByOrSell    = make(chan bool)
+		stopProfitOrder = make(chan bool)
 	)
-	depth, price, stopBuy, stopSell, stopByOrSell, stopAfterProcess, buyEvent, sellEvent :=
+	depth, stopBuy, stopSell, stopByOrSell, buyEvent, sellEvent :=
 		Initialization(
 			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
@@ -189,37 +176,12 @@ func Run(
 			config.Save()
 		}
 		if (*pair).GetStage() != pairs_types.OutputOfPositionStage {
-			quantityRound := int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
-			priceRound := int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
-			sellQuantity, _ := GetTargetBalance(account, pair)
-			order, err :=
-				client.NewCreateOrderService().
-					Symbol(string(binance.SymbolType((*pair).GetPair()))).
-					Type(binance.OrderTypeTakeProfit).
-					Side(binance.SideTypeSell).
-					Quantity(utils.ConvFloat64ToStr(sellQuantity, quantityRound)).
-					Price(utils.ConvFloat64ToStr(price, priceRound)).
-					TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-			if err != nil {
-				logrus.Errorf("Can't create order: %v", err)
-				logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-					(*pair).GetPair(), binance.SideTypeSell, sellQuantity, price)
-				stopEvent <- os.Interrupt
-				return
-			}
-			ProcessAfterOrder(
-				config,
-				client,
-				pair,
-				pairInfo,
-				minuteOrderLimit,
-				dayOrderLimit,
-				minuteRawRequestLimit,
-				sellEvent,
-				stopAfterProcess,
-				stopEvent,
-				orderStatusEvent,
-				order)
+			orderExecutionGuard := ProcessSellTakeProfitOrder(
+				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
+				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
+				sellEvent, stopProfitOrder, stopEvent, orderStatusEvent)
+			<-orderExecutionGuard
+
 		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму

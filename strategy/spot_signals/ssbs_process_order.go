@@ -167,6 +167,85 @@ func ProcessSellOrder(
 	return
 }
 
+func ProcessSellTakeProfitOrder(
+	config *config_types.ConfigFile,
+	client *binance.Client,
+	pair *config_interfaces.Pairs,
+	pairInfo *symbol_info_types.Symbol,
+	orderType binance.OrderType,
+	minuteOrderLimit *exchange_types.RateLimits,
+	dayOrderLimit *exchange_types.RateLimits,
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	sellEvent chan *depth_types.DepthItemType,
+	stopProcess chan bool,
+	stopEvent chan os.Signal,
+	orderStatusEvent chan *binance.WsUserDataEvent) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
+	var (
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
+	)
+	go func() {
+		for {
+			select {
+			case <-stopProcess:
+				return
+			case <-stopEvent:
+				return
+			case params := <-sellEvent:
+				if minuteOrderLimit.Limit == 0 || dayOrderLimit.Limit == 0 || minuteRawRequestLimit.Limit == 0 {
+					logrus.Warn("Order limits has been out!!!, waiting for update...")
+					continue
+				}
+				order, err :=
+					client.NewCreateOrderService().
+						Symbol(string(binance.SymbolType((*pair).GetPair()))).
+						Type(binance.OrderTypeTakeProfit).
+						Side(binance.SideTypeSell).
+						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+				if err != nil {
+					logrus.Errorf("Can't create order: %v", err)
+					logrus.Errorf("Order params: %v", params)
+					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+						(*pair).GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+					stopEvent <- os.Interrupt
+					return
+				}
+				minuteOrderLimit.Limit++
+				dayOrderLimit.Limit++
+				if order.Status == binance.OrderStatusTypeNew {
+					orderExecutionGuard := OrderExecutionGuard(
+						config,
+						client,
+						pair,
+						pairInfo,
+						minuteOrderLimit,
+						dayOrderLimit,
+						minuteRawRequestLimit,
+						stopProcess,
+						stopEvent,
+						orderStatusEvent,
+						order)
+					<-orderExecutionGuard
+					startBuyOrderEvent <- order
+				} else {
+					for _, fill := range order.Fills {
+						fillPrice := utils.ConvStrToFloat64(fill.Price)
+						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
+						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
+						(*pair).CalcMiddlePrice()
+						(*pair).AddCommission(fill)
+					}
+					config.Save()
+				}
+			}
+		}
+	}()
+	return
+}
+
 func ProcessAfterBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
@@ -257,7 +336,7 @@ func ProcessAfterSellOrder(
 	}()
 }
 
-func ProcessAfterOrder(
+func OrderExecutionGuard(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair *config_interfaces.Pairs,
@@ -265,11 +344,11 @@ func ProcessAfterOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	sellEvent chan *depth_types.DepthItemType,
 	stopProcess chan bool,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent,
-	order *binance.CreateOrderResponse) {
+	order *binance.CreateOrderResponse) (orderExecuted chan bool) {
+	orderExecuted = make(chan bool)
 	go func() {
 		for {
 			select {
@@ -287,10 +366,12 @@ func ProcessAfterOrder(
 						(*pair).CalcMiddlePrice()
 						(*pair).SetStage(pairs_types.PositionClosedStage)
 						config.Save()
-						break
+						orderExecuted <- true
+						return
 					}
 				}
 			}
 		}
 	}()
+	return
 }
