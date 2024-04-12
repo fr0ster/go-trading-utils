@@ -119,6 +119,7 @@ func BuyOrSellSignal(
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
 	if (*pair).GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		stopEvent <- os.Interrupt
 		return
 	}
 	go func() {
@@ -277,6 +278,7 @@ func StartOutputOfPositionSignal(
 	positionOutEvent chan bool) { // Виходимо з накопичення)
 	if (*pair).GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		stopEvent <- os.Interrupt
 		return
 	}
 
@@ -335,6 +337,7 @@ func StopWorkingSignal(
 	stopWorkingEvent chan bool) { // Виходимо з накопичення)
 	if (*pair).GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+		stopEvent <- os.Interrupt
 		return
 	}
 
