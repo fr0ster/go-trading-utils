@@ -172,8 +172,7 @@ func Run(
 			stopBuy <- true
 			(*pair).SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
-		}
-		if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
+		} else if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
 			orderExecutionGuard := ProcessSellTakeProfitOrder(
 				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -181,6 +180,8 @@ func Run(
 			<-orderExecutionGuard
 			(*pair).SetStage(pairs_types.PositionClosedStage)
 			config.Save()
+			stopEvent <- os.Interrupt
+		} else {
 			stopEvent <- os.Interrupt
 		}
 
