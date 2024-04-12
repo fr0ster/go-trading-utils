@@ -216,6 +216,7 @@ func StartWorkInPositionSignal(
 	collectionOutEvent chan bool) { // Виходимо з накопичення
 	if (*pair).GetStage() != pair_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.InputIntoPositionStage)
+		stopEvent <- os.Interrupt
 		return
 	}
 
