@@ -111,9 +111,9 @@ func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err erro
 }
 
 func GetBound(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
-	boundAsk = (*pair).GetMiddlePrice() * (1 + (*pair).GetBuyDelta())
+	boundAsk = (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
 	logrus.Debugf("Ask bound: %f", boundAsk)
-	boundBid = (*pair).GetMiddlePrice() * (1 - (*pair).GetSellDelta())
+	boundBid = (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
 	logrus.Debugf("Bid bound: %f", boundBid)
 	return
 }
