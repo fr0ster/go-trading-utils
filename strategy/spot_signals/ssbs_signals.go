@@ -221,7 +221,7 @@ func StartOutputOfPositionSignal(
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	buyEvent chan *depth_types.DepthItemType) (
+	triggerEvent chan *depth_types.DepthItemType) (
 	positionOutEvent chan bool) { // Виходимо з накопичення)
 	if (*pair).GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
@@ -237,7 +237,7 @@ func StartOutputOfPositionSignal(
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-buyEvent: // Чекаємо на спрацювання тригера
+			case <-triggerEvent: // Чекаємо на спрацювання тригера
 			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
@@ -281,7 +281,7 @@ func StopWorkingSignal(
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	buyEvent chan *depth_types.DepthItemType) (
+	triggerEvent chan *depth_types.DepthItemType) (
 	stopWorkingEvent chan bool) { // Виходимо з накопичення)
 	if (*pair).GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
@@ -297,7 +297,7 @@ func StopWorkingSignal(
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-buyEvent: // Чекаємо на спрацювання тригера
+			case <-triggerEvent: // Чекаємо на спрацювання тригера
 			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість торгової валюти
