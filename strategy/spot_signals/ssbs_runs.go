@@ -187,5 +187,6 @@ func Run(
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
 		logrus.Warnf("Unknown strategy: %v", (*pair).GetStrategy())
+		stopEvent <- os.Interrupt
 	}
 }
