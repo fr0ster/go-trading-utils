@@ -19,6 +19,7 @@ type (
 		GetTargetSymbol() string
 		GetBaseSymbol() string
 		GetSleepingTime() time.Duration
+		GetTakingPositionSleepingTime() time.Duration
 		GetLimitInputIntoPosition() float64
 		GetLimitOutputOfPosition() float64
 		GetLimitOnPosition() float64

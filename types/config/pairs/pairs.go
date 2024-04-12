@@ -40,15 +40,16 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		InitialBalance float64       `json:"initial_balance"` // Початковий баланс
-		AccountType    AccountType   `json:"account_type"`    // Тип акаунта
-		StrategyType   StrategyType  `json:"strategy_type"`   // Тип стратегії
-		StageType      StageType     `json:"stage_type"`      // Cтадія стратегії
-		Pair           string        `json:"symbol"`          // Пара
-		TargetSymbol   string        `json:"target_symbol"`   // Цільовий токен
-		BaseSymbol     string        `json:"base_symbol"`     // Базовий токен
-		SleepingTime   time.Duration `json:"sleeping_time"`   // Час сплячки, хвилини
-		MiddlePrice    float64       `json:"middle_price"`    // Середня ціна купівлі по позиції
+		InitialBalance             float64       `json:"initial_balance"`               // Початковий баланс
+		AccountType                AccountType   `json:"account_type"`                  // Тип акаунта
+		StrategyType               StrategyType  `json:"strategy_type"`                 // Тип стратегії
+		StageType                  StageType     `json:"stage_type"`                    // Cтадія стратегії
+		Pair                       string        `json:"symbol"`                        // Пара
+		TargetSymbol               string        `json:"target_symbol"`                 // Цільовий токен
+		BaseSymbol                 string        `json:"base_symbol"`                   // Базовий токен
+		SleepingTime               time.Duration `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
+		TakingPositionSleepingTime time.Duration `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
+		MiddlePrice                float64       `json:"middle_price"`                  // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -129,7 +130,12 @@ func (cr *Pairs) GetBaseSymbol() string {
 
 // GetSleepingTime implements Configuration.
 func (cr *Pairs) GetSleepingTime() time.Duration {
-	return cr.SleepingTime * time.Minute
+	return cr.SleepingTime * time.Millisecond
+}
+
+// GetTakingPositionSleepingTime implements Configuration.
+func (cr *Pairs) GetTakingPositionSleepingTime() time.Duration {
+	return cr.TakingPositionSleepingTime * time.Minute
 }
 
 func (cr *Pairs) GetLimitInputIntoPosition() float64 {

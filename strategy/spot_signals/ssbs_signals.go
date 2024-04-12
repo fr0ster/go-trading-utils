@@ -124,6 +124,7 @@ func BuyOrSellSignal(
 					}
 				}
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
@@ -148,7 +149,6 @@ func InitMiddlePrice(
 }
 
 func StartWorkInPositionSignal(
-	client *binance.Client,
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
@@ -176,7 +176,7 @@ func StartWorkInPositionSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
+			case <-time.After((*pair).GetTakingPositionSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(account, pair)
@@ -211,6 +211,7 @@ func StartWorkInPositionSignal(
 				collectionOutEvent <- true
 				return
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
@@ -233,6 +234,12 @@ func StartOutputOfPositionSignal(
 
 	go func() {
 		for {
+			err := account.Update()
+			if err != nil {
+				logrus.Errorf("Can't update account: %v", err)
+				stopEvent <- os.Interrupt
+				return
+			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
@@ -271,6 +278,7 @@ func StartOutputOfPositionSignal(
 				positionOutEvent <- true
 				return
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return
@@ -293,6 +301,12 @@ func StopWorkingSignal(
 
 	go func() {
 		for {
+			err := account.Update()
+			if err != nil {
+				logrus.Errorf("Can't update account: %v", err)
+				stopEvent <- os.Interrupt
+				return
+			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
@@ -312,6 +326,7 @@ func StopWorkingSignal(
 				stopWorkingEvent <- true
 				return
 			}
+			time.Sleep((*pair).GetSleepingTime())
 		}
 	}()
 	return

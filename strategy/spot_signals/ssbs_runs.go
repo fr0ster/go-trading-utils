@@ -121,7 +121,7 @@ func Run(
 		// Відпрацьовуємо  Holding стратегію
 	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
 		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, pair, pairInfo, binance.OrderTypeMarket,
@@ -145,7 +145,7 @@ func Run(
 			buyEvent, stopBuy, stopEvent)
 
 		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			<-collectionOutEvent
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
@@ -161,7 +161,7 @@ func Run(
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
 		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, pair, pairInfo, binance.OrderTypeMarket,
