@@ -47,6 +47,7 @@ type (
 		TargetSymbol   string        `json:"target_symbol"`   // Цільовий токен
 		BaseSymbol     string        `json:"base_symbol"`     // Базовий токен
 		SleepingTime   time.Duration `json:"sleeping_time"`   // Час сплячки, хвилини
+		MiddlePrice    float64       `json:"middle_price"`    // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -198,12 +199,20 @@ func (cr *Pairs) SetCommission(commission Commission) {
 	cr.Commission = commission
 }
 
-func (cr *Pairs) GetMiddlePrice() float64 {
+func (cr *Pairs) CalcMiddlePrice() float64 {
 	if cr.BuyQuantity == 0 && cr.SellQuantity == 0 {
 		return 0
 	}
 
 	return (cr.BuyValue - cr.SellValue) / (cr.BuyQuantity - cr.SellQuantity)
+}
+
+func (cr *Pairs) GetMiddlePrice() float64 {
+	return cr.MiddlePrice
+}
+
+func (cr *Pairs) SetMiddlePrice(price float64) {
+	cr.MiddlePrice = price
 }
 
 func (cr *Pairs) GetProfit(currentPrice float64) float64 {

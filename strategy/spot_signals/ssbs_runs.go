@@ -120,8 +120,7 @@ func Run(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) {
 	var (
-		depth *depth_types.Depth
-		// bookTicker       *bookTicker_types.BookTickerBTree
+		depth            *depth_types.Depth
 		stopBuy          = make(chan bool)
 		stopSell         = make(chan bool)
 		stopByOrSell     = make(chan bool)
@@ -131,6 +130,12 @@ func Run(
 		Initialization(
 			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
+	err := InitMiddlePrice(client, pair, pairInfo)
+	if err != nil {
+		logrus.Errorf("Can't get middle price: %v", err)
+		stopEvent <- os.Interrupt
+		return
+	}
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
@@ -139,7 +144,7 @@ func Run(
 		// Відпрацьовуємо  Holding стратегію
 	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
 		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, pair, pairInfo, binance.OrderTypeMarket,
@@ -161,7 +166,7 @@ func Run(
 			buyEvent, stopBuy, stopEvent)
 
 		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
 
 			<-collectionOutEvent
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
@@ -177,7 +182,7 @@ func Run(
 		// Відпрацьовуємо Trading стратегію
 	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
 		if (*pair).GetStage() != pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(client, account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, pair, pairInfo, binance.OrderTypeMarket,

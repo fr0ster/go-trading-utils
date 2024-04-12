@@ -15,46 +15,58 @@ import (
 )
 
 const (
-	APIKey                   = "your_api_key"                     // Ключ API
-	APISecret                = "your_api_secret"                  // Секретний ключ API
-	UseTestNet               = false                              // Використовувати тестову мережу
-	InitialBalance           = 1000.0                             // Початковий баланс
-	AccountType_1            = pairs_types.SpotAccountType        // Тип акаунта
-	StrategyType_1           = pairs_types.HoldingStrategyType    // Тип стратегії
-	StageType_1              = pairs_types.InputIntoPositionStage // Стадія стратегії
-	Pair_1                   = "BTCUSDT"                          // Пара
-	TargetSymbol_1           = "BTC"                              // Котирувальна валюта
-	BaseSymbol_1             = "USDT"                             // Базова валюта
-	SleepingTime_1           = 5                                  // Час сплячки
-	BaseBalance_1            = 2000.0                             // Баланс базової валюти
-	LimitInputIntoPosition_1 = 0.01                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitOutputOfPosition_1  = 0.05                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-	LimitOnPosition_1        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
-	BuyDelta_1               = 0.01                               // Дельта для купівлі
-	SellDelta_1              = 0.01                               // Дельта для продажу
-	BuyQuantity_1            = 1.0                                // Кількість для купівлі, суммарно по позиції
-	SellQuantity_1           = 1.0                                // Кількість для продажу, суммарно по позиції
-	BuyValue_1               = 100.0                              // Вартість для купівлі, суммарно по позиції
-	SellValue_1              = 100.0                              // Вартість для продажу, суммарно по позиції
-	AccountType_2            = pairs_types.USDTFutureType         // Тип акаунта
-	StrategyType_2           = pairs_types.TradingStrategyType    // Тип стратегії
-	StageType_2              = pairs_types.WorkInPositionStage    // Тип стадії
-	Pair_2                   = "ETHUSDT"                          // Пара
-	TargetSymbol_2           = "ETH"                              // Котирувальна валюта
-	BaseSymbol_2             = "USDT"                             // Базова валюта
-	SleepingTime_2           = 5                                  // Час сплячки
-	LimitValue_2             = 2000.0                             // Баланс базової валюти
-	LimitInputIntoPosition_2 = 0.10                               // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitOutputOfPosition_2  = 0.15                               // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-	LimitOnPosition_2        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
-	BuyDelta_2               = 0.01                               // Дельта для купівлі
-	SellDelta_2              = 0.01                               // Дельта для продажу
-	BuyQuantity_2            = 1.0                                // Кількість для купівлі, суммарно по позиції
-	SellQuantity_2           = 1.0                                // Кількість для продажу, суммарно по позиції
-	BuyValue_2               = 100.0                              // Вартість для купівлі, суммарно по позиції
-	SellValue_2              = 100.0                              // Вартість для продажу, суммарно по позиції
+	APIKey     = "your_api_key"    // Ключ API
+	APISecret  = "your_api_secret" // Секретний ключ API
+	UseTestNet = false             // Використовувати тестову мережу
+
+	InitialBalance = 1000.0 // Початковий баланс
+
+	AccountType_1   = pairs_types.SpotAccountType        // Тип акаунта
+	StrategyType_1  = pairs_types.HoldingStrategyType    // Тип стратегії
+	StageType_1     = pairs_types.InputIntoPositionStage // Стадія стратегії
+	Pair_1          = "BTCUSDT"                          // Пара
+	TargetSymbol_1  = "BTC"                              // Котирувальна валюта
+	BaseSymbol_1    = "USDT"                             // Базова валюта
+	BaseBalance_1   = 2000.0                             // Баланс базової валюти
+	TargetBalance_1 = 1000.0                             // Баланс цільової валюти
+	MiddlePrice_1   = 40000.0                            // Середня ціна купівлі по позиції
+	SleepingTime_1  = 5                                  // Час сплячки
+
+	LimitInputIntoPosition_1 = 0.01 // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitOutputOfPosition_1  = 0.05 // Ліміт на вихід з позиції, відсоток від балансу базової валюти
+	LimitOnPosition_1        = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_1     = 0.10 // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+	BuyDelta_1     = 0.01  // Дельта для купівлі
+	SellDelta_1    = 0.01  // Дельта для продажу
+	BuyQuantity_1  = 1.0   // Кількість для купівлі, суммарно по позиції
+	SellQuantity_1 = 1.0   // Кількість для продажу, суммарно по позиції
+	BuyValue_1     = 100.0 // Вартість для купівлі, суммарно по позиції
+	SellValue_1    = 100.0 // Вартість для продажу, суммарно по позиції
+
+	AccountType_2   = pairs_types.USDTFutureType      // Тип акаунта
+	StrategyType_2  = pairs_types.TradingStrategyType // Тип стратегії
+	StageType_2     = pairs_types.WorkInPositionStage // Тип стадії
+	Pair_2          = "ETHUSDT"                       // Пара
+	TargetSymbol_2  = "ETH"                           // Котирувальна валюта
+	BaseSymbol_2    = "USDT"                          // Базова валюта
+	BaseBalance_2   = 2000.0                          // Баланс базової валюти
+	TargetBalance_2 = 10.0                            // Баланс цільової валюти
+	MiddlePrice_2   = 3000.0                          // Середня ціна купівлі по позиції
+	SleepingTime_2  = 5                               // Час сплячки
+
+	LimitValue_2             = 2000.0 // Баланс базової валюти
+	LimitInputIntoPosition_2 = 0.10   // Ліміт на вхід в позицію, відсоток від балансу базової валюти
+	LimitOutputOfPosition_2  = 0.15   // Ліміт на вихід з позиції, відсоток від балансу базової валюти
+	LimitOnPosition_2        = 0.50   // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2     = 0.01   // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+	BuyDelta_2     = 0.01  // Дельта для купівлі
+	SellDelta_2    = 0.01  // Дельта для продажу
+	BuyQuantity_2  = 1.0   // Кількість для купівлі, суммарно по позиції
+	SellQuantity_2 = 1.0   // Кількість для продажу, суммарно по позиції
+	BuyValue_2     = 100.0 // Вартість для купівлі, суммарно по позиції
+	SellValue_2    = 100.0 // Вартість для продажу, суммарно по позиції
 )
 
 var (
@@ -72,6 +84,7 @@ var (
 		TargetSymbol:           TargetSymbol_1,
 		BaseSymbol:             BaseSymbol_1,
 		SleepingTime:           SleepingTime_1,
+		MiddlePrice:            MiddlePrice_1,
 		LimitInputIntoPosition: LimitInputIntoPosition_1,
 		LimitOutputOfPosition:  LimitOutputOfPosition_1,
 		LimitOnPosition:        LimitOnPosition_1,
@@ -93,6 +106,7 @@ var (
 		TargetSymbol:           TargetSymbol_2,
 		BaseSymbol:             BaseSymbol_2,
 		SleepingTime:           SleepingTime_2,
+		MiddlePrice:            MiddlePrice_2,
 		LimitInputIntoPosition: LimitInputIntoPosition_2,
 		LimitOutputOfPosition:  LimitOutputOfPosition_2,
 		LimitOnPosition:        LimitOnPosition_2,
@@ -123,6 +137,7 @@ func getTestData() []byte {
 				"target_symbol": "` + TargetSymbol_1 + `",
 				"base_symbol": "` + BaseSymbol_1 + `",
 				"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
+				"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_1, 'f', -1, 64)).String() + `,
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
 				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
 				"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
@@ -147,6 +162,7 @@ func getTestData() []byte {
 				"target_symbol": "` + TargetSymbol_2 + `",
 				"base_symbol": "` + BaseSymbol_2 + `",
 				"sleeping_time": ` + strconv.Itoa(SleepingTime_2) + `,
+				"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
 				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
 				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
@@ -180,6 +196,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetSleepingTime(), config.GetPair(Pair_1).GetSleepingTime())
+	assert.Equal(t, (*checkingDate)[0].GetMiddlePrice(), config.GetPair(Pair_1).GetMiddlePrice())
 	assert.Equal(t, (*checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnPosition(), config.GetPair(Pair_1).GetLimitOnPosition())
@@ -200,6 +217,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetSleepingTime(), config.GetPair(Pair_1).GetSleepingTime())
+	assert.Equal(t, (*checkingDate)[1].GetMiddlePrice(), config.GetPair(Pair_2).GetMiddlePrice())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnPosition(), config.GetPair(Pair_2).GetLimitOnPosition())
@@ -287,6 +305,7 @@ func TestPairSetter(t *testing.T) {
 	}
 	newCommission := pairs_types.Commission{"USDT": 0.1}
 	pair.SetInitialBalance(3000)
+	pair.SetMiddlePrice(45000)
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)
 	pair.SetBuyValue(BuyValue_2)
@@ -295,6 +314,7 @@ func TestPairSetter(t *testing.T) {
 	pair.SetCommission(newCommission)
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
+	assert.Equal(t, 45000.0, pair.GetMiddlePrice())
 	assert.Equal(t, StageType_2, pair.GetStage())
 	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
 	assert.Equal(t, BuyValue_2, pair.GetBuyValue())
@@ -313,6 +333,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, TargetSymbol_1, pair.GetTargetSymbol())
 	assert.Equal(t, BaseSymbol_1, pair.GetBaseSymbol())
 	assert.Equal(t, SleepingTime_1*time.Minute, pair.GetSleepingTime())
+	assert.Equal(t, MiddlePrice_1, pair.GetMiddlePrice())
 	assert.Equal(t, LimitInputIntoPosition_1, pair.GetLimitInputIntoPosition())
 	assert.Equal(t, LimitOutputOfPosition_1, pair.GetLimitOutputOfPosition())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
