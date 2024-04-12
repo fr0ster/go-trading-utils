@@ -218,3 +218,10 @@ func (cr *Pairs) SetMiddlePrice(price float64) {
 func (cr *Pairs) GetProfit(currentPrice float64) float64 {
 	return (currentPrice - cr.GetMiddlePrice()) * (cr.BuyQuantity - cr.SellQuantity)
 }
+
+func (cr *Pairs) CheckingPair() bool {
+	return cr.MiddlePrice != 0 &&
+		cr.LimitInputIntoPosition != 0 &&
+		cr.LimitOutputOfPosition != 0 &&
+		cr.LimitInputIntoPosition < cr.LimitOutputOfPosition
+}

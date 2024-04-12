@@ -40,6 +40,7 @@ type (
 		GetMiddlePrice() float64
 		SetMiddlePrice(price float64)
 		GetProfit(currentPrice float64) float64
+		CheckingPair() bool
 	}
 	Configuration interface {
 		GetAPIKey() string

@@ -55,11 +55,17 @@ const (
 	MiddlePrice_2   = 3000.0                          // Середня ціна купівлі по позиції
 	SleepingTime_2  = 5                               // Час сплячки
 
-	LimitValue_2             = 2000.0 // Баланс базової валюти
-	LimitInputIntoPosition_2 = 0.10   // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitOutputOfPosition_2  = 0.15   // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-	LimitOnPosition_2        = 0.50   // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_2     = 0.01   // Ліміт на транзакцію, відсоток від ліміту на позицію
+	LimitValue_2 = 2000.0 // Баланс базової валюти
+	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
+	// повинно бути меньше ніж LimitOutputOfPosition_2,
+	// але це для перевірки CheckingPair
+	LimitInputIntoPosition_2 = 0.15
+	// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
+	// повинно бути більше ніж LimitInputIntoPosition_2,
+	// але це для перевірки CheckingPair
+	LimitOutputOfPosition_2 = 0.10 // Ліміт на вихід з позиції, відсоток від балансу базової валюти
+	LimitOnPosition_2       = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2    = 0.01 // Ліміт на транзакцію, відсоток від ліміту на позицію
 
 	BuyDelta_2     = 0.01  // Дельта для купівлі
 	SellDelta_2    = 0.01  // Дельта для продажу
@@ -345,6 +351,11 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
 	assert.Equal(t, SellValue_1, pair.GetSellValue())
 	assert.Equal(t, Commission, pair.GetCommission())
+}
+
+func TestPairChecking(t *testing.T) {
+	assert.True(t, pair_1.CheckingPair())
+	assert.False(t, pair_2.CheckingPair())
 }
 
 func TestConfigGetter(t *testing.T) {
