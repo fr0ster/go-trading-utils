@@ -190,7 +190,7 @@ func GetBuyAndSellQuantity(
 
 func EvaluateMiddlePrice(
 	account account_interfaces.Accounts,
-	depths depth_types.Depth,
+	depths *depth_types.Depth,
 	pair config_interfaces.Pairs) (middlePrice float64, err error) {
 	err = account.Update()
 	if err != nil {
