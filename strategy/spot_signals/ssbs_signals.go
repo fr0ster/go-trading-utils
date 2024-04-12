@@ -165,6 +165,12 @@ func StartWorkInPositionSignal(
 
 	go func() {
 		for {
+			err := account.Update()
+			if err != nil {
+				logrus.Errorf("Can't update account: %v", err)
+				stopEvent <- os.Interrupt
+				return
+			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt

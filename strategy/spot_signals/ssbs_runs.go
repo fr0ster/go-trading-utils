@@ -132,6 +132,7 @@ func Run(
 			(*pair).SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 			stopBuy <- true
+			stopEvent <- os.Interrupt
 		} else {
 			stopEvent <- os.Interrupt
 		}

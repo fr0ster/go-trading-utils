@@ -190,3 +190,16 @@ func GetBuyAndSellQuantity(
 	buyQuantity = GetTransactionValue(pair, baseBalance) / boundAsk
 	return
 }
+
+func EvaluateMiddlePrice(
+	account account_interfaces.Accounts,
+	depths *depth_types.Depth,
+	pair *config_interfaces.Pairs) (middlePrice float64, err error) {
+	err = account.Update()
+	if err != nil {
+		return
+	}
+	baseBalance, err := GetBaseBalance(account, pair)
+	middlePrice = ((*pair).GetInitialBalance() - baseBalance) / ((*pair).GetBuyQuantity() - (*pair).GetSellQuantity())
+	return
+}
