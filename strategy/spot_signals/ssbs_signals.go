@@ -46,6 +46,7 @@ func BuyOrSellSignal(
 			}
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 				err := account.Update()
@@ -166,6 +167,7 @@ func StartWorkInPositionSignal(
 		for {
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
@@ -227,6 +229,7 @@ func StartOutputOfPositionSignal(
 		for {
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case <-buyEvent: // Чекаємо на спрацювання тригера
 			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
@@ -286,6 +289,7 @@ func StopWorkingSignal(
 		for {
 			select {
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case <-buyEvent: // Чекаємо на спрацювання тригера
 			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час

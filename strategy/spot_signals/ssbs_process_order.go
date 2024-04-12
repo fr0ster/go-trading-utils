@@ -44,8 +44,10 @@ func ProcessBuyOrder(
 		for {
 			select {
 			case <-stopBuy:
+				stopBuy <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case params := <-buyEvent:
 				if minuteOrderLimit.Limit == 0 || dayOrderLimit.Limit == 0 || minuteRawRequestLimit.Limit == 0 {
@@ -117,8 +119,10 @@ func ProcessSellOrder(
 		for {
 			select {
 			case <-stopSell:
+				stopSell <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case params := <-sellEvent:
 				if minuteOrderLimit.Limit == 0 || dayOrderLimit.Limit == 0 || minuteRawRequestLimit.Limit == 0 {
@@ -188,8 +192,10 @@ func ProcessSellTakeProfitOrder(
 		for {
 			select {
 			case <-stopProcess:
+				stopProcess <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case params := <-sellEvent:
 				if minuteOrderLimit.Limit == 0 || dayOrderLimit.Limit == 0 || minuteRawRequestLimit.Limit == 0 {
@@ -264,10 +270,13 @@ func ProcessAfterBuyOrder(
 		for {
 			select {
 			case <-stopBuy:
+				stopBuy <- true
 				return
 			case <-stopSell:
+				stopSell <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case order := <-startBuyOrderEvent:
 				if order != nil {
@@ -309,10 +318,13 @@ func ProcessAfterSellOrder(
 		for {
 			select {
 			case <-stopBuy:
+				stopBuy <- true
 				return
 			case <-stopSell:
+				stopSell <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case order := <-startSellOrderEvent:
 				if order != nil {
@@ -353,8 +365,10 @@ func OrderExecutionGuard(
 		for {
 			select {
 			case <-stopProcess:
+				stopProcess <- true
 				return
 			case <-stopEvent:
+				stopEvent <- os.Interrupt
 				return
 			case orderEvent := <-orderStatusEvent:
 				logrus.Debug("Order status changed")
