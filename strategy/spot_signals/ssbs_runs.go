@@ -66,9 +66,6 @@ func Initialization(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) (
 	depth *depth_types.Depth,
-	stopBuy chan bool,
-	stopSell chan bool,
-	stopByOrSell chan bool,
 	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType) {
 	depth = depth_types.NewDepth(degree, (*pair).GetPair())
@@ -87,7 +84,7 @@ func Initialization(
 	go PositionInfoOut(account, pair, stopEvent, updateTime)
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, stopByOrSell, triggerEvent)
+	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
 
 	return
 }
@@ -113,7 +110,7 @@ func Run(
 		stopByOrSell    = make(chan bool)
 		stopProfitOrder = make(chan bool)
 	)
-	depth, stopBuy, stopSell, stopByOrSell, buyEvent, sellEvent :=
+	depth, buyEvent, sellEvent :=
 		Initialization(
 			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)

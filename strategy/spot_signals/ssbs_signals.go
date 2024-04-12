@@ -36,7 +36,6 @@ func BuyOrSellSignal(
 	depths *depth_types.Depth,
 	pair *config_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	stopByOrSell chan bool,
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
