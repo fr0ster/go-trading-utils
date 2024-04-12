@@ -36,7 +36,7 @@ type (
 		AddCommission(commission *binance.Fill)
 		GetCommission() pairs_types.Commission
 		SetCommission(commission pairs_types.Commission)
-		CalcMiddlePrice() float64
+		CalcMiddlePrice() error
 		GetMiddlePrice() float64
 		SetMiddlePrice(price float64)
 		GetProfit(currentPrice float64) float64

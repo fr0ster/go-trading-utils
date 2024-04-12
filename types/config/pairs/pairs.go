@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -199,12 +200,13 @@ func (cr *Pairs) SetCommission(commission Commission) {
 	cr.Commission = commission
 }
 
-func (cr *Pairs) CalcMiddlePrice() float64 {
-	if cr.BuyQuantity == 0 && cr.SellQuantity == 0 {
-		return 0
+func (cr *Pairs) CalcMiddlePrice() error {
+	if cr.BuyQuantity == cr.SellQuantity {
+		return fmt.Errorf("BuyQuantity: %f and SellQuantity %f, can't calculate middle price", cr.BuyQuantity, cr.SellQuantity)
 	}
 
-	return (cr.BuyValue - cr.SellValue) / (cr.BuyQuantity - cr.SellQuantity)
+	cr.MiddlePrice = (cr.BuyValue - cr.SellValue) / (cr.BuyQuantity - cr.SellQuantity)
+	return nil
 }
 
 func (cr *Pairs) GetMiddlePrice() float64 {
