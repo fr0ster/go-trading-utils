@@ -49,6 +49,12 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
+				err := account.Update()
+				if err != nil {
+					logrus.Errorf("Can't update account: %v", err)
+					stopEvent <- os.Interrupt
+					return
+				}
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
