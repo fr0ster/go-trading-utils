@@ -96,13 +96,13 @@ func BuyOrSellSignal(
 					return
 				}
 				// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
-				if (*pair).GetMiddlePrice() >= boundAsk {
+				if ask <= boundAsk {
 					logrus.Infof("Middle price %f is higher than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    boundAsk,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
-				} else if (*pair).GetMiddlePrice() <= boundBid {
+				} else if bid >= boundBid {
 					logrus.Infof("Middle price %f is lower than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
@@ -111,18 +111,18 @@ func BuyOrSellSignal(
 					// Чекаємо на зміну ціни
 					logrus.Infof("Middle price is %f, bound Bid price %f, bound Ask price %f",
 						(*pair).GetMiddlePrice(), boundBid, boundAsk)
-					if (*pair).GetMiddlePrice() > boundBid && (*pair).GetMiddlePrice() < boundAsk {
+					if bid < boundBid && ask > boundAsk {
 						logrus.Info("Wait for buy or sell signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
-					} else if (*pair).GetMiddlePrice() < boundAsk {
-						logrus.Info("Wait for buy signal")
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f", boundAsk)
-					} else if (*pair).GetMiddlePrice() > boundBid {
-						logrus.Info("Wait for sell signal")
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for bid increase to %f", boundBid)
+						// } else if ask < boundAsk {
+						// 	logrus.Info("Wait for buy signal")
+						// 	logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						// 	logrus.Infof("Waiting for ask decrease to %f", boundAsk)
+						// } else if bid > boundBid {
+						// 	logrus.Info("Wait for sell signal")
+						// 	logrus.Infof("Now ask is %f, bid is %f", ask, bid)
+						// 	logrus.Infof("Waiting for bid increase to %f", boundBid)
 					}
 				}
 			}
