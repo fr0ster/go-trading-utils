@@ -27,8 +27,8 @@ import (
 func ProcessBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	account *account_interfaces.Accounts,
-	pair *config_interfaces.Pairs,
+	account account_interfaces.Accounts,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -61,18 +61,18 @@ func ProcessBuyOrder(
 				}
 				targetBalance, err := GetTargetBalance(account, pair)
 				if err != nil {
-					logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
+					logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
 					stopEvent <- os.Interrupt
 					return
 				}
-				if targetBalance > (*pair).GetLimitInputIntoPosition() || targetBalance > (*pair).GetLimitOutputOfPosition() {
+				if targetBalance > pair.GetLimitInputIntoPosition() || targetBalance > pair.GetLimitOutputOfPosition() {
 					logrus.Warnf("We'd buy %s lots of %s, but we have not enough %s",
-						(*pair).GetPair(), (*pair).GetBaseSymbol(), (*pair).GetBaseSymbol())
+						pair.GetPair(), pair.GetBaseSymbol(), pair.GetBaseSymbol())
 					continue
 				}
 				service :=
 					client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType((*pair).GetPair()))).
+						Symbol(string(binance.SymbolType(pair.GetPair()))).
 						Type(orderType).
 						Side(binance.SideTypeBuy).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
@@ -87,7 +87,7 @@ func ProcessBuyOrder(
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
 					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						(*pair).GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+						pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
 					stopEvent <- os.Interrupt
 					return
 				}
@@ -99,15 +99,15 @@ func ProcessBuyOrder(
 					for _, fill := range order.Fills {
 						fillPrice := utils.ConvStrToFloat64(fill.Price)
 						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
-						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
-						(*pair).CalcMiddlePrice()
-						(*pair).AddCommission(fill)
+						pair.SetBuyQuantity(pair.GetBuyQuantity() + fillQuantity)
+						pair.SetBuyValue(pair.GetBuyValue() + fillQuantity*fillPrice)
+						pair.CalcMiddlePrice()
+						pair.AddCommission(fill)
 					}
 					config.Save()
 				}
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
@@ -116,8 +116,8 @@ func ProcessBuyOrder(
 func ProcessSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	account *account_interfaces.Accounts,
-	pair *config_interfaces.Pairs,
+	account account_interfaces.Accounts,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -152,18 +152,18 @@ func ProcessSellOrder(
 				}
 				targetBalance, err := GetTargetBalance(account, pair)
 				if err != nil {
-					logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
+					logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
 					stopEvent <- os.Interrupt
 					return
 				}
 				if targetBalance < params.Price*params.Quantity {
 					logrus.Warnf("We don't have enough %s to sell %s lots of %s",
-						(*pair).GetPair(), (*pair).GetBaseSymbol(), (*pair).GetBaseSymbol())
+						pair.GetPair(), pair.GetBaseSymbol(), pair.GetBaseSymbol())
 					continue
 				}
 				service :=
 					client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType((*pair).GetPair()))).
+						Symbol(string(binance.SymbolType(pair.GetPair()))).
 						Type(binance.OrderTypeLimit).
 						Side(binance.SideTypeSell).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
@@ -178,7 +178,7 @@ func ProcessSellOrder(
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
 					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						(*pair).GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
+						pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
 					stopEvent <- os.Interrupt
 					return
 				}
@@ -190,15 +190,15 @@ func ProcessSellOrder(
 					for _, fill := range order.Fills {
 						fillPrice := utils.ConvStrToFloat64(fill.Price)
 						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
-						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
-						(*pair).CalcMiddlePrice()
-						(*pair).AddCommission(fill)
+						pair.SetBuyQuantity(pair.GetBuyQuantity() + fillQuantity)
+						pair.SetBuyValue(pair.GetBuyValue() + fillQuantity*fillPrice)
+						pair.CalcMiddlePrice()
+						pair.AddCommission(fill)
 					}
 					config.Save()
 				}
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
@@ -207,7 +207,7 @@ func ProcessSellOrder(
 func ProcessSellTakeProfitOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -237,7 +237,7 @@ func ProcessSellTakeProfitOrder(
 				}
 				order, err :=
 					client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType((*pair).GetPair()))).
+						Symbol(string(binance.SymbolType(pair.GetPair()))).
 						Type(binance.OrderTypeTakeProfit).
 						Side(binance.SideTypeSell).
 						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
@@ -247,7 +247,7 @@ func ProcessSellTakeProfitOrder(
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
 					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						(*pair).GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+						pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
 					stopEvent <- os.Interrupt
 					return
 				}
@@ -272,15 +272,15 @@ func ProcessSellTakeProfitOrder(
 					for _, fill := range order.Fills {
 						fillPrice := utils.ConvStrToFloat64(fill.Price)
 						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						(*pair).SetBuyQuantity((*pair).GetBuyQuantity() + fillQuantity)
-						(*pair).SetBuyValue((*pair).GetBuyValue() + fillQuantity*fillPrice)
-						(*pair).CalcMiddlePrice()
-						(*pair).AddCommission(fill)
+						pair.SetBuyQuantity(pair.GetBuyQuantity() + fillQuantity)
+						pair.SetBuyValue(pair.GetBuyValue() + fillQuantity*fillPrice)
+						pair.CalcMiddlePrice()
+						pair.AddCommission(fill)
 					}
 					config.Save()
 				}
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
@@ -289,7 +289,7 @@ func ProcessSellTakeProfitOrder(
 func ProcessAfterBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -320,9 +320,9 @@ func ProcessAfterBuyOrder(
 						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
 							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-								(*pair).SetBuyQuantity((*pair).GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-								(*pair).SetBuyValue((*pair).GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-								(*pair).CalcMiddlePrice()
+								pair.SetBuyQuantity(pair.GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+								pair.SetBuyValue(pair.GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								pair.CalcMiddlePrice()
 								config.Save()
 								break
 							}
@@ -337,7 +337,7 @@ func ProcessAfterBuyOrder(
 func ProcessAfterSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -368,9 +368,9 @@ func ProcessAfterSellOrder(
 						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
 							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-								(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-								(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-								(*pair).CalcMiddlePrice()
+								pair.SetSellQuantity(pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+								pair.SetSellValue(pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								pair.CalcMiddlePrice()
 								config.Save()
 								break
 							}
@@ -385,7 +385,7 @@ func ProcessAfterSellOrder(
 func OrderExecutionGuard(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -409,10 +409,10 @@ func OrderExecutionGuard(
 				if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
 					if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
 						orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-						(*pair).SetSellQuantity((*pair).GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-						(*pair).SetSellValue((*pair).GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-						(*pair).CalcMiddlePrice()
-						(*pair).SetStage(pairs_types.PositionClosedStage)
+						pair.SetSellQuantity(pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+						pair.SetSellValue(pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+						pair.CalcMiddlePrice()
+						pair.SetStage(pairs_types.PositionClosedStage)
 						config.Save()
 						orderExecuted <- true
 						return

@@ -26,14 +26,14 @@ import (
 
 // Виводимо інформацію про позицію
 func PositionInfoOut(
-	account *account_interfaces.Accounts,
-	pair *config_interfaces.Pairs,
+	account account_interfaces.Accounts,
+	pair config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) {
 	for {
-		baseBalance, err := (*account).GetAsset((*pair).GetBaseSymbol())
+		baseBalance, err := account.GetAsset(pair.GetBaseSymbol())
 		if err != nil {
-			logrus.Errorf("Can't get %s asset: %v", (*pair).GetBaseSymbol(), err)
+			logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
 			stopEvent <- os.Interrupt
 			return
 		}
@@ -42,9 +42,9 @@ func PositionInfoOut(
 			stopEvent <- os.Interrupt
 			return
 		default:
-			if val := (*pair).GetMiddlePrice(); val != 0 {
+			if val := pair.GetMiddlePrice(); val != 0 {
 				logrus.Infof("Middle %s price: %f, available USDT: %f",
-					(*pair).GetPair(), val, baseBalance)
+					pair.GetPair(), val, baseBalance)
 			}
 		}
 		time.Sleep(updateTime)
@@ -56,9 +56,9 @@ func Initialization(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -68,12 +68,12 @@ func Initialization(
 	depth *depth_types.Depth,
 	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType) {
-	depth = depth_types.NewDepth(degree, (*pair).GetPair())
+	depth = depth_types.NewDepth(degree, pair.GetPair())
 
 	bookTicker := bookTicker_types.New(degree)
 
 	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream((*pair).GetPair(), 1)
+	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
 	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
@@ -94,9 +94,9 @@ func Run(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -115,12 +115,12 @@ func Run(
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
 
 	// Відпрацьовуємо Arbitrage стратегію
-	if (*pair).GetStrategy() == pairs_types.ArbitrageStrategyType {
+	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return
 
 		// Відпрацьовуємо  Holding стратегію
-	} else if (*pair).GetStrategy() == pairs_types.HoldingStrategyType {
-		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
+	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
+		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
@@ -129,7 +129,7 @@ func Run(
 				buyEvent, stopBuy, stopEvent)
 
 			<-collectionOutEvent
-			(*pair).SetStage(pairs_types.WorkInPositionStage)
+			pair.SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 			stopBuy <- true
 			stopEvent <- os.Interrupt
@@ -138,20 +138,20 @@ func Run(
 		}
 
 		// Відпрацьовуємо Scalping стратегію
-	} else if (*pair).GetStrategy() == pairs_types.ScalpingStrategyType {
+	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
 		_ = ProcessBuyOrder(
 			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 			buyEvent, stopBuy, stopEvent)
 
-		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
+		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			<-collectionOutEvent
-			(*pair).SetStage(pairs_types.WorkInPositionStage)
+			pair.SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
 		}
-		if (*pair).GetStage() == pairs_types.WorkInPositionStage {
+		if pair.GetStage() == pairs_types.WorkInPositionStage {
 			_ = ProcessSellOrder(
 				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -159,12 +159,12 @@ func Run(
 		}
 
 		// Відпрацьовуємо Trading стратегію
-	} else if (*pair).GetStrategy() == pairs_types.TradingStrategyType {
-		if (*pair).GetStage() == pairs_types.WorkInPositionStage {
+	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
+		if pair.GetStage() == pairs_types.WorkInPositionStage {
 			stopEvent <- os.Interrupt
 			return
 		}
-		if (*pair).GetStage() == pairs_types.InputIntoPositionStage {
+		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
 
 			_ = ProcessBuyOrder(
@@ -174,23 +174,23 @@ func Run(
 
 			<-collectionOutEvent
 			stopBuy <- true
-			(*pair).SetStage(pairs_types.OutputOfPositionStage)
+			pair.SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
 		}
-		if (*pair).GetStage() == pairs_types.OutputOfPositionStage {
+		if pair.GetStage() == pairs_types.OutputOfPositionStage {
 			orderExecutionGuard := ProcessSellTakeProfitOrder(
 				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
 				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 				sellEvent, stopProfitOrder, stopEvent, orderStatusEvent)
 			<-orderExecutionGuard
-			(*pair).SetStage(pairs_types.PositionClosedStage)
+			pair.SetStage(pairs_types.PositionClosedStage)
 			config.Save()
 			stopEvent <- os.Interrupt
 		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
-		logrus.Warnf("Unknown strategy: %v", (*pair).GetStrategy())
+		logrus.Warnf("Unknown strategy: %v", pair.GetStrategy())
 		stopEvent <- os.Interrupt
 	}
 }

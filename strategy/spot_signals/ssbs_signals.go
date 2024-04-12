@@ -32,16 +32,16 @@ type (
 )
 
 func BuyOrSellSignal(
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
 	sellEvent = make(chan *depth_types.DepthItemType, 1)
 	go func() {
 		for {
-			if (*pair).GetMiddlePrice() == 0 {
+			if pair.GetMiddlePrice() == 0 {
 				continue
 			}
 			select {
@@ -49,7 +49,7 @@ func BuyOrSellSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				err := (*account).Update()
+				err := account.Update()
 				if err != nil {
 					logrus.Errorf("Can't update account: %v", err)
 					stopEvent <- os.Interrupt
@@ -58,14 +58,14 @@ func BuyOrSellSignal(
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
-					logrus.Errorf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+					logrus.Errorf("Can't get %s balance: %v", pair.GetTargetSymbol(), err)
 					stopEvent <- os.Interrupt
 					return
 				}
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(account, pair)
 				if err != nil {
-					logrus.Errorf("Can't get %s balance: %v", (*pair).GetTargetSymbol(), err)
+					logrus.Errorf("Can't get %s balance: %v", pair.GetTargetSymbol(), err)
 					stopEvent <- os.Interrupt
 					return
 				}
@@ -97,50 +97,50 @@ func BuyOrSellSignal(
 
 				if buyQuantity == 0 && sellQuantity == 0 {
 					logrus.Errorf("We don't have any %s for buy and don't have any %s for sell",
-						(*pair).GetBaseSymbol(), (*pair).GetTargetSymbol())
+						pair.GetBaseSymbol(), pair.GetTargetSymbol())
 					stopEvent <- os.Interrupt
 					return
 				}
 				// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
 				if ask <= boundAsk &&
-					targetBalance*ask < (*pair).GetLimitInputIntoPosition()*baseBalance &&
-					targetBalance*ask < (*pair).GetLimitOutputOfPosition()*baseBalance {
-					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", (*pair).GetMiddlePrice(), ask, boundAsk)
+					targetBalance*ask < pair.GetLimitInputIntoPosition()*baseBalance &&
+					targetBalance*ask < pair.GetLimitOutputOfPosition()*baseBalance {
+					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", pair.GetMiddlePrice(), ask, boundAsk)
 					buyEvent <- &depth_types.DepthItemType{
 						Price:    ask,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
 				} else if bid >= boundBid && sellQuantity < targetBalance {
-					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", (*pair).GetMiddlePrice(), bid, boundBid)
+					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", pair.GetMiddlePrice(), bid, boundBid)
 					sellEvent <- &depth_types.DepthItemType{
 						Price:    boundBid,
 						Quantity: sellQuantity}
 				} else {
 					if ask <= boundAsk &&
-						(targetBalance*ask > (*pair).GetLimitInputIntoPosition()*baseBalance ||
-							targetBalance*ask > (*pair).GetLimitOutputOfPosition()*baseBalance) {
+						(targetBalance*ask > pair.GetLimitInputIntoPosition()*baseBalance ||
+							targetBalance*ask > pair.GetLimitOutputOfPosition()*baseBalance) {
 						logrus.Infof("We can't buy %s, because we have more than %f %s",
-							(*pair).GetTargetSymbol(),
-							(*pair).GetLimitInputIntoPosition()*baseBalance,
-							(*pair).GetBaseSymbol())
+							pair.GetTargetSymbol(),
+							pair.GetLimitInputIntoPosition()*baseBalance,
+							pair.GetBaseSymbol())
 					} else if bid >= boundBid && sellQuantity >= targetBalance {
 						logrus.Infof("We can't sell %s, because we haven't %s enough for sell, we need %f %s but have %f %s only",
-							(*pair).GetTargetSymbol(),
-							(*pair).GetTargetSymbol(),
+							pair.GetTargetSymbol(),
+							pair.GetTargetSymbol(),
 							sellQuantity,
-							(*pair).GetTargetSymbol(),
+							pair.GetTargetSymbol(),
 							targetBalance,
-							(*pair).GetTargetSymbol())
+							pair.GetTargetSymbol())
 					} else if bid < boundBid && ask > boundAsk { // Чекаємо на зміну ціни
 						logrus.Infof("Middle price is %f, bound Bid price %f, bound Ask price %f",
-							(*pair).GetMiddlePrice(), boundBid, boundAsk)
+							pair.GetMiddlePrice(), boundBid, boundAsk)
 						logrus.Info("Wait for buy or sell signal")
 						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
 						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
 				}
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
@@ -148,14 +148,14 @@ func BuyOrSellSignal(
 
 func InitMiddlePrice(
 	client *binance.Client,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol) (err error) {
 	quantity := (*pairInfo).LotSizeFilter().MinQuantity
 
-	if (*pair).GetMiddlePrice() == 0 {
+	if pair.GetMiddlePrice() == 0 {
 		_, err =
 			client.NewCreateOrderService().
-				Symbol(string(binance.SymbolType((*pair).GetPair()))).
+				Symbol(string(binance.SymbolType(pair.GetPair()))).
 				Type(binance.OrderTypeMarket).
 				Side(binance.SideTypeBuy).
 				Quantity(quantity).
@@ -165,14 +165,14 @@ func InitMiddlePrice(
 }
 
 func StartWorkInPositionSignal(
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	collectionOutEvent chan bool) { // Виходимо з накопичення
-	if (*pair).GetStage() != pair_types.InputIntoPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.InputIntoPositionStage)
+	if pair.GetStage() != pair_types.InputIntoPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pair.GetStage(), pair_types.InputIntoPositionStage)
 		stopEvent <- os.Interrupt
 		return
 	}
@@ -181,7 +181,7 @@ func StartWorkInPositionSignal(
 
 	go func() {
 		for {
-			err := (*account).Update()
+			err := account.Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
@@ -192,7 +192,7 @@ func StartWorkInPositionSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-			case <-time.After((*pair).GetTakingPositionSleepingTime()): // Або просто чекаємо якийсь час
+			case <-time.After(pair.GetTakingPositionSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(account, pair)
@@ -207,9 +207,9 @@ func StartWorkInPositionSignal(
 				continue
 			}
 			// Ліміт на вхід в позицію, відсоток від балансу базової валюти
-			LimitInputIntoPosition := (*pair).GetLimitInputIntoPosition()
+			LimitInputIntoPosition := pair.GetLimitInputIntoPosition()
 			// Ліміт на позицію, відсоток від балансу базової валюти
-			LimitOnPosition := (*pair).GetLimitOnPosition()
+			LimitOnPosition := pair.GetLimitOnPosition()
 			// Верхня межа ціни купівлі
 			boundAsk,
 				// Нижня межа ціни продажу
@@ -223,25 +223,25 @@ func StartWorkInPositionSignal(
 			// - переходимо в режим спекуляції
 			if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
 				targetBalance*boundAsk >= baseBalance*LimitOnPosition {
-				(*pair).SetStage(pair_types.WorkInPositionStage)
+				pair.SetStage(pair_types.WorkInPositionStage)
 				collectionOutEvent <- true
 				return
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
 }
 
 func StartOutputOfPositionSignal(
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	positionOutEvent chan bool) { // Виходимо з накопичення)
-	if (*pair).GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+	if pair.GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pair.GetStage(), pair_types.WorkInPositionStage)
 		stopEvent <- os.Interrupt
 		return
 	}
@@ -250,7 +250,7 @@ func StartOutputOfPositionSignal(
 
 	go func() {
 		for {
-			err := (*account).Update()
+			err := account.Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
@@ -261,7 +261,7 @@ func StartOutputOfPositionSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
+			case <-time.After(pair.GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(account, pair)
@@ -276,9 +276,9 @@ func StartOutputOfPositionSignal(
 				continue
 			}
 			// Ліміт на вхід в позицію, відсоток від балансу базової валюти
-			LimitInputIntoPosition := (*pair).GetLimitInputIntoPosition()
+			LimitInputIntoPosition := pair.GetLimitInputIntoPosition()
 			// Ліміт на позицію, відсоток від балансу базової валюти
-			LimitOnPosition := (*pair).GetLimitOnPosition()
+			LimitOnPosition := pair.GetLimitOnPosition()
 			// Верхня межа ціни купівлі
 			_,
 				// Нижня межа ціни продажу
@@ -290,25 +290,25 @@ func StartOutputOfPositionSignal(
 			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 			if targetBalance*boundBid >= baseBalance*LimitInputIntoPosition ||
 				targetBalance*boundBid >= baseBalance*LimitOnPosition {
-				(*pair).SetStage(pair_types.OutputOfPositionStage)
+				pair.SetStage(pair_types.OutputOfPositionStage)
 				positionOutEvent <- true
 				return
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return
 }
 
 func StopWorkingSignal(
-	account *account_interfaces.Accounts,
+	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	stopWorkingEvent chan bool) { // Виходимо з накопичення)
-	if (*pair).GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", (*pair).GetStage(), pair_types.WorkInPositionStage)
+	if pair.GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pair.GetStage(), pair_types.WorkInPositionStage)
 		stopEvent <- os.Interrupt
 		return
 	}
@@ -317,7 +317,7 @@ func StopWorkingSignal(
 
 	go func() {
 		for {
-			err := (*account).Update()
+			err := account.Update()
 			if err != nil {
 				logrus.Errorf("Can't update account: %v", err)
 				stopEvent <- os.Interrupt
@@ -328,7 +328,7 @@ func StopWorkingSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-			case <-time.After((*pair).GetSleepingTime()): // Або просто чекаємо якийсь час
+			case <-time.After(pair.GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
@@ -338,11 +338,11 @@ func StopWorkingSignal(
 			}
 			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 			if targetBalance == 0 {
-				(*pair).SetStage(pair_types.WorkInPositionStage)
+				pair.SetStage(pair_types.WorkInPositionStage)
 				stopWorkingEvent <- true
 				return
 			}
-			time.Sleep((*pair).GetSleepingTime())
+			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
 	return

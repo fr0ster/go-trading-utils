@@ -50,7 +50,7 @@ func LimitRead(degree int, symbols []string, client *binance.Client) (
 func RestUpdate(
 	client *binance.Client,
 	stop chan os.Signal,
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	depth *depth_types.Depth,
 	limit int,
 	bookTicker *bookTicker_types.BookTickerBTree,
@@ -71,7 +71,7 @@ func RestUpdate(
 
 				time.Sleep(1 * time.Second)
 
-				err = spot_bookticker.Init(bookTicker, (*pair).GetPair(), client)
+				err = spot_bookticker.Init(bookTicker, pair.GetPair(), client)
 				if err != nil {
 					logrus.Errorf(errorMsg, err)
 					stop <- os.Interrupt
@@ -110,23 +110,23 @@ func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err erro
 	return
 }
 
-func GetBound(pair *config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
-	boundAsk = (*pair).GetMiddlePrice() * (1 - (*pair).GetBuyDelta())
+func GetBound(pair config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
+	boundAsk = pair.GetMiddlePrice() * (1 - pair.GetBuyDelta())
 	logrus.Debugf("Ask bound: %f", boundAsk)
-	boundBid = (*pair).GetMiddlePrice() * (1 + (*pair).GetSellDelta())
+	boundBid = pair.GetMiddlePrice() * (1 + pair.GetSellDelta())
 	logrus.Debugf("Bid bound: %f", boundBid)
 	return
 }
 
 func GetBaseBalance(
-	account *account_interfaces.Accounts,
-	pair *config_interfaces.Pairs) (
+	account account_interfaces.Accounts,
+	pair config_interfaces.Pairs) (
 	baseBalance float64, // Кількість базової валюти
 	err error) {
-	baseBalance, err = func(pair *config_interfaces.Pairs) (
+	baseBalance, err = func(pair config_interfaces.Pairs) (
 		baseBalance float64,
 		err error) {
-		baseBalance, err = (*account).GetAsset((*pair).GetBaseSymbol())
+		baseBalance, err = account.GetAsset(pair.GetBaseSymbol())
 		return
 	}(pair)
 
@@ -137,14 +137,14 @@ func GetBaseBalance(
 }
 
 func GetTargetBalance(
-	account *account_interfaces.Accounts,
-	pair *config_interfaces.Pairs) (
+	account account_interfaces.Accounts,
+	pair config_interfaces.Pairs) (
 	targetBalance float64, // Кількість торгової валюти
 	err error) {
-	targetBalance, err = func(pair *config_interfaces.Pairs) (
+	targetBalance, err = func(pair config_interfaces.Pairs) (
 		targetBalance float64,
 		err error) {
-		targetBalance, err = (*account).GetAsset((*pair).GetTargetSymbol())
+		targetBalance, err = account.GetAsset(pair.GetTargetSymbol())
 		return
 	}(pair)
 
@@ -155,16 +155,16 @@ func GetTargetBalance(
 }
 
 func GetTransactionValue(
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	baseBalance float64) (
 	TransactionValue float64) { // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
 	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
-	TransactionValue = (*pair).GetLimitOnTransaction() * (*pair).GetLimitOnPosition() * baseBalance
+	TransactionValue = pair.GetLimitOnTransaction() * pair.GetLimitOnPosition() * baseBalance
 	return
 }
 
 func GetBuyAndSellQuantity(
-	pair *config_interfaces.Pairs,
+	pair config_interfaces.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	ask float64,
@@ -182,21 +182,21 @@ func GetBuyAndSellQuantity(
 	// Кількість торгової валюти для купівлі
 	buyQuantity = GetTransactionValue(pair, baseBalance) / ask
 	// Якщо закуплено торгової валюти більше за ліміт на позицію, то не купуємо
-	if targetBalance > (*pair).GetLimitInputIntoPosition() {
+	if targetBalance > pair.GetLimitInputIntoPosition() {
 		buyQuantity = 0
 	}
 	return
 }
 
 func EvaluateMiddlePrice(
-	account *account_interfaces.Accounts,
-	depths *depth_types.Depth,
-	pair *config_interfaces.Pairs) (middlePrice float64, err error) {
-	err = (*account).Update()
+	account account_interfaces.Accounts,
+	depths depth_types.Depth,
+	pair config_interfaces.Pairs) (middlePrice float64, err error) {
+	err = account.Update()
 	if err != nil {
 		return
 	}
 	baseBalance, err := GetBaseBalance(account, pair)
-	middlePrice = ((*pair).GetInitialBalance() - baseBalance) / ((*pair).GetBuyQuantity() - (*pair).GetSellQuantity())
+	middlePrice = (pair.GetInitialBalance() - baseBalance) / (pair.GetBuyQuantity() - pair.GetSellQuantity())
 	return
 }
