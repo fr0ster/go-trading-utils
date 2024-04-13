@@ -119,12 +119,12 @@ func BuyOrSellSignal(
 					if ask <= boundAsk &&
 						(targetBalance*ask > pair.GetLimitInputIntoPosition()*baseBalance ||
 							targetBalance*ask > pair.GetLimitOutputOfPosition()*baseBalance) {
-						logrus.Infof("We can't buy %s, because we have more than %f %s",
+						logrus.Debugf("We can't buy %s, because we have more than %f %s",
 							pair.GetTargetSymbol(),
 							pair.GetLimitInputIntoPosition()*baseBalance,
 							pair.GetBaseSymbol())
 					} else if bid >= boundBid && sellQuantity >= targetBalance {
-						logrus.Infof("We can't sell %s, because we haven't %s enough for sell, we need %f %s but have %f %s only",
+						logrus.Debugf("We can't sell %s, because we haven't %s enough for sell, we need %f %s but have %f %s only",
 							pair.GetTargetSymbol(),
 							pair.GetTargetSymbol(),
 							sellQuantity,
@@ -132,11 +132,11 @@ func BuyOrSellSignal(
 							targetBalance,
 							pair.GetTargetSymbol())
 					} else if bid < boundBid && ask > boundAsk { // Чекаємо на зміну ціни
-						logrus.Infof("Middle price is %f, bound Bid price %f, bound Ask price %f",
+						logrus.Debugf("Middle price is %f, bound Bid price %f, bound Ask price %f",
 							pair.GetMiddlePrice(), boundBid, boundAsk)
-						logrus.Info("Wait for buy or sell signal")
-						logrus.Infof("Now ask is %f, bid is %f", ask, bid)
-						logrus.Infof("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
+						logrus.Debugf("Wait for buy or sell signal")
+						logrus.Debugf("Now ask is %f, bid is %f", ask, bid)
+						logrus.Debugf("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
 				}
 			}
