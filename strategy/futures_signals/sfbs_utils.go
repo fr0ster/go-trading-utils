@@ -14,6 +14,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/info"
 	futures_bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 
@@ -24,11 +25,27 @@ import (
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 )
 
 const (
 	errorMsg = "Error: %v"
 )
+
+func LimitRead(degree int, symbols []string, client *futures.Client) (
+	updateTime time.Duration,
+	minuteOrderLimit *exchange_types.RateLimits,
+	dayOrderLimit *exchange_types.RateLimits,
+	minuteRawRequestLimit *exchange_types.RateLimits) {
+	exchangeInfo := exchange_types.NewExchangeInfo()
+	futures_exchange_info.Init(exchangeInfo, degree, client)
+
+	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
+	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
+	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
+	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
+	return
+}
 
 func RestUpdate(
 	client *futures.Client,
