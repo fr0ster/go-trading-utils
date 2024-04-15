@@ -116,25 +116,16 @@ func Run(
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
+		logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
+		stopEvent <- os.Interrupt
 		return
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
-
-			_ = ProcessBuyOrder(
-				config, client, account, pair, pairInfo, futures.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				buyEvent, stopBuy, stopEvent)
-
-			<-collectionOutEvent
-			pair.SetStage(pairs_types.WorkInPositionStage)
-			config.Save()
-			stopBuy <- true
+			logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
 			stopEvent <- os.Interrupt
-		} else {
-			stopEvent <- os.Interrupt
+			return
 		}
 
 		// Відпрацьовуємо Scalping стратегію
@@ -192,5 +183,6 @@ func Run(
 	} else {
 		logrus.Warnf("Unknown strategy: %v", pair.GetStrategy())
 		stopEvent <- os.Interrupt
+		return
 	}
 }
