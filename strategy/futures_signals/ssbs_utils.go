@@ -1,4 +1,4 @@
-package spot_signals
+package futures_signals
 
 import (
 	"context"
@@ -12,11 +12,10 @@ import (
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
-	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 
-	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/info"
-	spot_bookticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
-	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
+	futures_bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
+	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
@@ -25,30 +24,14 @@ import (
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 )
 
 const (
 	errorMsg = "Error: %v"
 )
 
-func LimitRead(degree int, symbols []string, client *binance.Client) (
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits) {
-	exchangeInfo := exchange_types.NewExchangeInfo()
-	spot_exchange_info.RestrictedInit(exchangeInfo, degree, symbols, client)
-
-	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
-	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
-	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
-	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
-	return
-}
-
 func RestUpdate(
-	client *binance.Client,
+	client *futures.Client,
 	stop chan os.Signal,
 	pair config_interfaces.Pairs,
 	depth *depth_types.Depth,
@@ -62,7 +45,7 @@ func RestUpdate(
 				// Якщо отримано сигнал з каналу stop, вийти з циклу
 				return
 			default:
-				err := spot_depth.Init(depth, client, limit)
+				err := futures_depth.Init(depth, client, limit)
 				if err != nil {
 					logrus.Errorf(errorMsg, err)
 					stop <- os.Interrupt
@@ -71,7 +54,7 @@ func RestUpdate(
 
 				time.Sleep(1 * time.Second)
 
-				err = spot_bookticker.Init(bookTicker, pair.GetPair(), client)
+				err = futures_bookticker.Init(bookTicker, pair.GetPair(), client)
 				if err != nil {
 					logrus.Errorf(errorMsg, err)
 					stop <- os.Interrupt
@@ -84,7 +67,7 @@ func RestUpdate(
 	}()
 }
 
-func GetPrice(client *binance.Client, symbol string) (float64, error) {
+func GetPrice(client *futures.Client, symbol string) (float64, error) {
 	price, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
 	if err != nil {
 		return 0, err

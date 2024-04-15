@@ -9,7 +9,7 @@ import (
 
 func Init(a *depth_analyzer_types.DepthAnalyzer, client *futures.Client, symbolname string, rounded, limits int, UseTestnet bool) error {
 	depth := depth_types.NewDepth(a.Degree, symbolname)
-	err := futuresDepth.FuturesDepthInit(depth, client, limits)
+	err := futuresDepth.Init(depth, client, limits)
 	if err != nil {
 		return err
 	}

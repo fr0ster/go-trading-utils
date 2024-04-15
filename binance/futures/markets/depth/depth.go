@@ -7,7 +7,7 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func FuturesDepthInit(d *depth_types.Depth, client *futures.Client, limit int) (err error) {
+func Init(d *depth_types.Depth, client *futures.Client, limit int) (err error) {
 	d.Lock()         // Locking the depths
 	defer d.Unlock() // Unlocking the depths
 	res, err :=

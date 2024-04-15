@@ -64,7 +64,7 @@ func TestInitDepthTree(t *testing.T) {
 
 	// Add more test cases here
 	testDepthTree := depth_types.NewDepth(3, "SUSHIUSDT")
-	err := futures_depth.FuturesDepthInit(testDepthTree, futures, 10)
+	err := futures_depth.Init(testDepthTree, futures, 10)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)
 	}

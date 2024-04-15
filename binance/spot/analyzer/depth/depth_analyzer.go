@@ -9,7 +9,7 @@ import (
 
 func Init(a *depth_analyzer_types.DepthAnalyzer, client *binance.Client, symbolname string, limits int) error {
 	depth := depth_types.NewDepth(a.Degree, symbolname)
-	err := spotDepth.SpotDepthInit(depth, client, limits)
+	err := spotDepth.Init(depth, client, limits)
 	if err != nil {
 		return err
 	}
