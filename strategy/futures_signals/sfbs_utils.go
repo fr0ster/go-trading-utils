@@ -38,7 +38,7 @@ func LimitRead(degree int, symbols []string, client *futures.Client) (
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits) {
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	futures_exchange_info.Init(exchangeInfo, degree, client)
+	futures_exchange_info.RestrictedInit(exchangeInfo, degree, symbols, client)
 
 	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
 	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
