@@ -16,9 +16,10 @@ func TestAccount_GetQuantityLimits(t *testing.T) {
 	futures.UseTestnet = false
 	symbols := []string{"BTC", "ETH", "BNB", "USDT", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
-	account := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, symbols)
+	assert.Nil(t, err)
 
-	err := account.Update()
+	err = account.Update()
 	assert.Nil(t, err)
 
 	test := func(al account_interface.Accounts) {
@@ -39,9 +40,10 @@ func TestAccount_GetQuantityEmptyLimits(t *testing.T) {
 	futures.UseTestnet = false
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
-	account := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, symbols)
+	assert.Nil(t, err)
 
-	err := account.Update()
+	err = account.Update()
 	assert.Nil(t, err)
 
 	test := func(al account_interface.Accounts) {
@@ -62,9 +64,10 @@ func TestAccount_GetAsset(t *testing.T) {
 	futures.UseTestnet = false
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
-	account := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, symbols)
+	assert.Nil(t, err)
 
-	err := account.Update()
+	err = account.Update()
 	assert.Nil(t, err)
 
 	assets := account.GetAssets()
@@ -77,9 +80,10 @@ func TestAccount_GetPositions(t *testing.T) {
 	futures.UseTestnet = false
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret)
-	account := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, symbols)
+	assert.Nil(t, err)
 
-	err := account.Update()
+	err = account.Update()
 	assert.Nil(t, err)
 
 	positions := account.GetPositions()

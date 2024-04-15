@@ -130,7 +130,7 @@ func (a *Account) Update() error {
 	return nil
 }
 
-func New(client *futures.Client, degree int, symbols []string) (al *Account) {
+func New(client *futures.Client, degree int, symbols []string) (al *Account, err error) {
 	al = &Account{
 		client:           client,
 		account:          nil,
@@ -140,7 +140,7 @@ func New(client *futures.Client, degree int, symbols []string) (al *Account) {
 		symbols:          make(map[string]bool),
 		symbolsRestrict:  symbols,
 	}
-	al.Update()
+	err = al.Update()
 	return
 }
 
