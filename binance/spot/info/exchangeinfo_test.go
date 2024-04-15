@@ -36,7 +36,11 @@ func TestGetOrderTypes(t *testing.T) {
 	info.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
-	orderTypes := exchangeInfo.GetSymbol("BTCUSDT").OrderTypes
+	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
+	if err != nil {
+		t.Errorf("GetSpotSymbol returned an error: %v", err)
+	}
+	orderTypes := symbol.OrderTypes
 
 	// Check if the orderTypes is not empty
 	if len(orderTypes) == 0 {
@@ -53,7 +57,11 @@ func TestGetPermissions(t *testing.T) {
 	info.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
-	permissions := exchangeInfo.GetSymbol("BTCUSDT").Permissions
+	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
+	if err != nil {
+		t.Errorf("GetSpotSymbol returned an error: %v", err)
+	}
+	permissions := symbol.Permissions
 
 	// Check if the permissions is not empty
 	if len(permissions) == 0 {

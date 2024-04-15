@@ -15,9 +15,12 @@ import (
 )
 
 const (
-	APIKey     = "your_api_key"    // Ключ API
-	APISecret  = "your_api_secret" // Секретний ключ API
-	UseTestNet = false             // Використовувати тестову мережу
+	SpotAPIKey        = "your_api_key"    // Ключ API для спот-біржі
+	SpotAPISecret     = "your_api_secret" // Секретний ключ API для спот-біржі
+	SpotUseTestNet    = false             // Використовувати тестову мережу для спот-біржі
+	FuturesAPIKey     = "your_api_key"    // Ключ API для ф'ючерсів
+	FuturesAPISecret  = "your_api_secret" // Секретний ключ API для ф'ючерсів
+	FuturesUseTestNet = false             // Використовувати тестову мережу для ф'ючерсів
 
 	InitialBalance = 1000.0 // Початковий баланс
 
@@ -83,7 +86,20 @@ var (
 	Commission_1      = 0.00001
 	Commission_2      = 0.02
 	Commission        = pairs_types.Commission{CommissionAsset_1: Commission_1, CommissionAsset_2: Commission_2}
-	pair_1            = &pairs_types.Pairs{
+	config            = &config_types.Configs{
+		SpotConnection: &config_types.Connection{
+			APIKey:     SpotAPIKey,
+			APISecret:  SpotAPISecret,
+			UseTestNet: SpotUseTestNet,
+		},
+		FuturesConnection: &config_types.Connection{
+			APIKey:     FuturesAPIKey,
+			APISecret:  FuturesAPISecret,
+			UseTestNet: FuturesUseTestNet,
+		},
+		Pairs: btree.New(2),
+	}
+	pair_1 = &pairs_types.Pairs{
 		InitialBalance:             InitialBalance,
 		AccountType:                AccountType_1,
 		StrategyType:               StrategyType_1,
@@ -134,71 +150,81 @@ var (
 func getTestData() []byte {
 	return []byte(
 		`{
-		"api_key": "` + APIKey + `",
-		"api_secret": "` + APISecret + `",
-		"use_test_net": ` + strconv.FormatBool(UseTestNet) + `,
-		"pairs": [
-			{
-				"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
-				"account_type": "` + string(AccountType_1) + `",
-				"strategy_type": "` + string(StrategyType_1) + `",
-				"stage_type": "` + string(StageType_1) + `",
-				"symbol": "` + Pair_1 + `",
-				"target_symbol": "` + TargetSymbol_1 + `",
-				"base_symbol": "` + BaseSymbol_1 + `",
-				"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
-				"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
-				"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_1, 'f', -1, 64)).String() + `,
-				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
-				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
-				"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
-				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
-				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
-				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
-				"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
-				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
-				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
-				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
-				"commission": {
-					"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
-					"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
-				}
+			"spot_connection": {
+				"api_key": "` + SpotAPIKey + `",
+				"api_secret": "` + SpotAPISecret + `",
+				"use_test_net": ` + strconv.FormatBool(SpotUseTestNet) + `
 			},
-			{
-				"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
-				"account_type": "` + string(AccountType_2) + `",
-				"strategy_type": "` + string(StrategyType_2) + `",
-				"stage_type": "` + string(StageType_2) + `",
-				"symbol": "` + Pair_2 + `",
-				"target_symbol": "` + TargetSymbol_2 + `",
-				"base_symbol": "` + BaseSymbol_2 + `",
-				"sleeping_time": ` + strconv.Itoa(SleepingTime_2) + `,
-				"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_2) + `,
-				"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
-				"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
-				"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
-				"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
-				"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
-				"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
-				"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
-				"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
-				"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
-				"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
-				"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
-				"commission": {
-					"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
-					"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
+			"futures_connection": {
+				"api_key": "` + FuturesAPIKey + `",
+				"api_secret": "` + FuturesAPISecret + `",
+				"use_test_net": ` + strconv.FormatBool(FuturesUseTestNet) + `
+			},
+			"pairs": [
+				{
+					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"account_type": "` + string(AccountType_1) + `",
+					"strategy_type": "` + string(StrategyType_1) + `",
+					"stage_type": "` + string(StageType_1) + `",
+					"symbol": "` + Pair_1 + `",
+					"target_symbol": "` + TargetSymbol_1 + `",
+					"base_symbol": "` + BaseSymbol_1 + `",
+					"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
+					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
+					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_1, 'f', -1, 64)).String() + `,
+					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
+					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
+					"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
+					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
+					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
+					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
+					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
+					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
+					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
+					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
+					"commission": {
+						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
+						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
+					}
+				},
+				{
+					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"account_type": "` + string(AccountType_2) + `",
+					"strategy_type": "` + string(StrategyType_2) + `",
+					"stage_type": "` + string(StageType_2) + `",
+					"symbol": "` + Pair_2 + `",
+					"target_symbol": "` + TargetSymbol_2 + `",
+					"base_symbol": "` + BaseSymbol_2 + `",
+					"sleeping_time": ` + strconv.Itoa(SleepingTime_2) + `,
+					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_2) + `,
+					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
+					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
+					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
+					"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
+					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
+					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
+					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
+					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
+					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
+					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
+					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
+					"commission": {
+						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
+						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
+					}
 				}
-			}
-		]
-	}`)
+			]
+		}`)
 }
 
 func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate *[]config_interfaces.Pairs) {
 	assert.NoError(t, err)
-	assert.Equal(t, APIKey, config.GetAPIKey())
-	assert.Equal(t, APISecret, config.GetSecretKey())
-	assert.Equal(t, UseTestNet, config.GetUseTestNet())
+	assert.Equal(t, SpotAPIKey, config.GetSpotConnection().GetAPIKey())
+	assert.Equal(t, SpotAPISecret, config.GetSpotConnection().GetSecretKey())
+	assert.Equal(t, SpotUseTestNet, config.GetSpotConnection().GetUseTestNet())
+	assert.Equal(t, FuturesAPIKey, config.GetFuturesConnection().GetAPIKey())
+	assert.Equal(t, FuturesAPISecret, config.GetFuturesConnection().GetSecretKey())
+	assert.Equal(t, FuturesUseTestNet, config.GetFuturesConnection().GetUseTestNet())
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
@@ -281,10 +307,17 @@ func TestConfigFile_Save(t *testing.T) {
 	config := &config_types.ConfigFile{
 		FilePath: tmpFile.Name(),
 		Configs: &config_types.Configs{
-			APIKey:     APIKey,
-			APISecret:  APISecret,
-			UseTestNet: UseTestNet,
-			Pairs:      btree.New(2),
+			SpotConnection: &config_types.Connection{
+				APIKey:     SpotAPIKey,
+				APISecret:  SpotAPISecret,
+				UseTestNet: SpotUseTestNet,
+			},
+			FuturesConnection: &config_types.Connection{
+				APIKey:     FuturesAPIKey,
+				APISecret:  FuturesAPISecret,
+				UseTestNet: FuturesUseTestNet,
+			},
+			Pairs: btree.New(2),
 		},
 	}
 	config.Configs.Pairs.ReplaceOrInsert(pair_1)
@@ -368,12 +401,6 @@ func TestPairChecking(t *testing.T) {
 }
 
 func TestConfigGetter(t *testing.T) {
-	config := &config_types.Configs{
-		APIKey:     APIKey,
-		APISecret:  APISecret,
-		UseTestNet: UseTestNet,
-		Pairs:      btree.New(2),
-	}
 	config.Pairs.ReplaceOrInsert(pair_1)
 	config.Pairs.ReplaceOrInsert(pair_2)
 
@@ -381,12 +408,6 @@ func TestConfigGetter(t *testing.T) {
 }
 
 func TestConfigSetter(t *testing.T) {
-	config := &config_types.Configs{
-		APIKey:     APIKey,
-		APISecret:  APISecret,
-		UseTestNet: UseTestNet,
-		Pairs:      btree.New(2),
-	}
 	pairs := []config_interfaces.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 
@@ -395,12 +416,6 @@ func TestConfigSetter(t *testing.T) {
 }
 
 func TestConfigGetPairs(t *testing.T) {
-	config := &config_types.Configs{
-		APIKey:     APIKey,
-		APISecret:  APISecret,
-		UseTestNet: UseTestNet,
-		Pairs:      btree.New(2),
-	}
 	pairs := []config_interfaces.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 

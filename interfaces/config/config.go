@@ -43,10 +43,17 @@ type (
 		GetProfit(currentPrice float64) float64
 		CheckingPair() bool
 	}
-	Configuration interface {
+	Connection interface {
 		GetAPIKey() string
+		SetApiKey(key string)
 		GetSecretKey() string
+		SetSecretKey(key string)
 		GetUseTestNet() bool
+		SetUseTestNet(useTestNet bool)
+	}
+	Configuration interface {
+		GetSpotConnection() Connection
+		GetFuturesConnection() Connection
 		GetPair(pair string) Pairs
 		GetPairs(account_type ...pairs_types.AccountType) (*[]Pairs, error)
 		SetPairs([]Pairs) error

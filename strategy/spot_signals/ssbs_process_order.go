@@ -2,6 +2,7 @@ package spot_signals
 
 import (
 	"context"
+	"log"
 	"math"
 	_ "net/http/pprof"
 	"time"
@@ -37,9 +38,14 @@ func ProcessBuyOrder(
 	buyEvent chan *depth_types.DepthItemType,
 	stopBuy chan bool,
 	stopEvent chan os.Signal) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
+	symbol, err := (*pairInfo).GetSpotSymbol()
+	if err != nil {
+		log.Printf(errorMsg, err)
+		return
+	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
 	go func() {
 		var order *binance.CreateOrderResponse
@@ -126,9 +132,14 @@ func ProcessSellOrder(
 	sellEvent chan *depth_types.DepthItemType,
 	stopSell chan bool,
 	stopEvent chan os.Signal) (startSellOrderEvent chan *binance.CreateOrderResponse) {
+	symbol, err := (*pairInfo).GetSpotSymbol()
+	if err != nil {
+		log.Printf(errorMsg, err)
+		return
+	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
 	startSellOrderEvent = make(chan *binance.CreateOrderResponse)
 	go func() {
@@ -217,9 +228,14 @@ func ProcessSellTakeProfitOrder(
 	stopProcess chan bool,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *binance.WsUserDataEvent) (startBuyOrderEvent chan *binance.CreateOrderResponse) {
+	symbol, err := (*pairInfo).GetSpotSymbol()
+	if err != nil {
+		log.Printf(errorMsg, err)
+		return
+	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64((*pairInfo).PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
 	go func() {
 		for {

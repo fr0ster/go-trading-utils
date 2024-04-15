@@ -98,10 +98,17 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 	res = &ConfigFile{
 		FilePath: file_path,
 		Configs: &Configs{
-			APIKey:     "",
-			APISecret:  "",
-			UseTestNet: false,
-			Pairs:      btree.New(degree),
+			SpotConnection: &Connection{
+				APIKey:     "",
+				APISecret:  "",
+				UseTestNet: false,
+			},
+			FuturesConnection: &Connection{
+				APIKey:     "",
+				APISecret:  "",
+				UseTestNet: false,
+			},
+			Pairs: btree.New(degree),
 		},
 	}
 	return

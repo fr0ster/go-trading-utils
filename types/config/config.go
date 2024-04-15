@@ -10,24 +10,77 @@ import (
 )
 
 type (
-	Configs struct {
+	Connection struct {
 		APIKey     string `json:"api_key"`
 		APISecret  string `json:"api_secret"`
 		UseTestNet bool   `json:"use_test_net"`
-		Pairs      *btree.BTree
+	}
+	Configs struct {
+		SpotConnection    *Connection `json:"spot_connection"`
+		FuturesConnection *Connection `json:"futures_connection"`
+		Pairs             *btree.BTree
 	}
 )
 
-func (cf *Configs) GetAPIKey() string {
+func (cf *Connection) GetAPIKey() string {
 	return cf.APIKey
 }
 
-func (cf *Configs) GetSecretKey() string {
+func (cf *Connection) SetApiKey(key string) {
+	cf.APIKey = key
+}
+
+func (cf *Connection) GetSecretKey() string {
 	return cf.APISecret
 }
 
-func (cf *Configs) GetUseTestNet() bool {
+func (cf *Connection) SetSecretKey(key string) {
+	cf.APISecret = key
+}
+
+func (cf *Connection) GetUseTestNet() bool {
 	return cf.UseTestNet
+}
+
+func (cf *Connection) SetUseTestNet(useTestNet bool) {
+	cf.UseTestNet = useTestNet
+}
+
+func (cf *Connection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
+	}{
+		APIKey:     cf.APIKey,
+		APISecret:  cf.APISecret,
+		UseTestNet: cf.UseTestNet,
+	})
+}
+
+func (cf *Connection) UnmarshalJSON(data []byte) error {
+	temp := &struct {
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
+	}{}
+	if err := json.Unmarshal(data, temp); err != nil {
+		return err
+	}
+	cf.APIKey = temp.APIKey
+	cf.APISecret = temp.APISecret
+	cf.UseTestNet = temp.UseTestNet
+	return nil
+}
+
+// GetFuturesConnection implements config.Configuration.
+func (cf *Configs) GetFuturesConnection() config_interfaces.Connection {
+	return cf.FuturesConnection
+}
+
+// GetSpotConnection implements config.Configuration.
+func (cf *Configs) GetSpotConnection() config_interfaces.Connection {
+	return cf.SpotConnection
 }
 
 func (cf *Configs) GetPair(pair string) config_interfaces.Pairs {
@@ -74,31 +127,35 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		APIKey     string               `json:"api_key"`
-		APISecret  string               `json:"api_secret"`
-		UseTestNet bool                 `json:"use_test_net"`
-		Pairs      []*pairs_types.Pairs `json:"pairs"`
+		SpotConnection    *Connection          `json:"spot_connection"`
+		FuturesConnection *Connection          `json:"futures_connection"`
+		Pairs             []*pairs_types.Pairs `json:"pairs"`
 	}{
-		APIKey:     c.APIKey,
-		APISecret:  c.APISecret,
-		UseTestNet: c.UseTestNet,
-		Pairs:      pairs,
+		SpotConnection:    c.SpotConnection,
+		FuturesConnection: c.FuturesConnection,
+		Pairs:             pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		APIKey     string               `json:"api_key"`
-		APISecret  string               `json:"api_secret"`
-		UseTestNet bool                 `json:"use_test_net"`
-		Pairs      []*pairs_types.Pairs `json:"pairs"`
+		SpotConnection    *Connection          `json:"spot_connection"`
+		FuturesConnection *Connection          `json:"futures_connection"`
+		Pairs             []*pairs_types.Pairs `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
 	}
-	c.APIKey = temp.APIKey
-	c.APISecret = temp.APISecret
-	c.UseTestNet = temp.UseTestNet
+	c.SpotConnection = &Connection{
+		APIKey:     temp.SpotConnection.APIKey,
+		APISecret:  temp.SpotConnection.APISecret,
+		UseTestNet: temp.SpotConnection.UseTestNet,
+	}
+	c.FuturesConnection = &Connection{
+		APIKey:     temp.FuturesConnection.APIKey,
+		APISecret:  temp.FuturesConnection.APISecret,
+		UseTestNet: temp.FuturesConnection.UseTestNet,
+	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
 		c.Pairs.ReplaceOrInsert(pair)

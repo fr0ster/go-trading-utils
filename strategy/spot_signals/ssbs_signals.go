@@ -1,13 +1,11 @@
 package spot_signals
 
 import (
-	"context"
 	_ "net/http/pprof"
 	"time"
 
 	"os"
 
-	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
@@ -15,7 +13,6 @@ import (
 
 	pair_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
 )
 
 type (
@@ -143,24 +140,6 @@ func BuyOrSellSignal(
 			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
-	return
-}
-
-func InitMiddlePrice(
-	client *binance.Client,
-	pair config_interfaces.Pairs,
-	pairInfo *symbol_info_types.Symbol) (err error) {
-	quantity := (*pairInfo).LotSizeFilter().MinQuantity
-
-	if pair.GetMiddlePrice() == 0 {
-		_, err =
-			client.NewCreateOrderService().
-				Symbol(string(binance.SymbolType(pair.GetPair()))).
-				Type(binance.OrderTypeMarket).
-				Side(binance.SideTypeBuy).
-				Quantity(quantity).
-				TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-	}
 	return
 }
 
