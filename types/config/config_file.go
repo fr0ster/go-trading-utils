@@ -4,9 +4,9 @@ import (
 	"io"
 	"os"
 	"sync"
-	"time"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
+	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
@@ -54,27 +54,15 @@ func (cf *ConfigFile) Save() error {
 	cf.Lock()
 	defer cf.Unlock()
 	if cf.Configs.Pairs.Len() == 0 {
-		cf.Configs.Pairs.ReplaceOrInsert(&pairs_types.Pairs{
-			InitialBalance:         0.0,
-			AccountType:            "SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE",
-			StrategyType:           "HOLDING/SCALPING/ARBITRAGE/TRADING",
-			StageType:              "INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION",
-			Pair:                   "BTCUSDT",
-			TargetSymbol:           "BTC",
-			BaseSymbol:             "USDT",
-			SleepingTime:           3 * time.Minute,
-			LimitInputIntoPosition: 0.1,
-			LimitOutputOfPosition:  0.5,
-			LimitOnPosition:        1.0,
-			LimitOnTransaction:     0.01,
-			BuyDelta:               0.01,
-			BuyQuantity:            0.0,
-			BuyValue:               0.0,
-			SellDelta:              0.05,
-			SellQuantity:           0.0,
-			SellValue:              0.0,
-			Commission:             pairs_types.Commission{},
-		})
+		cf.Configs.Pairs.ReplaceOrInsert(
+			pairs_types.New(
+				&connection_types.Connection{},
+				pairs_types.SpotAccountType,
+				pairs_types.HoldingStrategyType,
+				pairs_types.InputIntoPositionStage,
+				"BTCUSDT",
+				"BTC",
+				"USDT"))
 	}
 
 	formattedJSON, err := cf.Configs.MarshalJSON()
@@ -99,12 +87,12 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 	res = &ConfigFile{
 		FilePath: file_path,
 		Configs: &Configs{
-			SpotConnection: &Connection{
+			SpotConnection: &connection_types.Connection{
 				APIKey:     "",
 				APISecret:  "",
 				UseTestNet: false,
 			},
-			FuturesConnection: &Connection{
+			FuturesConnection: &connection_types.Connection{
 				APIKey:     "",
 				APISecret:  "",
 				UseTestNet: false,

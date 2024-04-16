@@ -5,7 +5,11 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
+
+	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
+
 	"github.com/fr0ster/go-trading-utils/utils"
+
 	"github.com/google/btree"
 )
 
@@ -40,16 +44,17 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		AccountType                AccountType   `json:"account_type"`                  // Тип акаунта
-		StrategyType               StrategyType  `json:"strategy_type"`                 // Тип стратегії
-		StageType                  StageType     `json:"stage_type"`                    // Cтадія стратегії
-		Pair                       string        `json:"symbol"`                        // Пара
-		TargetSymbol               string        `json:"target_symbol"`                 // Цільовий токен
-		BaseSymbol                 string        `json:"base_symbol"`                   // Базовий токен
-		InitialBalance             float64       `json:"initial_balance"`               // Початковий баланс
-		SleepingTime               time.Duration `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
-		TakingPositionSleepingTime time.Duration `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
-		MiddlePrice                float64       `json:"middle_price"`                  // Середня ціна купівлі по позиції
+		Connection                 *connection_types.Connection `json:"connection"`
+		AccountType                AccountType                  `json:"account_type"`                  // Тип акаунта
+		StrategyType               StrategyType                 `json:"strategy_type"`                 // Тип стратегії
+		StageType                  StageType                    `json:"stage_type"`                    // Cтадія стратегії
+		Pair                       string                       `json:"symbol"`                        // Пара
+		TargetSymbol               string                       `json:"target_symbol"`                 // Цільовий токен
+		BaseSymbol                 string                       `json:"base_symbol"`                   // Базовий токен
+		InitialBalance             float64                      `json:"initial_balance"`               // Початковий баланс
+		SleepingTime               time.Duration                `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
+		TakingPositionSleepingTime time.Duration                `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
+		MiddlePrice                float64                      `json:"middle_price"`                  // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -76,13 +81,13 @@ type (
 // Less implements btree.Item.
 func (cr *Pairs) Less(item btree.Item) bool {
 	other := item.(*Pairs)
-	if cr.AccountType != other.AccountType {
+	if cr.AccountType != other.AccountType && cr.AccountType != "" && other.AccountType != "" {
 		return cr.AccountType < other.AccountType
 	}
-	if cr.StrategyType != other.StrategyType {
+	if cr.StrategyType != other.StrategyType && cr.StrategyType != "" && other.StrategyType != "" {
 		return cr.StrategyType < other.StrategyType
 	}
-	if cr.StageType != other.StageType {
+	if cr.StageType != other.StageType && cr.StageType != "" && other.StageType != "" {
 		return cr.StageType < other.StageType
 	}
 	return cr.Pair < other.Pair
@@ -95,6 +100,14 @@ func (cr *Pairs) Equals(item btree.Item) bool {
 		cr.StrategyType == other.StrategyType &&
 		cr.StageType == other.StageType &&
 		cr.Pair == other.Pair
+}
+
+func (cr *Pairs) GetConnection() *connection_types.Connection {
+	return cr.Connection
+}
+
+func (cr *Pairs) SetConnection(connection *connection_types.Connection) {
+	cr.Connection = connection
 }
 
 // GetInitialBalance implements Configuration.
@@ -246,4 +259,37 @@ func (cr *Pairs) CheckingPair() bool {
 		cr.LimitInputIntoPosition != 0 &&
 		cr.LimitOutputOfPosition != 0 &&
 		cr.LimitInputIntoPosition < cr.LimitOutputOfPosition
+}
+
+func New(
+	connection *connection_types.Connection,
+	accountType AccountType,
+	strategyType StrategyType,
+	stageType StageType,
+	pair string,
+	targetSymbol string,
+	baseSymbol string,
+) *Pairs {
+	return &Pairs{
+		Connection:             connection,
+		InitialBalance:         0.0,
+		AccountType:            accountType,
+		StrategyType:           strategyType,
+		StageType:              stageType,
+		Pair:                   pair,
+		TargetSymbol:           targetSymbol,
+		BaseSymbol:             baseSymbol,
+		SleepingTime:           3 * time.Minute,
+		LimitInputIntoPosition: 0.1,
+		LimitOutputOfPosition:  0.5,
+		LimitOnPosition:        1.0,
+		LimitOnTransaction:     0.01,
+		BuyDelta:               0.01,
+		BuyQuantity:            0.0,
+		BuyValue:               0.0,
+		SellDelta:              0.05,
+		SellQuantity:           0.0,
+		SellValue:              0.0,
+		Commission:             Commission{},
+	}
 }

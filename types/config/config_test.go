@@ -8,8 +8,10 @@ import (
 	"time"
 
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
@@ -89,12 +91,12 @@ var (
 	Commission_2      = 0.02
 	Commission        = pairs_types.Commission{CommissionAsset_1: Commission_1, CommissionAsset_2: Commission_2}
 	config            = &config_types.Configs{
-		SpotConnection: &config_types.Connection{
+		SpotConnection: &connection_types.Connection{
 			APIKey:     SpotAPIKey,
 			APISecret:  SpotAPISecret,
 			UseTestNet: SpotUseTestNet,
 		},
-		FuturesConnection: &config_types.Connection{
+		FuturesConnection: &connection_types.Connection{
 			APIKey:     FuturesAPIKey,
 			APISecret:  FuturesAPISecret,
 			UseTestNet: FuturesUseTestNet,
@@ -102,6 +104,11 @@ var (
 		Pairs: btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
+		Connection: &connection_types.Connection{
+			APIKey:     SpotAPIKey,
+			APISecret:  SpotAPISecret,
+			UseTestNet: SpotUseTestNet,
+		},
 		InitialBalance:             InitialBalance,
 		AccountType:                AccountType_1,
 		StrategyType:               StrategyType_1,
@@ -125,6 +132,11 @@ var (
 		Commission:                 Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
+		Connection: &connection_types.Connection{
+			APIKey:     FuturesAPIKey,
+			APISecret:  FuturesAPISecret,
+			UseTestNet: FuturesUseTestNet,
+		},
 		InitialBalance:             InitialBalance,
 		AccountType:                AccountType_2,
 		StrategyType:               StrategyType_2,
@@ -164,6 +176,11 @@ func getTestData() []byte {
 			},
 			"pairs": [
 				{
+					"connection": {
+						"api_key": "your_api_key",
+						"api_secret": "your_api_secret",
+						"use_test_net": false
+					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_1) + `",
 					"strategy_type": "` + string(StrategyType_1) + `",
@@ -190,6 +207,11 @@ func getTestData() []byte {
 					}
 				},
 				{
+					"connection": {
+						"api_key": "your_api_key",
+						"api_secret": "your_api_secret",
+						"use_test_net": false
+					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_2) + `",
 					"strategy_type": "` + string(StrategyType_2) + `",
@@ -219,7 +241,7 @@ func getTestData() []byte {
 		}`)
 }
 
-func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate *[]config_interfaces.Pairs) {
+func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate *[]pairs_interfaces.Pairs) {
 	assert.NoError(t, err)
 	assert.Equal(t, SpotAPIKey, config.GetSpotConnection().GetAPIKey())
 	assert.Equal(t, SpotAPISecret, config.GetSpotConnection().GetSecretKey())
@@ -228,6 +250,9 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, FuturesAPISecret, config.GetFuturesConnection().GetSecretKey())
 	assert.Equal(t, FuturesUseTestNet, config.GetFuturesConnection().GetUseTestNet())
 
+	assert.Equal(t, (*checkingDate)[0].GetConnection().GetAPIKey(), config.GetPair(Pair_1).GetConnection().GetAPIKey())
+	assert.Equal(t, (*checkingDate)[0].GetConnection().GetSecretKey(), config.GetPair(Pair_1).GetConnection().GetSecretKey())
+	assert.Equal(t, (*checkingDate)[0].GetConnection().GetUseTestNet(), config.GetPair(Pair_1).GetConnection().GetUseTestNet())
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
 	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
@@ -250,6 +275,9 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
 	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
 
+	assert.Equal(t, (*checkingDate)[1].GetConnection().GetAPIKey(), config.GetPair(Pair_2).GetConnection().GetAPIKey())
+	assert.Equal(t, (*checkingDate)[1].GetConnection().GetSecretKey(), config.GetPair(Pair_2).GetConnection().GetSecretKey())
+	assert.Equal(t, (*checkingDate)[1].GetConnection().GetUseTestNet(), config.GetPair(Pair_2).GetConnection().GetUseTestNet())
 	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
@@ -309,12 +337,12 @@ func TestConfigFile_Save(t *testing.T) {
 	config := &config_types.ConfigFile{
 		FilePath: tmpFile.Name(),
 		Configs: &config_types.Configs{
-			SpotConnection: &config_types.Connection{
+			SpotConnection: &connection_types.Connection{
 				APIKey:     SpotAPIKey,
 				APISecret:  SpotAPISecret,
 				UseTestNet: SpotUseTestNet,
 			},
-			FuturesConnection: &config_types.Connection{
+			FuturesConnection: &connection_types.Connection{
 				APIKey:     FuturesAPIKey,
 				APISecret:  FuturesAPISecret,
 				UseTestNet: FuturesUseTestNet,
@@ -353,6 +381,11 @@ func TestPairSetter(t *testing.T) {
 		Commission:  Commission,
 	}
 	newCommission := pairs_types.Commission{"USDT": 0.1}
+	pair.SetConnection(&connection_types.Connection{
+		APIKey:     SpotAPIKey,
+		APISecret:  SpotAPISecret,
+		UseTestNet: SpotUseTestNet,
+	})
 	pair.SetInitialBalance(3000)
 	pair.SetMiddlePrice(45000)
 	pair.SetStage(StageType_2)
@@ -362,6 +395,9 @@ func TestPairSetter(t *testing.T) {
 	pair.SetSellValue(SellValue_2)
 	pair.SetCommission(newCommission)
 
+	assert.Equal(t, SpotAPIKey, pair.GetConnection().GetAPIKey())
+	assert.Equal(t, SpotAPISecret, pair.GetConnection().GetSecretKey())
+	assert.Equal(t, SpotUseTestNet, pair.GetConnection().GetUseTestNet())
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
 	assert.Equal(t, 45000.0, pair.GetMiddlePrice())
 	assert.Equal(t, StageType_2, pair.GetStage())
@@ -374,6 +410,9 @@ func TestPairSetter(t *testing.T) {
 
 func TestPairGetter(t *testing.T) {
 	pair := pair_1
+	assert.Equal(t, SpotAPIKey, pair.GetConnection().GetAPIKey())
+	assert.Equal(t, SpotAPISecret, pair.GetConnection().GetSecretKey())
+	assert.Equal(t, SpotUseTestNet, pair.GetConnection().GetUseTestNet())
 	assert.Equal(t, InitialBalance, pair.GetInitialBalance())
 	assert.Equal(t, AccountType_1, pair.GetAccountType())
 	assert.Equal(t, StrategyType_1, pair.GetStrategy())
@@ -403,14 +442,14 @@ func TestPairChecking(t *testing.T) {
 }
 
 func TestConfigGetter(t *testing.T) {
+	config := config
 	config.Pairs.ReplaceOrInsert(pair_1)
 	config.Pairs.ReplaceOrInsert(pair_2)
-
-	assertTest(t, nil, config, &[]config_interfaces.Pairs{pair_1, pair_2})
+	assertTest(t, nil, config, &[]pairs_interfaces.Pairs{pair_1, pair_2})
 }
 
 func TestConfigSetter(t *testing.T) {
-	pairs := []config_interfaces.Pairs{pair_1, pair_2}
+	pairs := []pairs_interfaces.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 
 	checkingDate, err := config.GetPairs()
@@ -418,7 +457,7 @@ func TestConfigSetter(t *testing.T) {
 }
 
 func TestConfigGetPairs(t *testing.T) {
-	pairs := []config_interfaces.Pairs{pair_1, pair_2}
+	pairs := []pairs_interfaces.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 
 	checkingDate, err := config.GetPairs()

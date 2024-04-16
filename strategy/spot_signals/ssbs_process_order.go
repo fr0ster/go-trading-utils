@@ -16,7 +16,7 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
-	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
@@ -29,7 +29,7 @@ func ProcessBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	account account_interfaces.Accounts,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -123,7 +123,7 @@ func ProcessSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	account account_interfaces.Accounts,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -218,7 +218,7 @@ func ProcessSellOrder(
 func ProcessSellTakeProfitOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	orderType binance.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -305,7 +305,7 @@ func ProcessSellTakeProfitOrder(
 func ProcessAfterBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -353,7 +353,7 @@ func ProcessAfterBuyOrder(
 func ProcessAfterSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -401,7 +401,7 @@ func ProcessAfterSellOrder(
 func OrderExecutionGuard(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.Symbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,

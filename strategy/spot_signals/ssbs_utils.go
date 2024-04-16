@@ -21,7 +21,7 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
-	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
@@ -50,7 +50,7 @@ func LimitRead(degree int, symbols []string, client *binance.Client) (
 func RestUpdate(
 	client *binance.Client,
 	stop chan os.Signal,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	depth *depth_types.Depth,
 	limit int,
 	bookTicker *bookTicker_types.BookTickerBTree,
@@ -110,7 +110,7 @@ func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err erro
 	return
 }
 
-func GetBound(pair config_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
+func GetBound(pair pairs_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
 	boundAsk = pair.GetMiddlePrice() * (1 - pair.GetBuyDelta())
 	logrus.Debugf("Ask bound: %f", boundAsk)
 	boundBid = pair.GetMiddlePrice() * (1 + pair.GetSellDelta())
@@ -120,10 +120,10 @@ func GetBound(pair config_interfaces.Pairs) (boundAsk float64, boundBid float64,
 
 func GetBaseBalance(
 	account account_interfaces.Accounts,
-	pair config_interfaces.Pairs) (
+	pair pairs_interfaces.Pairs) (
 	baseBalance float64, // Кількість базової валюти
 	err error) {
-	baseBalance, err = func(pair config_interfaces.Pairs) (
+	baseBalance, err = func(pair pairs_interfaces.Pairs) (
 		baseBalance float64,
 		err error) {
 		baseBalance, err = account.GetAsset(pair.GetBaseSymbol())
@@ -138,10 +138,10 @@ func GetBaseBalance(
 
 func GetTargetBalance(
 	account account_interfaces.Accounts,
-	pair config_interfaces.Pairs) (
+	pair pairs_interfaces.Pairs) (
 	targetBalance float64, // Кількість торгової валюти
 	err error) {
-	targetBalance, err = func(pair config_interfaces.Pairs) (
+	targetBalance, err = func(pair pairs_interfaces.Pairs) (
 		targetBalance float64,
 		err error) {
 		targetBalance, err = account.GetAsset(pair.GetTargetSymbol())
@@ -155,7 +155,7 @@ func GetTargetBalance(
 }
 
 func GetTransactionValue(
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	baseBalance float64) (
 	TransactionValue float64) { // Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
 	// Сума для транзакції, множимо баланс базової валюти на ліміт на транзакцію та на ліміт на позицію
@@ -164,7 +164,7 @@ func GetTransactionValue(
 }
 
 func GetBuyAndSellQuantity(
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	ask float64,
@@ -191,7 +191,7 @@ func GetBuyAndSellQuantity(
 func EvaluateMiddlePrice(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair config_interfaces.Pairs) (middlePrice float64, err error) {
+	pair pairs_interfaces.Pairs) (middlePrice float64, err error) {
 	err = account.Update()
 	if err != nil {
 		return

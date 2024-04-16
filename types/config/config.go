@@ -5,73 +5,21 @@ import (
 	"errors"
 
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+
 	"github.com/google/btree"
 )
 
 type (
-	Connection struct {
-		APIKey     string `json:"api_key"`
-		APISecret  string `json:"api_secret"`
-		UseTestNet bool   `json:"use_test_net"`
-	}
 	Configs struct {
-		SpotConnection    *Connection `json:"spot_connection"`
-		FuturesConnection *Connection `json:"futures_connection"`
+		SpotConnection    *connection_types.Connection `json:"spot_connection"`
+		FuturesConnection *connection_types.Connection `json:"futures_connection"`
 		Pairs             *btree.BTree
 	}
 )
-
-func (cf *Connection) GetAPIKey() string {
-	return cf.APIKey
-}
-
-func (cf *Connection) SetApiKey(key string) {
-	cf.APIKey = key
-}
-
-func (cf *Connection) GetSecretKey() string {
-	return cf.APISecret
-}
-
-func (cf *Connection) SetSecretKey(key string) {
-	cf.APISecret = key
-}
-
-func (cf *Connection) GetUseTestNet() bool {
-	return cf.UseTestNet
-}
-
-func (cf *Connection) SetUseTestNet(useTestNet bool) {
-	cf.UseTestNet = useTestNet
-}
-
-func (cf *Connection) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		APIKey     string `json:"api_key"`
-		APISecret  string `json:"api_secret"`
-		UseTestNet bool   `json:"use_test_net"`
-	}{
-		APIKey:     cf.APIKey,
-		APISecret:  cf.APISecret,
-		UseTestNet: cf.UseTestNet,
-	})
-}
-
-func (cf *Connection) UnmarshalJSON(data []byte) error {
-	temp := &struct {
-		APIKey     string `json:"api_key"`
-		APISecret  string `json:"api_secret"`
-		UseTestNet bool   `json:"use_test_net"`
-	}{}
-	if err := json.Unmarshal(data, temp); err != nil {
-		return err
-	}
-	cf.APIKey = temp.APIKey
-	cf.APISecret = temp.APISecret
-	cf.UseTestNet = temp.UseTestNet
-	return nil
-}
 
 // GetFuturesConnection implements config.Configuration.
 func (cf *Configs) GetFuturesConnection() config_interfaces.Connection {
@@ -83,13 +31,13 @@ func (cf *Configs) GetSpotConnection() config_interfaces.Connection {
 	return cf.SpotConnection
 }
 
-func (cf *Configs) GetPair(pair string) config_interfaces.Pairs {
+func (cf *Configs) GetPair(pair string) pairs_interfaces.Pairs {
 	// Implement the GetPair method
 	res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair})
 	return res.(*pairs_types.Pairs)
 }
 
-func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]config_interfaces.Pairs, error) {
+func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error) {
 	// Implement the GetPairs method
 	isExist := func(a pairs_types.AccountType) bool {
 		for _, at := range account_type {
@@ -99,7 +47,7 @@ func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]config_
 		}
 		return false
 	}
-	pairs := make([]config_interfaces.Pairs, 0)
+	pairs := make([]pairs_interfaces.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
 		if len(account_type) == 0 || isExist(a.(*pairs_types.Pairs).AccountType) {
 			pairs = append(pairs, a.(*pairs_types.Pairs))
@@ -112,7 +60,7 @@ func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]config_
 	return &pairs, nil
 }
 
-func (cf *Configs) SetPairs(pairs []config_interfaces.Pairs) error {
+func (cf *Configs) SetPairs(pairs []pairs_interfaces.Pairs) error {
 	// Implement the SetPairs method
 	for _, pair := range pairs {
 		cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
@@ -127,9 +75,9 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		SpotConnection    *Connection          `json:"spot_connection"`
-		FuturesConnection *Connection          `json:"futures_connection"`
-		Pairs             []*pairs_types.Pairs `json:"pairs"`
+		SpotConnection    *connection_types.Connection `json:"spot_connection"`
+		FuturesConnection *connection_types.Connection `json:"futures_connection"`
+		Pairs             []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		SpotConnection:    c.SpotConnection,
 		FuturesConnection: c.FuturesConnection,
@@ -139,19 +87,19 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		SpotConnection    *Connection          `json:"spot_connection"`
-		FuturesConnection *Connection          `json:"futures_connection"`
-		Pairs             []*pairs_types.Pairs `json:"pairs"`
+		SpotConnection    *connection_types.Connection `json:"spot_connection"`
+		FuturesConnection *connection_types.Connection `json:"futures_connection"`
+		Pairs             []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
 	}
-	c.SpotConnection = &Connection{
+	c.SpotConnection = &connection_types.Connection{
 		APIKey:     temp.SpotConnection.APIKey,
 		APISecret:  temp.SpotConnection.APISecret,
 		UseTestNet: temp.SpotConnection.UseTestNet,
 	}
-	c.FuturesConnection = &Connection{
+	c.FuturesConnection = &connection_types.Connection{
 		APIKey:     temp.FuturesConnection.APIKey,
 		APISecret:  temp.FuturesConnection.APISecret,
 		UseTestNet: temp.FuturesConnection.UseTestNet,

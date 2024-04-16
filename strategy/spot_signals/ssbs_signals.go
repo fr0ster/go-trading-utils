@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
-	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -31,7 +31,7 @@ type (
 func BuyOrSellSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
 	buyEvent = make(chan *depth_types.DepthItemType, 1)
@@ -146,7 +146,7 @@ func BuyOrSellSignal(
 func StartWorkInPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	collectionOutEvent chan bool) { // Виходимо з накопичення
@@ -215,7 +215,7 @@ func StartWorkInPositionSignal(
 func StartOutputOfPositionSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	positionOutEvent chan bool) { // Виходимо з накопичення)
@@ -282,7 +282,7 @@ func StartOutputOfPositionSignal(
 func StopWorkingSignal(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
-	pair config_interfaces.Pairs,
+	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
 	stopWorkingEvent chan bool) { // Виходимо з накопичення)
