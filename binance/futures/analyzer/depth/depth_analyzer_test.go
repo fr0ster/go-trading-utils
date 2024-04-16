@@ -26,7 +26,7 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	depth := depth_types.NewDepth(degree, symbol)
 	futures_depth.Init(depth, futures, limit)
 
-	da := depth_analyzer.NewDepthAnalyzer(3, rounded, bound)
+	da := depth_analyzer.New(3, rounded, bound)
 	da.Update(depth)
 
 	test := func(da depth_analyzer_interface.DepthAnalyzer) {

@@ -5,9 +5,12 @@ import (
 	"sync"
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
+
 	types "github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+
 	"github.com/fr0ster/go-trading-utils/utils"
+
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
@@ -171,7 +174,7 @@ func (a *DepthAnalyzer) GetLevels(side types.DepthSide) *btree.BTree {
 	}
 }
 
-func NewDepthAnalyzer(degree, round int, bound float64) *DepthAnalyzer {
+func New(degree, round int, bound float64) *DepthAnalyzer {
 	return &DepthAnalyzer{
 		ask:    btree.New(degree),
 		bid:    btree.New(degree),

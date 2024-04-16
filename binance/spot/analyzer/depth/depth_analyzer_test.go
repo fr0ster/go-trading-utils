@@ -26,7 +26,7 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	depth := depth_types.NewDepth(degree, symbol)
 	spot_depth.Init(depth, spot, limit)
 
-	da := depth_analyzer.NewDepthAnalyzer(3, rounded, bound)
+	da := depth_analyzer.New(3, rounded, bound)
 	da.Update(depth)
 
 	test := func(da depth_analyzer_interface.DepthAnalyzer) {
