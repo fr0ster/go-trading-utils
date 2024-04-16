@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/common"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
@@ -66,7 +65,7 @@ func (a *MarginAccount) GetBalances() *btree.BTree {
 
 func (a *MarginAccount) Update() (err error) {
 	a.MarginAccount, err = a.client.NewGetMarginAccountService().Do(context.Background())
-	if err != nil && err.(common.APIError).Code == 0 {
+	if err != nil {
 		return
 	}
 	for _, balance := range a.MarginAccount.UserAssets {

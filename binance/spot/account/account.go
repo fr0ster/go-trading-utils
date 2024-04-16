@@ -108,27 +108,3 @@ func New(client *binance.Client, symbols []string) (al *Account, err error) {
 	err = al.Update()
 	return
 }
-
-// func Binance2Balances(binanceAssetBalance interface{}) (*balances_types.BalanceItemType, error) {
-// 	var assetBalance balances_types.BalanceItemType
-
-// 	val := reflect.ValueOf(binanceAssetBalance)
-// 	if val.Kind() != reflect.Ptr {
-// 		val = reflect.ValueOf(&binanceAssetBalance)
-// 	}
-
-// 	err := copier.Copy(&assetBalance, val.Interface())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &assetBalance, nil
-// }
-
-// func Binance2Balances(binanceAccountAsset interface{}) *Balance {
-// 	var accountAsset Balance
-// 	accountAsset.Asset = binanceAccountAsset.(*Balance).Asset
-// 	accountAsset.Free = utils.ConvStrToFloat64(binanceAccountAsset.(*Balance).Free)
-// 	accountAsset.Locked = utils.ConvStrToFloat64(binanceAccountAsset.(*Balance).Locked)
-// 	return &accountAsset
-// }
