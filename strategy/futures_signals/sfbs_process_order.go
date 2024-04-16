@@ -30,7 +30,7 @@ func ProcessBuyOrder(
 	client *futures.Client,
 	account account_interfaces.Accounts,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
+	pairInfo *symbol_info_types.FuturesSymbol,
 	orderType futures.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -38,7 +38,7 @@ func ProcessBuyOrder(
 	buyEvent chan *depth_types.DepthItemType,
 	stopBuy chan bool,
 	stopEvent chan os.Signal) (startBuyOrderEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pairInfo).GetSpotSymbol()
+	symbol, err := (*pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
 		return
@@ -121,7 +121,7 @@ func ProcessSellOrder(
 	client *futures.Client,
 	account account_interfaces.Accounts,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
+	pairInfo *symbol_info_types.FuturesSymbol,
 	orderType futures.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -129,7 +129,7 @@ func ProcessSellOrder(
 	sellEvent chan *depth_types.DepthItemType,
 	stopSell chan bool,
 	stopEvent chan os.Signal) (startSellOrderEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pairInfo).GetSpotSymbol()
+	symbol, err := (*pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
 		return
@@ -213,7 +213,7 @@ func ProcessSellTakeProfitOrder(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
+	pairInfo *symbol_info_types.FuturesSymbol,
 	orderType futures.OrderType,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
@@ -222,7 +222,7 @@ func ProcessSellTakeProfitOrder(
 	stopProcess chan bool,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *futures.WsUserDataEvent) (startBuyOrderEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pairInfo).GetSpotSymbol()
+	symbol, err := (*pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
 		return
@@ -393,7 +393,7 @@ func OrderExecutionGuard(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
+	pairInfo *symbol_info_types.FuturesSymbol,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
