@@ -75,12 +75,19 @@ type (
 
 // Less implements btree.Item.
 func (cr *Pairs) Less(item btree.Item) bool {
-	return cr.Pair < item.(*Pairs).Pair
+	return cr.Pair < item.(*Pairs).Pair &&
+		cr.AccountType < item.(*Pairs).AccountType &&
+		cr.StrategyType < item.(*Pairs).StrategyType &&
+		cr.StageType < item.(*Pairs).StageType
+
 }
 
 // Equals implements btree.Item.
 func (cr *Pairs) Equals(item btree.Item) bool {
-	return cr.Pair == item.(*Pairs).Pair
+	return cr.Pair == item.(*Pairs).Pair &&
+		cr.AccountType == item.(*Pairs).AccountType &&
+		cr.StrategyType == item.(*Pairs).StrategyType &&
+		cr.StageType == item.(*Pairs).StageType
 }
 
 // GetInitialBalance implements Configuration.
