@@ -2,13 +2,13 @@ package info
 
 import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
+	"github.com/google/btree"
 )
 
 type (
 	ExchangeInfo interface {
-		GetSymbol(symbol string) *symbol_info.Symbol
+		GetSymbol(btree.Item) btree.Item
 		GetSymbols() *symbols_info.Symbols
 		GetTimezone() string
 		GetServerTime() int64

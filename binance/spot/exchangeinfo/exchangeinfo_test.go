@@ -8,6 +8,7 @@ import (
 	exchangeinfo "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/exchangeinfo"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,10 +43,7 @@ func TestGetOrderTypes(t *testing.T) {
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
-	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
-	if err != nil {
-		t.Errorf("GetSpotSymbol returned an error: %v", err)
-	}
+	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
 	orderTypes := symbol.OrderTypes
 
 	// Check if the orderTypes is not empty
@@ -63,10 +61,7 @@ func TestGetPermissions(t *testing.T) {
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
-	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
-	if err != nil {
-		t.Errorf("GetSpotSymbol returned an error: %v", err)
-	}
+	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
 	permissions := symbol.Permissions
 	assert.NotNil(t, permissions)
 }
@@ -80,7 +75,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
-	symbol := exchangeInfo.GetSymbol("BTCUSDT")
+	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
 
 	// Check if the permissions is not empty
 	if symbol == nil {
@@ -98,8 +93,7 @@ func TestInterface(t *testing.T) {
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
-		_ = exchangeInfo.GetSymbol("BTCUSDT")
-		symbol, _ := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
+		symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
 		for _, permissions := range symbol.Permissions {
 			_ = permissions
 		}

@@ -1,8 +1,11 @@
 package symbols
 
 import (
+	"fmt"
 	"sync"
 
+	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/google/btree"
 )
@@ -12,6 +15,9 @@ type (
 		degree  int
 		symbols btree.BTree
 		mu      sync.Mutex
+	}
+	ISymbol interface {
+		symbol_info.SpotSymbol | symbol_info.FuturesSymbol
 	}
 )
 
@@ -27,26 +33,39 @@ func (s *Symbols) Len() int {
 	return s.symbols.Len()
 }
 
-func (s *Symbols) Insert(symbol *symbol_info.Symbol) {
+func (s *Symbols) Insert(symbol btree.Item) {
 	s.symbols.ReplaceOrInsert(symbol)
 }
 
-func (s *Symbols) GetSymbol(symbol string) *symbol_info.Symbol {
-	item := s.symbols.Get(&symbol_info.Symbol{Symbol: symbol})
+func (s *Symbols) GetSymbol(symbol btree.Item) btree.Item {
+	item := s.symbols.Get(symbol)
 	if item == nil {
 		return nil
 	}
-	return item.(*symbol_info.Symbol)
+	return item
 }
 
-func NewSymbols(degree int, symbols []interface{}) *Symbols {
-	s := Symbols{
+func NewSymbols(degree int, symbols []interface{}) (s *Symbols, err error) {
+	s = &Symbols{
 		degree:  degree,
 		symbols: *btree.New(degree),
 		mu:      sync.Mutex{},
 	}
 	for _, symbol := range symbols {
-		s.Insert(symbol_info.NewSymbol(symbol))
+		switch symbol := symbol.(type) {
+		case symbol_info.SpotSymbol:
+			s.Insert(&symbol)
+		case binance.Symbol:
+			val := symbol_info.SpotSymbol(symbol)
+			s.Insert(&val)
+		case symbol_info.FuturesSymbol:
+			s.Insert(&symbol)
+		case futures.Symbol:
+			val := symbol_info.FuturesSymbol(symbol)
+			s.Insert(&val)
+		default:
+			err = fmt.Errorf("invalid symbol type: %T", symbol)
+		}
 	}
-	return &s
+	return
 }

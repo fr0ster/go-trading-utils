@@ -11,7 +11,7 @@ type (
 	Symbols interface {
 		Lock()
 		Unlock()
-		GetSymbol(symbol string) *symbol_info.Symbol
+		GetSymbol(symbol string) *symbol_info.SpotSymbol
 		GetSpotSymbol() *binance.Symbol
 		GetFuturesSymbol() *futures.Symbol
 		Insert(symbol btree.Item)

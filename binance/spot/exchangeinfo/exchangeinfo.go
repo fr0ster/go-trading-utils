@@ -19,8 +19,9 @@ func Init(val *exchange_types.ExchangeInfo, degree int, client *binance.Client) 
 	val.ServerTime = exchangeInfo.ServerTime
 	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
 	val.ExchangeFilters = exchangeInfo.ExchangeFilters
-	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
-	return nil
+	val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
+	val.SpotSymbols = exchangeInfo.Symbols
+	return err
 }
 
 func RestrictedInit(val *exchange_types.ExchangeInfo, degree int, symbols []string, client *binance.Client) error {
@@ -32,8 +33,8 @@ func RestrictedInit(val *exchange_types.ExchangeInfo, degree int, symbols []stri
 	val.ServerTime = exchangeInfo.ServerTime
 	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
 	val.ExchangeFilters = exchangeInfo.ExchangeFilters
-	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
-	return nil
+	val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
+	return err
 }
 
 func convertSymbols(symbols []binance.Symbol) []interface{} {

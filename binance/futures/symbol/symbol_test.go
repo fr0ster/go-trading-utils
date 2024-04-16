@@ -11,20 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewSymbol(t *testing.T) {
-	symbol := &futures.Symbol{
-		Symbol: "BTCUSDT",
-	}
-
-	s := symbol_info.NewSymbol(symbol)
-
-	if s.Symbol != "BTCUSDT" {
-		t.Errorf("Expected SymbolName to be 'BTCUSDT', got %s", s.Symbol)
-	}
-
-	// Add more assertions for other fields if needed
-}
-
 const degree = 3
 
 func TestInterface(t *testing.T) {
@@ -37,10 +23,10 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
-	symbol := exchangeInfo.GetSymbol("BTCUSDT")
+	symbol := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol)
 
 	// Check if the struct implements the interface
-	test := func(s *symbol_info.Symbol) interface{} {
+	test := func(s *symbol_info.FuturesSymbol) interface{} {
 		return s.GetFilter("MAX_NUM_ALGO_ORDERS")
 	}
 	res := test(symbol)

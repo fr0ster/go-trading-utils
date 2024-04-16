@@ -17,8 +17,8 @@ func Init(val *exchange_types.ExchangeInfo, degree int, client *futures.Client) 
 	val.ServerTime = exchangeInfo.ServerTime
 	val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
 	val.ExchangeFilters = exchangeInfo.ExchangeFilters
-	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
-	return nil
+	val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
+	return err
 }
 
 func RestrictedInit(val *exchange_types.ExchangeInfo, degree int, symbols []string, client *futures.Client) error {
@@ -40,8 +40,8 @@ func RestrictedInit(val *exchange_types.ExchangeInfo, degree int, symbols []stri
 			restrictedSymbols = append(restrictedSymbols, s)
 		}
 	}
-	val.Symbols = symbols_info.NewSymbols(degree, convertSymbols(restrictedSymbols))
-	return nil
+	val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(restrictedSymbols))
+	return err
 }
 
 func convertSymbols(symbols []futures.Symbol) []interface{} {

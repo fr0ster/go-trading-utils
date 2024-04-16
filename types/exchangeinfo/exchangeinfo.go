@@ -3,8 +3,10 @@ package exchangeinfo
 import (
 	"time"
 
-	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
+	"github.com/google/btree"
 )
 
 type (
@@ -20,11 +22,13 @@ type (
 		Limit         int64  `json:"limit"`
 	}
 	ExchangeInfo struct {
-		Timezone        string        `json:"timezone"`
-		ServerTime      int64         `json:"serverTime"`
-		RateLimits      []RateLimit   `json:"rateLimits"`
-		ExchangeFilters []interface{} `json:"exchangeFilters"`
-		Symbols         *symbols_info.Symbols
+		Timezone        string                `json:"timezone"`
+		ServerTime      int64                 `json:"serverTime"`
+		RateLimits      []RateLimit           `json:"rateLimits"`
+		ExchangeFilters []interface{}         `json:"exchangeFilters"`
+		Symbols         *symbols_info.Symbols `json:"symbols"`
+		SpotSymbols     []binance.Symbol      `json:"spotSymbols"`
+		FuturesSymbols  []futures.Symbol      `json:"futuresSymbols"`
 	}
 )
 
@@ -77,7 +81,7 @@ func (e *ExchangeInfo) GetTimezone() string {
 	return e.Timezone
 }
 
-func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.Symbol {
+func (exchangeInfo *ExchangeInfo) GetSymbol(symbol btree.Item) btree.Item {
 	return exchangeInfo.Symbols.GetSymbol(symbol)
 }
 

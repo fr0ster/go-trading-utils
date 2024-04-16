@@ -6,10 +6,12 @@ import (
 	"github.com/adshao/go-binance/v2"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSymbolsNew(t *testing.T) {
-	symbols := symbols_info.NewSymbols(2, []interface{}{})
+	symbols, err := symbols_info.NewSymbols(2, []interface{}{})
+	assert.Nil(t, err)
 
 	if symbols == nil {
 		t.Errorf("Expected symbols to be initialized, but got nil")
@@ -17,8 +19,9 @@ func TestSymbolsNew(t *testing.T) {
 }
 
 func TestSymbolsLen(t *testing.T) {
-	symbols :=
+	symbols, err :=
 		symbols_info.NewSymbols(2, []interface{}{binance.Symbol{Symbol: "BTCUSDT"}})
+	assert.Nil(t, err)
 
 	// TODO: Add test cases to insert symbols into the BTree
 
@@ -31,12 +34,10 @@ func TestSymbolsLen(t *testing.T) {
 }
 
 func TestSymbolsInsert(t *testing.T) {
-	symbols :=
-		symbols_info.NewSymbols(2, []interface{}{})
+	symbols, err := symbols_info.NewSymbols(2, []interface{}{})
+	assert.Nil(t, err)
 
-	symbol := symbol_info.NewSymbol(&binance.Symbol{
-		// Initialize the symbol with test data
-	})
+	symbol := &symbol_info.SpotSymbol{Symbol: "BTCUSDT"}
 
 	symbols.Insert(symbol)
 
@@ -45,12 +46,13 @@ func TestSymbolsInsert(t *testing.T) {
 
 func TestSymbolsGetSymbol(t *testing.T) {
 	symbolName := "BTCUSDT"
-	symbols :=
+	symbols, err :=
 		symbols_info.NewSymbols(2, append([]interface{}{}, []interface{}{binance.Symbol{Symbol: symbolName}}...))
+	assert.Nil(t, err)
 
 	// TODO: Add test cases to insert symbols into the BTree
 
-	actualSymbol := symbols.GetSymbol(symbolName)
+	actualSymbol := symbols.GetSymbol(&symbol_info.SpotSymbol{Symbol: symbolName}).(*symbol_info.SpotSymbol)
 
 	if actualSymbol == nil {
 		t.Errorf("Expected to get symbol %s, but got nil", symbolName)

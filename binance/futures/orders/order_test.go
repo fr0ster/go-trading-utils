@@ -12,6 +12,7 @@ import (
 	exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	"github.com/fr0ster/go-trading-utils/binance/futures/orders"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -40,7 +41,7 @@ func TestNewLimitOrder(t *testing.T) {
 		log.Printf(errorMsg, err)
 		return
 	}
-	pairInfo, err := exchangeInfo.GetSymbol(pair).GetFuturesSymbol()
+	pairInfo, err := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair}).(*symbol_info.FuturesSymbol).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
 		return

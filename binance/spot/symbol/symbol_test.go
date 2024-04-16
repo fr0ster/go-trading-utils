@@ -13,20 +13,6 @@ import (
 
 const degree = 3
 
-func TestNewSymbol(t *testing.T) {
-	symbol := &binance.Symbol{
-		Symbol: "BTCUSDT",
-	}
-
-	s := symbol_info.NewSymbol(symbol)
-
-	if s.Symbol != "BTCUSDT" {
-		t.Errorf("Expected SymbolName to be 'BTCUSDT', got %s", s.Symbol)
-	}
-
-	// Add more assertions for other fields if needed
-}
-
 func TestInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
@@ -37,10 +23,10 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error: %v", err)
 	}
-	symbol := exchangeInfo.GetSymbol("BTCUSDT")
+	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
 
 	// Check if the struct implements the interface
-	test := func(s *symbol_info.Symbol) interface{} {
+	test := func(s *symbol_info.SpotSymbol) interface{} {
 		return s.GetFilter("MAX_NUM_ALGO_ORDERS")
 	}
 	res := test(symbol)
