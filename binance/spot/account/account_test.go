@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	API_KEY      = "SPOT_TEST_BINANCE_API_KEY"
-	SECRET_KEY   = "SPOT_TEST_BINANCE_SECRET_KEY"
-	USE_TEST_NET = true
+	API_KEY      = "API_KEY"
+	SECRET_KEY   = "SECRET_KEY"
+	USE_TEST_NET = false
 )
 
 func TestAccountLimits_GetQuantityLimits(t *testing.T) {

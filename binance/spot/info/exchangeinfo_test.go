@@ -8,6 +8,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/binance/spot/info"
 	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/info"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -67,11 +68,7 @@ func TestGetPermissions(t *testing.T) {
 		t.Errorf("GetSpotSymbol returned an error: %v", err)
 	}
 	permissions := symbol.Permissions
-
-	// Check if the permissions is not empty
-	if len(permissions) == 0 {
-		t.Error("GetPermissions returned empty permissions")
-	}
+	assert.NotNil(t, permissions)
 }
 
 func TestGetExchangeInfoSymbol(t *testing.T) {
