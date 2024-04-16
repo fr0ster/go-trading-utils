@@ -10,12 +10,17 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 )
 
-const degree = 3
+const (
+	API_KEY      = "SPOT_TEST_BINANCE_API_KEY"
+	SECRET_KEY   = "SPOT_TEST_BINANCE_SECRET_KEY"
+	USE_TEST_NET = true
+	degree       = 3
+)
 
 func TestGetExchangeInfo(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
@@ -28,9 +33,9 @@ func TestGetExchangeInfo(t *testing.T) {
 }
 
 func TestGetOrderTypes(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
 	info.Init(exchangeInfo, degree, client)
@@ -49,9 +54,9 @@ func TestGetOrderTypes(t *testing.T) {
 }
 
 func TestGetPermissions(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
 	info.Init(exchangeInfo, degree, client)
@@ -70,9 +75,9 @@ func TestGetPermissions(t *testing.T) {
 }
 
 func TestGetExchangeInfoSymbol(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
 	info.Init(exchangeInfo, degree, client)
@@ -87,9 +92,9 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// binance.UseTestnet = true
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
@@ -97,6 +102,10 @@ func TestInterface(t *testing.T) {
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
 		_ = exchangeInfo.GetSymbol("BTCUSDT")
+		symbol, _ := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
+		for _, permissions := range symbol.Permissions {
+			_ = permissions
+		}
 		_ = exchangeInfo.GetTimezone()
 		_ = exchangeInfo.GetServerTime()
 		_ = exchangeInfo.GetRateLimits()

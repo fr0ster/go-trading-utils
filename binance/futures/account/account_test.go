@@ -10,10 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	API_KEY      = "FUTURE_TEST_BINANCE_API_KEY"
+	SECRET_KEY   = "FUTURE_TEST_BINANCE_SECRET_KEY"
+	USE_TEST_NET = true
+)
+
 func TestAccount_GetQuantityLimits(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	futures.UseTestnet = USE_TEST_NET
 	symbols := []string{"BTC", "ETH", "BNB", "USDT", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
 	account, err := futures_account.New(futures, 3, symbols)
@@ -35,9 +41,9 @@ func TestAccount_GetQuantityLimits(t *testing.T) {
 }
 
 func TestAccount_GetQuantityEmptyLimits(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	futures.UseTestnet = USE_TEST_NET
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
 	account, err := futures_account.New(futures, 3, symbols)
@@ -58,10 +64,10 @@ func TestAccount_GetQuantityEmptyLimits(t *testing.T) {
 	test(account)
 }
 
-func TestAccount_GetAsset(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
+func TestAccount_GetAssets(t *testing.T) {
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	futures.UseTestnet = USE_TEST_NET
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret_key)
 	account, err := futures_account.New(futures, 3, symbols)
@@ -75,9 +81,9 @@ func TestAccount_GetAsset(t *testing.T) {
 }
 
 func TestAccount_GetPositions(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
+	api_key := os.Getenv(API_KEY)
+	secret := os.Getenv(SECRET_KEY)
+	futures.UseTestnet = USE_TEST_NET
 	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
 	futures := futures.NewClient(api_key, secret)
 	account, err := futures_account.New(futures, 3, symbols)
@@ -88,4 +94,17 @@ func TestAccount_GetPositions(t *testing.T) {
 
 	positions := account.GetPositions()
 	assert.NotEqual(t, 0, len(positions))
+}
+
+func TestAccount_GetAsset(t *testing.T) {
+	api_key := os.Getenv(API_KEY)
+	secret_key := os.Getenv(SECRET_KEY)
+	futures.UseTestnet = USE_TEST_NET
+	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHIUSDT"}
+	futures := futures.NewClient(api_key, secret_key)
+	account, err := futures_account.New(futures, 3, symbols)
+	assert.Nil(t, err)
+
+	_, err = account.GetAsset("SUSHIUSDT")
+	assert.Nil(t, err)
 }

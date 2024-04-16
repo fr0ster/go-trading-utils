@@ -10,19 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	API_KEY      = "SPOT_TEST_BINANCE_API_KEY"
-	SECRET_KEY   = "SPOT_TEST_BINANCE_SECRET_KEY"
-	USE_TEST_NET = true
-)
-
-func TestAccountLimits_GetQuantityLimits(t *testing.T) {
+func TestMarginAccountLimits_GetQuantityLimits(t *testing.T) {
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	symbols := []string{"BTC", "ETH", "BNB", "USDT", "SUSHI", "CYBER"}
 	spot := binance.NewClient(api_key, secret_key)
-	account, err := spot_account.New(spot, symbols)
+	account, err := spot_account.NewMargin(spot, symbols)
 	if err != nil {
 		t.Errorf("Error creating account limits: %v", err)
 		return
@@ -40,13 +34,13 @@ func TestAccountLimits_GetQuantityLimits(t *testing.T) {
 	test(account)
 }
 
-func TestAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
+func TestMarginAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	symbols := []string{}
 	spot := binance.NewClient(api_key, secret_key)
-	account, err := spot_account.New(spot, symbols)
+	account, err := spot_account.NewMargin(spot, symbols)
 	if err != nil {
 		t.Errorf("Error creating account limits: %v", err)
 		return

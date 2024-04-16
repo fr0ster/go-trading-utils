@@ -9,10 +9,13 @@ import (
 	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
-	Account struct {
+	Asset    futures.AccountAsset
+	Position futures.AccountPosition
+	Account  struct {
 		client           *futures.Client
 		account          *futures.Account
 		accountAssets    *btree.BTree
@@ -23,13 +26,35 @@ type (
 	}
 )
 
+func (a *Asset) Less(item btree.Item) bool {
+	return a.Asset < item.(*Asset).Asset
+}
+
+func (a *Asset) Equal(item btree.Item) bool {
+	return a.Asset == item.(*Asset).Asset
+}
+
+func (a *Position) Less(item btree.Item) bool {
+	return a.Symbol < item.(*Position).Symbol
+}
+
+func (a *Position) Equal(item btree.Item) bool {
+	return a.Symbol == item.(*Position).Symbol
+}
+
 func (a *Account) GetAsset(asset string) (float64, error) {
-	item := a.accountAssets.Get(&balances_types.BalanceItemType{Asset: asset})
+	item := a.accountAssets.Get(&Asset{Asset: asset})
 	if item == nil {
-		return 0, errors.New("item not found")
+		item = a.accountPositions.Get(&Position{Symbol: asset})
+		if item == nil {
+			return 0, errors.New("item not found")
+		} else {
+			symbolBalance := item.(*Position).MaintMargin
+			return utils.ConvStrToFloat64(symbolBalance), nil
+		}
 	} else {
-		symbolBalance := item.(*balances_types.BalanceItemType).Free
-		return symbolBalance, nil
+		symbolBalance := item.(*Asset).AvailableBalance
+		return utils.ConvStrToFloat64(symbolBalance), nil
 	}
 }
 
@@ -38,8 +63,8 @@ func (a *Account) GetLockedAsset(asset string) (float64, error) {
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
-		symbolBalance := Binance2AccountAsset(item)
-		return symbolBalance.Locked, nil
+		symbolBalance, err := Binance2AccountAsset(item)
+		return utils.ConvStrToFloat64(symbolBalance.AvailableBalance), err
 	}
 }
 
@@ -48,8 +73,8 @@ func (a *Account) GetTotalAsset(asset string) (float64, error) {
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
-		symbolBalance := Binance2AccountAsset(item)
-		return symbolBalance.Free + symbolBalance.Locked, nil
+		symbolBalance, err := Binance2AccountAsset(item)
+		return utils.ConvStrToFloat64(symbolBalance.WalletBalance), err
 	}
 }
 
@@ -117,13 +142,19 @@ func (a *Account) Update() error {
 	}
 	for _, asset := range a.account.Assets {
 		if _, exists := a.symbols[asset.Asset]; exists || len(a.symbols) == 0 {
-			val := Binance2AccountAsset(asset)
+			val, err := Binance2AccountAsset(asset)
+			if err != nil {
+				continue
+			}
 			a.accountAssets.ReplaceOrInsert(val)
 		}
 	}
 	for _, position := range a.account.Positions {
 		if _, exists := a.symbols[position.Symbol]; exists || len(a.symbols) == 0 {
-			val := Binance2AccountAsset(position)
+			val, err := Binance2AccountPosition(position)
+			if err != nil {
+				continue
+			}
 			a.accountPositions.ReplaceOrInsert(val)
 		}
 	}
@@ -144,10 +175,20 @@ func New(client *futures.Client, degree int, symbols []string) (al *Account, err
 	return
 }
 
-func Binance2AccountAsset(binanceAccountAsset interface{}) *balances_types.BalanceItemType {
-	var accountAsset balances_types.BalanceItemType
-	accountAsset.Asset = binanceAccountAsset.(*futures.AccountAsset).Asset
-	accountAsset.Free = utils.ConvStrToFloat64(binanceAccountAsset.(*futures.AccountAsset).WalletBalance)
-	accountAsset.Locked = utils.ConvStrToFloat64(binanceAccountAsset.(*futures.AccountAsset).MaintMargin)
-	return &accountAsset
+func Binance2AccountAsset(binanceAsset interface{}) (*Asset, error) {
+	var asset Asset
+	err := copier.Copy(&asset, binanceAsset)
+	if err != nil {
+		return nil, err
+	}
+	return &asset, nil
+}
+
+func Binance2AccountPosition(binancePosition interface{}) (*Position, error) {
+	var position Position
+	err := copier.Copy(&position, binancePosition)
+	if err != nil {
+		return nil, err
+	}
+	return &position, nil
 }

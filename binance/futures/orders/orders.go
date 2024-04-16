@@ -26,17 +26,13 @@ func NewMarketOrder(
 	client *futures.Client,
 	symbol futures.SymbolType,
 	side futures.SideType,
-	quantity,
-	quoteOrderQty,
-	price string,
-	timeInForce futures.TimeInForceType) (*futures.CreateOrderResponse, error) {
+	quantity string) (*futures.CreateOrderResponse, error) {
 	return client.NewCreateOrderService().
 		Symbol(string(symbol)).
-		Type(futures.OrderTypeLimit).
+		Type(futures.OrderTypeMarket).
 		Side(side).
 		Quantity(quantity).
-		Price(price).
-		TimeInForce(timeInForce).Do(context.Background())
+		Do(context.Background())
 }
 
 func NewLimitMakerOrder(
