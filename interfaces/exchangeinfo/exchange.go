@@ -1,9 +1,9 @@
 package info
 
 import (
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
-	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
 )
 
 type (

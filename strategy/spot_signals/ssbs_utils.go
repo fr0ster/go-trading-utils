@@ -14,7 +14,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
-	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/info"
+	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_bookticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 
@@ -25,7 +25,7 @@ import (
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 )
 
 const (

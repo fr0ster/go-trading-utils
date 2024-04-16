@@ -3,7 +3,7 @@ package symbols
 import (
 	"sync"
 
-	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/google/btree"
 )
 

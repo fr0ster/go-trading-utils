@@ -9,9 +9,9 @@ import (
 
 	"github.com/adshao/go-binance/v2/common"
 	"github.com/adshao/go-binance/v2/futures"
-	exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/info"
+	exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	"github.com/fr0ster/go-trading-utils/binance/futures/orders"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	"github.com/fr0ster/go-trading-utils/utils"
 )
 

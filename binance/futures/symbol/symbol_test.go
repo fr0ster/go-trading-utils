@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2/futures"
-	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/info"
-	exchange_info "github.com/fr0ster/go-trading-utils/types/info"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
+	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/stretchr/testify/assert"
 )
 

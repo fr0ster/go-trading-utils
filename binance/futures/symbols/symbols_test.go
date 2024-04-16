@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	symbols_info "github.com/fr0ster/go-trading-utils/types/info/symbols"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
 )
 
 func TestSymbolsNew(t *testing.T) {

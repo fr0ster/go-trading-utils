@@ -19,9 +19,9 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 // Виводимо інформацію про позицію

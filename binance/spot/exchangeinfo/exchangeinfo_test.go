@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/binance/spot/info"
-	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/info"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
+	exchangeinfo "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
+	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/exchangeinfo"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, degree, client)
+	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -39,7 +39,7 @@ func TestGetOrderTypes(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, degree, client)
+	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
@@ -60,7 +60,7 @@ func TestGetPermissions(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, degree, client)
+	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	symbol, err := exchangeInfo.GetSymbol("BTCUSDT").GetSpotSymbol()
@@ -77,7 +77,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, degree, client)
+	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")
@@ -95,7 +95,7 @@ func TestInterface(t *testing.T) {
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.NewExchangeInfo()
-	info.Init(exchangeInfo, degree, client)
+	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
 		_ = exchangeInfo.GetSymbol("BTCUSDT")
