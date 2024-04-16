@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 type (

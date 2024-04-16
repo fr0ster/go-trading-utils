@@ -7,7 +7,8 @@ import (
 	"time"
 
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+
 	"github.com/google/btree"
 )
 

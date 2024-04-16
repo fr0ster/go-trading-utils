@@ -18,10 +18,10 @@ import (
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 
-	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/info"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/info/symbols/symbol"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 // Виводимо інформацію про позицію

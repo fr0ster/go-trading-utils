@@ -1,4 +1,4 @@
-package config
+package pairs
 
 import (
 	"fmt"
@@ -40,13 +40,13 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		InitialBalance             float64       `json:"initial_balance"`               // Початковий баланс
 		AccountType                AccountType   `json:"account_type"`                  // Тип акаунта
 		StrategyType               StrategyType  `json:"strategy_type"`                 // Тип стратегії
 		StageType                  StageType     `json:"stage_type"`                    // Cтадія стратегії
 		Pair                       string        `json:"symbol"`                        // Пара
 		TargetSymbol               string        `json:"target_symbol"`                 // Цільовий токен
 		BaseSymbol                 string        `json:"base_symbol"`                   // Базовий токен
+		InitialBalance             float64       `json:"initial_balance"`               // Початковий баланс
 		SleepingTime               time.Duration `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
 		TakingPositionSleepingTime time.Duration `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
 		MiddlePrice                float64       `json:"middle_price"`                  // Середня ціна купівлі по позиції
@@ -75,19 +75,26 @@ type (
 
 // Less implements btree.Item.
 func (cr *Pairs) Less(item btree.Item) bool {
-	return cr.Pair < item.(*Pairs).Pair &&
-		cr.AccountType < item.(*Pairs).AccountType &&
-		cr.StrategyType < item.(*Pairs).StrategyType &&
-		cr.StageType < item.(*Pairs).StageType
-
+	other := item.(*Pairs)
+	if cr.AccountType != other.AccountType {
+		return cr.AccountType < other.AccountType
+	}
+	if cr.StrategyType != other.StrategyType {
+		return cr.StrategyType < other.StrategyType
+	}
+	if cr.StageType != other.StageType {
+		return cr.StageType < other.StageType
+	}
+	return cr.Pair < other.Pair
 }
 
 // Equals implements btree.Item.
 func (cr *Pairs) Equals(item btree.Item) bool {
-	return cr.Pair == item.(*Pairs).Pair &&
-		cr.AccountType == item.(*Pairs).AccountType &&
-		cr.StrategyType == item.(*Pairs).StrategyType &&
-		cr.StageType == item.(*Pairs).StageType
+	other := item.(*Pairs)
+	return cr.AccountType == other.AccountType &&
+		cr.StrategyType == other.StrategyType &&
+		cr.StageType == other.StageType &&
+		cr.Pair == other.Pair
 }
 
 // GetInitialBalance implements Configuration.
