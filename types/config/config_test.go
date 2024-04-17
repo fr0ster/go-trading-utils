@@ -45,12 +45,14 @@ const (
 	LimitOnPosition_1        = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1     = 0.10 // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	BuyDelta_1     = 0.01  // Дельта для купівлі
-	SellDelta_1    = 0.01  // Дельта для продажу
-	BuyQuantity_1  = 1.0   // Кількість для купівлі, суммарно по позиції
-	SellQuantity_1 = 1.0   // Кількість для продажу, суммарно по позиції
-	BuyValue_1     = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_1    = 100.0 // Вартість для продажу, суммарно по позиції
+	BuyDelta_1       = 0.01  // Дельта для купівлі
+	SellDelta_1      = 0.01  // Дельта для продажу
+	BuyQuantity_1    = 1.0   // Кількість для купівлі, суммарно по позиції
+	BuyCommission_1  = 0.001 // Комісія за купівлю
+	SellQuantity_1   = 1.0   // Кількість для продажу, суммарно по позиції
+	BuyValue_1       = 100.0 // Вартість для купівлі, суммарно по позиції
+	SellValue_1      = 100.0 // Вартість для продажу, суммарно по позиції
+	SellCommission_1 = 0.001 // Комісія за продаж
 
 	AccountType_2                = pairs_types.USDTFutureType      // Тип акаунта
 	StrategyType_2               = pairs_types.TradingStrategyType // Тип стратегії
@@ -76,12 +78,14 @@ const (
 	LimitOnPosition_2       = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2    = 0.01 // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	BuyDelta_2     = 0.01  // Дельта для купівлі
-	SellDelta_2    = 0.01  // Дельта для продажу
-	BuyQuantity_2  = 1.0   // Кількість для купівлі, суммарно по позиції
-	SellQuantity_2 = 1.0   // Кількість для продажу, суммарно по позиції
-	BuyValue_2     = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_2    = 100.0 // Вартість для продажу, суммарно по позиції
+	BuyDelta_2       = 0.01   // Дельта для купівлі
+	SellDelta_2      = 0.01   // Дельта для продажу
+	BuyQuantity_2    = 1.0    // Кількість для купівлі, суммарно по позиції
+	BuyCommission_2  = 0.0002 // Комісія за купівлю
+	SellQuantity_2   = 1.0    // Кількість для продажу, суммарно по позиції
+	BuyValue_2       = 100.0  // Вартість для купівлі, суммарно по позиції
+	SellValue_2      = 100.0  // Вартість для продажу, суммарно по позиції
+	SellCommission_2 = 0.0002 // Комісія за продаж
 )
 
 var (
@@ -126,9 +130,11 @@ var (
 		BuyDelta:                   BuyDelta_1,
 		BuyQuantity:                BuyQuantity_1,
 		BuyValue:                   BuyValue_1,
+		BuyCommission:              BuyCommission_1,
 		SellDelta:                  SellDelta_1,
 		SellQuantity:               SellQuantity_1,
 		SellValue:                  SellValue_1,
+		SellCommission:             SellCommission_1,
 		Commission:                 Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
@@ -154,9 +160,11 @@ var (
 		BuyDelta:                   BuyDelta_2,
 		BuyQuantity:                BuyQuantity_2,
 		BuyValue:                   BuyValue_2,
+		BuyCommission:              BuyCommission_2,
 		SellDelta:                  SellDelta_2,
 		SellQuantity:               SellQuantity_2,
 		SellValue:                  SellValue_2,
+		SellCommission:             SellCommission_2,
 		Commission:                 Commission,
 	}
 )
@@ -198,9 +206,11 @@ func getTestData() []byte {
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
 					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
 					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
+					"buy_commission": ` + json.Number(strconv.FormatFloat(BuyCommission_1, 'f', -1, 64)).String() + `,
 					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
+					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_1, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -229,9 +239,11 @@ func getTestData() []byte {
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
 					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
 					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
+					"buy_commission": ` + json.Number(strconv.FormatFloat(BuyCommission_2, 'f', -1, 64)).String() + `,
 					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
+					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_2, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -270,9 +282,11 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[0].GetBuyQuantity(), config.GetPair(Pair_1).GetBuyQuantity())
 	assert.Equal(t, (*checkingDate)[0].GetBuyValue(), config.GetPair(Pair_1).GetBuyValue())
+	assert.Equal(t, (*checkingDate)[0].GetBuyCommission(), config.GetPair(Pair_1).GetBuyCommission())
 	assert.Equal(t, (*checkingDate)[0].GetSellDelta(), config.GetPair(Pair_1).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[0].GetSellQuantity(), config.GetPair(Pair_1).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
+	assert.Equal(t, (*checkingDate)[0].GetSellCommission(), config.GetPair(Pair_1).GetSellCommission())
 	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
 
 	assert.Equal(t, (*checkingDate)[1].GetConnection().GetAPIKey(), config.GetPair(Pair_2).GetConnection().GetAPIKey())
@@ -297,9 +311,11 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetBuyDelta(), config.GetPair(Pair_2).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[1].GetBuyQuantity(), config.GetPair(Pair_2).GetBuyQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetBuyValue(), config.GetPair(Pair_2).GetBuyValue())
+	assert.Equal(t, (*checkingDate)[1].GetBuyCommission(), config.GetPair(Pair_2).GetBuyCommission())
 	assert.Equal(t, (*checkingDate)[1].GetSellDelta(), config.GetPair(Pair_2).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[1].GetSellQuantity(), config.GetPair(Pair_2).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetSellValue(), config.GetPair(Pair_2).GetSellValue())
+	assert.Equal(t, (*checkingDate)[1].GetSellCommission(), config.GetPair(Pair_2).GetSellCommission())
 	assert.Equal(t, (*checkingDate)[1].GetCommission(), Commission)
 
 }
@@ -391,8 +407,10 @@ func TestPairSetter(t *testing.T) {
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)
 	pair.SetBuyValue(BuyValue_2)
+	pair.SetBuyCommission(BuyCommission_2)
 	pair.SetSellQuantity(SellQuantity_2)
 	pair.SetSellValue(SellValue_2)
+	pair.SetSellCommission(SellCommission_2)
 	pair.SetCommission(newCommission)
 
 	assert.Equal(t, SpotAPIKey, pair.GetConnection().GetAPIKey())
@@ -403,8 +421,10 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, StageType_2, pair.GetStage())
 	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
 	assert.Equal(t, BuyValue_2, pair.GetBuyValue())
+	assert.Equal(t, BuyCommission_2, pair.GetBuyCommission())
 	assert.Equal(t, SellQuantity_2, pair.GetSellQuantity())
 	assert.Equal(t, SellValue_2, pair.GetSellValue())
+	assert.Equal(t, SellCommission_2, pair.GetSellCommission())
 	assert.Equal(t, newCommission, pair.GetCommission())
 }
 
@@ -430,9 +450,11 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, BuyDelta_1, pair.GetBuyDelta())
 	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
 	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
+	assert.Equal(t, BuyCommission_1, pair.GetBuyCommission())
 	assert.Equal(t, SellDelta_1, pair.GetSellDelta())
 	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
 	assert.Equal(t, SellValue_1, pair.GetSellValue())
+	assert.Equal(t, SellCommission_1, pair.GetSellCommission())
 	assert.Equal(t, Commission, pair.GetCommission())
 }
 

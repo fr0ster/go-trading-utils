@@ -38,6 +38,10 @@ type (
 		SetSellQuantity(quantity float64)
 		SetBuyValue(value float64)
 		SetSellValue(value float64)
+		GetBuyCommission() float64
+		SetBuyCommission(commission float64)
+		GetSellCommission() float64
+		SetSellCommission(commission float64)
 		AddCommission(commission *binance.Fill)
 		GetCommission() pairs_types.Commission
 		SetCommission(commission pairs_types.Commission)
