@@ -154,6 +154,15 @@ func GetTargetBalance(
 	return
 }
 
+func GetCommission(
+	account account_interfaces.Accounts,
+	pair pairs_interfaces.Pairs) (
+	buyCommission float64, // Комісія за покупку
+	sellCommission float64, // Комісія за продаж
+	err error) {
+	return
+}
+
 func GetTransactionValue(
 	pair pairs_interfaces.Pairs,
 	baseBalance float64) (
@@ -167,6 +176,8 @@ func GetBuyAndSellQuantity(
 	pair pairs_interfaces.Pairs,
 	baseBalance float64,
 	targetBalance float64,
+	buyCommission float64,
+	sellCommission float64,
 	ask float64,
 	bid float64) (
 	sellQuantity float64, // Кількість торгової валюти для продажу

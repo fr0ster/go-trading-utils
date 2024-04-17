@@ -66,6 +66,8 @@ func BuyOrSellSignal(
 					stopEvent <- os.Interrupt
 					return
 				}
+				buyCommission,
+					sellCommission, _ := GetCommission(account, pair)
 				ask,
 					// Ціна продажу
 					bid, err := GetAskAndBid(depths)
@@ -85,7 +87,7 @@ func BuyOrSellSignal(
 				// Кількість торгової валюти для продажу
 				sellQuantity,
 					// Кількість торгової валюти для купівлі
-					buyQuantity, err := GetBuyAndSellQuantity(pair, baseBalance, targetBalance, ask, bid)
+					buyQuantity, err := GetBuyAndSellQuantity(pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
 				if err != nil {
 					logrus.Errorf("Can't get data for analysis: %v", err)
 					stopEvent <- os.Interrupt

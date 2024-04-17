@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
+	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
@@ -22,23 +22,23 @@ type (
 )
 
 // GetFuturesConnection implements config.Configuration.
-func (cf *Configs) GetFuturesConnection() config_interfaces.Connection {
+func (cf *Configs) GetFuturesConnection() connection_interfaces.Connection {
 	return cf.FuturesConnection
 }
 
 // GetSpotConnection implements config.Configuration.
-func (cf *Configs) GetSpotConnection() config_interfaces.Connection {
+func (cf *Configs) GetSpotConnection() connection_interfaces.Connection {
 	return cf.SpotConnection
 }
 
+// Implement the GetPair method
 func (cf *Configs) GetPair(pair string) pairs_interfaces.Pairs {
-	// Implement the GetPair method
 	res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair})
 	return res.(*pairs_types.Pairs)
 }
 
+// Implement the GetPairs method
 func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error) {
-	// Implement the GetPairs method
 	isExist := func(a pairs_types.AccountType) bool {
 		for _, at := range account_type {
 			if at == a {
@@ -60,8 +60,8 @@ func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_i
 	return &pairs, nil
 }
 
+// Implement the SetPairs method
 func (cf *Configs) SetPairs(pairs []pairs_interfaces.Pairs) error {
-	// Implement the SetPairs method
 	for _, pair := range pairs {
 		cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
 	}
@@ -95,14 +95,18 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	c.SpotConnection = &connection_types.Connection{
-		APIKey:     temp.SpotConnection.APIKey,
-		APISecret:  temp.SpotConnection.APISecret,
-		UseTestNet: temp.SpotConnection.UseTestNet,
+		APIKey:          temp.SpotConnection.APIKey,
+		APISecret:       temp.SpotConnection.APISecret,
+		UseTestNet:      temp.SpotConnection.UseTestNet,
+		CommissionMaker: temp.SpotConnection.CommissionMaker,
+		CommissionTaker: temp.SpotConnection.CommissionTaker,
 	}
 	c.FuturesConnection = &connection_types.Connection{
-		APIKey:     temp.FuturesConnection.APIKey,
-		APISecret:  temp.FuturesConnection.APISecret,
-		UseTestNet: temp.FuturesConnection.UseTestNet,
+		APIKey:          temp.FuturesConnection.APIKey,
+		APISecret:       temp.FuturesConnection.APISecret,
+		UseTestNet:      temp.FuturesConnection.UseTestNet,
+		CommissionMaker: temp.FuturesConnection.CommissionMaker,
+		CommissionTaker: temp.FuturesConnection.CommissionTaker,
 	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
