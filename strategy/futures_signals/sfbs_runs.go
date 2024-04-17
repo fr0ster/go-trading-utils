@@ -109,6 +109,30 @@ func Run(
 		stopSell        = make(chan bool)
 		stopProfitOrder = make(chan bool)
 	)
+
+	baseFree, _ := account.GetAsset(pair.GetBaseSymbol())
+	targetFree, _ := account.GetAsset(pair.GetTargetSymbol())
+
+	if pair.GetInitialBalance() == 0 && pair.GetInitialPositionBalance() == 0 {
+		pair.SetInitialBalance(baseFree)
+		pair.SetInitialPositionBalance(targetFree * pair.GetLimitOnPosition())
+		config.Save()
+	}
+
+	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
+		targetFree, err := account.GetAsset(pair.GetPair())
+		if err != nil {
+			return
+		}
+		pair.SetBuyQuantity(targetFree)
+		price, err := GetPrice(client, pair.GetPair())
+		if err != nil {
+			return
+		}
+		pair.SetBuyValue(targetFree * price)
+		config.Save()
+	}
+
 	depth, buyEvent, sellEvent :=
 		Initialization(
 			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
