@@ -20,6 +20,7 @@ func getTestData() *btree.BTree {
 		TargetSymbol:               "BTC",
 		BaseSymbol:                 "USDT",
 		InitialBalance:             1000.0,
+		InitialPositionBalance:     900.0,
 		SleepingTime:               1,
 		TakingPositionSleepingTime: 1,
 		MiddlePrice:                50000.0,
@@ -48,6 +49,7 @@ func getTestData() *btree.BTree {
 		TargetSymbol:               "BTC",
 		BaseSymbol:                 "USDT",
 		InitialBalance:             1000.0,
+		InitialPositionBalance:     900.0,
 		SleepingTime:               1,
 		TakingPositionSleepingTime: 1,
 		MiddlePrice:                50000.0,
@@ -83,6 +85,13 @@ func assertPair(
 	// Test SetInitialBalance
 	pair.SetInitialBalance(2000.0)
 	assert.Equal(t, 2000.0, pair.GetInitialBalance())
+
+	// Test GetInitialPositionBalance
+	assert.Equal(t, 900.0, pair.GetInitialPositionBalance())
+
+	// Test SetInitialPositionBalance
+	pair.SetInitialPositionBalance(1800.0)
+	assert.Equal(t, 1800.0, pair.GetInitialPositionBalance())
 
 	// Test GetAccountType
 	assert.Equal(t, accountType, pair.GetAccountType())

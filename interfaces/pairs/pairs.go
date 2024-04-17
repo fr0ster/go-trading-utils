@@ -15,6 +15,8 @@ type (
 		SetConnection(connection *connection_types.Connection)
 		GetInitialBalance() float64
 		SetInitialBalance(balance float64)
+		GetInitialPositionBalance() float64
+		SetInitialPositionBalance(balance float64)
 		GetAccountType() pairs_types.AccountType
 		GetStrategy() pairs_types.StrategyType
 		GetStage() pairs_types.StageType

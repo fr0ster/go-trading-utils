@@ -43,10 +43,18 @@ const (
 	SleepingTime_1               = 5                                  // Час сплячки, міллісекунди
 	TakingPositionSleepingTime_1 = 60                                 // Час сплячки при вході в позицію, хвилини
 
-	LimitInputIntoPosition_1 = 0.01 // Ліміт на вхід в позицію, відсоток від балансу базової валюти
-	LimitOutputOfPosition_1  = 0.05 // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-	LimitOnPosition_1        = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_1     = 0.10 // Ліміт на транзакцію, відсоток від ліміту на позицію
+	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
+	// повинно бути меньше ніж LimitOutputOfPosition_1,
+	// але це для перевірки CheckingPair
+	LimitInputIntoPosition_1 = 0.01
+	// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
+	// повинно бути більше ніж LimitInputIntoPosition_1,
+	// але це для перевірки CheckingPair
+	LimitOutputOfPosition_1 = 0.05
+
+	LimitOnPosition_1        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
+	InitialPositionBalance_1 = InitialBalance * LimitOnPosition_1 // Початковий баланс позиції
 
 	BuyDelta_1       = 0.01  // Дельта для купівлі
 	SellDelta_1      = 0.01  // Дельта для продажу
@@ -72,7 +80,6 @@ const (
 	SleepingTime_2               = 5                               // Час сплячки, міллісекунди
 	TakingPositionSleepingTime_2 = 60                              // Час сплячки при вході в позицію, хвилини
 
-	LimitValue_2 = 2000.0 // Баланс базової валюти
 	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 	// повинно бути меньше ніж LimitOutputOfPosition_2,
 	// але це для перевірки CheckingPair
@@ -81,8 +88,10 @@ const (
 	// повинно бути більше ніж LimitInputIntoPosition_2,
 	// але це для перевірки CheckingPair
 	LimitOutputOfPosition_2 = 0.10 // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-	LimitOnPosition_2       = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_2    = 0.01 // Ліміт на транзакцію, відсоток від ліміту на позицію
+
+	LimitOnPosition_2        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
+	InitialPositionBalance_2 = InitialBalance * LimitOnPosition_2 // Початковий баланс позиції
 
 	BuyDelta_2       = 0.01   // Дельта для купівлі
 	SellDelta_2      = 0.01   // Дельта для продажу
@@ -126,6 +135,7 @@ var (
 			CommissionTaker: SpotCommissionTaker,
 		},
 		InitialBalance:             InitialBalance,
+		InitialPositionBalance:     InitialPositionBalance_1,
 		AccountType:                AccountType_1,
 		StrategyType:               StrategyType_1,
 		StageType:                  StageType_1,
@@ -158,6 +168,7 @@ var (
 			CommissionTaker: FuturesCommissionTaker,
 		},
 		InitialBalance:             InitialBalance,
+		InitialPositionBalance:     InitialPositionBalance_2,
 		AccountType:                AccountType_2,
 		StrategyType:               StrategyType_2,
 		StageType:                  StageType_2,
@@ -210,6 +221,7 @@ func getTestData() []byte {
 						"commission_taker": ` + json.Number(strconv.FormatFloat(SpotCommissionTaker, 'f', -1, 64)).String() + `
 					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_1, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_1) + `",
 					"strategy_type": "` + string(StrategyType_1) + `",
 					"stage_type": "` + string(StageType_1) + `",
@@ -245,6 +257,7 @@ func getTestData() []byte {
 						"commission_taker": ` + json.Number(strconv.FormatFloat(FuturesCommissionTaker, 'f', -1, 64)).String() + `
 					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_2, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_2) + `",
 					"strategy_type": "` + string(StrategyType_2) + `",
 					"stage_type": "` + string(StageType_2) + `",
@@ -254,7 +267,7 @@ func getTestData() []byte {
 					"sleeping_time": ` + strconv.Itoa(SleepingTime_2) + `,
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_2) + `,
 					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
-					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitValue_2, 'f', -1, 64)).String() + `,
+					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_2, 'f', -1, 64)).String() + `,
 					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 					"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
@@ -293,6 +306,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetConnection().GetCommissionTaker(), config.GetPair(Pair_1).GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
+	assert.Equal(t, (*checkingDate)[0].GetInitialPositionBalance(), config.GetPair(Pair_1).GetInitialPositionBalance())
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
 	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
 	assert.Equal(t, (*checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
@@ -323,6 +337,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetConnection().GetCommissionTaker(), config.GetPair(Pair_2).GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
+	assert.Equal(t, (*checkingDate)[1].GetInitialPositionBalance(), config.GetPair(Pair_2).GetInitialPositionBalance())
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
 	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
@@ -451,6 +466,7 @@ func TestPairSetter(t *testing.T) {
 	pair.GetConnection().SetCommissionTaker(FuturesCommissionTaker)
 
 	pair.SetInitialBalance(3000)
+	pair.SetInitialPositionBalance(3000 * LimitOnPosition_2)
 	pair.SetMiddlePrice(45000)
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)
@@ -468,6 +484,7 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, FuturesCommissionTaker, pair.GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
+	assert.Equal(t, 3000*LimitOnPosition_2, pair.GetInitialPositionBalance())
 	assert.Equal(t, 45000.0, pair.GetMiddlePrice())
 	assert.Equal(t, StageType_2, pair.GetStage())
 	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
@@ -497,6 +514,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, SpotCommissionMaker, pair.GetConnection().GetCommissionMaker())
 	assert.Equal(t, SpotCommissionTaker, pair.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InitialBalance, pair.GetInitialBalance())
+	assert.Equal(t, InitialPositionBalance_1, pair.GetInitialPositionBalance())
 	assert.Equal(t, AccountType_1, pair.GetAccountType())
 	assert.Equal(t, StrategyType_1, pair.GetStrategy())
 	assert.Equal(t, StageType_1, pair.GetStage())

@@ -52,6 +52,7 @@ type (
 		TargetSymbol               string                       `json:"target_symbol"`                 // Цільовий токен
 		BaseSymbol                 string                       `json:"base_symbol"`                   // Базовий токен
 		InitialBalance             float64                      `json:"initial_balance"`               // Початковий баланс
+		InitialPositionBalance     float64                      `json:"initial_position_balance"`      // Початковий баланс позиції
 		SleepingTime               time.Duration                `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
 		TakingPositionSleepingTime time.Duration                `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
 		MiddlePrice                float64                      `json:"middle_price"`                  // Середня ціна купівлі по позиції
@@ -120,6 +121,16 @@ func (cr *Pairs) GetInitialBalance() float64 {
 // SetInitialBalance implements Configuration.
 func (cr *Pairs) SetInitialBalance(balance float64) {
 	cr.InitialBalance = balance
+}
+
+// GetInitialPositionBalance implements Configuration.
+func (cr *Pairs) GetInitialPositionBalance() float64 {
+	return cr.InitialPositionBalance
+}
+
+// SetInitialPositionBalance implements Configuration.
+func (cr *Pairs) SetInitialPositionBalance(balance float64) {
+	cr.InitialPositionBalance = balance
 }
 
 // Get AccountType implements Configuration.
@@ -303,6 +314,7 @@ func New(
 	return &Pairs{
 		Connection:             connection,
 		InitialBalance:         0.0,
+		InitialPositionBalance: 0.0,
 		AccountType:            accountType,
 		StrategyType:           strategyType,
 		StageType:              stageType,
