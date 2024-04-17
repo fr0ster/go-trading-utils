@@ -426,6 +426,16 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, SellValue_2, pair.GetSellValue())
 	assert.Equal(t, SellCommission_2, pair.GetSellCommission())
 	assert.Equal(t, newCommission, pair.GetCommission())
+
+	pair.SetBuyData(BuyQuantity_1, BuyValue_1, BuyCommission_1)
+	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
+	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
+	assert.Equal(t, BuyCommission_1, pair.GetBuyCommission())
+
+	pair.SetSellData(SellQuantity_1, SellValue_1, SellCommission_1)
+	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
+	assert.Equal(t, SellValue_1, pair.GetSellValue())
+	assert.Equal(t, SellCommission_1, pair.GetSellCommission())
 }
 
 func TestPairGetter(t *testing.T) {

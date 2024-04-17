@@ -239,6 +239,18 @@ func (cr *Pairs) SetSellCommission(commission float64) {
 	cr.SellCommission = commission
 }
 
+func (cr *Pairs) SetBuyData(quantity, value, commission float64) {
+	cr.BuyQuantity = quantity
+	cr.BuyValue = value
+	cr.BuyCommission = commission
+}
+
+func (cr *Pairs) SetSellData(quantity, value, commission float64) {
+	cr.SellQuantity = quantity
+	cr.SellValue = value
+	cr.SellCommission = commission
+}
+
 func (cr *Pairs) AddCommission(commission *binance.Fill) {
 	cr.Commission[commission.CommissionAsset] += float64(utils.ConvStrToFloat64(commission.Commission))
 }
