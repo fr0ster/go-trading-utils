@@ -1,6 +1,7 @@
 package spot_signals
 
 import (
+	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -102,8 +103,7 @@ func Run(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent,
-	err error) {
+	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
 	var (
 		depth           *depth_types.Depth
 		stopBuy         = make(chan bool)
@@ -121,14 +121,14 @@ func Run(
 	}
 
 	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err := account.GetAsset(pair.GetPair())
+		targetFree, err = account.GetAsset(pair.GetPair())
 		if err != nil {
-			return
+			return err
 		}
 		pair.SetBuyQuantity(targetFree)
 		price, err := GetPrice(client, pair.GetPair())
 		if err != nil {
-			return
+			return err
 		}
 		pair.SetBuyValue(targetFree * price)
 		config.Save()
@@ -141,7 +141,7 @@ func Run(
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-		return
+		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
@@ -187,7 +187,7 @@ func Run(
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
 		if pair.GetStage() == pairs_types.WorkInPositionStage {
 			stopEvent <- os.Interrupt
-			return
+			return fmt.Errorf("pair %v can't be in WorkInPositionStage for TradingStrategyType", pair.GetPair())
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
@@ -218,4 +218,5 @@ func Run(
 		logrus.Warnf("Unknown strategy: %v", pair.GetStrategy())
 		stopEvent <- os.Interrupt
 	}
+	return nil
 }

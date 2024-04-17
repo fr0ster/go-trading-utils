@@ -1,6 +1,7 @@
 package futures_signals
 
 import (
+	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -102,7 +103,7 @@ func Run(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *futures.WsUserDataEvent) {
+	orderStatusEvent chan *futures.WsUserDataEvent) (err error) {
 	var (
 		depth           *depth_types.Depth
 		stopBuy         = make(chan bool)
@@ -120,14 +121,14 @@ func Run(
 	}
 
 	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err := account.GetAsset(pair.GetPair())
+		targetFree, err = account.GetAsset(pair.GetPair())
 		if err != nil {
-			return
+			return err
 		}
 		pair.SetBuyQuantity(targetFree)
 		price, err := GetPrice(client, pair.GetPair())
 		if err != nil {
-			return
+			return err
 		}
 		pair.SetBuyValue(targetFree * price)
 		config.Save()
@@ -142,14 +143,14 @@ func Run(
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
 		stopEvent <- os.Interrupt
-		return
+		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
 			stopEvent <- os.Interrupt
-			return
+			return fmt.Errorf("holding strategy should not be used for %v", pair.GetPair())
 		}
 
 		// Відпрацьовуємо Scalping стратегію
@@ -177,7 +178,7 @@ func Run(
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
 		if pair.GetStage() == pairs_types.WorkInPositionStage {
 			stopEvent <- os.Interrupt
-			return
+			return fmt.Errorf("pair %v can't be in WorkInPositionStage for TradingStrategyType", pair.GetPair())
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
@@ -209,4 +210,5 @@ func Run(
 		stopEvent <- os.Interrupt
 		return
 	}
+	return nil
 }
