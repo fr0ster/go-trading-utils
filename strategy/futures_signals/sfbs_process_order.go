@@ -13,9 +13,9 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
-	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -28,7 +28,7 @@ import (
 func ProcessBuyOrder(
 	config *config_types.ConfigFile,
 	client *futures.Client,
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.FuturesSymbol,
 	orderType futures.OrderType,
@@ -119,7 +119,7 @@ func ProcessBuyOrder(
 func ProcessSellOrder(
 	config *config_types.ConfigFile,
 	client *futures.Client,
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.FuturesSymbol,
 	orderType futures.OrderType,

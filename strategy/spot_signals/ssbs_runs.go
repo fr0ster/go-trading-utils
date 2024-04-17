@@ -11,9 +11,9 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
-	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
@@ -27,7 +27,7 @@ import (
 
 // Виводимо інформацію про позицію
 func PositionInfoOut(
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) {
@@ -59,7 +59,7 @@ func Initialization(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.SpotSymbol,
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -97,7 +97,7 @@ func Run(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.SpotSymbol,
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,

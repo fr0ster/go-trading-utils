@@ -11,10 +11,10 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
-	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
@@ -27,7 +27,7 @@ import (
 
 // Виводимо інформацію про позицію
 func PositionInfoOut(
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) {
@@ -59,7 +59,7 @@ func Initialization(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.FuturesSymbol,
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -97,7 +97,7 @@ func Run(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.FuturesSymbol,
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,

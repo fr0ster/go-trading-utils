@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
@@ -29,7 +29,7 @@ type (
 )
 
 func BuyOrSellSignal(
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -146,7 +146,7 @@ func BuyOrSellSignal(
 }
 
 func StartWorkInPositionSignal(
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -215,7 +215,7 @@ func StartWorkInPositionSignal(
 }
 
 func StartOutputOfPositionSignal(
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
@@ -282,7 +282,7 @@ func StartOutputOfPositionSignal(
 }
 
 func StopWorkingSignal(
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,

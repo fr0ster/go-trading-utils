@@ -14,6 +14,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
@@ -137,7 +138,7 @@ func GetBaseBalance(
 }
 
 func GetTargetBalance(
-	account account_interfaces.Accounts,
+	account *futures_account.Account,
 	pair pairs_interfaces.Pairs) (
 	targetBalance float64, // Кількість торгової валюти
 	err error) {

@@ -15,7 +15,8 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
-	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -28,7 +29,7 @@ import (
 func ProcessBuyOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.SpotSymbol,
 	orderType binance.OrderType,
@@ -122,7 +123,7 @@ func ProcessBuyOrder(
 func ProcessSellOrder(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	account account_interfaces.Accounts,
+	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.SpotSymbol,
 	orderType binance.OrderType,
