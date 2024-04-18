@@ -63,14 +63,14 @@ func StartGlobalStreams(
 	}
 
 	orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(
-		userDataStream4Order.DataChannel,
+		userDataStream4Order.GetDataChannel(),
 		orderStatuses)
 
 	userDataStream4Balance = futures_streams.NewUserDataStream(listenKey, 1)
 	userDataStream4Balance.Start()
 
 	// Запускаємо потік для отримання оновлення балансу
-	balanceEvent = futures_handlers.GetBalancesUpdateGuard(balances, userDataStream4Balance.DataChannel)
+	balanceEvent = futures_handlers.GetBalancesUpdateGuard(balances, userDataStream4Balance.GetDataChannel())
 
 	return
 }

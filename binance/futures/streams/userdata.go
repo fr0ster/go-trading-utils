@@ -6,21 +6,21 @@ import (
 )
 
 type UserDataStream struct {
-	DataChannel  chan *futures.WsUserDataEvent
+	dataChannel  chan *futures.WsUserDataEvent
 	eventChannel chan bool
 	listenKey    string
 }
 
 func NewUserDataStream(listenKey string, size int) *UserDataStream {
 	return &UserDataStream{
-		DataChannel:  make(chan *futures.WsUserDataEvent, size),
+		dataChannel:  make(chan *futures.WsUserDataEvent, size),
 		eventChannel: make(chan bool, size),
 		listenKey:    listenKey,
 	}
 }
 
 func (u *UserDataStream) GetDataChannel() chan *futures.WsUserDataEvent {
-	return u.DataChannel
+	return u.dataChannel
 }
 
 func (u *UserDataStream) GetStreamEvent() chan bool {
@@ -30,7 +30,7 @@ func (u *UserDataStream) GetStreamEvent() chan bool {
 func (u *UserDataStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsUserDataEvent) {
 		go func() {
-			u.DataChannel <- event
+			u.dataChannel <- event
 		}()
 		go func() {
 			u.eventChannel <- true
