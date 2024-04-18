@@ -52,20 +52,20 @@ func PositionInfoOut(
 	}
 }
 
-func Initialization(
-	config *config_types.ConfigFile,
+func initialization(
+	// config *config_types.ConfigFile,
 	client *binance.Client,
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
+	// pairInfo *symbol_info_types.SpotSymbol,
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent) (
+	updateTime time.Duration) (
+	// minuteOrderLimit *exchange_types.RateLimits,
+	// dayOrderLimit *exchange_types.RateLimits,
+	// minuteRawRequestLimit *exchange_types.RateLimits,
+	// orderStatusEvent chan *binance.WsUserDataEvent) (
 	depth *depth_types.Depth,
 	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType) {
@@ -79,10 +79,10 @@ func Initialization(
 
 	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
 
-	RestUpdate(client, stopEvent, pair, depth, limit, bookTicker, updateTime)
-
-	// Виводимо інформацію про позицію
-	go PositionInfoOut(account, pair, stopEvent, updateTime)
+	// Запускаємо потік для отримання оновлення BookTicker через REST
+	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
+	// Запускаємо потік для отримання оновлення Depth через REST
+	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
@@ -135,9 +135,9 @@ func Run(
 	}
 
 	depth, buyEvent, sellEvent :=
-		Initialization(
-			config, client, degree, limit, pair, pairInfo, account, stopEvent, updateTime,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit, orderStatusEvent)
+		initialization(
+			client, degree, limit, pair,
+			account, stopEvent, updateTime)
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {

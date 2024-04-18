@@ -47,14 +47,40 @@ func LimitRead(degree int, symbols []string, client *binance.Client) (
 	return
 }
 
-func RestUpdate(
+func RestBookTickerUpdater(
 	client *binance.Client,
 	stop chan os.Signal,
 	pair pairs_interfaces.Pairs,
-	depth *depth_types.Depth,
 	limit int,
-	bookTicker *bookTicker_types.BookTickerBTree,
-	updateTime time.Duration) {
+	updateTime time.Duration,
+	bookTicker *bookTicker_types.BookTickerBTree) {
+	go func() {
+		for {
+			select {
+			case <-stop:
+				// Якщо отримано сигнал з каналу stop, вийти з циклу
+				return
+			default:
+				err := spot_bookticker.Init(bookTicker, pair.GetPair(), client)
+				if err != nil {
+					logrus.Errorf(errorMsg, err)
+					stop <- os.Interrupt
+					return
+				}
+
+				time.Sleep(updateTime)
+			}
+		}
+	}()
+}
+
+func RestDepthUpdater(
+	client *binance.Client,
+	stop chan os.Signal,
+	pair pairs_interfaces.Pairs,
+	limit int,
+	updateTime time.Duration,
+	depth *depth_types.Depth) {
 	go func() {
 		for {
 			select {
@@ -70,15 +96,6 @@ func RestUpdate(
 				}
 
 				time.Sleep(1 * time.Second)
-
-				err = spot_bookticker.Init(bookTicker, pair.GetPair(), client)
-				if err != nil {
-					logrus.Errorf(errorMsg, err)
-					stop <- os.Interrupt
-					return
-				}
-
-				time.Sleep(updateTime)
 			}
 		}
 	}()
