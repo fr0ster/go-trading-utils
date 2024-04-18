@@ -15,11 +15,12 @@ func GetChangingOfAccountInfoGuard(
 			event := <-source
 			if event.Event == binance.UserDataEventTypeOutboundAccountPosition {
 				if account.AccountUpdateTime < event.AccountUpdate.AccountUpdateTime {
-					account.Lock() // Locking the balances
+					account.Lock()
 					for _, item := range event.AccountUpdate.WsAccountUpdates {
 						account.AssetUpdate(binance.Balance(item))
 					}
-					account.Unlock() // Unlocking the balances
+					account.Unlock()
+					out <- event
 				}
 			}
 		}
