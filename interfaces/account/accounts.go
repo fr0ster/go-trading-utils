@@ -4,8 +4,9 @@ import "github.com/google/btree"
 
 type (
 	Accounts interface {
-		GetAsset(symbol string) (float64, error)
-		Update() error
+		GetFreeAsset(symbol string) (float64, error)
+		GetLockedAsset(symbol string) (float64, error)
+		GetTotalAsset(symbol string) (float64, error)
 		GetBalances() *btree.BTree
 	}
 )

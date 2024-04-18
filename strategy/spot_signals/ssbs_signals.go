@@ -46,12 +46,6 @@ func BuyOrSellSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				err := account.Update()
-				if err != nil {
-					logrus.Errorf("Can't update account: %v", err)
-					stopEvent <- os.Interrupt
-					return
-				}
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
@@ -162,12 +156,6 @@ func StartWorkInPositionSignal(
 
 	go func() {
 		for {
-			err := account.Update()
-			if err != nil {
-				logrus.Errorf("Can't update account: %v", err)
-				stopEvent <- os.Interrupt
-				return
-			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
@@ -231,12 +219,6 @@ func StartOutputOfPositionSignal(
 
 	go func() {
 		for {
-			err := account.Update()
-			if err != nil {
-				logrus.Errorf("Can't update account: %v", err)
-				stopEvent <- os.Interrupt
-				return
-			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
@@ -298,12 +280,6 @@ func StopWorkingSignal(
 
 	go func() {
 		for {
-			err := account.Update()
-			if err != nil {
-				logrus.Errorf("Can't update account: %v", err)
-				stopEvent <- os.Interrupt
-				return
-			}
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt

@@ -144,7 +144,7 @@ func GetBaseBalance(
 	baseBalance, err = func(pair pairs_interfaces.Pairs) (
 		baseBalance float64,
 		err error) {
-		baseBalance, err = account.GetAsset(pair.GetBaseSymbol())
+		baseBalance, err = account.GetFreeAsset(pair.GetBaseSymbol())
 		return
 	}(pair)
 
@@ -162,7 +162,7 @@ func GetTargetBalance(
 	targetBalance, err = func(pair pairs_interfaces.Pairs) (
 		targetBalance float64,
 		err error) {
-		targetBalance, err = account.GetAsset(pair.GetTargetSymbol())
+		targetBalance, err = account.GetFreeAsset(pair.GetTargetSymbol())
 		return
 	}(pair)
 
@@ -210,10 +210,6 @@ func EvaluateMiddlePrice(
 	account account_interfaces.Accounts,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs) (middlePrice float64, err error) {
-	err = account.Update()
-	if err != nil {
-		return
-	}
 	baseBalance, err := GetBaseBalance(account, pair)
 	middlePrice = (pair.GetInitialBalance() - baseBalance) / (pair.GetBuyQuantity() - pair.GetSellQuantity())
 	return

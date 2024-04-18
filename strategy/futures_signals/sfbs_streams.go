@@ -64,7 +64,6 @@ func StartGlobalStreams(
 
 	orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(
 		userDataStream4Order.DataChannel,
-		futures.UserDataEventTypeOrderTradeUpdate,
 		orderStatuses)
 
 	userDataStream4Balance = futures_streams.NewUserDataStream(listenKey, 1)

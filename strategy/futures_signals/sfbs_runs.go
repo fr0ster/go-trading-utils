@@ -32,7 +32,7 @@ func PositionInfoOut(
 	stopEvent chan os.Signal,
 	updateTime time.Duration) {
 	for {
-		baseBalance, err := account.GetAsset(pair.GetBaseSymbol())
+		baseBalance, err := account.GetFreeAsset(pair.GetBaseSymbol())
 		if err != nil {
 			logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
 			stopEvent <- os.Interrupt
@@ -105,8 +105,8 @@ func Run(
 		stopProfitOrder = make(chan bool)
 	)
 
-	baseFree, _ := account.GetAsset(pair.GetBaseSymbol())
-	targetFree, _ := account.GetAsset(pair.GetTargetSymbol())
+	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
+	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
 
 	if pair.GetInitialBalance() == 0 && pair.GetInitialPositionBalance() == 0 {
 		pair.SetInitialBalance(baseFree)
@@ -115,7 +115,7 @@ func Run(
 	}
 
 	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err = account.GetAsset(pair.GetPair())
+		targetFree, err = account.GetFreeAsset(pair.GetPair())
 		if err != nil {
 			return err
 		}

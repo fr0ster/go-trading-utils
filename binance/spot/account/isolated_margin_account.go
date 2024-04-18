@@ -14,7 +14,7 @@ type (
 	IsolatedMarginAsset   binance.IsolatedMarginAsset
 	IsolatedMarginAccount struct {
 		client                *binance.Client
-		IsolatedMarginAccount *binance.IsolatedMarginAccount
+		isolatedMarginAccount *binance.IsolatedMarginAccount
 		assets                *btree.BTree
 		mu                    sync.Mutex
 		symbols               map[string]bool
@@ -29,7 +29,7 @@ func (a *IsolatedMarginAsset) Equal(item btree.Item) bool {
 	return a.Symbol == item.(*IsolatedMarginAsset).Symbol
 }
 
-func (a *IsolatedMarginAccount) GetAsset(asset string) (float64, error) {
+func (a *IsolatedMarginAccount) GetFreeAsset(asset string) (float64, error) {
 	item := a.assets.Get(&UserAsset{Asset: asset})
 	if item == nil {
 		return 0, fmt.Errorf("%s not found", asset)
@@ -63,12 +63,18 @@ func (a *IsolatedMarginAccount) GetBalances() *btree.BTree {
 	return a.assets
 }
 
+// ReplaceOrInsert for assets
+func (a *IsolatedMarginAccount) AssetUpdate(item binance.Balance) {
+	val := Balance(item)
+	a.assets.ReplaceOrInsert(&val)
+}
+
 func (a *IsolatedMarginAccount) Update() (err error) {
-	a.IsolatedMarginAccount, err = a.client.NewGetIsolatedMarginAccountService().Do(context.Background())
+	a.isolatedMarginAccount, err = a.client.NewGetIsolatedMarginAccountService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	for _, assets := range a.IsolatedMarginAccount.Assets {
+	for _, assets := range a.isolatedMarginAccount.Assets {
 		if _, exists := a.symbols[assets.Symbol]; exists || len(a.symbols) == 0 {
 			val := IsolatedMarginAsset(assets)
 			a.assets.ReplaceOrInsert(&val)
@@ -80,7 +86,7 @@ func (a *IsolatedMarginAccount) Update() (err error) {
 func NewIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {
 	al = &IsolatedMarginAccount{
 		client:                client,
-		IsolatedMarginAccount: nil,
+		isolatedMarginAccount: nil,
 		assets:                btree.New(2),
 		mu:                    sync.Mutex{},
 		symbols:               make(map[string]bool), // Add the missing field "mapSymbols"

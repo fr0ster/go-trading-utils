@@ -64,7 +64,6 @@ func StartGlobalStreams(
 
 	orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(
 		userDataStream4Order.DataChannel,
-		binance.UserDataEventTypeExecutionReport,
 		orderStatuses)
 
 	userDataStream4Balance = spot_streams.NewUserDataStream(listenKey, 1)

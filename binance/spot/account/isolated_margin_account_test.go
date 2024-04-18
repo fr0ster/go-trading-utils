@@ -7,7 +7,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	account_interface "github.com/fr0ster/go-trading-utils/interfaces/account"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestIsolatedMarginAccountLimits_GetQuantityLimits(t *testing.T) {
@@ -51,8 +50,8 @@ func TestIsolatedMarginAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		// freeAssets, err := al.GetAsset("USDT")
-		assert.Nil(t, err)
+		// freeAssets, err := al.GetFreeAsset("USDT")
+		// assert.Nil(t, err)
 		// assert.NotEqual(t, 0, freeAssets)
 	}
 

@@ -9,6 +9,7 @@ import (
 	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
@@ -27,7 +28,6 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	outChannel :=
 		handlers.GetChangingOfOrdersGuard(
 			inChannel,
-			futures.UserDataEventTypeOrderTradeUpdate,
 			append([]futures.OrderStatusType{futures.OrderStatusTypeFilled}, futures.OrderStatusTypePartiallyFilled))
 	inChannel <- even
 	res := false
@@ -150,33 +150,34 @@ func getTestDepths() *depth_types.Depth {
 	return ds
 }
 
-// func TestDepthsUpdaterHandler(t *testing.T) {
-// 	inChannel := make(chan *futures.WsDepthEvent, 1)
-// 	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
-// 	go func() {
-// 		for i := 0; i < 10; i++ {
-// 			inChannel <- &futures.WsDepthEvent{
-// 				Event:         "depthUpdate",
-// 				Symbol:        "BTCUSDT",
-// 				FirstUpdateID: LastUpdateID - 1,
-// 				LastUpdateID:  LastUpdateID + 1,
-// 				Bids:          []futures.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
-// 				Asks:          []futures.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
-// 			}
-// 		}
-// 	}()
-// 	res := false
-// 	for {
-// 		select {
-// 		case <-outChannel:
-// 			res = true
-// 		case <-time.After(1000 * time.Millisecond):
-// 			res = false
-// 		}
-// 		if !res {
-// 			t.Fatal("Error sending order event to channel")
-// 		} else {
-// 			break
-// 		}
-// 	}
-// }
+func TestDepthsUpdaterHandler(t *testing.T) {
+	inChannel := make(chan *futures.WsDepthEvent, 1)
+	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
+	go func() {
+		for i := 0; i < 10; i++ {
+			inChannel <- &futures.WsDepthEvent{
+				Event:         "depthUpdate",
+				Symbol:        "BTCUSDT",
+				FirstUpdateID: LastUpdateID - 1,
+				LastUpdateID:  LastUpdateID + 2,
+				Bids:          []futures.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
+				Asks:          []futures.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(10000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
+	}
+}

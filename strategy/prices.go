@@ -16,7 +16,7 @@ func GetLimitPricesDumpWay(symbolname, target_symbol, base_symbol string, client
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
-	balance, err := account.GetAsset(base_symbol)
+	balance, err := account.GetFreeAsset(base_symbol)
 	if err != nil {
 		return "", 0, "", "", "", "", "", "", err
 	}
@@ -55,7 +55,7 @@ func BidOrAsk(symbolname, target_symbol, base_symbol string, bookTickers *bookti
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}
-	balance, err := account.GetAsset(base_symbol)
+	balance, err := account.GetFreeAsset(base_symbol)
 	if err != nil {
 		return "", "", "", "", "", "", "", "", err
 	}

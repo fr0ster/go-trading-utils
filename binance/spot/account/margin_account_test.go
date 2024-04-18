@@ -26,7 +26,7 @@ func TestMarginAccountLimits_GetQuantityLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		freeAssets, err := al.GetAsset("USDT")
+		freeAssets, err := al.GetFreeAsset("USDT")
 		assert.Nil(t, err)
 		assert.NotEqual(t, 0, freeAssets)
 	}
@@ -50,7 +50,7 @@ func TestMarginAccountLimits_GetQuantityEmptyLimits(t *testing.T) {
 		if al == nil {
 			t.Errorf("GetQuantityLimits returned an empty map")
 		}
-		freeAssets, err := al.GetAsset("USDT")
+		freeAssets, err := al.GetFreeAsset("USDT")
 		assert.Nil(t, err)
 		assert.NotEqual(t, 0, freeAssets)
 	}

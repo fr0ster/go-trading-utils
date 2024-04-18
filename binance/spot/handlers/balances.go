@@ -11,18 +11,18 @@ func GetBalancesUpdateGuard(bt *balances_types.BalanceBTree, source chan *binanc
 	go func() {
 		for {
 			event := <-source
-			bt.Lock() // Locking the balances
-			for _, item := range event.AccountUpdate.WsAccountUpdates {
-				balanceUpdate := &balances_types.BalanceItemType{
-					Asset:  item.Asset,
-					Free:   utils.ConvStrToFloat64(item.Free),
-					Locked: utils.ConvStrToFloat64(item.Locked),
+			if event.Event == binance.UserDataEventTypeOutboundAccountPosition {
+				bt.Lock() // Locking the balances
+				for _, item := range event.AccountUpdate.WsAccountUpdates {
+					balanceUpdate := &balances_types.BalanceItemType{
+						Asset:  item.Asset,
+						Free:   utils.ConvStrToFloat64(item.Free),
+						Locked: utils.ConvStrToFloat64(item.Locked),
+					}
+					bt.SetItem(balanceUpdate)
 				}
-				// bt.Lock()
-				bt.SetItem(balanceUpdate)
-				// bt.Unlock()
+				bt.Unlock() // Unlocking the balances
 			}
-			bt.Unlock() // Unlocking the balances
 			out <- true
 		}
 	}()
