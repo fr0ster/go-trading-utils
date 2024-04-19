@@ -132,7 +132,7 @@ func (a *Account) PermissionUpdate(item string) {
 	a.permissions.ReplaceOrInsert(&Permission{string: item})
 }
 
-func New(client *binance.Client, symbols []string) (account *Account, err error) {
+func New(client *binance.Client, assets []string) (account *Account, err error) {
 	accountIn, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
 		return

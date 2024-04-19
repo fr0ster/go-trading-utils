@@ -20,9 +20,10 @@ func TestAccount_GetQuantityLimits(t *testing.T) {
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	futures.UseTestnet = USE_TEST_NET
-	symbols := []string{"BTC", "ETH", "BNB", "USDT", "SUSHI", "CYBER"}
+	assets := []string{"BTC", "ETH", "BNB", "USDT"}
+	symbols := []string{"SUSHIUSDT", "CYBERUSDT"}
 	futures := futures.NewClient(api_key, secret_key)
-	account, err := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, assets, symbols)
 	assert.Nil(t, err)
 
 	test := func(al account_interface.Accounts) {
@@ -41,9 +42,10 @@ func TestAccount_GetQuantityEmptyLimits(t *testing.T) {
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	futures.UseTestnet = USE_TEST_NET
-	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHI", "CYBER"}
+	assets := []string{"BTC", "ETH", "BNB", "USDT"}
+	symbols := []string{"SUSHIUSDT", "CYBERUSDT"}
 	futures := futures.NewClient(api_key, secret_key)
-	account, err := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, assets, symbols)
 	assert.Nil(t, err)
 
 	test := func(al account_interface.Accounts) {
@@ -62,9 +64,10 @@ func TestAccount_GetAsset(t *testing.T) {
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	futures.UseTestnet = USE_TEST_NET
-	symbols := []string{"USDT", "BTC", "ETH", "BNB", "SUSHIUSDT"}
+	assets := []string{"BTC", "ETH", "BNB", "USDT"}
+	symbols := []string{"SUSHIUSDT", "CYBERUSDT"}
 	futures := futures.NewClient(api_key, secret_key)
-	account, err := futures_account.New(futures, 3, symbols)
+	account, err := futures_account.New(futures, 3, assets, symbols)
 	assert.Nil(t, err)
 
 	_, err = account.GetFreeAsset("SUSHIUSDT")

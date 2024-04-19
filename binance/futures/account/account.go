@@ -37,7 +37,9 @@ type (
 		assets                      *btree.BTree
 		positions                   *btree.BTree
 		mu                          sync.Mutex
-		symbols                     map[string]bool
+		assetsName                  map[string]bool
+		symbolsName                 map[string]bool
+		assetsRestrict              []string
 		symbolsRestrict             []string
 	}
 )
@@ -154,7 +156,7 @@ func (a *Account) PositionsUpdate(item *Position) {
 	a.positions.ReplaceOrInsert(item)
 }
 
-func New(client *futures.Client, degree int, symbols []string) (*Account, error) {
+func New(client *futures.Client, degree int, assets []string, symbols []string) (*Account, error) {
 	accountIn, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
 		return nil, err
@@ -181,14 +183,19 @@ func New(client *futures.Client, degree int, symbols []string) (*Account, error)
 		assets:                      btree.New(degree),
 		positions:                   btree.New(degree),
 		mu:                          sync.Mutex{},
-		symbols:                     make(map[string]bool),
+		assetsName:                  make(map[string]bool),
+		symbolsName:                 make(map[string]bool),
+		assetsRestrict:              assets,
 		symbolsRestrict:             symbols,
 	}
+	for _, asset := range account.assetsRestrict {
+		account.assetsName[asset] = true
+	}
 	for _, symbol := range account.symbolsRestrict {
-		account.symbols[symbol] = true
+		account.symbolsName[symbol] = true
 	}
 	for _, asset := range accountIn.Assets {
-		if _, exists := account.symbols[asset.Asset]; exists || len(account.symbols) == 0 {
+		if _, exists := account.assetsName[asset.Asset]; exists || len(account.assetsName) == 0 {
 			val, err := Futures2AccountAsset(asset)
 			if err != nil {
 				continue
@@ -197,7 +204,7 @@ func New(client *futures.Client, degree int, symbols []string) (*Account, error)
 		}
 	}
 	for _, position := range accountIn.Positions {
-		if _, exists := account.symbols[position.Symbol]; exists || len(account.symbols) == 0 {
+		if _, exists := account.symbolsName[position.Symbol]; exists || len(account.symbolsName) == 0 {
 			val, err := Futures2AccountPosition(position)
 			if err != nil {
 				continue
