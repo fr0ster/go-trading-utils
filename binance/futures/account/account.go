@@ -124,6 +124,11 @@ func (a *Account) GetBalances() *btree.BTree {
 	return a.assets
 }
 
+// GetPositions implements account.AccountLimits.
+func (a *Account) GetPositions() *btree.BTree {
+	return a.positions
+}
+
 func (a *Account) AssetsAscend(iterator func(item *balances_types.BalanceItemType) bool) {
 	a.assets.Ascend(func(i btree.Item) bool {
 		return iterator(i.(*balances_types.BalanceItemType))
@@ -148,13 +153,13 @@ func (a *Account) PositionsDescend(iterator func(item *balances_types.BalanceIte
 	})
 }
 
-func (a *Account) GetAssetsTree() *btree.BTree {
-	return a.assets
-}
+// func (a *Account) GetAssetsTree() *btree.BTree {
+// 	return a.assets
+// }
 
-func (a *Account) GetPositionsTree() *btree.BTree {
-	return a.positions
-}
+// func (a *Account) GetPositionsTree() *btree.BTree {
+// 	return a.positions
+// }
 
 // ReplaceOrInsert for Assets
 func (a *Account) AssetUpdate(item *Asset) {

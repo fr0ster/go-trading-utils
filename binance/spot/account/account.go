@@ -108,6 +108,30 @@ func (a *Account) PermissionUpdate(item string) {
 	a.permissions.ReplaceOrInsert(&Permission{string: item})
 }
 
+func (a *Account) AssetsAscend(iterator func(item *Balance) bool) {
+	a.balances.Ascend(func(i btree.Item) bool {
+		return iterator(i.(*Balance))
+	})
+}
+
+func (a *Account) PositionsAscend(iterator func(item *Permission) bool) {
+	a.permissions.Ascend(func(i btree.Item) bool {
+		return iterator(i.(*Permission))
+	})
+}
+
+func (a *Account) AssetsDescend(iterator func(item *Balance) bool) {
+	a.balances.Descend(func(i btree.Item) bool {
+		return iterator(i.(*Balance))
+	})
+}
+
+func (a *Account) PositionsDescend(iterator func(item *Permission) bool) {
+	a.permissions.Descend(func(i btree.Item) bool {
+		return iterator(i.(*Permission))
+	})
+}
+
 func New(client *binance.Client, symbols []string) (account *Account, err error) {
 	accountIn, err := client.NewGetAccountService().Do(context.Background())
 	if err != nil {
