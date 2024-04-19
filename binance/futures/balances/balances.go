@@ -24,6 +24,18 @@ func (b *Balance) Equal(item btree.Item) bool {
 	return b.Asset == item.(*Balance).Asset
 }
 
+func (b *Balances) Ascend(f func(item btree.Item) bool) {
+	b.balance.Ascend(func(i btree.Item) bool {
+		return f(i)
+	})
+}
+
+func (b *Balances) Descend(f func(item btree.Item) bool) {
+	b.balance.Descend(func(i btree.Item) bool {
+		return f(i)
+	})
+}
+
 func New(client *futures.Client) (*Balances, error) {
 	bl := &Balances{
 		balance: btree.New(2),
