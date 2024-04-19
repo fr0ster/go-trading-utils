@@ -19,9 +19,6 @@ func GetChangingOfAccountInfoGuard(
 					for _, val := range event.AccountUpdate.Balances {
 						account.AssetUpdate(&futures_account.Asset{Asset: val.Asset, WalletBalance: val.Balance, CrossWalletBalance: val.CrossWalletBalance})
 					}
-					// for _, val := range event.AccountUpdate.Positions {
-					// 	account.PositionsUpdate(&futures_account.Position{Symbol: val.Symbol, PositionAmt: val.PositionAmt, EntryPrice: val.EntryPrice, MarkPrice: val.MarkPrice, UnRealizedProfit: val.UnRealizedProfit})
-					// }
 					account.Unlock()
 					out <- event
 				}

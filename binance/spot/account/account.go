@@ -103,7 +103,7 @@ func (a *Account) AssetsAscend(iterator func(item *Asset) bool) {
 	})
 }
 
-func (a *Account) PositionsAscend(iterator func(item *Permission) bool) {
+func (a *Account) PermissionsAscend(iterator func(item *Permission) bool) {
 	a.permissions.Ascend(func(i btree.Item) bool {
 		return iterator(i.(*Permission))
 	})
@@ -115,7 +115,7 @@ func (a *Account) AssetsDescend(iterator func(item *Asset) bool) {
 	})
 }
 
-func (a *Account) PositionsDescend(iterator func(item *Permission) bool) {
+func (a *Account) PermissionsDescend(iterator func(item *Permission) bool) {
 	a.permissions.Descend(func(i btree.Item) bool {
 		return iterator(i.(*Permission))
 	})
