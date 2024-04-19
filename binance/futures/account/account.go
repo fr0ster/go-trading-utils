@@ -111,6 +111,18 @@ func (a *Account) GetPositionRisk(symbol string) ([]*futures.PositionRisk, error
 	return risk, nil
 }
 
+func (a *Account) GetPositionRisks() (res []*futures.PositionRisk, err error) {
+	var risk []*futures.PositionRisk
+	for _, symbol := range a.symbolsRestrict {
+		risk, err = a.client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
+		if err != nil {
+			return
+		}
+		res = append(res, risk...)
+	}
+	return
+}
+
 // GetBalances implements account.AccountLimits.
 func (a *Account) GetAssets() *btree.BTree {
 	return a.assets
@@ -151,7 +163,7 @@ func (a *Account) AssetUpdate(item *Asset) {
 }
 
 // ReplaceOrInsert for Positions
-func (a *Account) PositionsUpdate(item *Position) {
+func (a *Account) PositionUpdate(item *Position) {
 	a.positions.ReplaceOrInsert(item)
 }
 
