@@ -111,7 +111,7 @@ func (a *Account) GetPositionRisk(symbol string) ([]*futures.PositionRisk, error
 }
 
 // GetBalances implements account.AccountLimits.
-func (a *Account) GetBalances() *btree.BTree {
+func (a *Account) GetAssets() *btree.BTree {
 	return a.assets
 }
 

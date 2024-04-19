@@ -7,6 +7,6 @@ type (
 		GetFreeAsset(symbol string) (float64, error)
 		GetLockedAsset(symbol string) (float64, error)
 		GetTotalAsset(symbol string) (float64, error)
-		GetBalances() *btree.BTree
+		GetAssets() *btree.BTree
 	}
 )

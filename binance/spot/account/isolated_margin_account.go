@@ -59,13 +59,13 @@ func (a *IsolatedMarginAccount) GetTotalAsset(asset string) (float64, error) {
 	}
 }
 
-func (a *IsolatedMarginAccount) GetBalances() *btree.BTree {
+func (a *IsolatedMarginAccount) GetAssets() *btree.BTree {
 	return a.assets
 }
 
 // ReplaceOrInsert for assets
 func (a *IsolatedMarginAccount) AssetUpdate(item binance.Balance) {
-	val := Balance(item)
+	val := Asset(item)
 	a.assets.ReplaceOrInsert(&val)
 }
 
