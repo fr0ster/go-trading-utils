@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/adshao/go-binance/v2/futures"
-	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
@@ -84,7 +83,7 @@ func (a *Account) GetFreeAsset(asset string) (float64, error) {
 }
 
 func (a *Account) GetLockedAsset(asset string) (float64, error) {
-	item := a.assets.Get(&balances_types.BalanceItemType{Asset: asset})
+	item := a.assets.Get(&Asset{Asset: asset})
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
@@ -94,7 +93,7 @@ func (a *Account) GetLockedAsset(asset string) (float64, error) {
 }
 
 func (a *Account) GetTotalAsset(asset string) (float64, error) {
-	item := a.assets.Get(&balances_types.BalanceItemType{Asset: asset})
+	item := a.assets.Get(&Asset{Asset: asset})
 	if item == nil {
 		return 0, errors.New("item not found")
 	} else {
@@ -102,14 +101,6 @@ func (a *Account) GetTotalAsset(asset string) (float64, error) {
 		return utils.ConvStrToFloat64(symbolBalance.WalletBalance), err
 	}
 }
-
-// func (a *Account) GetAssets() []*futures.AccountAsset {
-// 	return a.account.Assets
-// }
-
-// func (a *Account) GetPositions() []*futures.AccountPosition {
-// 	return a.account.Positions
-// }
 
 func (a *Account) GetPositionRisk(symbol string) ([]*futures.PositionRisk, error) {
 	risk, err := a.client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
@@ -129,37 +120,29 @@ func (a *Account) GetPositions() *btree.BTree {
 	return a.positions
 }
 
-func (a *Account) AssetsAscend(iterator func(item *balances_types.BalanceItemType) bool) {
+func (a *Account) AssetsAscend(iterator func(item *Asset) bool) {
 	a.assets.Ascend(func(i btree.Item) bool {
-		return iterator(i.(*balances_types.BalanceItemType))
+		return iterator(i.(*Asset))
 	})
 }
 
-func (a *Account) PositionsAscend(iterator func(item *balances_types.BalanceItemType) bool) {
+func (a *Account) PositionsAscend(iterator func(item *Position) bool) {
 	a.positions.Ascend(func(i btree.Item) bool {
-		return iterator(i.(*balances_types.BalanceItemType))
+		return iterator(i.(*Position))
 	})
 }
 
-func (a *Account) AssetsDescend(iterator func(item *balances_types.BalanceItemType) bool) {
+func (a *Account) AssetsDescend(iterator func(item *Asset) bool) {
 	a.assets.Descend(func(i btree.Item) bool {
-		return iterator(i.(*balances_types.BalanceItemType))
+		return iterator(i.(*Asset))
 	})
 }
 
-func (a *Account) PositionsDescend(iterator func(item *balances_types.BalanceItemType) bool) {
+func (a *Account) PositionsDescend(iterator func(item *Position) bool) {
 	a.positions.Descend(func(i btree.Item) bool {
-		return iterator(i.(*balances_types.BalanceItemType))
+		return iterator(i.(*Position))
 	})
 }
-
-// func (a *Account) GetAssetsTree() *btree.BTree {
-// 	return a.assets
-// }
-
-// func (a *Account) GetPositionsTree() *btree.BTree {
-// 	return a.positions
-// }
 
 // ReplaceOrInsert for Assets
 func (a *Account) AssetUpdate(item *Asset) {
@@ -215,7 +198,7 @@ func New(client *futures.Client, degree int, symbols []string) (*Account, error)
 	}
 	for _, position := range accountIn.Positions {
 		if _, exists := account.symbols[position.Symbol]; exists || len(account.symbols) == 0 {
-			val, err := Binance2AccountPosition(position)
+			val, err := Futures2AccountPosition(position)
 			if err != nil {
 				continue
 			}
@@ -234,7 +217,7 @@ func Futures2AccountAsset(binanceAsset interface{}) (*Asset, error) {
 	return &asset, nil
 }
 
-func Binance2AccountPosition(binancePosition interface{}) (*Position, error) {
+func Futures2AccountPosition(binancePosition interface{}) (*Position, error) {
 	var position Position
 	err := copier.Copy(&position, binancePosition)
 	if err != nil {
