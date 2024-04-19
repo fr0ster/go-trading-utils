@@ -6,7 +6,7 @@ import (
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 )
 
-func GetChangingOfAccountInfoGuard(
+func GetAccountInfoGuard(
 	account *spot_account.Account,
 	source chan *binance.WsUserDataEvent) (out chan *binance.WsUserDataEvent) {
 	out = make(chan *binance.WsUserDataEvent, 1)

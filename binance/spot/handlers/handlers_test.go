@@ -1,12 +1,15 @@
 package handlers_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/fr0ster/go-trading-utils/binance/spot/handlers"
-	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
+	"github.com/stretchr/testify/assert"
+
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 )
 
@@ -23,7 +26,7 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
 	outChannel :=
-		handlers.GetChangingOfOrdersGuard(
+		spot_handlers.GetChangingOfOrdersGuard(
 			inChannel,
 			append([]binance.OrderStatusType{binance.OrderStatusTypeFilled}, binance.OrderStatusTypeFilled))
 	inChannel <- even
@@ -43,21 +46,22 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	}
 }
 
-func TestBalanceTreeUpdateHandler(t *testing.T) {
+func TestAccountUpdateHandler(t *testing.T) {
 	even := &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeExecutionReport,
+		Event: binance.UserDataEventTypeOutboundAccountPosition,
 		OrderUpdate: binance.WsOrderUpdate{
 			Status: string(binance.OrderStatusTypeFilled),
 		},
 	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	bt := balances_types.New(3)
-	bt.SetItem(&balances_types.BalanceItemType{
-		Asset:  "BTC",
-		Free:   0.0,
-		Locked: 0.0,
-	})
-	outChannel := handlers.GetBalancesUpdateGuard(bt, inChannel)
+	api_key := os.Getenv("SPOT_TEST_BINANCE_API_KEY")
+	secret_key := os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
+	binance.UseTestnet = true
+	spot := binance.NewClient(api_key, secret_key)
+	account, err := spot_account.New(spot, []string{"BTC", "USDT"})
+	assert.Equal(t, nil, err)
+
+	outChannel := spot_handlers.GetAccountInfoGuard(account, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -92,7 +96,7 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 		AskPrice:    0.0,
 		AskQuantity: 0.0,
 	})
-	outChannel := handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
+	outChannel := spot_handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
 	inChannel <- even
 	res := false
 	for {

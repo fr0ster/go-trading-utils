@@ -1,12 +1,17 @@
 package handlers_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
+	"github.com/bmizerany/assert"
+
+	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
+
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -26,7 +31,7 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
 	outChannel :=
-		handlers.GetChangingOfOrdersGuard(
+		futures_handlers.GetChangingOfOrdersGuard(
 			inChannel,
 			append([]futures.OrderStatusType{futures.OrderStatusTypeFilled}, futures.OrderStatusTypePartiallyFilled))
 	inChannel <- even
@@ -46,21 +51,51 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	}
 }
 
-func TestBalanceTreeUpdateHandler(t *testing.T) {
+func TestAccountUpdateHandler(t *testing.T) {
 	even := &futures.WsUserDataEvent{
-		Event: futures.UserDataEventTypeOrderTradeUpdate,
-		OrderTradeUpdate: futures.WsOrderTradeUpdate{
-			Status: futures.OrderStatusTypeFilled,
+		Event: futures.UserDataEventTypeAccountUpdate,
+		AccountUpdate: futures.WsAccountUpdate{
+			Reason: "Deposit",
+			Balances: []futures.WsBalance{
+				{Asset: "BTC", Balance: "0.0", ChangeBalance: "0.0"},
+				{Asset: "USDT", Balance: "0.0", ChangeBalance: "0.0"},
+			},
+			Positions: []futures.WsPosition{
+				{
+					Symbol:                    "BTCUSDT",
+					Side:                      futures.PositionSideTypeLong,
+					Amount:                    "0.0",
+					MarginType:                futures.MarginTypeIsolated,
+					IsolatedWallet:            "0.0",
+					EntryPrice:                "0.0",
+					MarkPrice:                 "0.0",
+					UnrealizedPnL:             "0.0",
+					AccumulatedRealized:       "0.0",
+					MaintenanceMarginRequired: "0.0"},
+				{
+					Symbol:                    "BTCUSDT",
+					Side:                      futures.PositionSideTypeShort,
+					Amount:                    "0.0",
+					MarginType:                futures.MarginTypeIsolated,
+					IsolatedWallet:            "0.0",
+					EntryPrice:                "0.0",
+					MarkPrice:                 "0.0",
+					UnrealizedPnL:             "0.0",
+					AccumulatedRealized:       "0.0",
+					MaintenanceMarginRequired: "0.0",
+				},
+			},
 		},
 	}
 	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	bt := balances_types.New(3)
-	bt.SetItem(&balances_types.BalanceItemType{
-		Asset:  "BTC",
-		Free:   0.0,
-		Locked: 0.0,
-	})
-	outChannel := handlers.GetBalancesUpdateGuard(bt, inChannel)
+	api_key := os.Getenv("FUTURES_TEST_BINANCE_API_KEY")
+	secret_key := os.Getenv("FUTURES_TEST_BINANCE_SECRET_KEY")
+	binance.UseTestnet = true
+	client := futures.NewClient(api_key, secret_key)
+	account, err := futures_account.New(client, 3, []string{"BTC", "USDT"}, []string{"BTCUSDT"})
+	assert.Equal(t, nil, err)
+
+	outChannel := futures_handlers.GetAccountInfoGuard(account, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -95,7 +130,7 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 		AskPrice:    0.0,
 		AskQuantity: 0.0,
 	})
-	outChannel := handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
+	outChannel := futures_handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
 	inChannel <- even
 	res := false
 	for {
@@ -152,7 +187,7 @@ func getTestDepths() *depth_types.Depth {
 
 func TestDepthsUpdaterHandler(t *testing.T) {
 	inChannel := make(chan *futures.WsDepthEvent, 1)
-	outChannel := handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
+	outChannel := futures_handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
 	go func() {
 		for i := 0; i < 10; i++ {
 			inChannel <- &futures.WsDepthEvent{

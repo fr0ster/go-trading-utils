@@ -6,7 +6,7 @@ import (
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 )
 
-func GetChangingOfAccountInfoGuard(
+func GetAccountInfoGuard(
 	account *futures_account.Account,
 	source chan *futures.WsUserDataEvent) (out chan *futures.WsUserDataEvent) {
 	out = make(chan *futures.WsUserDataEvent, 1)

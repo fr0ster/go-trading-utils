@@ -10,10 +10,10 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
-	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
@@ -42,9 +42,9 @@ func StartPairStreams(
 func StartGlobalStreams(
 	client *futures.Client,
 	stop chan os.Signal,
-	balances *balances_types.BalanceBTree) (
-	userDataStream4Balance *futures_streams.UserDataStream,
-	balanceEvent chan bool,
+	account *futures_account.Account) (
+	userDataStream4Account *futures_streams.UserDataStream,
+	accountUpdateEvent chan *futures.WsUserDataEvent,
 	userDataStream4Order *futures_streams.UserDataStream,
 	orderStatusEvent chan *futures.WsUserDataEvent) {
 	// Запускаємо потік для отримання wsUserDataEvent
@@ -66,11 +66,11 @@ func StartGlobalStreams(
 		userDataStream4Order.GetDataChannel(),
 		orderStatuses)
 
-	userDataStream4Balance = futures_streams.NewUserDataStream(listenKey, 1)
-	userDataStream4Balance.Start()
+	userDataStream4Account = futures_streams.NewUserDataStream(listenKey, 1)
+	userDataStream4Account.Start()
 
-	// Запускаємо потік для отримання оновлення балансу
-	balanceEvent = futures_handlers.GetBalancesUpdateGuard(balances, userDataStream4Balance.GetDataChannel())
+	// Запускаємо потік для отримання оновлення аккаунту
+	accountUpdateEvent = futures_handlers.GetAccountInfoGuard(account, userDataStream4Account.GetDataChannel())
 
 	return
 }

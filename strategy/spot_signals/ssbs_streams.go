@@ -10,10 +10,10 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
-	balances_types "github.com/fr0ster/go-trading-utils/types/balances"
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
@@ -42,9 +42,9 @@ func StartPairStreams(
 func StartGlobalStreams(
 	client *binance.Client,
 	stop chan os.Signal,
-	balances *balances_types.BalanceBTree) (
-	userDataStream4Balance *spot_streams.UserDataStream,
-	balanceEvent chan bool,
+	account *spot_account.Account) (
+	userDataStream4Account *spot_streams.UserDataStream,
+	accountUpdateEvent chan *binance.WsUserDataEvent,
 	userDataStream4Order *spot_streams.UserDataStream,
 	orderStatusEvent chan *binance.WsUserDataEvent) {
 	// Запускаємо потік для отримання wsUserDataEvent
@@ -63,14 +63,14 @@ func StartGlobalStreams(
 	}
 
 	orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(
-		userDataStream4Order.DataChannel,
+		userDataStream4Order.GetDataChannel(),
 		orderStatuses)
 
-	userDataStream4Balance = spot_streams.NewUserDataStream(listenKey, 1)
-	userDataStream4Balance.Start()
+	userDataStream4Account = spot_streams.NewUserDataStream(listenKey, 1)
+	userDataStream4Account.Start()
 
-	// Запускаємо потік для отримання оновлення балансу
-	balanceEvent = spot_handlers.GetBalancesUpdateGuard(balances, userDataStream4Balance.DataChannel)
+	// Запускаємо потік для отримання оновлення аккаунту
+	accountUpdateEvent = spot_handlers.GetAccountInfoGuard(account, userDataStream4Account.GetDataChannel())
 
 	return
 }

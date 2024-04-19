@@ -9,10 +9,15 @@ require (
 	github.com/stretchr/testify v1.9.0
 )
 
-require golang.org/x/net v0.24.0 // indirect
+require (
+	github.com/kr/pretty v0.2.0 // indirect
+	github.com/kr/text v0.1.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+)
 
 require (
 	github.com/bitly/go-simplejson v0.5.1 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/jinzhu/copier v0.4.0
