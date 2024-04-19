@@ -11,8 +11,10 @@ import (
 type (
 	Balance  futures.Balance
 	Balances struct {
-		balance *btree.BTree
-		mu      *sync.Mutex
+		balance        *btree.BTree
+		mu             *sync.Mutex
+		assetsName     map[string]bool
+		assetsRestrict []string
 	}
 )
 
@@ -36,18 +38,53 @@ func (b *Balances) Descend(f func(item btree.Item) bool) {
 	})
 }
 
-func New(client *futures.Client) (*Balances, error) {
+func (b *Balances) Insert(balance *Balance) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.balance.ReplaceOrInsert(balance)
+}
+
+func (b *Balances) Delete(balance *Balance) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.balance.Delete(balance)
+}
+
+func (b *Balances) Get(asset string) *Balance {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	item := b.balance.Get(&Balance{Asset: asset})
+	if item == nil {
+		return nil
+	}
+	return item.(*Balance)
+}
+
+func (b *Balances) Update(balance *Balance) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.balance.ReplaceOrInsert(balance)
+}
+
+func New(client *futures.Client, assets []string) (*Balances, error) {
 	bl := &Balances{
-		balance: btree.New(2),
-		mu:      &sync.Mutex{},
+		balance:        btree.New(2),
+		mu:             &sync.Mutex{},
+		assetsName:     make(map[string]bool),
+		assetsRestrict: assets,
+	}
+	for _, asset := range bl.assetsRestrict {
+		bl.assetsName[asset] = true
 	}
 	balances, err := client.NewGetBalanceService().Do(context.Background())
 	if err != nil {
 		return nil, err
 	}
 	for _, balance := range balances {
-		val := Balance(*balance)
-		bl.balance.ReplaceOrInsert(&val)
+		if _, exists := bl.assetsName[balance.Asset]; exists || len(bl.assetsName) == 0 {
+			val := Balance(*balance)
+			bl.balance.ReplaceOrInsert(&val)
+		}
 	}
 	return bl, nil
 }
