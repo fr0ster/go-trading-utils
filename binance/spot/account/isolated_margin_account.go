@@ -13,11 +13,12 @@ import (
 type (
 	IsolatedMarginAsset   binance.IsolatedMarginAsset
 	IsolatedMarginAccount struct {
-		// client                *binance.Client
-		isolatedMarginAccount *binance.IsolatedMarginAccount
-		assets                *btree.BTree
-		mu                    sync.Mutex
-		assetsRestriction     map[string]bool
+		TotalAssetOfBTC     string `json:"totalAssetOfBtc"`
+		TotalLiabilityOfBTC string `json:"totalLiabilityOfBtc"`
+		TotalNetAssetOfBTC  string `json:"totalNetAssetOfBtc"`
+		assets              *btree.BTree
+		mu                  sync.Mutex
+		assetsRestriction   map[string]bool
 	}
 )
 
@@ -64,25 +65,29 @@ func (a *IsolatedMarginAccount) GetAssets() *btree.BTree {
 }
 
 // ReplaceOrInsert for assets
-func (a *IsolatedMarginAccount) AssetUpdate(item Asset) {
+func (a *IsolatedMarginAccount) AssetUpdate(item IsolatedMarginAsset) {
 	a.assets.ReplaceOrInsert(&item)
 }
 
 func NewIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {
-	al = &IsolatedMarginAccount{
-		isolatedMarginAccount: nil,
-		assets:                btree.New(2),
-		mu:                    sync.Mutex{},
-		assetsRestriction:     make(map[string]bool), // Add the missing field "mapSymbols"
-	}
-	al.isolatedMarginAccount, err = client.NewGetIsolatedMarginAccountService().Do(context.Background())
+	isolatedMarginAccount, err := client.NewGetIsolatedMarginAccountService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	for _, assets := range al.isolatedMarginAccount.Assets {
-		if _, exists := al.assetsRestriction[assets.Symbol]; exists || len(al.assetsRestriction) == 0 {
-			val := IsolatedMarginAsset(assets)
-			al.assets.ReplaceOrInsert(&val)
+	al = &IsolatedMarginAccount{
+		TotalAssetOfBTC:     isolatedMarginAccount.TotalAssetOfBTC,
+		TotalLiabilityOfBTC: isolatedMarginAccount.TotalLiabilityOfBTC,
+		TotalNetAssetOfBTC:  isolatedMarginAccount.TotalNetAssetOfBTC,
+		assets:              btree.New(2),
+		mu:                  sync.Mutex{},
+		assetsRestriction:   make(map[string]bool), // Add the missing field "mapSymbols"
+	}
+	for _, assets := range symbols {
+		al.assetsRestriction[assets] = true
+	}
+	for _, asset := range isolatedMarginAccount.Assets {
+		if _, exists := al.assetsRestriction[asset.Symbol]; exists || len(al.assetsRestriction) == 0 {
+			al.AssetUpdate(IsolatedMarginAsset(asset))
 		}
 	}
 	return

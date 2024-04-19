@@ -13,11 +13,16 @@ import (
 type (
 	UserAsset     binance.UserAsset
 	MarginAccount struct {
-		client            *binance.Client
-		marginAccount     *binance.MarginAccount
-		assets            *btree.BTree
-		mu                sync.Mutex
-		assetsRestriction map[string]bool
+		BorrowEnabled       bool   `json:"borrowEnabled"`
+		MarginLevel         string `json:"marginLevel"`
+		TotalAssetOfBTC     string `json:"totalAssetOfBtc"`
+		TotalLiabilityOfBTC string `json:"totalLiabilityOfBtc"`
+		TotalNetAssetOfBTC  string `json:"totalNetAssetOfBtc"`
+		TradeEnabled        bool   `json:"tradeEnabled"`
+		TransferEnabled     bool   `json:"transferEnabled"`
+		assets              *btree.BTree
+		mu                  sync.Mutex
+		assetsRestriction   map[string]bool
 	}
 )
 
@@ -64,28 +69,35 @@ func (a *MarginAccount) GetAssets() *btree.BTree {
 }
 
 // ReplaceOrInsert for assets
-func (a *MarginAccount) AssetUpdate(item binance.Balance) {
-	val := Asset(item)
+func (a *MarginAccount) AssetUpdate(item UserAsset) {
+	val := UserAsset(item)
 	a.assets.ReplaceOrInsert(&val)
 }
 
 func NewMargin(client *binance.Client, symbols []string) (al *MarginAccount, err error) {
-	al = &MarginAccount{
-		client:            client,
-		marginAccount:     nil,
-		assets:            btree.New(2),
-		mu:                sync.Mutex{},
-		assetsRestriction: make(map[string]bool), // Add the missing field "mapSymbols"
-	}
-
-	al.marginAccount, err = client.NewGetMarginAccountService().Do(context.Background())
+	marginAccount, err := client.NewGetMarginAccountService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	for _, balance := range al.marginAccount.UserAssets {
-		if _, exists := al.assetsRestriction[balance.Asset]; exists || len(al.assetsRestriction) == 0 {
-			val := UserAsset(balance)
-			al.assets.ReplaceOrInsert(&val)
+	al = &MarginAccount{
+		BorrowEnabled:       marginAccount.BorrowEnabled,
+		MarginLevel:         marginAccount.MarginLevel,
+		TotalAssetOfBTC:     marginAccount.TotalAssetOfBTC,
+		TotalLiabilityOfBTC: marginAccount.TotalLiabilityOfBTC,
+		TotalNetAssetOfBTC:  marginAccount.TotalNetAssetOfBTC,
+		TradeEnabled:        marginAccount.TradeEnabled,
+		TransferEnabled:     marginAccount.TransferEnabled,
+		assets:              btree.New(2),
+		mu:                  sync.Mutex{},
+		assetsRestriction:   make(map[string]bool), // Add the missing field "mapSymbols"
+	}
+	for _, asset := range symbols {
+		al.assetsRestriction[asset] = true
+	}
+
+	for _, asset := range marginAccount.UserAssets {
+		if _, exists := al.assetsRestriction[asset.Asset]; exists || len(al.assetsRestriction) == 0 {
+			al.AssetUpdate(UserAsset(asset))
 		}
 	}
 	return
