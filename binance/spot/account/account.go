@@ -14,7 +14,6 @@ type (
 	Asset      binance.Balance
 	Permission struct{ string }
 	Account    struct {
-		client            *binance.Client
 		AccountUpdateTime int64
 		MakerCommission   int64                   `json:"makerCommission"`
 		TakerCommission   int64                   `json:"takerCommission"`
@@ -29,7 +28,7 @@ type (
 		assets            *btree.BTree
 		permissions       *btree.BTree
 		mu                sync.Mutex
-		symbols           map[string]bool
+		assetsRestriction map[string]bool
 	}
 )
 
@@ -122,9 +121,8 @@ func (a *Account) PermissionsDescend(iterator func(item *Permission) bool) {
 }
 
 // ReplaceOrInsert for assets
-func (a *Account) AssetUpdate(item binance.Balance) {
-	val := Asset(item)
-	a.assets.ReplaceOrInsert(&val)
+func (a *Account) AssetUpdate(item Asset) {
+	a.assets.ReplaceOrInsert(&item)
 }
 
 // ReplaceOrInsert for permissions
@@ -138,7 +136,6 @@ func New(client *binance.Client, assets []string) (account *Account, err error) 
 		return
 	}
 	account = &Account{
-		client:            client,
 		AccountUpdateTime: int64(accountIn.UpdateTime),
 		MakerCommission:   accountIn.MakerCommission,
 		TakerCommission:   accountIn.TakerCommission,
@@ -153,17 +150,18 @@ func New(client *binance.Client, assets []string) (account *Account, err error) 
 		assets:            btree.New(2),
 		permissions:       btree.New(2),
 		mu:                sync.Mutex{},
-		symbols:           make(map[string]bool), // Add the missing field "mapSymbols"
+		assetsRestriction: make(map[string]bool), // Add the missing field "mapSymbols"
+	}
+	for _, asset := range assets {
+		account.assetsRestriction[asset] = true
 	}
 	for _, balance := range accountIn.Balances {
-		if _, exists := account.symbols[balance.Asset]; exists || len(account.symbols) == 0 {
-			account.AssetUpdate(balance)
+		if _, exists := account.assetsRestriction[balance.Asset]; exists || len(account.assetsRestriction) == 0 {
+			account.AssetUpdate(Asset(balance))
 		}
 	}
 	for _, permission := range accountIn.Permissions {
-		if _, exists := account.symbols[permission]; exists || len(account.symbols) == 0 {
-			account.PermissionUpdate(permission)
-		}
+		account.PermissionUpdate(permission)
 	}
 	return
 }

@@ -13,11 +13,11 @@ import (
 type (
 	IsolatedMarginAsset   binance.IsolatedMarginAsset
 	IsolatedMarginAccount struct {
-		client                *binance.Client
+		// client                *binance.Client
 		isolatedMarginAccount *binance.IsolatedMarginAccount
 		assets                *btree.BTree
 		mu                    sync.Mutex
-		symbols               map[string]bool
+		assetsRestriction     map[string]bool
 	}
 )
 
@@ -64,33 +64,26 @@ func (a *IsolatedMarginAccount) GetAssets() *btree.BTree {
 }
 
 // ReplaceOrInsert for assets
-func (a *IsolatedMarginAccount) AssetUpdate(item binance.Balance) {
-	val := Asset(item)
-	a.assets.ReplaceOrInsert(&val)
-}
-
-func (a *IsolatedMarginAccount) Update() (err error) {
-	a.isolatedMarginAccount, err = a.client.NewGetIsolatedMarginAccountService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	for _, assets := range a.isolatedMarginAccount.Assets {
-		if _, exists := a.symbols[assets.Symbol]; exists || len(a.symbols) == 0 {
-			val := IsolatedMarginAsset(assets)
-			a.assets.ReplaceOrInsert(&val)
-		}
-	}
-	return nil
+func (a *IsolatedMarginAccount) AssetUpdate(item Asset) {
+	a.assets.ReplaceOrInsert(&item)
 }
 
 func NewIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {
 	al = &IsolatedMarginAccount{
-		client:                client,
 		isolatedMarginAccount: nil,
 		assets:                btree.New(2),
 		mu:                    sync.Mutex{},
-		symbols:               make(map[string]bool), // Add the missing field "mapSymbols"
+		assetsRestriction:     make(map[string]bool), // Add the missing field "mapSymbols"
 	}
-	err = al.Update()
+	al.isolatedMarginAccount, err = client.NewGetIsolatedMarginAccountService().Do(context.Background())
+	if err != nil {
+		return
+	}
+	for _, assets := range al.isolatedMarginAccount.Assets {
+		if _, exists := al.assetsRestriction[assets.Symbol]; exists || len(al.assetsRestriction) == 0 {
+			val := IsolatedMarginAsset(assets)
+			al.assets.ReplaceOrInsert(&val)
+		}
+	}
 	return
 }

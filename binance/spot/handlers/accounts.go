@@ -17,7 +17,7 @@ func GetChangingOfAccountInfoGuard(
 				if account.AccountUpdateTime < event.AccountUpdate.AccountUpdateTime {
 					account.Lock()
 					for _, item := range event.AccountUpdate.WsAccountUpdates {
-						account.AssetUpdate(binance.Balance(item))
+						account.AssetUpdate(spot_account.Asset(item))
 					}
 					account.Unlock()
 					out <- event

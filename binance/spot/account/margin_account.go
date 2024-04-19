@@ -13,11 +13,11 @@ import (
 type (
 	UserAsset     binance.UserAsset
 	MarginAccount struct {
-		client        *binance.Client
-		marginAccount *binance.MarginAccount
-		assets        *btree.BTree
-		mu            sync.Mutex
-		symbols       map[string]bool
+		client            *binance.Client
+		marginAccount     *binance.MarginAccount
+		assets            *btree.BTree
+		mu                sync.Mutex
+		assetsRestriction map[string]bool
 	}
 )
 
@@ -69,28 +69,24 @@ func (a *MarginAccount) AssetUpdate(item binance.Balance) {
 	a.assets.ReplaceOrInsert(&val)
 }
 
-func (a *MarginAccount) Update() (err error) {
-	a.marginAccount, err = a.client.NewGetMarginAccountService().Do(context.Background())
+func NewMargin(client *binance.Client, symbols []string) (al *MarginAccount, err error) {
+	al = &MarginAccount{
+		client:            client,
+		marginAccount:     nil,
+		assets:            btree.New(2),
+		mu:                sync.Mutex{},
+		assetsRestriction: make(map[string]bool), // Add the missing field "mapSymbols"
+	}
+
+	al.marginAccount, err = client.NewGetMarginAccountService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	for _, balance := range a.marginAccount.UserAssets {
-		if _, exists := a.symbols[balance.Asset]; exists || len(a.symbols) == 0 {
+	for _, balance := range al.marginAccount.UserAssets {
+		if _, exists := al.assetsRestriction[balance.Asset]; exists || len(al.assetsRestriction) == 0 {
 			val := UserAsset(balance)
-			a.assets.ReplaceOrInsert(&val)
+			al.assets.ReplaceOrInsert(&val)
 		}
 	}
-	return nil
-}
-
-func NewMargin(client *binance.Client, symbols []string) (al *MarginAccount, err error) {
-	al = &MarginAccount{
-		client:        client,
-		marginAccount: nil,
-		assets:        btree.New(2),
-		mu:            sync.Mutex{},
-		symbols:       make(map[string]bool), // Add the missing field "mapSymbols"
-	}
-	err = al.Update()
 	return
 }
