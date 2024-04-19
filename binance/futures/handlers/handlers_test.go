@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
-	"github.com/bmizerany/assert"
+	"github.com/stretchr/testify/assert"
 
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
@@ -52,8 +51,18 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 }
 
 func TestAccountUpdateHandler(t *testing.T) {
-	even := &futures.WsUserDataEvent{
+	inChannel := make(chan *futures.WsUserDataEvent, 1)
+	api_key := os.Getenv("FUTURE_TEST_BINANCE_API_KEY")
+	secret_key := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
+	futures.UseTestnet = true
+	client := futures.NewClient(api_key, secret_key)
+	account, err := futures_account.New(client, 3, []string{"BTC", "USDT"}, []string{"BTCUSDT"})
+	assert.Equal(t, nil, err)
+
+	outChannel := futures_handlers.GetAccountInfoGuard(account, inChannel)
+	inChannel <- &futures.WsUserDataEvent{
 		Event: futures.UserDataEventTypeAccountUpdate,
+		Time:  account.UpdateTime + 100,
 		AccountUpdate: futures.WsAccountUpdate{
 			Reason: "Deposit",
 			Balances: []futures.WsBalance{
@@ -87,16 +96,6 @@ func TestAccountUpdateHandler(t *testing.T) {
 			},
 		},
 	}
-	inChannel := make(chan *futures.WsUserDataEvent, 1)
-	api_key := os.Getenv("FUTURES_TEST_BINANCE_API_KEY")
-	secret_key := os.Getenv("FUTURES_TEST_BINANCE_SECRET_KEY")
-	binance.UseTestnet = true
-	client := futures.NewClient(api_key, secret_key)
-	account, err := futures_account.New(client, 3, []string{"BTC", "USDT"}, []string{"BTCUSDT"})
-	assert.Equal(t, nil, err)
-
-	outChannel := futures_handlers.GetAccountInfoGuard(account, inChannel)
-	inChannel <- even
 	res := false
 	for {
 		select {

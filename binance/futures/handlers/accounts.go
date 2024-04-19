@@ -14,7 +14,7 @@ func GetAccountInfoGuard(
 		for {
 			event := <-source
 			if event.Event == futures.UserDataEventTypeAccountUpdate {
-				if account.AccountUpdateTime < event.Time {
+				if account.UpdateTime < event.Time {
 					account.Lock()
 					for _, val := range event.AccountUpdate.Balances {
 						account.AssetUpdate(&futures_account.Asset{Asset: val.Asset, WalletBalance: val.Balance, CrossWalletBalance: val.CrossWalletBalance})

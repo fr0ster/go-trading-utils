@@ -16,7 +16,6 @@ type (
 	Position futures.AccountPosition
 	Account  struct {
 		client                      *futures.Client
-		AccountUpdateTime           int64
 		FeeTier                     int    `json:"feeTier"`
 		CanTrade                    bool   `json:"canTrade"`
 		CanDeposit                  bool   `json:"canDeposit"`

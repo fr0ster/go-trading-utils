@@ -47,12 +47,6 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 }
 
 func TestAccountUpdateHandler(t *testing.T) {
-	even := &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeOutboundAccountPosition,
-		OrderUpdate: binance.WsOrderUpdate{
-			Status: string(binance.OrderStatusTypeFilled),
-		},
-	}
 	inChannel := make(chan *binance.WsUserDataEvent, 1)
 	api_key := os.Getenv("SPOT_TEST_BINANCE_API_KEY")
 	secret_key := os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
@@ -62,7 +56,24 @@ func TestAccountUpdateHandler(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	outChannel := spot_handlers.GetAccountInfoGuard(account, inChannel)
-	inChannel <- even
+	inChannel <- &binance.WsUserDataEvent{
+		Event: binance.UserDataEventTypeOutboundAccountPosition,
+		AccountUpdate: binance.WsAccountUpdateList{
+			AccountUpdateTime: account.AccountUpdateTime + 100,
+			WsAccountUpdates: []binance.WsAccountUpdate{
+				{
+					Asset:  "BTC",
+					Free:   "0.0",
+					Locked: "0.0",
+				},
+				{
+					Asset:  "USDT",
+					Free:   "0.0",
+					Locked: "0.0",
+				},
+			},
+		},
+	}
 	res := false
 	for {
 		select {
