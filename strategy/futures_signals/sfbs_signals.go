@@ -50,7 +50,7 @@ func BuyOrSellSignal(
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
-					logrus.Errorf("Can't get %s balance: %v", pair.GetTargetSymbol(), err)
+					logrus.Errorf("Can't get %s balance: %v", pair.GetBaseSymbol(), err)
 					stopEvent <- os.Interrupt
 					return
 				}
