@@ -78,33 +78,13 @@ func (a *MarginAccount) GetAssets() *btree.BTree {
 	return a.assets
 }
 
-// GetTakerCommission for account
-func (a *MarginAccount) GetTakerCommission() float64 {
-	panic("implement me")
-}
-
-// GetMakerCommission for account
-func (a *MarginAccount) GetMakerCommission() float64 {
-	panic("implement me")
-}
-
-// GetBuyerCommission for account
-func (a *MarginAccount) GetBuyerCommission() float64 {
-	panic("implement me")
-}
-
-// GetSellerCommission for account
-func (a *MarginAccount) GetSellerCommission() float64 {
-	panic("implement me")
-}
-
 // ReplaceOrInsert for assets
 func (a *MarginAccount) AssetUpdate(item UserAsset) {
 	val := UserAsset(item)
 	a.assets.ReplaceOrInsert(&val)
 }
 
-func NewMargin(client *binance.Client, symbols []string) (al *MarginAccount, err error) {
+func newMargin(client *binance.Client, symbols []string) (al *MarginAccount, err error) {
 	marginAccount, err := client.NewGetMarginAccountService().Do(context.Background())
 	if err != nil {
 		return

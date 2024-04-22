@@ -168,7 +168,7 @@ func (a *Account) GetMarginAccount() (marginAccount *MarginAccount) {
 		}
 	}
 	if len(marginSymbols) != 0 {
-		marginAccount, _ = NewMargin(a.client, marginSymbols)
+		marginAccount, _ = newMargin(a.client, marginSymbols)
 	}
 	return
 }
@@ -183,7 +183,7 @@ func (a *Account) GetIsolatedMargin() (isolatedMarginAsset *IsolatedMarginAccoun
 		}
 	}
 	if len(marginSymbols) != 0 {
-		isolatedMarginAsset, _ = NewIsolatedMargin(a.client, marginSymbols)
+		isolatedMarginAsset, _ = newIsolatedMargin(a.client, marginSymbols)
 	}
 	return
 }

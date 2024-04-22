@@ -79,27 +79,7 @@ func (a *IsolatedMarginAccount) AssetUpdate(item IsolatedMarginAsset) {
 	a.assets.ReplaceOrInsert(&item)
 }
 
-// GetTakerCommission for account
-func (a *IsolatedMarginAccount) GetTakerCommission() float64 {
-	panic("implement me")
-}
-
-// GetMakerCommission for account
-func (a *IsolatedMarginAccount) GetMakerCommission() float64 {
-	panic("implement me")
-}
-
-// GetBuyerCommission for account
-func (a *IsolatedMarginAccount) GetBuyerCommission() float64 {
-	panic("implement me")
-}
-
-// GetSellerCommission for account
-func (a *IsolatedMarginAccount) GetSellerCommission() float64 {
-	panic("implement me")
-}
-
-func NewIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {
+func newIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {
 	isolatedMarginAccount, err := client.NewGetIsolatedMarginAccountService().Do(context.Background())
 	if err != nil {
 		return
