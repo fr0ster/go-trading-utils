@@ -140,7 +140,6 @@ func BuyOrSellSignal(
 
 func StartWorkInPositionSignal(
 	account *spot_account.Account,
-	// depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan *depth_types.DepthItemType) (
