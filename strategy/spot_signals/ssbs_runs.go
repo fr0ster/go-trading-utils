@@ -234,7 +234,6 @@ func Run(
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
 	var (
-		// depth           *depth_types.Depth
 		stopBuy         = make(chan bool)
 		stopSell        = make(chan bool)
 		stopProfitOrder = make(chan bool)
