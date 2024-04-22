@@ -34,6 +34,16 @@ func (a *UserAsset) Equal(item btree.Item) bool {
 	return a.Asset == item.(*UserAsset).Asset
 }
 
+// Locking the account
+func (a *MarginAccount) Lock() {
+	a.mu.Lock()
+}
+
+// Unlocking the account
+func (a *MarginAccount) Unlock() {
+	a.mu.Unlock()
+}
+
 func (a *MarginAccount) GetFreeAsset(asset string) (float64, error) {
 	item := a.assets.Get(&UserAsset{Asset: asset})
 	if item == nil {
@@ -66,6 +76,26 @@ func (a *MarginAccount) GetTotalAsset(asset string) (float64, error) {
 
 func (a *MarginAccount) GetAssets() *btree.BTree {
 	return a.assets
+}
+
+// GetTakerCommission for account
+func (a *MarginAccount) GetTakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetMakerCommission for account
+func (a *MarginAccount) GetMakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetBuyerCommission for account
+func (a *MarginAccount) GetBuyerCommission() float64 {
+	panic("implement me")
+}
+
+// GetSellerCommission for account
+func (a *MarginAccount) GetSellerCommission() float64 {
+	panic("implement me")
 }
 
 // ReplaceOrInsert for assets

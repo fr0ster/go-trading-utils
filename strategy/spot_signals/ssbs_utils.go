@@ -172,12 +172,9 @@ func GetTargetBalance(
 }
 
 func GetCommission(
-	account account_interfaces.Accounts,
-	pair pairs_interfaces.Pairs) (
-	buyCommission float64, // Комісія за покупку
-	sellCommission float64, // Комісія за продаж
-	err error) {
-	panic("Not implemented")
+	account account_interfaces.Accounts) (
+	commission float64) { // Комісія за покупку/Комісія за продаж)
+	return account.GetMakerCommission()
 }
 
 func GetTransactionValue(

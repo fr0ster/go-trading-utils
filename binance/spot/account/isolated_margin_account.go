@@ -30,6 +30,16 @@ func (a *IsolatedMarginAsset) Equal(item btree.Item) bool {
 	return a.Symbol == item.(*IsolatedMarginAsset).Symbol
 }
 
+// Locking the account
+func (a *IsolatedMarginAccount) Lock() {
+	a.mu.Lock()
+}
+
+// Unlocking the account
+func (a *IsolatedMarginAccount) Unlock() {
+	a.mu.Unlock()
+}
+
 func (a *IsolatedMarginAccount) GetFreeAsset(asset string) (float64, error) {
 	item := a.assets.Get(&UserAsset{Asset: asset})
 	if item == nil {
@@ -67,6 +77,26 @@ func (a *IsolatedMarginAccount) GetAssets() *btree.BTree {
 // ReplaceOrInsert for assets
 func (a *IsolatedMarginAccount) AssetUpdate(item IsolatedMarginAsset) {
 	a.assets.ReplaceOrInsert(&item)
+}
+
+// GetTakerCommission for account
+func (a *IsolatedMarginAccount) GetTakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetMakerCommission for account
+func (a *IsolatedMarginAccount) GetMakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetBuyerCommission for account
+func (a *IsolatedMarginAccount) GetBuyerCommission() float64 {
+	panic("implement me")
+}
+
+// GetSellerCommission for account
+func (a *IsolatedMarginAccount) GetSellerCommission() float64 {
+	panic("implement me")
 }
 
 func NewIsolatedMargin(client *binance.Client, symbols []string) (al *IsolatedMarginAccount, err error) {

@@ -58,6 +58,26 @@ func (a *Account) Unlock() {
 	a.mu.Unlock()
 }
 
+// Get MakerCommission
+func (a *Account) GetMakerCommission() float64 {
+	return float64(a.MakerCommission / 10000)
+}
+
+// Get TakerCommission
+func (a *Account) GetTakerCommission() float64 {
+	return float64(a.TakerCommission / 10000)
+}
+
+// Get BuyerCommission
+func (a *Account) GetBuyerCommission() float64 {
+	return float64(a.BuyerCommission / 10000)
+}
+
+// Get SellerCommission
+func (a *Account) GetSellerCommission() float64 {
+	return float64(a.SellerCommission / 10000)
+}
+
 func (a *Account) GetFreeAsset(asset string) (float64, error) {
 	item := a.assets.Get(&Asset{Asset: asset})
 	if item == nil {

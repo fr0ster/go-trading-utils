@@ -103,6 +103,26 @@ func (a *Account) GetTotalAsset(asset string) (float64, error) {
 	}
 }
 
+// GetTakerCommission for account
+func (a *Account) GetTakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetMakerCommission for account
+func (a *Account) GetMakerCommission() float64 {
+	panic("implement me")
+}
+
+// GetBuyerCommission for account
+func (a *Account) GetBuyerCommission() float64 {
+	panic("implement me")
+}
+
+// GetSellerCommission for account
+func (a *Account) GetSellerCommission() float64 {
+	panic("implement me")
+}
+
 func (a *Account) GetPositionRisk(symbol string) ([]*futures.PositionRisk, error) {
 	risk, err := a.client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
 	if err != nil {
