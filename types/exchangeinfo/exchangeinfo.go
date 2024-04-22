@@ -89,6 +89,16 @@ func (exchangeInfo *ExchangeInfo) GetSymbols() *symbols_info.Symbols {
 	return exchangeInfo.Symbols
 }
 
+// Ascend implements info.ExchangeInfo.
+func (exchangeInfo *ExchangeInfo) Ascend(iterator func(item btree.Item) bool) {
+	exchangeInfo.Symbols.Ascend(iterator)
+}
+
+// Descend implements info.ExchangeInfo.
+func (exchangeInfo *ExchangeInfo) Descend(iterator func(item btree.Item) bool) {
+	exchangeInfo.Symbols.Descend(iterator)
+}
+
 func NewExchangeInfo() *ExchangeInfo {
 	return &ExchangeInfo{
 		Timezone:   "",

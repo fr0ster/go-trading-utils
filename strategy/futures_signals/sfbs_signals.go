@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+	"github.com/fr0ster/go-trading-utils/utils"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 
@@ -58,6 +59,24 @@ func BuyOrSellSignal(
 				targetBalance, err := GetTargetBalance(account, pair)
 				if err != nil {
 					logrus.Errorf("Can't get %s balance: %v", pair.GetTargetSymbol(), err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				riskPosition, err := account.GetPositionRisk(pair.GetPair())
+				if err != nil {
+					logrus.Errorf("Can't get position risk: %v", err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				if len(riskPosition) != 1 {
+					logrus.Errorf("Can't get position risk: %v", riskPosition)
+					stopEvent <- os.Interrupt
+					return
+				}
+				if (utils.ConvStrToFloat64(riskPosition[0].MarkPrice) -
+					utils.ConvStrToFloat64(riskPosition[0].LiquidationPrice)/
+						utils.ConvStrToFloat64(riskPosition[0].MarkPrice)) < 0.1 {
+					logrus.Errorf("Risk position is too high: %v", riskPosition)
 					stopEvent <- os.Interrupt
 					return
 				}

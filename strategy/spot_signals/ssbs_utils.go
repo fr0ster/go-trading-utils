@@ -177,7 +177,7 @@ func GetCommission(
 	buyCommission float64, // Комісія за покупку
 	sellCommission float64, // Комісія за продаж
 	err error) {
-	return
+	panic("Not implemented")
 }
 
 func GetTransactionValue(

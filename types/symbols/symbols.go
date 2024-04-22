@@ -45,6 +45,18 @@ func (s *Symbols) GetSymbol(symbol btree.Item) btree.Item {
 	return item
 }
 
+func (s *Symbols) Ascend(f func(btree.Item) bool) {
+	s.symbols.Ascend(func(i btree.Item) bool {
+		return f(i)
+	})
+}
+
+func (s *Symbols) Descend(f func(btree.Item) bool) {
+	s.symbols.Descend(func(i btree.Item) bool {
+		return f(i)
+	})
+}
+
 func NewSymbols(degree int, symbols []interface{}) (s *Symbols, err error) {
 	s = &Symbols{
 		degree:  degree,

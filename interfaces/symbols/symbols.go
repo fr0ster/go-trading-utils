@@ -14,6 +14,8 @@ type (
 		GetSymbol(symbol string) *symbol_info.SpotSymbol
 		GetSpotSymbol() *binance.Symbol
 		GetFuturesSymbol() *futures.Symbol
+		Ascend(f func(btree.Item) bool)
+		Descend(f func(btree.Item) bool)
 		Insert(symbol btree.Item)
 		Len() int
 	}
