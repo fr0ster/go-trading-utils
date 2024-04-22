@@ -110,6 +110,9 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
+		if pair.Connection == nil {
+			pair.Connection = &connection_types.Connection{}
+		}
 		if pair.AccountType == pairs_types.SpotAccountType &&
 			pair.Connection.GetAPIKey() == "" &&
 			pair.Connection.GetSecretKey() == "" &&
