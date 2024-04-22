@@ -35,7 +35,7 @@ func TestNewLimitOrder(t *testing.T) {
 	futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	err := exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
 		log.Printf(errorMsg, err)

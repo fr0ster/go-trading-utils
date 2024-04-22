@@ -25,7 +25,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Check if the exchangeInfo is not nil
@@ -39,7 +39,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
@@ -57,7 +57,7 @@ func TestGetPermissions(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
@@ -71,7 +71,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	// Call the function being tested
@@ -89,7 +89,7 @@ func TestInterface(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.NewExchangeInfo()
+	exchangeInfo := exchange_types.New()
 	exchangeinfo.Init(exchangeInfo, degree, client)
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {

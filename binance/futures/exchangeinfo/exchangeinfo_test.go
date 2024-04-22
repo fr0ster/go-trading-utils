@@ -19,7 +19,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchangeinfo.NewExchangeInfo()
+	exchangeInfo := exchangeinfo.New()
 	err := futuresInfo.Init(exchangeInfo, degree, client)
 	// Check if the function returned an error
 	if err != nil {
@@ -37,7 +37,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.NewExchangeInfo()
+	exchangeInfo := exchangeinfo.New()
 	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)
@@ -53,7 +53,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.NewExchangeInfo()
+	exchangeInfo := exchangeinfo.New()
 	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("GetExchangeInfo returned an error: %v", err)

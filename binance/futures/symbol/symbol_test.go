@@ -18,7 +18,7 @@ func TestInterface(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_info.NewExchangeInfo()
+	exchangeInfo := exchange_info.New()
 	err := futuresInfo.Init(exchangeInfo, degree, client)
 	if err != nil {
 		t.Errorf("Error: %v", err)

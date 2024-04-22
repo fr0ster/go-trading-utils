@@ -99,7 +99,7 @@ func (exchangeInfo *ExchangeInfo) Descend(iterator func(item btree.Item) bool) {
 	exchangeInfo.Symbols.Descend(iterator)
 }
 
-func NewExchangeInfo() *ExchangeInfo {
+func New() *ExchangeInfo {
 	return &ExchangeInfo{
 		Timezone:   "",
 		ServerTime: 0,
