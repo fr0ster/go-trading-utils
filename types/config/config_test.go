@@ -104,12 +104,26 @@ const (
 )
 
 var (
-	CommissionAsset_1 = "BNB"
-	CommissionAsset_2 = "USDT"
-	Commission_1      = 0.00001
-	Commission_2      = 0.02
-	Commission        = pairs_types.Commission{CommissionAsset_1: Commission_1, CommissionAsset_2: Commission_2}
-	config            = &config_types.Configs{
+	CommissionAsset_1     = "BNB"
+	CommissionAsset_2     = "USDT"
+	Commission_1          = 0.00001
+	Commission_2          = 0.02
+	Commission            = pairs_types.Commission{CommissionAsset_1: Commission_1, CommissionAsset_2: Commission_2}
+	DefaultSpotConnection = &connection_types.Connection{
+		APIKey:          SpotAPIKey,
+		APISecret:       SpotAPISecret,
+		UseTestNet:      SpotUseTestNet,
+		CommissionMaker: SpotCommissionMaker,
+		CommissionTaker: SpotCommissionTaker,
+	}
+	DefaultFuturesConnection = &connection_types.Connection{
+		APIKey:          FuturesAPIKey,
+		APISecret:       FuturesAPISecret,
+		UseTestNet:      FuturesUseTestNet,
+		CommissionMaker: FuturesCommissionMaker,
+		CommissionTaker: FuturesCommissionTaker,
+	}
+	config = &config_types.Configs{
 		SpotConnection: &connection_types.Connection{
 			APIKey:          SpotAPIKey,
 			APISecret:       SpotAPISecret,
@@ -127,13 +141,7 @@ var (
 		Pairs: btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		Connection: &connection_types.Connection{
-			APIKey:          SpotAPIKey,
-			APISecret:       SpotAPISecret,
-			UseTestNet:      SpotUseTestNet,
-			CommissionMaker: SpotCommissionMaker,
-			CommissionTaker: SpotCommissionTaker,
-		},
+		Connection:                 &connection_types.Connection{},
 		InitialBalance:             InitialBalance,
 		InitialPositionBalance:     InitialPositionBalance_1,
 		AccountType:                AccountType_1,
@@ -160,13 +168,7 @@ var (
 		Commission:                 Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
-		Connection: &connection_types.Connection{
-			APIKey:          FuturesAPIKey,
-			APISecret:       FuturesAPISecret,
-			UseTestNet:      FuturesUseTestNet,
-			CommissionMaker: FuturesCommissionMaker,
-			CommissionTaker: FuturesCommissionTaker,
-		},
+		Connection:                 &connection_types.Connection{},
 		InitialBalance:             InitialBalance,
 		InitialPositionBalance:     InitialPositionBalance_2,
 		AccountType:                AccountType_2,
@@ -508,11 +510,11 @@ func TestPairSetter(t *testing.T) {
 
 func TestPairGetter(t *testing.T) {
 	pair := pair_1
-	assert.Equal(t, SpotAPIKey, pair.GetConnection().GetAPIKey())
-	assert.Equal(t, SpotAPISecret, pair.GetConnection().GetSecretKey())
-	assert.Equal(t, SpotUseTestNet, pair.GetConnection().GetUseTestNet())
-	assert.Equal(t, SpotCommissionMaker, pair.GetConnection().GetCommissionMaker())
-	assert.Equal(t, SpotCommissionTaker, pair.GetConnection().GetCommissionTaker())
+	assert.Equal(t, "", pair.GetConnection().GetAPIKey())
+	assert.Equal(t, "", pair.GetConnection().GetSecretKey())
+	assert.Equal(t, false, pair.GetConnection().GetUseTestNet())
+	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionMaker())
+	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InitialBalance, pair.GetInitialBalance())
 	assert.Equal(t, InitialPositionBalance_1, pair.GetInitialPositionBalance())
 	assert.Equal(t, AccountType_1, pair.GetAccountType())

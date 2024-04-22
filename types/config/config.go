@@ -110,6 +110,12 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
+		if pair.AccountType == pairs_types.SpotAccountType && pair.Connection == nil {
+			pair.Connection = c.SpotConnection
+		} else if pair.AccountType == pairs_types.USDTFutureType && pair.Connection == nil {
+			pair.Connection = c.FuturesConnection
+		}
+
 		c.Pairs.ReplaceOrInsert(pair)
 	}
 	return nil
