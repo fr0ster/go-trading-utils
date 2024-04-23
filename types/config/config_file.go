@@ -80,14 +80,17 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 	return cf.configs
 }
 
+func (cf *ConfigFile) SetConfigurations(config config_types.Configuration) {
+	cf.configs = config.(*Configs)
+}
+
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
 func NewConfigFile(
 	file_path string,
-	degree int,
-	config *Configs) (res *ConfigFile) {
+	degree int) (res *ConfigFile) {
 	res = &ConfigFile{
 		filePath: file_path,
-		configs:  config,
+		configs:  &Configs{},
 	}
 	return
 }

@@ -400,10 +400,8 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a new ConfigFile instance
-	configFile := config_types.NewConfigFile(
-		tmpFile.Name(),
-		2,
-		config_types.NewConfig(DefaultSpotConnection, DefaultFuturesConnection, InfoLevel))
+	configFile := config_types.NewConfigFile(tmpFile.Name(), 2)
+	configFile.SetConfigurations(config)
 
 	// Load the config from the file
 	err = configFile.Load()
@@ -421,29 +419,13 @@ func TestConfigFile_Save(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	// Create a new ConfigFile instance
-	spotConnection := connection_types.NewConnection(
-		SpotAPIKey,
-		SpotAPISecret,
-		SpotUseTestNet,
-		SpotCommissionMaker,
-		SpotCommissionTaker,
-	)
-	futuresConnection := connection_types.NewConnection(
-		FuturesAPIKey,
-		FuturesAPISecret,
-		FuturesUseTestNet,
-		FuturesCommissionMaker,
-		FuturesCommissionTaker,
-	)
-	config := config_types.NewConfigFile(
-		tmpFile.Name(),
-		2,
-		config_types.NewConfig(spotConnection, futuresConnection, InfoLevel))
-	config.GetConfigurations().SetPair(pair_1)
-	config.GetConfigurations().SetPair(pair_2)
+	config_file := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file.SetConfigurations(config)
+	config_file.GetConfigurations().SetPair(pair_1)
+	config_file.GetConfigurations().SetPair(pair_2)
 
 	// Save the config to the file
-	err = config.Save()
+	err = config_file.Save()
 	assert.NoError(t, err)
 
 	// Read the saved config file
@@ -456,8 +438,8 @@ func TestConfigFile_Save(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the saved config matches the original config
-	checkingDate, err := config.GetConfigurations().GetPairs()
-	assertTest(t, err, config.GetConfigurations(), checkingDate)
+	checkingDate, err := config_file.GetConfigurations().GetPairs()
+	assertTest(t, err, config_file.GetConfigurations(), checkingDate)
 }
 
 // Add more tests for other methods if needed
