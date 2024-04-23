@@ -105,12 +105,12 @@ func RunSpotHolding(
 	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
-	buyEvent, _ :=
+	buyEvent, sellEvent :=
 		BuySellSignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
-	collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+	collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -155,17 +155,20 @@ func RunSpotScalping(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.WorkInPositionStage)
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
+		workingOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 		_ = ProcessSellOrder(
 			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
 			sellEvent, nil, stopEvent)
+
+		<-workingOutEvent
 	}
 	return nil
 }
@@ -201,7 +204,7 @@ func RunSpotTrading(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.OutputOfPositionStage)
@@ -275,7 +278,7 @@ func Run(
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -299,7 +302,7 @@ func Run(
 			buyEvent, stopBuy, stopEvent)
 
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 			<-collectionOutEvent
 			pair.SetStage(pairs_types.WorkInPositionStage)
@@ -319,7 +322,7 @@ func Run(
 			return fmt.Errorf("pair %v can't be in WorkInPositionStage for TradingStrategyType", pair.GetPair())
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent)
+			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
 			_ = ProcessBuyOrder(
 				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
