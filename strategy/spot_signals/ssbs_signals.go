@@ -52,8 +52,8 @@ func BuyOrSellSignal(
 					logrus.Warnf("Can't get data for analysis: %v", err)
 					continue
 				}
-				pair.SetCurrentBalance(baseBalance * pair.GetLimitOnPosition())
-				pair.SetCurrentPositionBalance(baseBalance)
+				pair.SetCurrentBalance(baseBalance)
+				pair.SetCurrentPositionBalance(baseBalance * pair.GetLimitOnPosition())
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(account, pair)
 				if err != nil {
@@ -170,8 +170,8 @@ func StartWorkInPositionSignal(
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			pair.SetCurrentBalance(baseBalance * pair.GetLimitOnPosition())
-			pair.SetCurrentPositionBalance(baseBalance)
+			pair.SetCurrentBalance(baseBalance)
+			pair.SetCurrentPositionBalance(baseBalance * pair.GetLimitOnPosition())
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
 			if err != nil {
@@ -237,8 +237,8 @@ func StopWorkInPositionSignal(
 				logrus.Warnf("Can't get data for analysis: %v", err)
 				continue
 			}
-			pair.SetCurrentBalance(baseBalance * pair.GetLimitOnPosition())
-			pair.SetCurrentPositionBalance(baseBalance)
+			pair.SetCurrentBalance(baseBalance)
+			pair.SetCurrentPositionBalance(baseBalance * pair.GetLimitOnPosition())
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
 			if err != nil {
