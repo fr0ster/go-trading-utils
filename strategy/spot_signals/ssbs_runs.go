@@ -12,78 +12,14 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
-
-// Виводимо інформацію про позицію
-func PositionInfoOut(
-	account *spot_account.Account,
-	pair pairs_interfaces.Pairs,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) {
-	for {
-		baseBalance, err := account.GetFreeAsset(pair.GetBaseSymbol())
-		if err != nil {
-			logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
-			stopEvent <- os.Interrupt
-			return
-		}
-		select {
-		case <-stopEvent:
-			stopEvent <- os.Interrupt
-			return
-		default:
-			if val := pair.GetMiddlePrice(); val != 0 {
-				logrus.Infof("Middle %s price: %f, available USDT: %f",
-					pair.GetPair(), val, baseBalance)
-			}
-		}
-		time.Sleep(updateTime)
-	}
-}
-
-func BuySellSignalInitialization(
-	client *binance.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) (
-	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType) {
-	depth := depth_types.NewDepth(degree, pair.GetPair())
-
-	bookTicker := bookTicker_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
-
-	if updateTime > 0 {
-		// Запускаємо потік для отримання оновлення BookTicker через REST
-		RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-		// Запускаємо потік для отримання оновлення Depth через REST
-		RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
-	}
-
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
-
-	return
-}
 
 func RunSpotHolding(
 	config *config_types.ConfigFile,
@@ -105,6 +41,14 @@ func RunSpotHolding(
 	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
+
+	err = PairInit(client, config, account, pair)
+	if err != nil {
+		return err
+	}
+
+	RunConfigSaver(config, stopEvent, updateTime)
+
 	buyEvent, sellEvent :=
 		BuySellSignalInitialization(
 			client, degree, limit, pair,
@@ -144,6 +88,14 @@ func RunSpotScalping(
 	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
+
+	err = PairInit(client, config, account, pair)
+	if err != nil {
+		return err
+	}
+
+	RunConfigSaver(config, stopEvent, updateTime)
+
 	buyEvent, sellEvent :=
 		BuySellSignalInitialization(
 			client, degree, limit, pair,
@@ -193,6 +145,14 @@ func RunSpotTrading(
 	if pair.GetStrategy() != pairs_types.TradingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
+
+	err = PairInit(client, config, account, pair)
+	if err != nil {
+		return err
+	}
+
+	RunConfigSaver(config, stopEvent, updateTime)
+
 	buyEvent, sellEvent :=
 		BuySellSignalInitialization(
 			client, degree, limit, pair,
@@ -243,28 +203,12 @@ func Run(
 		stopProfitOrder = make(chan bool)
 	)
 
-	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
-	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
-
-	if pair.GetInitialBalance() == 0 && pair.GetInitialPositionBalance() == 0 {
-		pair.SetInitialBalance(baseFree)
-		pair.SetInitialPositionBalance(targetFree * pair.GetLimitOnPosition())
-		config.Save()
+	err = PairInit(client, config, account, pair)
+	if err != nil {
+		return err
 	}
 
-	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err = account.GetFreeAsset(pair.GetPair())
-		if err != nil {
-			return err
-		}
-		pair.SetBuyQuantity(targetFree)
-		price, err := GetPrice(client, pair.GetPair())
-		if err != nil {
-			return err
-		}
-		pair.SetBuyValue(targetFree * price)
-		config.Save()
-	}
+	RunConfigSaver(config, stopEvent, updateTime)
 
 	buyEvent, sellEvent :=
 		BuySellSignalInitialization(
