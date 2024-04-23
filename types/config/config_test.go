@@ -400,7 +400,10 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a new ConfigFile instance
-	configFile := config_types.ConfigNew(tmpFile.Name(), 2)
+	configFile := config_types.NewConfigFile(
+		tmpFile.Name(),
+		2,
+		config_types.NewConfig(DefaultSpotConnection, DefaultFuturesConnection, InfoLevel))
 
 	// Load the config from the file
 	err = configFile.Load()
@@ -418,27 +421,24 @@ func TestConfigFile_Save(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	// Create a new ConfigFile instance
-	config := &config_types.ConfigFile{
-		FilePath: tmpFile.Name(),
-		Configs: &config_types.Configs{
-			SpotConnection: &connection_types.Connection{
-				APIKey:          SpotAPIKey,
-				APISecret:       SpotAPISecret,
-				UseTestNet:      SpotUseTestNet,
-				CommissionMaker: SpotCommissionMaker,
-				CommissionTaker: SpotCommissionTaker,
-			},
-			FuturesConnection: &connection_types.Connection{
-				APIKey:          FuturesAPIKey,
-				APISecret:       FuturesAPISecret,
-				UseTestNet:      FuturesUseTestNet,
-				CommissionMaker: FuturesCommissionMaker,
-				CommissionTaker: FuturesCommissionTaker,
-			},
-			LogLevel: InfoLevel,
-			Pairs:    btree.New(2),
-		},
-	}
+	spotConnection := connection_types.NewConnection(
+		SpotAPIKey,
+		SpotAPISecret,
+		SpotUseTestNet,
+		SpotCommissionMaker,
+		SpotCommissionTaker,
+	)
+	futuresConnection := connection_types.NewConnection(
+		FuturesAPIKey,
+		FuturesAPISecret,
+		FuturesUseTestNet,
+		FuturesCommissionMaker,
+		FuturesCommissionTaker,
+	)
+	config := config_types.NewConfigFile(
+		tmpFile.Name(),
+		2,
+		config_types.NewConfig(spotConnection, futuresConnection, InfoLevel))
 	config.Configs.Pairs.ReplaceOrInsert(pair_1)
 	config.Configs.Pairs.ReplaceOrInsert(pair_2)
 

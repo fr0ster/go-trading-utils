@@ -8,13 +8,11 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-
-	"github.com/google/btree"
 )
 
 type (
 	ConfigFile struct {
-		FilePath string   `json:"file_path"`
+		filePath string   `json:"file_path"`
 		Configs  *Configs `json:"symbols"`
 		mu       sync.Mutex
 	}
@@ -31,7 +29,7 @@ func (cf *ConfigFile) Unlock() {
 func (cf *ConfigFile) Load() error {
 	cf.Lock()
 	defer cf.Unlock()
-	file, err := os.Open(cf.FilePath)
+	file, err := os.Open(cf.filePath)
 	if err != nil {
 		return err
 	}
@@ -70,7 +68,7 @@ func (cf *ConfigFile) Save() error {
 		return err
 	}
 
-	err = os.WriteFile(cf.FilePath, formattedJSON, 0644)
+	err = os.WriteFile(cf.filePath, formattedJSON, 0644)
 	if err != nil {
 		return err
 	}
@@ -83,27 +81,13 @@ func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
 }
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
-func ConfigNew(file_path string, degree int) (res *ConfigFile) {
+func NewConfigFile(
+	file_path string,
+	degree int,
+	config *Configs) (res *ConfigFile) {
 	res = &ConfigFile{
-		FilePath: file_path,
-		Configs: &Configs{
-			SpotConnection: &connection_types.Connection{
-				APIKey:          "",
-				APISecret:       "",
-				UseTestNet:      false,
-				CommissionMaker: 0.001,
-				CommissionTaker: 0.001,
-			},
-			FuturesConnection: &connection_types.Connection{
-				APIKey:          "",
-				APISecret:       "",
-				UseTestNet:      false,
-				CommissionMaker: 0.001,
-				CommissionTaker: 0.001,
-			},
-			LogLevel: 0x00,
-			Pairs:    btree.New(degree),
-		},
+		filePath: file_path,
+		Configs:  config,
 	}
 	return
 }

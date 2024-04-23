@@ -153,3 +153,15 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	return nil
 }
+
+func NewConfig(
+	spotConnection *connection_types.Connection,
+	futuresConnection *connection_types.Connection,
+	logLevel logrus.Level) *Configs {
+	return &Configs{
+		SpotConnection:    spotConnection,
+		FuturesConnection: futuresConnection,
+		LogLevel:          logrus.InfoLevel,
+		Pairs:             btree.New(2),
+	}
+}

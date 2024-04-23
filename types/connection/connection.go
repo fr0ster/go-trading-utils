@@ -96,3 +96,19 @@ func (cf *Connection) UnmarshalJSON(data []byte) error {
 	cf.CommissionTaker = temp.CommissionTaker
 	return nil
 }
+
+func NewConnection(
+	apiKey string,
+	apiSecret string,
+	useTestNet bool,
+	commissionMaker float64,
+	commissionTaker float64,
+) *Connection {
+	return &Connection{
+		APIKey:          apiKey,
+		APISecret:       apiSecret,
+		UseTestNet:      useTestNet,
+		CommissionMaker: commissionMaker,
+		CommissionTaker: commissionTaker,
+	}
+}
