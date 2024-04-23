@@ -101,7 +101,8 @@ func ConfigNew(file_path string, degree int) (res *ConfigFile) {
 				CommissionMaker: 0.001,
 				CommissionTaker: 0.001,
 			},
-			Pairs: btree.New(degree),
+			LogLevel: 0x00,
+			Pairs:    btree.New(degree),
 		},
 	}
 	return

@@ -9,6 +9,7 @@ import (
 
 	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+	"github.com/sirupsen/logrus"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
@@ -25,6 +26,8 @@ const (
 	FuturesAPIKey     = "your_api_key"    // Ключ API для ф'ючерсів
 	FuturesAPISecret  = "your_api_secret" // Секретний ключ API для ф'ючерсів
 	FuturesUseTestNet = false             // Використовувати тестову мережу для ф'ючерсів
+	InfoLevel         = logrus.InfoLevel  // Рівень логування
+	DebugLevel        = logrus.DebugLevel // Рівень логування
 
 	InitialBalance = 1000.0 // Початковий баланс
 	CurrentBalance = 2000.0 // Поточний баланс
@@ -141,7 +144,8 @@ var (
 			CommissionMaker: FuturesCommissionMaker,
 			CommissionTaker: FuturesCommissionTaker,
 		},
-		Pairs: btree.New(2),
+		LogLevel: InfoLevel,
+		Pairs:    btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
 		Connection:                 &connection_types.Connection{},
@@ -220,6 +224,7 @@ func getTestData() []byte {
 				"commission_maker": ` + json.Number(strconv.FormatFloat(FuturesCommissionMaker, 'f', -1, 64)).String() + `,
 				"commission_taker": ` + json.Number(strconv.FormatFloat(FuturesCommissionTaker, 'f', -1, 64)).String() + `
 			},
+			"log_level": "` + InfoLevel.String() + `",
 			"pairs": [
 				{
 					"connection": {
@@ -311,6 +316,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, FuturesUseTestNet, config.GetFuturesConnection().GetUseTestNet())
 	assert.Equal(t, SpotCommissionMaker, config.GetSpotConnection().GetCommissionMaker())
 	assert.Equal(t, SpotCommissionTaker, config.GetSpotConnection().GetCommissionTaker())
+	assert.Equal(t, InfoLevel, config.GetLogLevel())
 
 	assert.Equal(t, (*checkingDate)[0].GetConnection().GetAPIKey(), config.GetPair(Pair_1).GetConnection().GetAPIKey())
 	assert.Equal(t, (*checkingDate)[0].GetConnection().GetSecretKey(), config.GetPair(Pair_1).GetConnection().GetSecretKey())
@@ -429,7 +435,8 @@ func TestConfigFile_Save(t *testing.T) {
 				CommissionMaker: FuturesCommissionMaker,
 				CommissionTaker: FuturesCommissionTaker,
 			},
-			Pairs: btree.New(2),
+			LogLevel: InfoLevel,
+			Pairs:    btree.New(2),
 		},
 	}
 	config.Configs.Pairs.ReplaceOrInsert(pair_1)

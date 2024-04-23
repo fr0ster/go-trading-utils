@@ -3,9 +3,11 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+	"github.com/sirupsen/logrus"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -17,6 +19,7 @@ type (
 	Configs struct {
 		SpotConnection    *connection_types.Connection `json:"spot_connection"`
 		FuturesConnection *connection_types.Connection `json:"futures_connection"`
+		LogLevel          logrus.Level                 `json:"log_level"`
 		Pairs             *btree.BTree
 	}
 )
@@ -29,6 +32,14 @@ func (cf *Configs) GetFuturesConnection() connection_interfaces.Connection {
 // GetSpotConnection implements config.Configuration.
 func (cf *Configs) GetSpotConnection() connection_interfaces.Connection {
 	return cf.SpotConnection
+}
+
+func (cf *Configs) GetLogLevel() logrus.Level {
+	return cf.LogLevel
+}
+
+func (cf *Configs) SetLogLevel(level logrus.Level) {
+	cf.LogLevel = level
 }
 
 // Implement the GetPair method
@@ -77,10 +88,12 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 	return json.MarshalIndent(&struct {
 		SpotConnection    *connection_types.Connection `json:"spot_connection"`
 		FuturesConnection *connection_types.Connection `json:"futures_connection"`
+		LogLevel          string                       `json:"log_level"`
 		Pairs             []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		SpotConnection:    c.SpotConnection,
 		FuturesConnection: c.FuturesConnection,
+		LogLevel:          c.LogLevel.String(),
 		Pairs:             pairs,
 	}, "", "  ")
 }
@@ -89,6 +102,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
 		SpotConnection    *connection_types.Connection `json:"spot_connection"`
 		FuturesConnection *connection_types.Connection `json:"futures_connection"`
+		LogLevel          string                       `json:"log_level"`
 		Pairs             []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -107,6 +121,12 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		UseTestNet:      temp.FuturesConnection.UseTestNet,
 		CommissionMaker: temp.FuturesConnection.CommissionMaker,
 		CommissionTaker: temp.FuturesConnection.CommissionTaker,
+	}
+	// Parse the string log level to a logrus.Level
+	var err error
+	c.LogLevel, err = logrus.ParseLevel(temp.LogLevel)
+	if err != nil {
+		return fmt.Errorf("invalid log level: %s", temp.LogLevel)
 	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
