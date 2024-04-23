@@ -410,7 +410,7 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the loaded config matches the test data
-	checkingDate, err := configFile.Configs.GetPairs()
+	checkingDate, err := configFile.GetConfigurations().GetPairs()
 	assertTest(t, err, configFile.GetConfigurations(), checkingDate)
 }
 
@@ -439,8 +439,8 @@ func TestConfigFile_Save(t *testing.T) {
 		tmpFile.Name(),
 		2,
 		config_types.NewConfig(spotConnection, futuresConnection, InfoLevel))
-	config.Configs.Pairs.ReplaceOrInsert(pair_1)
-	config.Configs.Pairs.ReplaceOrInsert(pair_2)
+	config.GetConfigurations().SetPair(pair_1)
+	config.GetConfigurations().SetPair(pair_2)
 
 	// Save the config to the file
 	err = config.Save()

@@ -48,6 +48,11 @@ func (cf *Configs) GetPair(pair string) pairs_interfaces.Pairs {
 	return res.(*pairs_types.Pairs)
 }
 
+// Implement the SetPair method
+func (cf *Configs) SetPair(pair pairs_interfaces.Pairs) {
+	cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
+}
+
 // Implement the GetPairs method
 func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error) {
 	isExist := func(a pairs_types.AccountType) bool {

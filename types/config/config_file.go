@@ -12,8 +12,8 @@ import (
 
 type (
 	ConfigFile struct {
-		filePath string   `json:"file_path"`
-		Configs  *Configs `json:"symbols"`
+		filePath string
+		configs  *Configs
 		mu       sync.Mutex
 	}
 )
@@ -40,7 +40,7 @@ func (cf *ConfigFile) Load() error {
 		return err
 	}
 
-	err = cf.Configs.UnmarshalJSON(data)
+	err = cf.configs.UnmarshalJSON(data)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,8 @@ func (cf *ConfigFile) Load() error {
 func (cf *ConfigFile) Save() error {
 	cf.Lock()
 	defer cf.Unlock()
-	if cf.Configs.Pairs.Len() == 0 {
-		cf.Configs.Pairs.ReplaceOrInsert(
+	if cf.configs.Pairs.Len() == 0 {
+		cf.configs.Pairs.ReplaceOrInsert(
 			pairs_types.New(
 				&connection_types.Connection{},
 				pairs_types.SpotAccountType,
@@ -63,7 +63,7 @@ func (cf *ConfigFile) Save() error {
 				"USDT"))
 	}
 
-	formattedJSON, err := cf.Configs.MarshalJSON()
+	formattedJSON, err := cf.configs.MarshalJSON()
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (cf *ConfigFile) Save() error {
 }
 
 func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
-	return cf.Configs
+	return cf.configs
 }
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
@@ -87,7 +87,7 @@ func NewConfigFile(
 	config *Configs) (res *ConfigFile) {
 	res = &ConfigFile{
 		filePath: file_path,
-		Configs:  config,
+		configs:  config,
 	}
 	return
 }
