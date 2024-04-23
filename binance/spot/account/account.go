@@ -21,7 +21,6 @@ type (
 		client            *binance.Client
 		exchangeInfo      *exchange_info.ExchangeInfo
 		degree            int
-		AccountUpdateTime int64
 		MakerCommission   int64                   `json:"makerCommission"`
 		TakerCommission   int64                   `json:"takerCommission"`
 		BuyerCommission   int64                   `json:"buyerCommission"`
@@ -197,7 +196,6 @@ func New(client *binance.Client, assets []string) (account *Account, err error) 
 		client:            client,
 		degree:            2,
 		exchangeInfo:      exchange_info.New(),
-		AccountUpdateTime: int64(accountIn.UpdateTime),
 		MakerCommission:   accountIn.MakerCommission,
 		TakerCommission:   accountIn.TakerCommission,
 		BuyerCommission:   accountIn.BuyerCommission,

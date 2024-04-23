@@ -14,7 +14,7 @@ func GetAccountInfoGuard(
 		for {
 			event := <-source
 			if event.Event == binance.UserDataEventTypeOutboundAccountPosition {
-				if account.AccountUpdateTime < event.AccountUpdate.AccountUpdateTime {
+				if account.UpdateTime < uint64(event.AccountUpdate.AccountUpdateTime) {
 					account.Lock()
 					for _, item := range event.AccountUpdate.WsAccountUpdates {
 						account.AssetUpdate(spot_account.Asset(item))

@@ -59,7 +59,7 @@ func TestAccountUpdateHandler(t *testing.T) {
 	inChannel <- &binance.WsUserDataEvent{
 		Event: binance.UserDataEventTypeOutboundAccountPosition,
 		AccountUpdate: binance.WsAccountUpdateList{
-			AccountUpdateTime: account.AccountUpdateTime + 100,
+			AccountUpdateTime: int64(account.UpdateTime + 100),
 			WsAccountUpdates: []binance.WsAccountUpdate{
 				{
 					Asset:  "BTC",
