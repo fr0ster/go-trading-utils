@@ -27,6 +27,7 @@ const (
 	FuturesUseTestNet = false             // Використовувати тестову мережу для ф'ючерсів
 
 	InitialBalance = 1000.0 // Початковий баланс
+	CurrentBalance = 2000.0 // Поточний баланс
 
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
@@ -55,6 +56,7 @@ const (
 	LimitOnPosition_1        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	InitialPositionBalance_1 = InitialBalance * LimitOnPosition_1 // Початковий баланс позиції
+	CurrentPositionBalance_1 = CurrentBalance * LimitOnPosition_1 // Поточний баланс позиції
 
 	BuyDelta_1       = 0.01  // Дельта для купівлі
 	SellDelta_1      = 0.01  // Дельта для продажу
@@ -92,6 +94,7 @@ const (
 	LimitOnPosition_2        = 0.50                               // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	InitialPositionBalance_2 = InitialBalance * LimitOnPosition_2 // Початковий баланс позиції
+	CurrentPositionBalance_2 = CurrentBalance * LimitOnPosition_2 // Поточний баланс позиції
 
 	BuyDelta_2       = 0.01   // Дельта для купівлі
 	SellDelta_2      = 0.01   // Дельта для продажу
@@ -143,7 +146,9 @@ var (
 	pair_1 = &pairs_types.Pairs{
 		Connection:                 &connection_types.Connection{},
 		InitialBalance:             InitialBalance,
+		CurrentBalance:             CurrentBalance,
 		InitialPositionBalance:     InitialPositionBalance_1,
+		CurrentPositionBalance:     CurrentPositionBalance_1,
 		AccountType:                AccountType_1,
 		StrategyType:               StrategyType_1,
 		StageType:                  StageType_1,
@@ -170,7 +175,9 @@ var (
 	pair_2 = &pairs_types.Pairs{
 		Connection:                 &connection_types.Connection{},
 		InitialBalance:             InitialBalance,
+		CurrentBalance:             CurrentBalance,
 		InitialPositionBalance:     InitialPositionBalance_2,
+		CurrentPositionBalance:     CurrentPositionBalance_2,
 		AccountType:                AccountType_2,
 		StrategyType:               StrategyType_2,
 		StageType:                  StageType_2,
@@ -223,7 +230,9 @@ func getTestData() []byte {
 						"commission_taker": ` + json.Number(strconv.FormatFloat(SpotCommissionTaker, 'f', -1, 64)).String() + `
 					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
 					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_1, 'f', -1, 64)).String() + `,
+					"current_position_balance": ` + json.Number(strconv.FormatFloat(CurrentPositionBalance_1, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_1) + `",
 					"strategy_type": "` + string(StrategyType_1) + `",
 					"stage_type": "` + string(StageType_1) + `",
@@ -259,7 +268,9 @@ func getTestData() []byte {
 						"commission_taker": ` + json.Number(strconv.FormatFloat(FuturesCommissionTaker, 'f', -1, 64)).String() + `
 					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
+					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
 					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_2, 'f', -1, 64)).String() + `,
+					"current_position_balance": ` + json.Number(strconv.FormatFloat(CurrentPositionBalance_2, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_2) + `",
 					"strategy_type": "` + string(StrategyType_2) + `",
 					"stage_type": "` + string(StageType_2) + `",
@@ -308,7 +319,9 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetConnection().GetCommissionTaker(), config.GetPair(Pair_1).GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
+	assert.Equal(t, (*checkingDate)[0].GetCurrentBalance(), config.GetPair(Pair_1).GetCurrentBalance())
 	assert.Equal(t, (*checkingDate)[0].GetInitialPositionBalance(), config.GetPair(Pair_1).GetInitialPositionBalance())
+	assert.Equal(t, (*checkingDate)[0].GetCurrentPositionBalance(), config.GetPair(Pair_1).GetCurrentPositionBalance())
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
 	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
 	assert.Equal(t, (*checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
@@ -339,7 +352,9 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetConnection().GetCommissionTaker(), config.GetPair(Pair_2).GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
+	assert.Equal(t, (*checkingDate)[1].GetCurrentBalance(), config.GetPair(Pair_2).GetCurrentBalance())
 	assert.Equal(t, (*checkingDate)[1].GetInitialPositionBalance(), config.GetPair(Pair_2).GetInitialPositionBalance())
+	assert.Equal(t, (*checkingDate)[1].GetCurrentPositionBalance(), config.GetPair(Pair_2).GetCurrentPositionBalance())
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
 	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
@@ -468,7 +483,9 @@ func TestPairSetter(t *testing.T) {
 	pair.GetConnection().SetCommissionTaker(FuturesCommissionTaker)
 
 	pair.SetInitialBalance(3000)
+	pair.SetCurrentBalance(4000)
 	pair.SetInitialPositionBalance(3000 * LimitOnPosition_2)
+	pair.SetCurrentPositionBalance(4000 * LimitOnPosition_2)
 	pair.SetMiddlePrice(45000)
 	pair.SetStage(StageType_2)
 	pair.SetBuyQuantity(BuyQuantity_2)
@@ -486,7 +503,9 @@ func TestPairSetter(t *testing.T) {
 	assert.Equal(t, FuturesCommissionTaker, pair.GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
+	assert.Equal(t, 4000.0, pair.GetCurrentBalance())
 	assert.Equal(t, 3000*LimitOnPosition_2, pair.GetInitialPositionBalance())
+	assert.Equal(t, 4000*LimitOnPosition_2, pair.GetCurrentPositionBalance())
 	assert.Equal(t, 45000.0, pair.GetMiddlePrice())
 	assert.Equal(t, StageType_2, pair.GetStage())
 	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
@@ -516,7 +535,9 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionMaker())
 	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InitialBalance, pair.GetInitialBalance())
+	assert.Equal(t, CurrentBalance, pair.GetCurrentBalance())
 	assert.Equal(t, InitialPositionBalance_1, pair.GetInitialPositionBalance())
+	assert.Equal(t, CurrentPositionBalance_1, pair.GetCurrentPositionBalance())
 	assert.Equal(t, AccountType_1, pair.GetAccountType())
 	assert.Equal(t, StrategyType_1, pair.GetStrategy())
 	assert.Equal(t, StageType_1, pair.GetStage())

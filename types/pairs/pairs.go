@@ -52,7 +52,9 @@ type (
 		TargetSymbol               string                       `json:"target_symbol"`                 // Цільовий токен
 		BaseSymbol                 string                       `json:"base_symbol"`                   // Базовий токен
 		InitialBalance             float64                      `json:"initial_balance"`               // Початковий баланс
+		CurrentBalance             float64                      `json:"current_balance"`               // Поточний баланс
 		InitialPositionBalance     float64                      `json:"initial_position_balance"`      // Початковий баланс позиції
+		CurrentPositionBalance     float64                      `json:"current_position_balance"`      // Поточний баланс позиції
 		SleepingTime               time.Duration                `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
 		TakingPositionSleepingTime time.Duration                `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
 		MiddlePrice                float64                      `json:"middle_price"`                  // Середня ціна купівлі по позиції
@@ -123,6 +125,16 @@ func (cr *Pairs) SetInitialBalance(balance float64) {
 	cr.InitialBalance = balance
 }
 
+// GetCurrentBalance implements Configuration.
+func (cr *Pairs) GetCurrentBalance() float64 {
+	return cr.CurrentBalance
+}
+
+// SetCurrentBalance implements Configuration.
+func (cr *Pairs) SetCurrentBalance(balance float64) {
+	cr.CurrentBalance = balance
+}
+
 // GetInitialPositionBalance implements Configuration.
 func (cr *Pairs) GetInitialPositionBalance() float64 {
 	return cr.InitialPositionBalance
@@ -131,6 +143,16 @@ func (cr *Pairs) GetInitialPositionBalance() float64 {
 // SetInitialPositionBalance implements Configuration.
 func (cr *Pairs) SetInitialPositionBalance(balance float64) {
 	cr.InitialPositionBalance = balance
+}
+
+// GetCurrentPositionBalance implements Configuration.
+func (cr *Pairs) GetCurrentPositionBalance() float64 {
+	return cr.CurrentPositionBalance
+}
+
+// SetCurrentPositionBalance implements Configuration.
+func (cr *Pairs) SetCurrentPositionBalance(balance float64) {
+	cr.CurrentPositionBalance = balance
 }
 
 // Get AccountType implements Configuration.
