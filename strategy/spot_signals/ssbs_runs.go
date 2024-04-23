@@ -52,7 +52,7 @@ func PositionInfoOut(
 	}
 }
 
-func initialization(
+func BuySellSignalInitialization(
 	client *binance.Client,
 	degree int,
 	limit int,
@@ -60,10 +60,9 @@ func initialization(
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) (
-	depth *depth_types.Depth,
 	buyEvent chan *depth_types.DepthItemType,
 	sellEvent chan *depth_types.DepthItemType) {
-	depth = depth_types.NewDepth(degree, pair.GetPair())
+	depth := depth_types.NewDepth(degree, pair.GetPair())
 
 	bookTicker := bookTicker_types.New(degree)
 
@@ -73,10 +72,12 @@ func initialization(
 
 	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
 
-	// Запускаємо потік для отримання оновлення BookTicker через REST
-	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-	// Запускаємо потік для отримання оновлення Depth через REST
-	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
+	if updateTime > 0 {
+		// Запускаємо потік для отримання оновлення BookTicker через REST
+		RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
+		// Запускаємо потік для отримання оновлення Depth через REST
+		RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
+	}
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
@@ -104,8 +105,8 @@ func RunSpotHolding(
 	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
-	_, buyEvent, _ :=
-		initialization(
+	buyEvent, _ :=
+		BuySellSignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -143,8 +144,8 @@ func RunSpotScalping(
 	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
-	_, buyEvent, sellEvent :=
-		initialization(
+	buyEvent, sellEvent :=
+		BuySellSignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -189,8 +190,8 @@ func RunSpotTrading(
 	if pair.GetStrategy() != pairs_types.TradingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
-	_, buyEvent, sellEvent :=
-		initialization(
+	buyEvent, sellEvent :=
+		BuySellSignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -262,8 +263,8 @@ func Run(
 		config.Save()
 	}
 
-	_, buyEvent, sellEvent :=
-		initialization(
+	buyEvent, sellEvent :=
+		BuySellSignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
