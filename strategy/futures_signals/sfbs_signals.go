@@ -78,9 +78,14 @@ func PriceSignal(
 	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	go func() {
-		ask,
-			// Ціна продажу
-			bid, err := GetAskAndBid(depths)
+		// Ціна купівлі
+		ask, err := GetAsk(depths)
+		if err != nil {
+			logrus.Errorf("Can't get data for analysis: %v", err)
+			return
+		}
+		// Ціна продажу
+		bid, err := GetBid(depths)
 		if err != nil {
 			logrus.Errorf("Can't get data for analysis: %v", err)
 			return
@@ -92,9 +97,14 @@ func PriceSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				ask,
-					// Ціна продажу
-					bid, err := GetAskAndBid(depths)
+				// Ціна купівлі
+				ask, err := GetAsk(depths)
+				if err != nil {
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Ціна продажу
+				bid, err := GetBid(depths)
 				if err != nil {
 					logrus.Errorf("Can't get data for analysis: %v", err)
 					continue

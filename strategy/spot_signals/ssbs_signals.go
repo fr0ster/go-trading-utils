@@ -63,17 +63,27 @@ func BuyOrSellSignal(
 					return
 				}
 				commission := GetCommission(account)
-				ask,
-					// Ціна продажу
-					bid, err := GetAskAndBid(depths)
+				// Ціна купівлі
+				ask, err := GetAsk(depths)
+				if err != nil {
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					continue
+				}
+				// Ціна продажу
+				bid, err := GetBid(depths)
 				if err != nil {
 					logrus.Errorf("Can't get data for analysis: %v", err)
 					continue
 				}
 				// Верхня межа ціни купівлі
-				boundAsk,
-					// Нижня межа ціни продажу
-					boundBid, err := GetBound(pair)
+				boundAsk, err := GetAskBound(pair)
+				if err != nil {
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					stopEvent <- os.Interrupt
+					return
+				}
+				// Нижня межа ціни продажу
+				boundBid, err := GetBidBound(pair)
 				if err != nil {
 					logrus.Errorf("Can't get data for analysis: %v", err)
 					stopEvent <- os.Interrupt
@@ -177,15 +187,13 @@ func StartWorkInPositionSignal(
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
 			if err != nil {
-				logrus.Warnf("Can't get data for analysis: %v", err)
+				logrus.Errorf("Can't get data for analysis: %v", err)
 				continue
 			}
 			// Верхня межа ціни купівлі
-			boundAsk,
-				// Нижня межа ціни продажу
-				_, err := GetBound(pair)
+			boundAsk, err := GetAskBound(pair)
 			if err != nil {
-				logrus.Warnf("Can't get data for analysis: %v", err)
+				logrus.Errorf("Can't get data for analysis: %v", err)
 				continue
 			}
 			// Якшо вартість купівлі цільової валюти більша
@@ -244,15 +252,13 @@ func StopWorkInPositionSignal(
 			// Кількість торгової валюти
 			targetBalance, err := GetTargetBalance(account, pair)
 			if err != nil {
-				logrus.Warnf("Can't get data for analysis: %v", err)
+				logrus.Errorf("Can't get data for analysis: %v", err)
 				continue
 			}
-			// Верхня межа ціни купівлі
-			_,
-				// Нижня межа ціни продажу
-				boundBid, err := GetBound(pair)
+			// Нижня межа ціни продажу
+			boundBid, err := GetBidBound(pair)
 			if err != nil {
-				logrus.Warnf("Can't get data for analysis: %v", err)
+				logrus.Errorf("Can't get data for analysis: %v", err)
 				continue
 			}
 			// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції

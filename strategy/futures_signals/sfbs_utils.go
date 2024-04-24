@@ -3,7 +3,6 @@ package futures_signals
 import (
 	"context"
 	"errors"
-	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -113,21 +112,20 @@ func GetPrice(client *futures.Client, symbol string) (float64, error) {
 	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err error) {
-	getPrice := func(val btree.Item) (float64, error) {
-		if val == nil {
-			return 0, errors.New("value is nil")
-		}
-		return val.(*pair_price_types.PairPrice).Price, nil
+func getPrice(val btree.Item) (float64, error) {
+	if val == nil {
+		return 0, errors.New("value is nil")
 	}
+	return val.(*pair_price_types.PairPrice).Price, nil
+}
+
+func GetAsk(depths *depth_types.Depth) (ask float64, err error) {
 	ask, err = getPrice(depths.GetAsks().Min())
-	if err != nil {
-		return 0, 0, fmt.Errorf("value is nil, can't get ask: %v", err)
-	}
+	return
+}
+
+func GetBid(depths *depth_types.Depth) (bid float64, err error) {
 	bid, err = getPrice(depths.GetBids().Max())
-	if err != nil {
-		return 0, 0, fmt.Errorf("value is nil, can't get bid: %v", err)
-	}
 	return
 }
 

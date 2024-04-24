@@ -3,7 +3,6 @@ package spot_signals
 import (
 	"context"
 	"errors"
-	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -114,27 +113,30 @@ func GetPrice(client *binance.Client, symbol string) (float64, error) {
 	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err error) {
-	getPrice := func(val btree.Item) (float64, error) {
-		if val == nil {
-			return 0, errors.New("value is nil")
-		}
-		return val.(*pair_price_types.PairPrice).Price, nil
+func getPrice(val btree.Item) (float64, error) {
+	if val == nil {
+		return 0, errors.New("value is nil")
 	}
+	return val.(*pair_price_types.PairPrice).Price, nil
+}
+
+func GetAsk(depths *depth_types.Depth) (ask float64, err error) {
 	ask, err = getPrice(depths.GetAsks().Min())
-	if err != nil {
-		return 0, 0, fmt.Errorf("value is nil, can't get ask: %v", err)
-	}
-	bid, err = getPrice(depths.GetBids().Max())
-	if err != nil {
-		return 0, 0, fmt.Errorf("value is nil, can't get bid: %v", err)
-	}
 	return
 }
 
-func GetBound(pair pairs_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
+func GetBid(depths *depth_types.Depth) (bid float64, err error) {
+	bid, err = getPrice(depths.GetBids().Max())
+	return
+}
+
+func GetAskBound(pair pairs_interfaces.Pairs) (boundAsk float64, err error) {
 	boundAsk = pair.GetMiddlePrice() * (1 - pair.GetBuyDelta())
 	logrus.Debugf("Ask bound: %f", boundAsk)
+	return
+}
+
+func GetBidBound(pair pairs_interfaces.Pairs) (boundBid float64, err error) {
 	boundBid = pair.GetMiddlePrice() * (1 + pair.GetSellDelta())
 	logrus.Debugf("Bid bound: %f", boundBid)
 	return
