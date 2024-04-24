@@ -11,7 +11,6 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker_types.BookTickers, source
 	go func() {
 		for {
 			event := <-source
-			bookTickers.Lock() // Locking the bookTickers
 			bookTickerUpdate := &bookticker_types.BookTicker{
 				Symbol:      event.Symbol,
 				BidPrice:    utils.ConvStrToFloat64(event.BestBidPrice),
@@ -19,7 +18,7 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker_types.BookTickers, source
 				AskPrice:    utils.ConvStrToFloat64(event.BestAskPrice),
 				AskQuantity: utils.ConvStrToFloat64(event.BestAskQty),
 			}
-			// bookTickers.Lock()
+			bookTickers.Lock() // Locking the bookTickers
 			bookTickers.Set(bookTickerUpdate)
 			bookTickers.Unlock() // Unlocking the bookTickers
 			out <- true

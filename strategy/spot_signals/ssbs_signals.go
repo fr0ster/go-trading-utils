@@ -11,6 +11,7 @@ import (
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
+	spot_book_tickers "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
@@ -44,6 +45,7 @@ func SignalInitialization(
 	sellEvent chan *pair_price_types.PairPrice) {
 
 	bookTickers := book_types.New(degree)
+	spot_book_tickers.Init(bookTickers, pair.GetPair(), client)
 
 	// Запускаємо потік для отримання оновлення bookTickers
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
