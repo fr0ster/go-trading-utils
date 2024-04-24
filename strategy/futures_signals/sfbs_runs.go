@@ -12,56 +12,14 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
-
-func SignalInitialization(
-	client *futures.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *futures_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) (
-	depth *depth_types.Depth,
-	increaseEvent chan *pair_price_types.PairPrice,
-	decreaseEvent chan *pair_price_types.PairPrice) {
-	depth = depth_types.NewDepth(degree, pair.GetPair())
-
-	bookTicker := bookTicker_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
-
-	// Запускаємо потік для контролю ризиків позиції
-	RiskSignal(account, pair, stopEvent, triggerEvent)
-
-	if updateTime > 0 {
-		// Запускаємо потік для отримання оновлення BookTicker через REST
-		RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-		// Запускаємо потік для отримання оновлення Depth через REST
-		RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
-	}
-
-	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent)
-
-	return
-}
 
 func Run(
 	config *config_types.ConfigFile,

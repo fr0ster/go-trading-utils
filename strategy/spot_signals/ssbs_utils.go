@@ -284,8 +284,20 @@ func SignalInitialization(
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 	depth := depth_types.NewDepth(degree, pair.GetPair())
+	err := spot_depth.Init(depth, client, limit)
+	if err != nil {
+		logrus.Errorf("Error: %v", err)
+		stopEvent <- os.Interrupt
+		return
+	}
 
 	bookTicker := bookTicker_types.New(degree)
+	err = spot_bookticker.Init(bookTicker, pair.GetPair(), client)
+	if err != nil {
+		logrus.Errorf("Error: %v", err)
+		stopEvent <- os.Interrupt
+		return
+	}
 
 	// Запускаємо потік для отримання оновлення bookTickers
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
