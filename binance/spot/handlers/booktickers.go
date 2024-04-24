@@ -23,6 +23,7 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker_types.BookTickerBTree, so
 			bookTickers.Set(bookTickerUpdate)
 			bookTickers.Unlock() // Unlocking the bookTickers
 			out <- true
+			source <- event
 		}
 	}()
 	return

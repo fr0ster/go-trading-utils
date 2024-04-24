@@ -37,6 +37,7 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 			if res {
 				out <- res
 			}
+			source <- event
 		}
 	}()
 	return
