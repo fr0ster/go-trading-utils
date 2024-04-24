@@ -15,25 +15,19 @@ import (
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_bookticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-)
-
-const (
-	errorMsg = "Error: %v"
 )
 
 func LimitRead(degree int, symbols []string, client *binance.Client) (
@@ -57,7 +51,7 @@ func RestBookTickerUpdater(
 	pair pairs_interfaces.Pairs,
 	limit int,
 	updateTime time.Duration,
-	bookTicker *bookTicker_types.BookTickerBTree) {
+	bookTicker *book_ticker_types.BookTickers) {
 	go func() {
 		for {
 			select {
@@ -120,14 +114,22 @@ func getPrice(val btree.Item) (float64, error) {
 	return val.(*pair_price_types.PairPrice).Price, nil
 }
 
-func GetAsk(depths *depth_types.Depth) (ask float64, err error) {
+func GetDepthAsk(depths *depth_types.Depth) (ask float64, err error) {
 	ask, err = getPrice(depths.GetAsks().Min())
 	return
 }
 
-func GetBid(depths *depth_types.Depth) (bid float64, err error) {
+func GetBookTickerAsk(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
+	return bookTicker.AskPrice, bookTicker.AskQuantity
+}
+
+func GetDepthBid(depths *depth_types.Depth) (bid float64, err error) {
 	bid, err = getPrice(depths.GetBids().Max())
 	return
+}
+
+func GetBookTickerBid(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
+	return bookTicker.BidPrice, bookTicker.BidQuantity
 }
 
 func GetAskBound(pair pairs_interfaces.Pairs) (boundAsk float64, err error) {
@@ -273,50 +275,6 @@ func RunConfigSaver(config *config_types.ConfigFile, stopEvent chan os.Signal, u
 			}
 		}
 	}()
-}
-
-func SignalInitialization(
-	client *binance.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) (
-	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice) {
-	depth := depth_types.NewDepth(degree, pair.GetPair())
-	err := spot_depth.Init(depth, client, limit)
-	if err != nil {
-		logrus.Errorf("Error: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
-
-	bookTicker := bookTicker_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення depth
-	depthStream := spot_streams.NewDepthStream(string(pair.GetPair()), true, 1)
-	_ = spot_handlers.GetDepthsUpdateGuard(depth, depthStream.DataChannel)
-	depthStream.Start()
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
-
-	// if updateTime > 0 {
-	// 	// Запускаємо потік для отримання оновлення BookTicker через REST
-	// 	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-	// 	// Запускаємо потік для отримання оновлення Depth через REST
-	// 	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
-	// }
-
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
-
-	return
 }
 
 // Виводимо інформацію про позицію

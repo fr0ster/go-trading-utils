@@ -42,7 +42,7 @@ func GetLimitPricesDumpWay(symbolname, target_symbol, base_symbol string, client
 	return price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta, nil
 }
 
-func BidOrAsk(symbolname, target_symbol, base_symbol string, bookTickers *bookticker_types.BookTickerBTree, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string, err error) {
+func BidOrAsk(symbolname, target_symbol, base_symbol string, bookTickers *bookticker_types.BookTickers, client *binance.Client, side string) (price, targetPrice, targetQuantity, stopPriceSL, priceSL, stopPriceTP, priceTP, trailingDelta string, err error) {
 	// При налаштуванні лімітного ордера на продаж, ви, як правило, орієнтуєтесь на ціну bid.
 	// Ціна bid - це найвища ціна, яку покупець готовий заплатити за актив.
 	// Коли ви продаете, ви хочете отримати найвищу можливу ціну,

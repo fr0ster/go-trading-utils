@@ -20,7 +20,7 @@ import (
 
 func StartPairStreams(
 	symbol string,
-	bookTicker *bookTicker_types.BookTickerBTree,
+	bookTicker *bookTicker_types.BookTickers,
 	depth *depth_types.Depth) (
 	depthEvent chan bool,
 	bookTickerEvent chan bool) {

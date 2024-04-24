@@ -56,7 +56,7 @@ func RestBookTickerUpdater(
 	pair pairs_interfaces.Pairs,
 	limit int,
 	updateTime time.Duration,
-	bookTicker *bookTicker_types.BookTickerBTree) {
+	bookTicker *bookTicker_types.BookTickers) {
 	go func() {
 		for {
 			select {

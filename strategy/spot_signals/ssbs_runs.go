@@ -12,10 +12,10 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"

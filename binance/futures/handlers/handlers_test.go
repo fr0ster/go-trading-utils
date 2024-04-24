@@ -124,7 +124,7 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 	}
 	inChannel := make(chan *futures.WsBookTickerEvent, 1)
 	bookTicker := bookticker_types.New(3)
-	bookTicker.Set(&bookticker_types.BookTickerItem{
+	bookTicker.Set(&bookticker_types.BookTicker{
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,
 		BidQuantity: 0.0,

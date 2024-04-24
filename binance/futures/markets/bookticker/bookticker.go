@@ -7,7 +7,7 @@ import (
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 )
 
-func Init(btt *bookticker_types.BookTickerBTree, symbolname string, client *futures.Client) (err error) {
+func Init(btt *bookticker_types.BookTickers, symbolname string, client *futures.Client) (err error) {
 	btt.Lock()         // Locking the bookticker
 	defer btt.Unlock() // Unlocking the bookticker
 	bookTickerList, err :=

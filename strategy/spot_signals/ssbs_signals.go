@@ -6,12 +6,16 @@ import (
 
 	"os"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
+	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
+
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
@@ -29,9 +33,34 @@ type (
 	}
 )
 
+func SignalInitialization(
+	client *binance.Client,
+	degree int,
+	limit int,
+	pair pairs_interfaces.Pairs,
+	account *spot_account.Account,
+	stopEvent chan os.Signal,
+	updateTime time.Duration) (
+	buyEvent chan *pair_price_types.PairPrice,
+	sellEvent chan *pair_price_types.PairPrice) {
+
+	bookTickers := book_types.New(degree)
+
+	// Запускаємо потік для отримання оновлення bookTickers
+	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
+	bookTickerStream.Start()
+
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+
+	// Запускаємо потік для отримання сигналів на купівлю та продаж
+	buyEvent, sellEvent = BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+
+	return
+}
+
 func BuyOrSellSignal(
 	account *spot_account.Account,
-	depths *depth_types.Depth,
+	bookTicker *book_types.BookTickers,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (buyEvent chan *pair_price_types.PairPrice, sellEvent chan *pair_price_types.PairPrice) {
@@ -63,18 +92,16 @@ func BuyOrSellSignal(
 					return
 				}
 				commission := GetCommission(account)
+				bookTicker := bookTicker.Get(pair.GetPair())
+				if bookTicker == nil {
+					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+					stopEvent <- os.Interrupt
+					return
+				}
 				// Ціна купівлі
-				ask, err := GetAsk(depths)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
+				ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
 				// Ціна продажу
-				bid, err := GetBid(depths)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
+				bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
 				// Верхня межа ціни купівлі
 				boundAsk, err := GetAskBound(pair)
 				if err != nil {
