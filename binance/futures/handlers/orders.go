@@ -18,6 +18,7 @@ func GetChangingOfOrdersGuard(
 					}
 				}
 			}
+			source <- event
 		}
 	}()
 	return

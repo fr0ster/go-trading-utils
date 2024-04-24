@@ -36,6 +36,7 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *futures.WsDept
 			if res {
 				out <- res
 			}
+			source <- event
 		}
 	}()
 	return
