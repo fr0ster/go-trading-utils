@@ -23,7 +23,6 @@ func GetAccountInfoGuard(
 					out <- event
 				}
 			}
-			source <- event
 		}
 	}()
 	return

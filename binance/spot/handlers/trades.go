@@ -22,10 +22,8 @@ func GetTradesUpdateGuard(trade *trade_types.Trades, source chan *binance.WsTrad
 				// IsBestMatch:   event.IsBestMatch,
 				// IsIsolated:    event.IsIsolated,
 			})
-			// trade.Unlock()
 			trade.Unlock() // Unlocking the depths
 			out <- true
-			source <- event
 		}
 	}()
 	return

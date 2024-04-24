@@ -23,7 +23,6 @@ func GetAggTradesUpdateGuard(trade *trade_types.AggTrades, source chan *futures.
 			})
 			trade.Unlock() // Unlocking the depths
 			out <- true
-			source <- event
 		}
 	}()
 	return
