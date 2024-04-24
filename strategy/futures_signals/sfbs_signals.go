@@ -155,10 +155,12 @@ func PriceSignal(
 					increaseEvent <- &pair_price_types.PairPrice{
 						Price: currentPrice,
 					}
-				} else {
+					currentPrice = lastPrice
+				} else if currentPrice < lastPrice {
 					decreaseEvent <- &pair_price_types.PairPrice{
 						Price: currentPrice,
 					}
+					currentPrice = lastPrice
 				}
 			}
 			triggerEvent <- true
