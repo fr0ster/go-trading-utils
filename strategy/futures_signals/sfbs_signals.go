@@ -6,13 +6,18 @@ import (
 
 	"os"
 
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 	"github.com/fr0ster/go-trading-utils/utils"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
+	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
+	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
+	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -30,6 +35,41 @@ type (
 		BoundBid        float64
 	}
 )
+
+func SignalInitialization(
+	client *futures.Client,
+	degree int,
+	limit int,
+	pair pairs_interfaces.Pairs,
+	account *futures_account.Account,
+	stopEvent chan os.Signal) (
+	depth *depth_types.Depth,
+	increaseEvent chan *pair_price_types.PairPrice,
+	decreaseEvent chan *pair_price_types.PairPrice) {
+	depth = depth_types.NewDepth(degree, pair.GetPair())
+	err := futures_depth.Init(depth, client, limit)
+	if err != nil {
+		logrus.Errorf("Error: %v", err)
+		stopEvent <- os.Interrupt
+		return
+	}
+
+	bookTicker := bookTicker_types.New(degree)
+
+	// Запускаємо потік для отримання оновлення bookTickers
+	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
+	bookTickerStream.Start()
+
+	triggerEvent := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
+
+	// Запускаємо потік для контролю ризиків позиції
+	RiskSignal(account, pair, stopEvent, triggerEvent)
+
+	// Запускаємо потік для отримання сигналів росту та падіння ціни
+	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent)
+
+	return
+}
 
 func RiskSignal(
 	account *futures_account.Account,

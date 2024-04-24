@@ -68,7 +68,7 @@ func Run(
 	_, _, _ =
 		SignalInitialization(
 			client, degree, limit, pair,
-			account, stopEvent, updateTime)
+			account, stopEvent)
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {

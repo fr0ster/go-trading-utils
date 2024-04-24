@@ -52,7 +52,7 @@ func RunSpotHolding(
 	buyEvent, sellEvent :=
 		SignalInitialization(
 			client, degree, limit, pair,
-			account, stopEvent, updateTime)
+			account, stopEvent)
 
 	collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
@@ -99,7 +99,7 @@ func RunSpotScalping(
 	buyEvent, sellEvent :=
 		SignalInitialization(
 			client, degree, limit, pair,
-			account, stopEvent, updateTime)
+			account, stopEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -156,7 +156,7 @@ func RunSpotTrading(
 	buyEvent, sellEvent :=
 		SignalInitialization(
 			client, degree, limit, pair,
-			account, stopEvent, updateTime)
+			account, stopEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -213,7 +213,7 @@ func Run(
 	buyEvent, sellEvent :=
 		SignalInitialization(
 			client, degree, limit, pair,
-			account, stopEvent, updateTime)
+			account, stopEvent)
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {

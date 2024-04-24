@@ -15,10 +15,8 @@ import (
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_bookticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
@@ -213,48 +211,5 @@ func EvaluateMiddlePrice(
 	pair pairs_interfaces.Pairs) (middlePrice float64, err error) {
 	baseBalance, err := GetBaseBalance(account, pair)
 	middlePrice = (pair.GetInitialBalance() - baseBalance) / (pair.GetBuyQuantity() - pair.GetSellQuantity())
-	return
-}
-
-func SignalInitialization(
-	client *futures.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *futures_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) (
-	depth *depth_types.Depth,
-	increaseEvent chan *pair_price_types.PairPrice,
-	decreaseEvent chan *pair_price_types.PairPrice) {
-	depth = depth_types.NewDepth(degree, pair.GetPair())
-	err := futures_depth.Init(depth, client, limit)
-	if err != nil {
-		logrus.Errorf("Error: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
-
-	bookTicker := bookTicker_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
-
-	// Запускаємо потік для контролю ризиків позиції
-	RiskSignal(account, pair, stopEvent, triggerEvent)
-
-	// if updateTime > 0 {
-	// 	// Запускаємо потік для отримання оновлення BookTicker через REST
-	// 	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-	// 	// Запускаємо потік для отримання оновлення Depth через REST
-	// 	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
-	// }
-
-	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent)
-
 	return
 }

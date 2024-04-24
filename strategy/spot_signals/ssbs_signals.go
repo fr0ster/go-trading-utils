@@ -39,8 +39,7 @@ func SignalInitialization(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	account *spot_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) (
+	stopEvent chan os.Signal) (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 
