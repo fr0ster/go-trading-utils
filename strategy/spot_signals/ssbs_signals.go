@@ -12,6 +12,7 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -33,9 +34,9 @@ func BuyOrSellSignal(
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (buyEvent chan *depth_types.DepthItemType, sellEvent chan *depth_types.DepthItemType) {
-	buyEvent = make(chan *depth_types.DepthItemType, 1)
-	sellEvent = make(chan *depth_types.DepthItemType, 1)
+	triggerEvent chan bool) (buyEvent chan *pair_price_types.PairPrice, sellEvent chan *pair_price_types.PairPrice) {
+	buyEvent = make(chan *pair_price_types.PairPrice, 1)
+	sellEvent = make(chan *pair_price_types.PairPrice, 1)
 	go func() {
 		for {
 			if pair.GetMiddlePrice() == 0 {
@@ -99,13 +100,13 @@ func BuyOrSellSignal(
 					targetBalance*ask < pair.GetLimitInputIntoPosition()*baseBalance &&
 					targetBalance*ask < pair.GetLimitOutputOfPosition()*baseBalance {
 					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", pair.GetMiddlePrice(), ask, boundAsk)
-					buyEvent <- &depth_types.DepthItemType{
+					buyEvent <- &pair_price_types.PairPrice{
 						Price:    ask,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
 				} else if bid >= boundBid && sellQuantity < targetBalance {
 					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", pair.GetMiddlePrice(), bid, boundBid)
-					sellEvent <- &depth_types.DepthItemType{
+					sellEvent <- &pair_price_types.PairPrice{
 						Price:    boundBid,
 						Quantity: sellQuantity}
 				} else {
@@ -132,6 +133,7 @@ func BuyOrSellSignal(
 						logrus.Debugf("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
 				}
+				triggerEvent <- true
 			}
 			time.Sleep(pair.GetSleepingTime())
 		}
@@ -143,8 +145,8 @@ func StartWorkInPositionSignal(
 	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType) (
+	buyEvent chan *pair_price_types.PairPrice,
+	sellEvent chan *pair_price_types.PairPrice) (
 	collectionOutEvent chan bool) { // Виходимо з накопичення
 	if pair.GetStage() != pair_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pair.GetStage(), pair_types.InputIntoPositionStage)
@@ -206,8 +208,8 @@ func StopWorkInPositionSignal(
 	// depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType) (
+	buyEvent chan *pair_price_types.PairPrice,
+	sellEvent chan *pair_price_types.PairPrice) (
 	workingOutEvent chan bool) { // Виходимо з накопичення
 	if pair.GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pair.GetStage(), pair_types.WorkInPositionStage)

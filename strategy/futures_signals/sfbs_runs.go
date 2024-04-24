@@ -21,38 +21,12 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
-// Виводимо інформацію про позицію
-func PositionInfoOut(
-	account *futures_account.Account,
-	pair pairs_interfaces.Pairs,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) {
-	for {
-		baseBalance, err := account.GetFreeAsset(pair.GetBaseSymbol())
-		if err != nil {
-			logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
-			stopEvent <- os.Interrupt
-			return
-		}
-		select {
-		case <-stopEvent:
-			stopEvent <- os.Interrupt
-			return
-		default:
-			if val := pair.GetMiddlePrice(); val != 0 {
-				logrus.Infof("Middle %s price: %f, available USDT: %f",
-					pair.GetPair(), val, baseBalance)
-			}
-		}
-		time.Sleep(updateTime)
-	}
-}
-
-func initialization(
+func SignalInitialization(
 	client *futures.Client,
 	degree int,
 	limit int,
@@ -61,8 +35,8 @@ func initialization(
 	stopEvent chan os.Signal,
 	updateTime time.Duration) (
 	depth *depth_types.Depth,
-	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType) {
+	increaseEvent chan *pair_price_types.PairPrice,
+	decreaseEvent chan *pair_price_types.PairPrice) {
 	depth = depth_types.NewDepth(degree, pair.GetPair())
 
 	bookTicker := bookTicker_types.New(degree)
@@ -73,13 +47,16 @@ func initialization(
 
 	triggerEvent := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
 
+	// Запускаємо потік для контролю ризиків позиції
+	RiskSignal(account, pair, stopEvent, triggerEvent)
+
 	// Запускаємо потік для отримання оновлення BookTicker через REST
 	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
 	// Запускаємо потік для отримання оновлення Depth через REST
 	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
 
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
+	// Запускаємо потік для отримання сигналів росту та падіння ціни
+	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent)
 
 	return
 }
@@ -98,12 +75,12 @@ func Run(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *futures.WsUserDataEvent) (err error) {
-	var (
-		depth           *depth_types.Depth
-		stopBuy         = make(chan bool)
-		stopSell        = make(chan bool)
-		stopProfitOrder = make(chan bool)
-	)
+	// var (
+	// 	depth           *depth_types.Depth
+	// 	stopBuy         = make(chan bool)
+	// 	stopSell        = make(chan bool)
+	// 	stopProfitOrder = make(chan bool)
+	// )
 
 	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
 	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
@@ -128,8 +105,8 @@ func Run(
 		config.Save()
 	}
 
-	depth, buyEvent, sellEvent :=
-		initialization(
+	_, _, _ =
+		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -149,53 +126,20 @@ func Run(
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		_ = ProcessBuyOrder(
-			config, client, account, pair, pairInfo, futures.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopBuy, stopEvent)
-
-		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
-
-			<-collectionOutEvent
-			pair.SetStage(pairs_types.WorkInPositionStage)
-			config.Save()
-		}
-		if pair.GetStage() == pairs_types.WorkInPositionStage {
-			_ = ProcessSellOrder(
-				config, client, account, pair, pairInfo, futures.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				sellEvent, stopSell, stopEvent)
-		}
+		logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
+		stopEvent <- os.Interrupt
+		return fmt.Errorf("scalping strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		if pair.GetStage() == pairs_types.WorkInPositionStage {
-			stopEvent <- os.Interrupt
-			return fmt.Errorf("pair %v can't be in WorkInPositionStage for TradingStrategyType", pair.GetPair())
-		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, depth, pair, stopEvent, buyEvent)
-
-			_ = ProcessBuyOrder(
-				config, client, account, pair, pairInfo, futures.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				buyEvent, stopBuy, stopEvent)
-
-			<-collectionOutEvent
-			stopBuy <- true
-			pair.SetStage(pairs_types.OutputOfPositionStage)
-			config.Save()
+			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
+		}
+		if pair.GetStage() == pairs_types.WorkInPositionStage {
+			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
 		}
 		if pair.GetStage() == pairs_types.OutputOfPositionStage {
-			orderExecutionGuard := ProcessSellTakeProfitOrder(
-				config, client, pair, pairInfo, futures.OrderTypeTakeProfit,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				sellEvent, stopProfitOrder, stopEvent, orderStatusEvent)
-			<-orderExecutionGuard
-			pair.SetStage(pairs_types.PositionClosedStage)
-			config.Save()
-			stopEvent <- os.Interrupt
+			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
 		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму

@@ -50,7 +50,7 @@ func RunSpotHolding(
 	RunConfigSaver(config, stopEvent, updateTime)
 
 	buyEvent, sellEvent :=
-		BuySellSignalInitialization(
+		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -97,7 +97,7 @@ func RunSpotScalping(
 	RunConfigSaver(config, stopEvent, updateTime)
 
 	buyEvent, sellEvent :=
-		BuySellSignalInitialization(
+		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -154,7 +154,7 @@ func RunSpotTrading(
 	RunConfigSaver(config, stopEvent, updateTime)
 
 	buyEvent, sellEvent :=
-		BuySellSignalInitialization(
+		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 
@@ -211,7 +211,7 @@ func Run(
 	RunConfigSaver(config, stopEvent, updateTime)
 
 	buyEvent, sellEvent :=
-		BuySellSignalInitialization(
+		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent, updateTime)
 

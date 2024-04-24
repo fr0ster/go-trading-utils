@@ -5,16 +5,19 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
 )
 
 func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 	bids = btree.New(3)
-	bidList := []depth_types.DepthItemType{
+	bidList := []pair_price_types.PairPrice{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -25,7 +28,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks = btree.New(3)
-	askList := []depth_types.DepthItemType{
+	askList := []pair_price_types.PairPrice{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima
@@ -98,7 +101,7 @@ func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
-	ask := depth_types.DepthItemType{Price: 1.96, Quantity: 200.0}
+	ask := pair_price_types.PairPrice{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
 	if ds.GetAsk(1.96) == nil {
 		t.Errorf("Failed to set ask")
@@ -109,7 +112,7 @@ func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")
 	ds.SetBids(bids)
-	bid := depth_types.DepthItemType{Price: 1.96, Quantity: 200.0}
+	bid := pair_price_types.PairPrice{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
 	if ds.GetBid(1.96) == nil {
 		t.Errorf("Failed to set bid")
@@ -122,7 +125,7 @@ func TestUpdateAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
-	assert.Equal(t, 300.0, ask.(*depth_types.DepthItemType).Quantity)
+	assert.Equal(t, 300.0, ask.(*pair_price_types.PairPrice).Quantity)
 	ds.UpdateAsk(1.000, 100.0)
 	assert.NotNil(t, ds.GetAsk(1.000))
 }
@@ -133,7 +136,7 @@ func TestUpdateBid(t *testing.T) {
 	ds.SetBids(bids)
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
-	assert.Equal(t, 300.0, bid.(*depth_types.DepthItemType).Quantity)
+	assert.Equal(t, 300.0, bid.(*pair_price_types.PairPrice).Quantity)
 	ds.UpdateBid(1.000, 100.0)
 	assert.NotNil(t, ds.GetBid(1.000))
 }
@@ -142,10 +145,10 @@ func TestDepthInterface(t *testing.T) {
 	test := func(ds depth_interface.Depth) {
 		ds.UpdateBid(1.93, 300.0)
 		bid := ds.GetBid(1.93)
-		assert.Equal(t, 300.0, bid.(*depth_types.DepthItemType).Quantity)
+		assert.Equal(t, 300.0, bid.(*pair_price_types.PairPrice).Quantity)
 		ds.UpdateAsk(1.951, 300.0)
 		ask := ds.GetAsk(1.951)
-		assert.Equal(t, 300.0, ask.(*depth_types.DepthItemType).Quantity)
+		assert.Equal(t, 300.0, ask.(*pair_price_types.PairPrice).Quantity)
 	}
 	asks, bids := getTestDepths()
 	ds := depth_types.NewDepth(3, "SUSHIUSDT")

@@ -27,6 +27,7 @@ import (
 	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 )
 
 const (
@@ -115,7 +116,7 @@ func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err erro
 		if val == nil {
 			return 0, errors.New("value is nil")
 		}
-		return val.(*depth_types.DepthItemType).Price, nil
+		return val.(*pair_price_types.PairPrice).Price, nil
 	}
 	ask, err = getPrice(depths.GetAsks().Min())
 	if err != nil {

@@ -7,12 +7,11 @@ import (
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 
 	types "github.com/fr0ster/go-trading-utils/types"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	pair_price "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	"github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/google/btree"
-	"github.com/jinzhu/copier"
 )
 
 type (
@@ -36,11 +35,11 @@ func (a *DepthAnalyzer) Unlock() {
 
 // Get implements Analyzers.
 func (a *DepthAnalyzer) Get(price float64) btree.Item {
-	ask := a.ask.Get(&depth_types.DepthItemType{Price: price})
+	ask := a.ask.Get(&pair_price.PairPrice{Price: price})
 	if ask != nil {
 		return ask
 	} else {
-		return a.bid.Get(&depth_types.DepthItemType{Price: price})
+		return a.bid.Get(&pair_price.PairPrice{Price: price})
 	}
 }
 
@@ -107,17 +106,17 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	da.bid.Clear(false)
 	newBids := btree.New(da.Degree)
 	dp.BidDescend(func(item btree.Item) bool {
-		bid, _ := Binance2DepthLevels(item)
+		bid, _ := pair_price.Binance2PairPrice(item)
 		bid.Price = utils.RoundToDecimalPlace(bid.Price, da.Round)
-		old := newBids.Get(&depth_types.DepthItemType{Price: bid.Price})
+		old := newBids.Get(&pair_price.PairPrice{Price: bid.Price})
 		if old != nil {
-			bid.Quantity += old.(*depth_types.DepthItemType).Quantity
+			bid.Quantity += old.(*pair_price.PairPrice).Quantity
 		}
 		newBids.ReplaceOrInsert(bid)
 		return true
 	})
 	newBids.Ascend(func(item btree.Item) bool {
-		bid, _ := Binance2DepthLevels(item)
+		bid, _ := pair_price.Binance2PairPrice(item)
 		if bid.Quantity > da.Bound {
 			da.bid.ReplaceOrInsert(bid)
 		}
@@ -126,17 +125,17 @@ func (da *DepthAnalyzer) Update(dp depth_interface.Depth) (err error) {
 	da.ask.Clear(false)
 	newAsks := btree.New(da.Degree)
 	dp.AskDescend(func(item btree.Item) bool {
-		ask, _ := Binance2DepthLevels(item)
+		ask, _ := pair_price.Binance2PairPrice(item)
 		ask.Price = utils.RoundToDecimalPlace(ask.Price, da.Round)
-		old := newAsks.Get(&depth_types.DepthItemType{Price: ask.Price})
+		old := newAsks.Get(&pair_price.PairPrice{Price: ask.Price})
 		if old != nil {
-			ask.Quantity += old.(*depth_types.DepthItemType).Quantity
+			ask.Quantity += old.(*pair_price.PairPrice).Quantity
 		}
 		newAsks.ReplaceOrInsert(ask)
 		return true
 	})
 	newAsks.Ascend(func(item btree.Item) bool {
-		ask, _ := Binance2DepthLevels(item)
+		ask, _ := pair_price.Binance2PairPrice(item)
 		if ask.Quantity > da.Bound {
 			da.ask.ReplaceOrInsert(item)
 		}
@@ -150,7 +149,7 @@ func (a *DepthAnalyzer) GetLevels(side types.DepthSide) *btree.BTree {
 		if a == nil {
 			return 0
 		}
-		return a.(*depth_types.DepthItemType).Quantity
+		return a.(*pair_price.PairPrice).Quantity
 	}
 	ascend := func(dataIn *btree.BTree) (res *btree.BTree) {
 		res = btree.New(a.Degree)
@@ -183,13 +182,4 @@ func New(degree, round int, bound float64) *DepthAnalyzer {
 		Round:  round,
 		Bound:  bound,
 	}
-}
-
-func Binance2DepthLevels(binanceDepth interface{}) (*depth_types.DepthItemType, error) {
-	var val depth_types.DepthItemType
-	err := copier.Copy(&val, binanceDepth)
-	if err != nil {
-		return nil, err
-	}
-	return &val, nil
 }

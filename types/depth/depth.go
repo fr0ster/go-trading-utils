@@ -4,31 +4,13 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/adshao/go-binance/v2/common"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+
 	"github.com/google/btree"
 )
 
 type (
-	DepthItemType struct {
-		Price    float64
-		Quantity float64
-	}
-)
-
-// DepthItemType - тип для зберігання заявок в стакані
-func (i *DepthItemType) Less(than btree.Item) bool {
-	return i.Price < than.(*DepthItemType).Price
-}
-
-func (i *DepthItemType) Equal(than btree.Item) bool {
-	return i.Price == than.(*DepthItemType).Price
-}
-
-func (i *DepthItemType) Parse(a common.PriceLevel) {
-	i.Price, i.Quantity, _ = a.Parse()
-}
-
-type (
+	// DepthItemType - тип для зберігання заявок в стакані
 	Depth struct {
 		symbol       string
 		asks         *btree.BTree
@@ -38,7 +20,6 @@ type (
 	}
 )
 
-// DepthItemType - тип для зберігання заявок в стакані
 func (i *Depth) Less(than btree.Item) bool {
 	return i.symbol < than.(*Depth).symbol
 }
@@ -69,12 +50,12 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 
 // DeleteAsk implements depth_interface.Depths.
 func (d *Depth) DeleteAsk(price float64) {
-	d.asks.Delete(&DepthItemType{Price: price})
+	d.asks.Delete(&pair_price_types.PairPrice{Price: price})
 }
 
 // DeleteBid implements depth_interface.Depths.
 func (d *Depth) DeleteBid(price float64) {
-	d.bids.Delete(&DepthItemType{Price: price})
+	d.bids.Delete(&pair_price_types.PairPrice{Price: price})
 }
 
 // ClearAsks implements depth_interface.Depths.
@@ -109,7 +90,7 @@ func (d *Depth) BidDescend(iter func(btree.Item) bool) {
 
 // GetAsk implements depth_interface.Depths.
 func (d *Depth) GetAsk(price float64) btree.Item {
-	item := d.asks.Get(&DepthItemType{Price: price})
+	item := d.asks.Get(&pair_price_types.PairPrice{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -118,7 +99,7 @@ func (d *Depth) GetAsk(price float64) btree.Item {
 
 // GetBid implements depth_interface.Depths.
 func (d *Depth) GetBid(price float64) btree.Item {
-	item := d.bids.Get(&DepthItemType{Price: price})
+	item := d.bids.Get(&pair_price_types.PairPrice{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -127,18 +108,18 @@ func (d *Depth) GetBid(price float64) btree.Item {
 
 // SetAsk implements depth_interface.Depths.
 func (d *Depth) SetAsk(price float64, quantity float64) {
-	d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 }
 
 // SetBid implements depth_interface.Depths.
 func (d *Depth) SetBid(price float64, quantity float64) {
-	d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 }
 
 // RestrictAsk implements depth_interface.Depths.
 func (d *Depth) RestrictAsk(price float64) {
 	d.asks.Ascend(func(i btree.Item) bool {
-		if i.(*DepthItemType).Price < price {
+		if i.(*pair_price_types.PairPrice).Price < price {
 			d.asks.Delete(i)
 			return false
 		}
@@ -149,7 +130,7 @@ func (d *Depth) RestrictAsk(price float64) {
 // RestrictBid implements depth_interface.Depths.
 func (d *Depth) RestrictBid(price float64) {
 	d.bids.Ascend(func(i btree.Item) bool {
-		if i.(*DepthItemType).Price > price {
+		if i.(*pair_price_types.PairPrice).Price > price {
 			d.bids.Delete(i)
 			return false
 		}
@@ -159,29 +140,29 @@ func (d *Depth) RestrictBid(price float64) {
 
 // UpdateAsk implements depth_interface.Depths.
 func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
-	old := d.asks.Get(&DepthItemType{Price: price})
-	if old != nil && old.(*DepthItemType).Quantity == quantity {
+	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
 		return false
 	}
 	if quantity == 0 {
-		d.asks.Delete(&DepthItemType{Price: price})
+		d.asks.Delete(&pair_price_types.PairPrice{Price: price})
 		return true
 	}
-	d.asks.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	return true
 }
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) bool {
-	old := d.bids.Get(&DepthItemType{Price: price})
-	if old != nil && old.(*DepthItemType).Quantity == quantity {
+	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
 		return false
 	}
 	if quantity == 0 {
-		d.bids.Delete(&DepthItemType{Price: price})
+		d.bids.Delete(&pair_price_types.PairPrice{Price: price})
 		return true
 	}
-	d.bids.ReplaceOrInsert(&DepthItemType{Price: price, Quantity: quantity})
+	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	return true
 }
 
@@ -210,9 +191,9 @@ func NewDepth(degree int, symbol string) *Depth {
 	}
 }
 
-func Binance2BookTicker(binanceDepth interface{}) (*DepthItemType, error) {
+func Binance2BookTicker(binanceDepth interface{}) (*pair_price_types.PairPrice, error) {
 	switch binanceDepth := binanceDepth.(type) {
-	case *DepthItemType:
+	case *pair_price_types.PairPrice:
 		return binanceDepth, nil
 	}
 	return nil, errors.New("it's not a DepthItemType")

@@ -19,8 +19,8 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
@@ -35,7 +35,7 @@ func ProcessBuyOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	buyEvent chan *depth_types.DepthItemType,
+	buyEvent chan *pair_price_types.PairPrice,
 	stopBuy chan bool,
 	stopEvent chan os.Signal) (startBuyOrderEvent chan *futures.CreateOrderResponse) {
 	symbol, err := (*pairInfo).GetFuturesSymbol()
@@ -126,7 +126,7 @@ func ProcessSellOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	sellEvent chan *depth_types.DepthItemType,
+	sellEvent chan *pair_price_types.PairPrice,
 	stopSell chan bool,
 	stopEvent chan os.Signal) (startSellOrderEvent chan *futures.CreateOrderResponse) {
 	symbol, err := (*pairInfo).GetFuturesSymbol()
@@ -218,7 +218,7 @@ func ProcessSellTakeProfitOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	sellEvent chan *depth_types.DepthItemType,
+	sellEvent chan *pair_price_types.PairPrice,
 	stopProcess chan bool,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *futures.WsUserDataEvent) (startBuyOrderEvent chan *futures.CreateOrderResponse) {
@@ -301,7 +301,7 @@ func ProcessAfterBuyOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	buyEvent chan *depth_types.DepthItemType,
+	buyEvent chan *pair_price_types.PairPrice,
 	stopEvent chan os.Signal,
 	orderStatusEvent chan *futures.WsUserDataEvent,
 	stopBuy chan bool,
@@ -349,7 +349,7 @@ func ProcessAfterSellOrder(
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
-	sellEvent chan *depth_types.DepthItemType,
+	sellEvent chan *pair_price_types.PairPrice,
 	stopBuy chan bool,
 	stopSell chan bool,
 	stopEvent chan os.Signal,

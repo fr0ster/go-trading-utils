@@ -30,6 +30,7 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 )
 
 const (
@@ -118,7 +119,7 @@ func GetAskAndBid(depths *depth_types.Depth) (ask float64, bid float64, err erro
 		if val == nil {
 			return 0, errors.New("value is nil")
 		}
-		return val.(*depth_types.DepthItemType).Price, nil
+		return val.(*pair_price_types.PairPrice).Price, nil
 	}
 	ask, err = getPrice(depths.GetAsks().Min())
 	if err != nil {
@@ -272,7 +273,7 @@ func RunConfigSaver(config *config_types.ConfigFile, stopEvent chan os.Signal, u
 	}()
 }
 
-func BuySellSignalInitialization(
+func SignalInitialization(
 	client *binance.Client,
 	degree int,
 	limit int,
@@ -280,8 +281,8 @@ func BuySellSignalInitialization(
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration) (
-	buyEvent chan *depth_types.DepthItemType,
-	sellEvent chan *depth_types.DepthItemType) {
+	buyEvent chan *pair_price_types.PairPrice,
+	sellEvent chan *pair_price_types.PairPrice) {
 	depth := depth_types.NewDepth(degree, pair.GetPair())
 
 	bookTicker := bookTicker_types.New(degree)
