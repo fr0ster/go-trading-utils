@@ -12,10 +12,10 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *futures.WsDept
 		for {
 			event := <-source
 			// Checking if the event is not outdated
-			if event.LastUpdateID <= depths.LastUpdateID {
+			if event.LastUpdateID < depths.LastUpdateID {
 				continue
 			}
-			if int64(depths.LastUpdateID)+1 >= event.FirstUpdateID && int64(depths.LastUpdateID)+1 <= event.LastUpdateID {
+			if event.FirstUpdateID <= int64(depths.LastUpdateID) && event.LastUpdateID >= int64(depths.LastUpdateID) {
 				depths.Lock() // Locking the depths
 				for _, bid := range event.Bids {
 					price, quantity, err := bid.Parse()
