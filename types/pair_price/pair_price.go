@@ -26,9 +26,9 @@ func (i *PairPrice) Parse(a common.PriceLevel) {
 	i.Price, i.Quantity, _ = a.Parse()
 }
 
-func Binance2PairPrice(binanceDepth interface{}) (*PairPrice, error) {
+func Binance2PairPrice(binancePairPrice interface{}) (*PairPrice, error) {
 	var val PairPrice
-	err := copier.Copy(&val, binanceDepth)
+	err := copier.Copy(&val, binancePairPrice)
 	if err != nil {
 		return nil, err
 	}
