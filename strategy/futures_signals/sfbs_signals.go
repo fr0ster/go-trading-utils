@@ -10,14 +10,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
 	"github.com/fr0ster/go-trading-utils/utils"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -43,35 +43,23 @@ func SignalInitialization(
 	pair pairs_interfaces.Pairs,
 	account *futures_account.Account,
 	stopEvent chan os.Signal) (
-	depth *depth_types.Depth,
 	increaseEvent chan *pair_price_types.PairPrice,
 	decreaseEvent chan *pair_price_types.PairPrice) {
-	depth = depth_types.NewDepth(degree, pair.GetPair())
-	err := futures_depth.Init(depth, client, limit)
-	if err != nil {
-		logrus.Errorf("Error: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
 
-	// Запускаємо потік для отримання оновлення depth
-	depthStream := futures_streams.NewPartialDepthStream(pair.GetPair(), 5, 1)
-	depthStream.Start()
-
-	bookTicker := bookTicker_types.New(degree)
+	bookTickers := book_types.New(degree)
 
 	// Запускаємо потік для отримання оновлення bookTickers
 	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
-	triggerEvent4Price := futures_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
+	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent4Price := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
 
 	// Запускаємо потік для контролю ризиків позиції
 	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)
 
 	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	increaseEvent, decreaseEvent = PriceSignal(depth, pair, stopEvent, triggerEvent4Price)
+	increaseEvent, decreaseEvent = PriceSignal(bookTickers, pair, stopEvent, triggerEvent4Price)
 
 	return
 }
@@ -113,7 +101,7 @@ func RiskSignal(
 }
 
 func PriceSignal(
-	depths *depth_types.Depth,
+	bookTickers *book_types.BookTickers,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
@@ -122,18 +110,16 @@ func PriceSignal(
 	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	go func() {
+		bookTicker := bookTickers.Get(pair.GetPair())
+		if bookTicker == nil {
+			logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+			stopEvent <- os.Interrupt
+			return
+		}
 		// Ціна купівлі
-		ask, err := GetAsk(depths)
-		if err != nil {
-			logrus.Errorf("Can't get data for analysis: %v", err)
-			return
-		}
+		ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
 		// Ціна продажу
-		bid, err := GetBid(depths)
-		if err != nil {
-			logrus.Errorf("Can't get data for analysis: %v", err)
-			return
-		}
+		bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
 		lastPrice := (ask + bid) / 2
 		for {
 			select {
@@ -141,18 +127,16 @@ func PriceSignal(
 				stopEvent <- os.Interrupt
 				return
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
+				bookTicker = bookTickers.Get(pair.GetPair())
+				if bookTicker == nil {
+					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+					stopEvent <- os.Interrupt
+					return
+				}
 				// Ціна купівлі
-				ask, err := GetAsk(depths)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
+				ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
 				// Ціна продажу
-				bid, err := GetBid(depths)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
+				bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
 				currentPrice := (ask + bid) / 2
 				if currentPrice > lastPrice {
 					increaseEvent <- &pair_price_types.PairPrice{

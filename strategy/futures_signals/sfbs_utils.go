@@ -23,7 +23,7 @@ import (
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
@@ -54,7 +54,7 @@ func RestBookTickerUpdater(
 	pair pairs_interfaces.Pairs,
 	limit int,
 	updateTime time.Duration,
-	bookTicker *bookTicker_types.BookTickers) {
+	bookTicker *book_ticker_types.BookTickers) {
 	go func() {
 		for {
 			select {
@@ -117,14 +117,22 @@ func getPrice(val btree.Item) (float64, error) {
 	return val.(*pair_price_types.PairPrice).Price, nil
 }
 
-func GetAsk(depths *depth_types.Depth) (ask float64, err error) {
+func GetDepthAsk(depths *depth_types.Depth) (ask float64, err error) {
 	ask, err = getPrice(depths.GetAsks().Min())
 	return
 }
 
-func GetBid(depths *depth_types.Depth) (bid float64, err error) {
+func GetDepthBid(depths *depth_types.Depth) (bid float64, err error) {
 	bid, err = getPrice(depths.GetBids().Max())
 	return
+}
+
+func GetBookTickerAsk(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
+	return bookTicker.AskPrice, bookTicker.AskQuantity
+}
+
+func GetBookTickerBid(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
+	return bookTicker.BidPrice, bookTicker.BidQuantity
 }
 
 func GetBound(pair pairs_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {

@@ -14,13 +14,13 @@ import (
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
-	bookTicker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
 func StartPairStreams(
 	symbol string,
-	bookTicker *bookTicker_types.BookTickers,
+	bookTicker *book_ticker_types.BookTickers,
 	depth *depth_types.Depth) (
 	depthEvent chan bool,
 	bookTickerEvent chan bool) {
