@@ -21,7 +21,6 @@ func GetAggTradesUpdateGuard(trade *trade_types.AggTrades, source chan *futures.
 				// IsBuyerMaker:     event.IsBuyerMaker,
 				// IsBestPriceMatch: event.IsBestPriceMatch,
 			})
-			// trade.Unlock()
 			trade.Unlock() // Unlocking the depths
 			out <- true
 			source <- event
