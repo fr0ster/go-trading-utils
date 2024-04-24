@@ -54,6 +54,10 @@ func SignalInitialization(
 		return
 	}
 
+	// Запускаємо потік для отримання оновлення depth
+	depthStream := futures_streams.NewPartialDepthStream(pair.GetPair(), 5, 1)
+	depthStream.Start()
+
 	bookTicker := bookTicker_types.New(degree)
 
 	// Запускаємо потік для отримання оновлення bookTickers
@@ -67,7 +71,7 @@ func SignalInitialization(
 	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)
 
 	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent4Price)
+	increaseEvent, decreaseEvent = PriceSignal(depth, pair, stopEvent, triggerEvent4Price)
 
 	return
 }
@@ -109,7 +113,6 @@ func RiskSignal(
 }
 
 func PriceSignal(
-	account *futures_account.Account,
 	depths *depth_types.Depth,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
