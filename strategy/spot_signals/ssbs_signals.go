@@ -40,10 +40,11 @@ func SignalInitialization(
 	pair pairs_interfaces.Pairs,
 	account *spot_account.Account,
 	stopEvent chan os.Signal) (
+	bookTickers *book_types.BookTickers,
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 
-	bookTickers := book_types.New(degree)
+	bookTickers = book_types.New(degree)
 
 	// Запускаємо потік для отримання оновлення bookTickers
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
