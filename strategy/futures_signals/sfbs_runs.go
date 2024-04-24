@@ -50,10 +50,12 @@ func SignalInitialization(
 	// Запускаємо потік для контролю ризиків позиції
 	RiskSignal(account, pair, stopEvent, triggerEvent)
 
-	// Запускаємо потік для отримання оновлення BookTicker через REST
-	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-	// Запускаємо потік для отримання оновлення Depth через REST
-	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
+	if updateTime > 0 {
+		// Запускаємо потік для отримання оновлення BookTicker через REST
+		RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
+		// Запускаємо потік для отримання оновлення Depth через REST
+		RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
+	}
 
 	// Запускаємо потік для отримання сигналів росту та падіння ціни
 	increaseEvent, decreaseEvent = PriceSignal(account, depth, pair, stopEvent, triggerEvent)
