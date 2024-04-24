@@ -294,12 +294,6 @@ func SignalInitialization(
 	}
 
 	bookTicker := bookTicker_types.New(degree)
-	err = spot_bookticker.Init(bookTicker, pair.GetPair(), client)
-	if err != nil {
-		logrus.Errorf("Error: %v", err)
-		stopEvent <- os.Interrupt
-		return
-	}
 
 	// Запускаємо потік для отримання оновлення depth
 	depthStream := spot_streams.NewDepthStream(string(pair.GetPair()), true, 1)
@@ -312,12 +306,12 @@ func SignalInitialization(
 
 	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
 
-	if updateTime > 0 {
-		// Запускаємо потік для отримання оновлення BookTicker через REST
-		RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
-		// Запускаємо потік для отримання оновлення Depth через REST
-		RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
-	}
+	// if updateTime > 0 {
+	// 	// Запускаємо потік для отримання оновлення BookTicker через REST
+	// 	RestBookTickerUpdater(client, stopEvent, pair, limit, updateTime, bookTicker)
+	// 	// Запускаємо потік для отримання оновлення Depth через REST
+	// 	RestDepthUpdater(client, stopEvent, pair, limit, updateTime, depth)
+	// }
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent = BuyOrSellSignal(account, depth, pair, stopEvent, triggerEvent)
