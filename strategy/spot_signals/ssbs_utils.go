@@ -301,6 +301,11 @@ func SignalInitialization(
 		return
 	}
 
+	// Запускаємо потік для отримання оновлення depth
+	depthStream := spot_streams.NewDepthStream(string(pair.GetPair()), true, 1)
+	_ = spot_handlers.GetDepthsUpdateGuard(depth, depthStream.DataChannel)
+	depthStream.Start()
+
 	// Запускаємо потік для отримання оновлення bookTickers
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
