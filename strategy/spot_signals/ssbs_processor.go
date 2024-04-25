@@ -88,14 +88,14 @@ func (pp *PairProcessor) PriceSignal() (
 	buy chan *pair_price_types.PairPrice,
 	sell chan *pair_price_types.PairPrice,
 	wait chan *pair_price_types.PairPrice) {
-	return PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
+	return PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
 }
 
 func (pp *PairProcessor) Start() {
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	pp.buy, pp.sell = BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
 	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
+	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
 	go func() {
 		for {
 			select {
@@ -142,7 +142,7 @@ func (pp *PairProcessor) StartBuyOrSellHandler() {
 
 func (pp *PairProcessor) StartPriceSignal() {
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
+	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
 }
 
 func (pp *PairProcessor) StartPriceHandler() {

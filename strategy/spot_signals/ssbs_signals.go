@@ -36,10 +36,11 @@ func PriceSignal(
 	bookTickers *book_types.BookTickers,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (
+	triggerEvent chan *binance.WsBookTickerEvent) (
 	increaseEvent chan *pair_price_types.PairPrice,
 	decreaseEvent chan *pair_price_types.PairPrice,
 	waitingEvent chan *pair_price_types.PairPrice) {
+	var lastPrice float64
 	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	waitingEvent = make(chan *pair_price_types.PairPrice, 1)
@@ -49,28 +50,21 @@ func PriceSignal(
 		stopEvent <- os.Interrupt
 		return
 	}
-	// Ціна купівлі
-	ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
-	// Ціна продажу
-	bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
-	lastPrice := (ask + bid) / 2
 	go func() {
 		for {
 			select {
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
-				bookTicker = bookTickers.Get(pair.GetPair())
-				if bookTicker == nil {
-					logrus.Errorf("Can't get bookTicker for %s when read for current price, spot strategy", pair.GetPair())
-					stopEvent <- os.Interrupt
-					return
-				}
+			case price := <-triggerEvent: // Чекаємо на спрацювання тригера
 				// Ціна купівлі
-				ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
+				ask := utils.ConvStrToFloat64(price.BestAskPrice)
 				// Ціна продажу
-				bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
+				bid := utils.ConvStrToFloat64(price.BestBidPrice)
+				if lastPrice == 0 {
+					lastPrice = (ask + bid) / 2
+					continue
+				}
 				currentPrice := (ask + bid) / 2
 				if currentPrice > lastPrice {
 					increaseEvent <- &pair_price_types.PairPrice{
