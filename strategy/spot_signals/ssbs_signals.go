@@ -165,13 +165,13 @@ func BuyOrSellSignal(
 				if ask <= boundAsk &&
 					targetBalance*ask < pair.GetLimitInputIntoPosition()*baseBalance &&
 					targetBalance*ask < pair.GetLimitOutputOfPosition()*baseBalance {
-					logrus.Infof("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", pair.GetMiddlePrice(), ask, boundAsk)
+					logrus.Debugf("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", pair.GetMiddlePrice(), ask, boundAsk)
 					buyEvent <- &pair_price_types.PairPrice{
 						Price:    ask,
 						Quantity: buyQuantity}
 					// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
 				} else if bid >= boundBid && sellQuantity < targetBalance {
-					logrus.Infof("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", pair.GetMiddlePrice(), bid, boundBid)
+					logrus.Debugf("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", pair.GetMiddlePrice(), bid, boundBid)
 					sellEvent <- &pair_price_types.PairPrice{
 						Price:    boundBid,
 						Quantity: sellQuantity}
