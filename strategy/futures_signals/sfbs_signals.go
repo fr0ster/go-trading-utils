@@ -45,6 +45,8 @@ func SignalInitialization(
 	stopEvent chan os.Signal) (
 	bookTickers *book_types.BookTickers,
 	bookTickerStream *futures_streams.BookTickerStream,
+	triggerEvent4Risk chan bool,
+	triggerEvent4Price chan bool,
 	increaseEvent chan *pair_price_types.PairPrice,
 	decreaseEvent chan *pair_price_types.PairPrice) {
 
@@ -54,8 +56,8 @@ func SignalInitialization(
 	bookTickerStream = futures_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-	triggerEvent4Price := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent4Risk = futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent4Price = futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
 
 	// Запускаємо потік для контролю ризиків позиції
 	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)

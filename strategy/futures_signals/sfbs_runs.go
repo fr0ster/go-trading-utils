@@ -65,7 +65,7 @@ func Run(
 		config.Save()
 	}
 
-	_, _, _, _ =
+	_, _, _, _, _, _ =
 		SignalInitialization(
 			client, degree, limit, pair,
 			account, stopEvent)
