@@ -23,7 +23,7 @@ func (u *BookTickerStream) GetDataChannel() chan *binance.WsBookTickerEvent {
 	return u.dataChannel
 }
 
-func (u *BookTickerStream) GetStreamEvent() chan bool {
+func (u *BookTickerStream) GetEventChannel() chan bool {
 	return u.eventChannel
 }
 

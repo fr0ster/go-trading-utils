@@ -19,7 +19,11 @@ func NewBookTickerStream(symbol string, size int) *BookTickerStream {
 	}
 }
 
-func (u *BookTickerStream) GetStreamEvent() chan bool {
+func (u *BookTickerStream) GetDataChannel() chan *futures.WsBookTickerEvent {
+	return u.DataChannel
+}
+
+func (u *BookTickerStream) GetEventChannel() chan bool {
 	return u.EventChannel
 }
 

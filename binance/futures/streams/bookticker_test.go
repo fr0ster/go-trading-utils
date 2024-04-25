@@ -33,7 +33,7 @@ func TestBookTickerStream_Start(t *testing.T) {
 
 func TestInterface(t *testing.T) {
 	test := func(u streams_interface.Stream) chan bool {
-		return u.GetStreamEvent()
+		return u.GetEventChannel()
 	}
 	bts := streams.NewBookTickerStream("SUSHIUSDT", 1)
 	assert.NotNil(t, test(bts))
