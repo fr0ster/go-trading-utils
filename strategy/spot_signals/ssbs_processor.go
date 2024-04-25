@@ -139,7 +139,7 @@ func (pp *PairProcessor) StartBuyOrSellHandler() {
 
 func (pp *PairProcessor) StartPriceSignal() {
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.buy, pp.sell, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
+	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
 }
 
 func (pp *PairProcessor) StartPriceHandler() {
