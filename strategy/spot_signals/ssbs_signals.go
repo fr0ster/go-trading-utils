@@ -30,6 +30,63 @@ type (
 	}
 )
 
+func PriceSignal(
+	bookTickers *book_types.BookTickers,
+	pair pairs_interfaces.Pairs,
+	stopEvent chan os.Signal,
+	triggerEvent chan bool) (
+	increaseEvent chan *pair_price_types.PairPrice,
+	decreaseEvent chan *pair_price_types.PairPrice) {
+	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
+	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
+	go func() {
+		bookTicker := bookTickers.Get(pair.GetPair())
+		if bookTicker == nil {
+			logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+			stopEvent <- os.Interrupt
+			return
+		}
+		// Ціна купівлі
+		ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
+		// Ціна продажу
+		bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
+		lastPrice := (ask + bid) / 2
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-triggerEvent: // Чекаємо на спрацювання тригера
+				bookTicker = bookTickers.Get(pair.GetPair())
+				if bookTicker == nil {
+					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+					stopEvent <- os.Interrupt
+					return
+				}
+				// Ціна купівлі
+				ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
+				// Ціна продажу
+				bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
+				currentPrice := (ask + bid) / 2
+				if currentPrice > lastPrice {
+					increaseEvent <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
+					lastPrice = currentPrice
+				} else if currentPrice < lastPrice {
+					decreaseEvent <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
+					lastPrice = currentPrice
+				}
+			}
+			triggerEvent <- true
+			time.Sleep(pair.GetSleepingTime())
+		}
+	}()
+	return
+}
+
 func BuyOrSellSignal(
 	account *spot_account.Account,
 	bookTicker *book_types.BookTickers,
