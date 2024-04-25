@@ -43,13 +43,15 @@ func SignalInitialization(
 	pair pairs_interfaces.Pairs,
 	account *futures_account.Account,
 	stopEvent chan os.Signal) (
+	bookTickers *book_types.BookTickers,
+	bookTickerStream *futures_streams.BookTickerStream,
 	increaseEvent chan *pair_price_types.PairPrice,
 	decreaseEvent chan *pair_price_types.PairPrice) {
 
-	bookTickers := book_types.New(degree)
+	bookTickers = book_types.New(degree)
 
 	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
+	bookTickerStream = futures_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
 	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)

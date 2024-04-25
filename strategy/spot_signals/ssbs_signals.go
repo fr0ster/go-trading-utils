@@ -41,6 +41,7 @@ func SignalInitialization(
 	account *spot_account.Account,
 	stopEvent chan os.Signal) (
 	bookTickers *book_types.BookTickers,
+	triggerEvent chan bool,
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 
@@ -50,7 +51,7 @@ func SignalInitialization(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent = spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
 
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
 	buyEvent, sellEvent = BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
