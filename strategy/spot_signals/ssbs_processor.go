@@ -6,8 +6,6 @@ import (
 
 	"os"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
@@ -81,21 +79,17 @@ func (pp *PairProcessor) StartBookTickersUpdateGuard() {
 func (pp *PairProcessor) BuyOrSellSignal() (
 	buy chan *pair_price_types.PairPrice,
 	sell chan *pair_price_types.PairPrice) {
-	return BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
+	return BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
 }
 
 func (pp *PairProcessor) PriceSignal() (
 	buy chan *pair_price_types.PairPrice,
 	sell chan *pair_price_types.PairPrice,
 	wait chan *pair_price_types.PairPrice) {
-	return PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
+	return PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
 }
 
-func (pp *PairProcessor) Start() {
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.buy, pp.sell = BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
-	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
+func (pp *PairProcessor) StartHandler() {
 	go func() {
 		for {
 			select {
@@ -104,14 +98,6 @@ func (pp *PairProcessor) Start() {
 				return
 			case <-pp.triggerEvent:
 				fmt.Printf("%s, Signal, ask %v, bid %v\n", pp.pair.GetPair(), pp.GetBookTicker().AskPrice, pp.GetBookTicker().BidPrice)
-			case <-pp.buy:
-				fmt.Printf("%s, Signal buy\n", pp.pair.GetPair())
-			case <-pp.sell:
-				fmt.Printf("%s, Signal sell\n", pp.pair.GetPair())
-			case <-pp.up:
-				fmt.Printf("%s, Spot signal up\n", pp.pair.GetPair())
-			case <-pp.down:
-				fmt.Printf("%s, Spot signal down\n", pp.pair.GetPair())
 			}
 		}
 	}()
@@ -119,7 +105,7 @@ func (pp *PairProcessor) Start() {
 
 func (pp *PairProcessor) StartBuyOrSellSignal() {
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.buy, pp.sell = BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
+	pp.buy, pp.sell = BuyOrSellSignal(pp.account, pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
 }
 
 func (pp *PairProcessor) StartBuyOrSellHandler() {
@@ -129,8 +115,6 @@ func (pp *PairProcessor) StartBuyOrSellHandler() {
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case <-pp.triggerEvent:
-				logrus.Debugf("%s, Signal, ask %v, bid %v\n", pp.pair.GetPair(), pp.GetBookTicker().AskPrice, pp.GetBookTicker().BidPrice)
 			case price := <-pp.buy:
 				fmt.Printf("%s, Signal buy, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
 			case price := <-pp.sell:
@@ -142,7 +126,7 @@ func (pp *PairProcessor) StartBuyOrSellHandler() {
 
 func (pp *PairProcessor) StartPriceSignal() {
 	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerStream.GetDataChannel())
+	pp.up, pp.down, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.triggerEvent)
 }
 
 func (pp *PairProcessor) StartPriceHandler() {
@@ -152,12 +136,12 @@ func (pp *PairProcessor) StartPriceHandler() {
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case <-pp.triggerEvent:
-				logrus.Debugf("%s, Signal, ask %v, bid %v\n", pp.pair.GetPair(), pp.GetBookTicker().AskPrice, pp.GetBookTicker().BidPrice)
 			case price := <-pp.up:
 				fmt.Printf("%s, Signal up, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
 			case price := <-pp.down:
 				fmt.Printf("%s, Signal down, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
+			case price := <-pp.wait:
+				fmt.Printf("%s, Signal wait, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
 			}
 		}
 	}()
