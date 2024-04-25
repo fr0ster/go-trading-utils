@@ -36,11 +36,6 @@ type (
 		depthsStream     *spot_streams.DepthStream
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
-		buy              chan *pair_price_types.PairPrice
-		sell             chan *pair_price_types.PairPrice
-		up               chan *pair_price_types.PairPrice
-		down             chan *pair_price_types.PairPrice
-		wait             chan *pair_price_types.PairPrice
 		stop             chan os.Signal
 	}
 )
@@ -57,6 +52,17 @@ func (pp *PairProcessor) GetDepth() *depth_types.Depth {
 	return pp.depths
 }
 
+func (pp *PairProcessor) GetBookTickerAskBid() (bid float64, ask float64, err error) {
+	btk := pp.bookTickers.Get(pp.pair.GetPair())
+	if btk == nil {
+		err = fmt.Errorf("can't get bookTicker for %s", pp.pair.GetPair())
+		return
+	}
+	ask = btk.(*book_ticker_types.BookTicker).AskPrice
+	bid = btk.(*book_ticker_types.BookTicker).BidPrice
+	return
+}
+
 func (pp *PairProcessor) GetDepthAskBid() (bid float64, ask float64, err error) {
 	minAsk := pp.depths.GetAsks().Min()
 	if minAsk == nil {
@@ -71,7 +77,7 @@ func (pp *PairProcessor) GetDepthAskBid() (bid float64, ask float64, err error) 
 	return
 }
 
-func (pp *PairProcessor) BuyOrSellByBookTickerSignal() (
+func (pp *PairProcessor) StartBuyOrSellByBookTickerSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 	buyEvent = make(chan *pair_price_types.PairPrice, 1)
@@ -187,7 +193,7 @@ func (pp *PairProcessor) BuyOrSellByBookTickerSignal() (
 	return
 }
 
-func (pp *PairProcessor) BuyOrSellByDepthSignal() (
+func (pp *PairProcessor) StartBuyOrSellByDepthSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 	buyEvent = make(chan *pair_price_types.PairPrice, 1)
@@ -299,29 +305,62 @@ func (pp *PairProcessor) BuyOrSellByDepthSignal() (
 	return
 }
 
-func (pp *PairProcessor) PriceSignal() (
-	buy chan *pair_price_types.PairPrice,
-	sell chan *pair_price_types.PairPrice,
+func (pp *PairProcessor) StartPriceSignal() (
+	up chan *pair_price_types.PairPrice,
+	down chan *pair_price_types.PairPrice,
 	wait chan *pair_price_types.PairPrice) {
-	return PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerEvent)
-}
-
-func (pp *PairProcessor) Start() {
+	var lastPrice float64
+	up = make(chan *pair_price_types.PairPrice, 1)
+	down = make(chan *pair_price_types.PairPrice, 1)
+	wait = make(chan *pair_price_types.PairPrice, 1)
+	bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
+	if bookTicker == nil {
+		logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pp.pair.GetPair())
+		pp.stop <- os.Interrupt
+		return
+	}
 	go func() {
 		for {
 			select {
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case <-pp.bookTickerEvent:
-				fmt.Printf("%s, Signal bookTickerEvent, ask %f, bid %f\n", pp.pair.GetPair(), pp.GetBookTicker().AskPrice, pp.GetBookTicker().BidPrice)
-			case <-pp.depthEvent:
-				minAsk := pp.depths.GetAsks().Min().(*pair_price_types.PairPrice)
-				maxBid := pp.depths.GetBids().Max().(*pair_price_types.PairPrice)
-				fmt.Printf("%s, Signal depthEvent, ask %f, bid %f\n", pp.pair.GetPair(), minAsk.Price, maxBid.Price)
+			case <-pp.bookTickerEvent: // Чекаємо на спрацювання тригера на зміну ціни
+				bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
+				if bookTicker == nil {
+					logrus.Errorf("Can't get bookTicker for %s", pp.pair.GetPair())
+					pp.stop <- os.Interrupt
+					return
+				}
+				// Ціна купівлі
+				ask := bookTicker.(*book_ticker_types.BookTicker).AskPrice
+				// Ціна продажу
+				bid := bookTicker.(*book_ticker_types.BookTicker).AskPrice
+				if lastPrice == 0 {
+					lastPrice = (ask + bid) / 2
+					continue
+				}
+				currentPrice := (ask + bid) / 2
+				if currentPrice > lastPrice {
+					up <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
+					lastPrice = currentPrice
+				} else if currentPrice < lastPrice {
+					down <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
+					lastPrice = currentPrice
+				} else {
+					wait <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
+				}
 			}
+			time.Sleep(pp.pair.GetSleepingTime())
 		}
 	}()
+	return
 }
 
 func (pp *PairProcessor) StartBookTickersUpdateGuard() {
@@ -330,93 +369,6 @@ func (pp *PairProcessor) StartBookTickersUpdateGuard() {
 
 func (pp *PairProcessor) StartDepthsUpdateGuard() {
 	pp.depthEvent = spot_handlers.GetDepthsUpdateGuard(pp.depths, pp.depthsStream.GetDataChannel())
-}
-
-func (pp *PairProcessor) StartBuyOrSellByBookTickerSignal() {
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.buy, pp.sell = pp.BuyOrSellByBookTickerSignal()
-}
-
-func (pp *PairProcessor) StartBuyOrSellByDepthSignal() {
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.buy, pp.sell = pp.BuyOrSellByDepthSignal()
-}
-
-func (pp *PairProcessor) StartBuyOrSellHandler() {
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case price := <-pp.buy:
-				fmt.Printf("%s, Signal buy, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
-			case price := <-pp.sell:
-				fmt.Printf("%s, Signal sell, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
-			}
-		}
-	}()
-}
-
-func (pp *PairProcessor) StartPriceSignal() {
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	pp.up, pp.up, pp.wait = PriceSignal(pp.bookTickers, pp.pair, pp.stop, pp.bookTickerEvent)
-}
-
-func (pp *PairProcessor) StartPriceHandler() {
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case price := <-pp.up:
-				fmt.Printf("%s, Signal up, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
-			case price := <-pp.down:
-				fmt.Printf("%s, Signal down, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
-			case price := <-pp.wait:
-				fmt.Printf("%s, Signal wait, price %f, quantity %f \n", pp.pair.GetPair(), price.Price, price.Quantity)
-			}
-		}
-	}()
-}
-
-func (pp *PairProcessor) StartPriceSignal1() {
-	var lastPrice float64
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-pp.bookTickerStream.GetEventChannel(): // Чекаємо на спрацювання тригера
-				// Ціна купівлі
-				ask := pp.bookTickers.Get(pp.pair.GetPair()).(*book_ticker_types.BookTicker).AskPrice
-				// Ціна продажу
-				bid := pp.bookTickers.Get(pp.pair.GetPair()).(*book_ticker_types.BookTicker).BidPrice
-				if lastPrice == 0 {
-					lastPrice = (ask + bid) / 2
-				}
-				currentPrice := (ask + bid) / 2
-				if currentPrice > lastPrice {
-					pp.up <- &pair_price_types.PairPrice{
-						Price: currentPrice,
-					}
-					lastPrice = currentPrice
-				} else if currentPrice < lastPrice {
-					pp.down <- &pair_price_types.PairPrice{
-						Price: currentPrice,
-					}
-					lastPrice = currentPrice
-				} else {
-					pp.wait <- &pair_price_types.PairPrice{
-						Price: currentPrice,
-					}
-				}
-			}
-			time.Sleep(pp.pair.GetSleepingTime())
-		}
-	}()
 }
 
 func NewPairProcessor(
@@ -439,10 +391,6 @@ func NewPairProcessor(
 		depthsStream:     spot_streams.NewDepthStream(pair.GetPair(), true, 1),
 		bookTickerEvent:  make(chan bool),
 		depthEvent:       make(chan bool),
-		buy:              make(chan *pair_price_types.PairPrice, 1),
-		sell:             make(chan *pair_price_types.PairPrice, 1),
-		up:               make(chan *pair_price_types.PairPrice, 1),
-		down:             make(chan *pair_price_types.PairPrice, 1),
 	}
 	pp.bookTickers = book_ticker_types.New(degree)
 	pp.depths = depth_types.New(degree, pp.pair.GetPair())
