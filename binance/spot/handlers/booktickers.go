@@ -11,7 +11,13 @@ func GetBookTickersUpdateGuard(bookTickers *bookticker_types.BookTickers, source
 	go func() {
 		for {
 			event := <-source
+			currentBookTicker := bookTickers.Get(event.Symbol)
+			if currentBookTicker != nil &&
+				currentBookTicker.(*bookticker_types.BookTicker).UpdateID >= event.UpdateID {
+				continue
+			}
 			bookTickerUpdate := &bookticker_types.BookTicker{
+				UpdateID:    event.UpdateID,
 				Symbol:      event.Symbol,
 				BidPrice:    utils.ConvStrToFloat64(event.BestBidPrice),
 				BidQuantity: utils.ConvStrToFloat64(event.BestBidQty),

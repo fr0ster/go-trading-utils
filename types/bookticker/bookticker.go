@@ -9,6 +9,7 @@ import (
 
 type (
 	BookTicker struct {
+		UpdateID    int64
 		Symbol      string
 		BidPrice    float64
 		BidQuantity float64

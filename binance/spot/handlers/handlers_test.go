@@ -92,6 +92,7 @@ func TestAccountUpdateHandler(t *testing.T) {
 
 func TestBookTickersUpdateHandler(t *testing.T) {
 	even := &binance.WsBookTickerEvent{
+		UpdateID:     1,
 		Symbol:       "BTCUSDT",
 		BestBidPrice: "10000.0",
 		BestBidQty:   "210.0",
@@ -101,6 +102,7 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 	inChannel := make(chan *binance.WsBookTickerEvent, 1)
 	bookTicker := bookticker_types.New(3)
 	bookTicker.Set(&bookticker_types.BookTicker{
+		UpdateID:    0,
 		Symbol:      "BTCUSDT",
 		BidPrice:    0.0,
 		BidQuantity: 0.0,
