@@ -6,30 +6,34 @@ import (
 )
 
 type BookTickerStream struct {
-	DataChannel  chan *binance.WsBookTickerEvent
-	EventChannel chan bool
+	dataChannel  chan *binance.WsBookTickerEvent
+	eventChannel chan bool
 	symbol       string
 }
 
 func NewBookTickerStream(symbol string, size int) *BookTickerStream {
 	return &BookTickerStream{
-		DataChannel:  make(chan *binance.WsBookTickerEvent, size),
-		EventChannel: make(chan bool, size),
+		dataChannel:  make(chan *binance.WsBookTickerEvent, size),
+		eventChannel: make(chan bool, size),
 		symbol:       symbol,
 	}
 }
 
+func (u *BookTickerStream) GetDataChannel() chan *binance.WsBookTickerEvent {
+	return u.dataChannel
+}
+
 func (u *BookTickerStream) GetStreamEvent() chan bool {
-	return u.EventChannel
+	return u.eventChannel
 }
 
 func (u *BookTickerStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsBookTickerEvent) {
 		go func() {
-			u.DataChannel <- event
+			u.dataChannel <- event
 		}()
 		go func() {
-			u.EventChannel <- true
+			u.eventChannel <- true
 		}()
 	}
 	return binance.WsBookTickerServe(u.symbol, wsHandler, utils.HandleErr)

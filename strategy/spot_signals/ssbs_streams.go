@@ -28,7 +28,7 @@ func StartPairStreams(
 	bookTickerStream := spot_streams.NewBookTickerStream(symbol, 1)
 	bookTickerStream.Start()
 
-	bookTickerEvent = spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.DataChannel)
+	bookTickerEvent = spot_handlers.GetBookTickersUpdateGuard(bookTicker, bookTickerStream.GetDataChannel())
 
 	// Запускаємо потік для отримання оновлення стакана
 	depthStream := spot_streams.NewDepthStream(symbol, true, 1)

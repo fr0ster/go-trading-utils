@@ -94,7 +94,7 @@ func PriceSignal(
 
 func BuyOrSellSignal(
 	account *spot_account.Account,
-	bookTicker *book_types.BookTickers,
+	bookTickers *book_types.BookTickers,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (buyEvent chan *pair_price_types.PairPrice, sellEvent chan *pair_price_types.PairPrice) {
@@ -126,7 +126,7 @@ func BuyOrSellSignal(
 					return
 				}
 				commission := GetCommission(account)
-				bookTicker := bookTicker.Get(pair.GetPair())
+				bookTicker := bookTickers.Get(pair.GetPair())
 				if bookTicker == nil {
 					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
 					stopEvent <- os.Interrupt

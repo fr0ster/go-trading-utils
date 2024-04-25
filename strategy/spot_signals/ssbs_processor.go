@@ -51,7 +51,7 @@ func NewPairProcessor(
 		stop:             stop,
 		bookTickers:      nil,
 		bookTickerStream: spot_streams.NewBookTickerStream(pair.GetPair(), 1),
-		triggerEvent:     make(chan bool),
+		triggerEvent:     make(chan bool, 1),
 		buy:              make(chan *pair_price_types.PairPrice, 1),
 		sell:             make(chan *pair_price_types.PairPrice, 1),
 		up:               make(chan *pair_price_types.PairPrice, 1),
@@ -63,7 +63,6 @@ func NewPairProcessor(
 	pp.bookTickerStream = spot_streams.NewBookTickerStream(pp.pair.GetPair(), 1)
 	pp.bookTickerStream.Start()
 	spot_book_ticker.Init(pp.bookTickers, pp.pair.GetPair(), client)
-	pp.triggerEvent = spot_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.DataChannel)
 	return pp
 }
 
@@ -73,6 +72,10 @@ func (pp *PairProcessor) GetBookTicker() *book_ticker_types.BookTicker {
 		return nil
 	}
 	return btk.(*book_ticker_types.BookTicker)
+}
+
+func (pp *PairProcessor) StartBookTickersUpdateGuard() {
+	pp.triggerEvent = spot_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.GetDataChannel())
 }
 
 func (pp *PairProcessor) BuyOrSellSignal() (

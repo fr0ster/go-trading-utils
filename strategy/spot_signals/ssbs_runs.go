@@ -58,7 +58,7 @@ func RunSpotHolding(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
 	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
 
@@ -110,7 +110,7 @@ func RunSpotScalping(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
 	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
 
@@ -172,7 +172,7 @@ func RunSpotTrading(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
 	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
 
@@ -234,7 +234,7 @@ func Run(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
 	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
 
