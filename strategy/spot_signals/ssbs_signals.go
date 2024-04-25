@@ -36,9 +36,11 @@ func PriceSignal(
 	stopEvent chan os.Signal,
 	triggerEvent chan bool) (
 	increaseEvent chan *pair_price_types.PairPrice,
-	decreaseEvent chan *pair_price_types.PairPrice) {
+	decreaseEvent chan *pair_price_types.PairPrice,
+	waitingEvent chan *pair_price_types.PairPrice) {
 	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
+	waitingEvent = make(chan *pair_price_types.PairPrice, 1)
 	go func() {
 		bookTicker := bookTickers.Get(pair.GetPair())
 		if bookTicker == nil {
@@ -78,6 +80,10 @@ func PriceSignal(
 						Price: currentPrice,
 					}
 					lastPrice = currentPrice
+				} else {
+					waitingEvent <- &pair_price_types.PairPrice{
+						Price: currentPrice,
+					}
 				}
 			}
 			time.Sleep(pair.GetSleepingTime())
