@@ -317,7 +317,6 @@ func (pp *PairProcessor) StartPriceSignal() (
 	up chan *pair_price_types.PairPrice,
 	down chan *pair_price_types.PairPrice,
 	wait chan *pair_price_types.PairPrice) {
-	var lastPrice float64
 	up = make(chan *pair_price_types.PairPrice, 1)
 	down = make(chan *pair_price_types.PairPrice, 1)
 	wait = make(chan *pair_price_types.PairPrice, 1)
@@ -328,6 +327,7 @@ func (pp *PairProcessor) StartPriceSignal() (
 		return
 	}
 	go func() {
+		var last_bid, last_ask, lastPrice float64
 		for {
 			select {
 			case <-pp.stop:
@@ -344,24 +344,29 @@ func (pp *PairProcessor) StartPriceSignal() (
 				ask := bookTicker.(*book_ticker_types.BookTicker).AskPrice
 				// Ціна продажу
 				bid := bookTicker.(*book_ticker_types.BookTicker).AskPrice
+				if last_bid == 0 || last_ask == 0 {
+					last_bid = bid
+					last_ask = ask
+				}
 				if lastPrice == 0 {
 					lastPrice = (ask + bid) / 2
-					continue
 				}
-				currentPrice := (ask + bid) / 2
-				if currentPrice > lastPrice {
-					up <- &pair_price_types.PairPrice{
-						Price: currentPrice,
-					}
-					lastPrice = currentPrice
-				} else if currentPrice < lastPrice {
-					down <- &pair_price_types.PairPrice{
-						Price: currentPrice,
-					}
-					lastPrice = currentPrice
-				} else {
+				if ask == last_ask && bid == last_bid {
 					wait <- &pair_price_types.PairPrice{
-						Price: currentPrice,
+						Price: (ask + bid) / 2,
+					}
+				} else {
+					currentPrice := (ask + bid) / 2
+					if currentPrice > lastPrice {
+						up <- &pair_price_types.PairPrice{
+							Price: currentPrice,
+						}
+						lastPrice = currentPrice
+					} else if currentPrice < lastPrice {
+						down <- &pair_price_types.PairPrice{
+							Price: currentPrice,
+						}
+						lastPrice = currentPrice
 					}
 				}
 			}
