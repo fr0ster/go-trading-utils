@@ -363,12 +363,14 @@ func (pp *PairProcessor) StartPriceSignal() (
 	return
 }
 
-func (pp *PairProcessor) StartBookTickersUpdateGuard() {
+func (pp *PairProcessor) StartBookTickersUpdateGuard() chan bool {
 	pp.bookTickerEvent = spot_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.GetDataChannel())
+	return pp.bookTickerEvent
 }
 
-func (pp *PairProcessor) StartDepthsUpdateGuard() {
+func (pp *PairProcessor) StartDepthsUpdateGuard() chan bool {
 	pp.depthEvent = spot_handlers.GetDepthsUpdateGuard(pp.depths, pp.depthsStream.GetDataChannel())
+	return pp.depthEvent
 }
 
 func NewPairProcessor(
