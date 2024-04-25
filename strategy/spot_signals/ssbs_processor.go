@@ -57,6 +57,20 @@ func (pp *PairProcessor) GetDepth() *depth_types.Depth {
 	return pp.depths
 }
 
+func (pp *PairProcessor) GetDepthAskBid() (bid float64, ask float64, err error) {
+	minAsk := pp.depths.GetAsks().Min()
+	if minAsk == nil {
+		err = fmt.Errorf("can't get min ask")
+	}
+	ask = minAsk.(*pair_price_types.PairPrice).Price
+	maxBid := pp.depths.GetBids().Max()
+	if maxBid == nil {
+		err = fmt.Errorf("can't get max bid")
+	}
+	bid = maxBid.(*pair_price_types.PairPrice).Price
+	return
+}
+
 func (pp *PairProcessor) BuyOrSellByBookTickerSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
