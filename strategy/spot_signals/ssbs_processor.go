@@ -48,8 +48,16 @@ func (pp *PairProcessor) GetBookTicker() *book_ticker_types.BookTicker {
 	return btk.(*book_ticker_types.BookTicker)
 }
 
+func (pp *PairProcessor) GetBookTickerStream() *spot_streams.BookTickerStream {
+	return pp.bookTickerStream
+}
+
 func (pp *PairProcessor) GetDepth() *depth_types.Depth {
 	return pp.depths
+}
+
+func (pp *PairProcessor) GetDepthStream() *spot_streams.DepthStream {
+	return pp.depthsStream
 }
 
 func (pp *PairProcessor) GetBookTickerAskBid() (bid float64, ask float64, err error) {
