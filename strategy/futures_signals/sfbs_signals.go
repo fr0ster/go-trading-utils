@@ -6,7 +6,6 @@ import (
 
 	"os"
 
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
@@ -14,8 +13,6 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
@@ -35,38 +32,6 @@ type (
 		BoundBid        float64
 	}
 )
-
-func SignalInitialization(
-	client *futures.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *futures_account.Account,
-	stopEvent chan os.Signal) (
-	bookTickers *book_types.BookTickers,
-	bookTickerStream *futures_streams.BookTickerStream,
-	triggerEvent4Risk chan bool,
-	triggerEvent4Price chan bool,
-	increaseEvent chan *pair_price_types.PairPrice,
-	decreaseEvent chan *pair_price_types.PairPrice) {
-
-	bookTickers = book_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream = futures_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent4Risk = futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-	triggerEvent4Price = futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-
-	// Запускаємо потік для контролю ризиків позиції
-	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)
-
-	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	increaseEvent, decreaseEvent = PriceSignal(bookTickers, pair, stopEvent, triggerEvent4Price)
-
-	return
-}
 
 func RiskSignal(
 	account *futures_account.Account,

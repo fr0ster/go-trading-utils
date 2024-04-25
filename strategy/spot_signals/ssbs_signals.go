@@ -6,12 +6,9 @@ import (
 
 	"os"
 
-	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
@@ -32,33 +29,6 @@ type (
 		BoundBid        float64
 	}
 )
-
-func SignalInitialization(
-	client *binance.Client,
-	degree int,
-	limit int,
-	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
-	stopEvent chan os.Signal) (
-	bookTickers *book_types.BookTickers,
-	bookTickerStream *spot_streams.BookTickerStream,
-	triggerEvent chan bool,
-	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice) {
-
-	bookTickers = book_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream = spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent = spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-
-	// Запускаємо потік для отримання сигналів на купівлю та продаж
-	buyEvent, sellEvent = BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
-
-	return
-}
 
 func BuyOrSellSignal(
 	account *spot_account.Account,

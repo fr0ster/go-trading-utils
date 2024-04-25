@@ -12,9 +12,12 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
+	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
+	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -65,10 +68,20 @@ func Run(
 		config.Save()
 	}
 
-	_, _, _, _, _, _ =
-		SignalInitialization(
-			client, degree, limit, pair,
-			account, stopEvent)
+	bookTickers := book_types.New(degree)
+
+	// Запускаємо потік для отримання оновлення bookTickers
+	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
+	bookTickerStream.Start()
+
+	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+	triggerEvent4Price := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
+
+	// Запускаємо потік для контролю ризиків позиції
+	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)
+
+	// Запускаємо потік для отримання сигналів росту та падіння ціни
+	_, _ = PriceSignal(bookTickers, pair, stopEvent, triggerEvent4Price)
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
