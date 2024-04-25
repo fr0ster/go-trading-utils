@@ -6,9 +6,11 @@ import (
 
 	"os"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	"github.com/fr0ster/go-trading-utils/utils"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
@@ -97,7 +99,9 @@ func BuyOrSellSignal(
 	bookTickers *book_types.BookTickers,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	triggerEvent chan bool) (buyEvent chan *pair_price_types.PairPrice, sellEvent chan *pair_price_types.PairPrice) {
+	triggerEvent chan *binance.WsBookTickerEvent) (
+	buyEvent chan *pair_price_types.PairPrice,
+	sellEvent chan *pair_price_types.PairPrice) {
 	buyEvent = make(chan *pair_price_types.PairPrice, 1)
 	sellEvent = make(chan *pair_price_types.PairPrice, 1)
 	go func() {
@@ -109,7 +113,7 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
+			case price := <-triggerEvent: // Чекаємо на спрацювання тригера
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
@@ -133,9 +137,9 @@ func BuyOrSellSignal(
 					return
 				}
 				// Ціна купівлі
-				ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
+				ask := utils.ConvStrToFloat64(price.BestAskPrice)
 				// Ціна продажу
-				bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
+				bid := utils.ConvStrToFloat64(price.BestBidPrice)
 				// Верхня межа ціни купівлі
 				boundAsk, err := GetAskBound(pair)
 				if err != nil {

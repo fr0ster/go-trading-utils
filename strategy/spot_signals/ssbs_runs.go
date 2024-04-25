@@ -12,7 +12,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
@@ -58,9 +57,9 @@ func RunSpotHolding(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
+	// triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, bookTickerStream.GetDataChannel())
 
 	collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
@@ -110,9 +109,9 @@ func RunSpotScalping(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
+	// triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, bookTickerStream.GetDataChannel())
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -172,9 +171,9 @@ func RunSpotTrading(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
+	// triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, bookTickerStream.GetDataChannel())
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -234,9 +233,9 @@ func Run(
 	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
 	bookTickerStream.Start()
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
+	// triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
 
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, bookTickerStream.GetDataChannel())
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
