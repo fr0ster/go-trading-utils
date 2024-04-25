@@ -54,7 +54,7 @@ func PriceSignal(
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
+			case <-triggerEvent: // Чекаємо на спрацювання тригера на зміну ціни
 				bookTicker := bookTickers.Get(pair.GetPair())
 				if bookTicker == nil {
 					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
@@ -111,7 +111,7 @@ func BuyOrSellSignal(
 			case <-stopEvent:
 				stopEvent <- os.Interrupt
 				return
-			case <-triggerEvent: // Чекаємо на спрацювання тригера
+			case <-triggerEvent: // Чекаємо на спрацювання тригера на зміну bookTicker
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(account, pair)
 				if err != nil {
