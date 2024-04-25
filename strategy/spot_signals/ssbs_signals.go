@@ -41,18 +41,18 @@ func PriceSignal(
 	increaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	decreaseEvent = make(chan *pair_price_types.PairPrice, 1)
 	waitingEvent = make(chan *pair_price_types.PairPrice, 1)
+	bookTicker := bookTickers.Get(pair.GetPair())
+	if bookTicker == nil {
+		logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pair.GetPair())
+		stopEvent <- os.Interrupt
+		return
+	}
+	// Ціна купівлі
+	ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
+	// Ціна продажу
+	bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
+	lastPrice := (ask + bid) / 2
 	go func() {
-		bookTicker := bookTickers.Get(pair.GetPair())
-		if bookTicker == nil {
-			logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pair.GetPair())
-			stopEvent <- os.Interrupt
-			return
-		}
-		// Ціна купівлі
-		ask, _ := GetBookTickerAsk(bookTicker.(*book_types.BookTicker))
-		// Ціна продажу
-		bid, _ := GetBookTickerBid(bookTicker.(*book_types.BookTicker))
-		lastPrice := (ask + bid) / 2
 		for {
 			select {
 			case <-stopEvent:
