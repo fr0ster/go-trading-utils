@@ -53,6 +53,10 @@ func (pp *PairProcessor) GetBookTicker() *book_ticker_types.BookTicker {
 	return btk.(*book_ticker_types.BookTicker)
 }
 
+func (pp *PairProcessor) GetDepth() *depth_types.Depth {
+	return pp.depths
+}
+
 func (pp *PairProcessor) BuyOrSellByBookTickerSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
