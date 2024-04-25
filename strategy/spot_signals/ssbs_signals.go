@@ -42,7 +42,7 @@ func PriceSignal(
 	go func() {
 		bookTicker := bookTickers.Get(pair.GetPair())
 		if bookTicker == nil {
-			logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+			logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pair.GetPair())
 			stopEvent <- os.Interrupt
 			return
 		}
@@ -59,7 +59,7 @@ func PriceSignal(
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 				bookTicker = bookTickers.Get(pair.GetPair())
 				if bookTicker == nil {
-					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+					logrus.Errorf("Can't get bookTicker for %s when read for current price, spot strategy", pair.GetPair())
 					stopEvent <- os.Interrupt
 					return
 				}

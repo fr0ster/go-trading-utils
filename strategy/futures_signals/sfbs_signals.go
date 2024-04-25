@@ -47,12 +47,12 @@ func RiskSignal(
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 				riskPosition, err := account.GetPositionRisk(pair.GetPair())
 				if err != nil {
-					logrus.Errorf("Can't get position risk: %v", err)
+					logrus.Errorf("Can't get position risk: %v, futures strategy", err)
 					stopEvent <- os.Interrupt
 					return
 				}
 				if len(riskPosition) != 1 {
-					logrus.Errorf("Can't get correct position risk: %v", riskPosition)
+					logrus.Errorf("Can't get correct position risk: %v, spot strategy", riskPosition)
 					stopEvent <- os.Interrupt
 					return
 				}
@@ -81,7 +81,7 @@ func PriceSignal(
 	go func() {
 		bookTicker := bookTickers.Get(pair.GetPair())
 		if bookTicker == nil {
-			logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+			logrus.Errorf("Can't get bookTicker for %s when read for last price, futures strategy", pair.GetPair())
 			stopEvent <- os.Interrupt
 			return
 		}
@@ -98,7 +98,7 @@ func PriceSignal(
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 				bookTicker = bookTickers.Get(pair.GetPair())
 				if bookTicker == nil {
-					logrus.Errorf("Can't get bookTicker for %s", pair.GetPair())
+					logrus.Errorf("Can't get bookTicker for %s when read for current price, futures strategy", pair.GetPair())
 					stopEvent <- os.Interrupt
 					return
 				}
