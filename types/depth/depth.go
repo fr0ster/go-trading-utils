@@ -182,7 +182,7 @@ func (d *Depth) Symbol() string {
 }
 
 // DepthBTree - B-дерево для зберігання стакана заявок
-func NewDepth(degree int, symbol string) *Depth {
+func New(degree int, symbol string) *Depth {
 	return &Depth{
 		symbol: symbol,
 		asks:   btree.New(degree),

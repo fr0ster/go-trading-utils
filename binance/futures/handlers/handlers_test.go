@@ -178,7 +178,7 @@ func getTestDepths() *depth_types.Depth {
 	for _, ask := range askList {
 		asks.ReplaceOrInsert(&ask)
 	}
-	ds := depth_types.NewDepth(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.LastUpdateID = LastUpdateID
 	ds.SetAsks(asks)
 	ds.SetBids(bids)

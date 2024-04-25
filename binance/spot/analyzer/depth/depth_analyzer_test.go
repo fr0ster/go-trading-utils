@@ -23,7 +23,7 @@ func TestDepthAnalyzerLoad(t *testing.T) {
 	rounded := 2
 	bound := 0.5
 	symbol := "BTCUSDT"
-	depth := depth_types.NewDepth(degree, symbol)
+	depth := depth_types.New(degree, symbol)
 	spot_depth.Init(depth, spot, limit)
 
 	da := depth_analyzer.New(3, rounded, bound)
