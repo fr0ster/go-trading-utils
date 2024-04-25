@@ -23,7 +23,7 @@ func (u *UserDataStream) GetDataChannel() chan *binance.WsUserDataEvent {
 	return u.dataChannel
 }
 
-func (u *UserDataStream) GetStreamEvent() chan bool {
+func (u *UserDataStream) GetEventChannel() chan bool {
 	return u.eventChannel
 }
 

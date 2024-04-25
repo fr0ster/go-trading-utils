@@ -21,7 +21,7 @@ func NewKlineStream(symbol, interval string, size int) *KlineStream {
 	}
 }
 
-func (u *KlineStream) GetStreamEvent() chan bool {
+func (u *KlineStream) GetEventChannel() chan bool {
 	return u.EventChannel
 }
 

@@ -34,7 +34,7 @@ func StartPairStreams(
 	depthStream := spot_streams.NewDepthStream(symbol, true, 1)
 	depthStream.Start()
 
-	depthEvent = spot_handlers.GetDepthsUpdateGuard(depth, depthStream.DataChannel)
+	depthEvent = spot_handlers.GetDepthsUpdateGuard(depth, depthStream.GetDataChannel())
 
 	return
 }

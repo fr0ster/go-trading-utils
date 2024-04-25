@@ -6,32 +6,36 @@ import (
 )
 
 type DepthStream struct {
-	DataChannel  chan *binance.WsDepthEvent
-	EventChannel chan bool
+	dataChannel  chan *binance.WsDepthEvent
+	eventChannel chan bool
 	symbol       string
 	use100Ms     bool
 }
 
 func NewDepthStream(symbol string, use100Ms bool, size int) *DepthStream {
 	return &DepthStream{
-		DataChannel:  make(chan *binance.WsDepthEvent, size),
-		EventChannel: make(chan bool, size),
+		dataChannel:  make(chan *binance.WsDepthEvent, size),
+		eventChannel: make(chan bool, size),
 		symbol:       symbol,
 		use100Ms:     use100Ms,
 	}
 }
 
-func (u *DepthStream) GetStreamEvent() chan bool {
-	return u.EventChannel
+func (u *DepthStream) GetDataChannel() chan *binance.WsDepthEvent {
+	return u.dataChannel
+}
+
+func (u *DepthStream) GetEventChannel() chan bool {
+	return u.eventChannel
 }
 
 func (u *DepthStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *binance.WsDepthEvent) {
 		go func() {
-			u.DataChannel <- event
+			u.dataChannel <- event
 		}()
 		go func() {
-			u.EventChannel <- true
+			u.eventChannel <- true
 		}()
 	}
 	if u.use100Ms {

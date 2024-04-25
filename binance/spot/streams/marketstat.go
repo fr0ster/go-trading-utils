@@ -19,7 +19,7 @@ func NewCombinedMarketStatStream(symbols []string, size int) *CombinedMarketStat
 	}
 }
 
-func (u *CombinedMarketStatStream) GetStreamEvent() chan bool {
+func (u *CombinedMarketStatStream) GetEventChannel() chan bool {
 	return u.EventChannel
 }
 
@@ -49,7 +49,7 @@ func NewAllMiniMarketsStaStream(symbols []string, size int) *AllMiniMarketsStaSt
 	}
 }
 
-func (u *AllMiniMarketsStaStream) GetStreamEvent() chan bool {
+func (u *AllMiniMarketsStaStream) GetEventChannel() chan bool {
 	return u.EventChannel
 }
 
