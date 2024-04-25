@@ -80,7 +80,6 @@ func PriceSignal(
 					lastPrice = currentPrice
 				}
 			}
-			triggerEvent <- true
 			time.Sleep(pair.GetSleepingTime())
 		}
 	}()
@@ -199,7 +198,6 @@ func BuyOrSellSignal(
 						logrus.Debugf("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
 					}
 				}
-				triggerEvent <- true
 			}
 			time.Sleep(pair.GetSleepingTime())
 		}
