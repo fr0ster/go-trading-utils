@@ -347,7 +347,7 @@ func (pp *PairProcessor) StartPriceSignal() (
 				// Ціна купівлі
 				ask := bookTicker.(*book_ticker_types.BookTicker).AskPrice
 				// Ціна продажу
-				bid := bookTicker.(*book_ticker_types.BookTicker).AskPrice
+				bid := bookTicker.(*book_ticker_types.BookTicker).BidPrice
 				if last_bid == 0 || last_ask == 0 {
 					last_bid = bid
 					last_ask = ask
