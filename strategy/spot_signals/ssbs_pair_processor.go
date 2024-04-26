@@ -95,40 +95,47 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.Cre
 						pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
 					continue
 				}
-				service :=
-					pp.client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-						Type(pp.orderType).
-						Side(binance.SideTypeBuy).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-				if pp.orderType == binance.OrderTypeMarket {
-					order, err = service.Do(context.Background())
-				} else if pp.orderType == binance.OrderTypeLimit {
-					order, err = service.
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-				}
-				if err != nil {
-					logrus.Errorf("Can't create order: %v", err)
-					logrus.Errorf("Order params: %v", params)
-					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-					pp.stop <- os.Interrupt
-					return
-				}
-				pp.minuteOrderLimit.Limit++
-				pp.dayOrderLimit.Limit++
-				if order.Status == binance.OrderStatusTypeNew {
-					startBuyOrderEvent <- order
-				} else {
-					for _, fill := range order.Fills {
-						fillPrice := utils.ConvStrToFloat64(fill.Price)
-						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-						pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-						pp.pair.CalcMiddlePrice()
-						pp.pair.AddCommission(fill)
+				if !pp.debug {
+					service :=
+						pp.client.NewCreateOrderService().
+							Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+							Type(pp.orderType).
+							Side(binance.SideTypeBuy).
+							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
+					if pp.orderType == binance.OrderTypeMarket {
+						order, err = service.Do(context.Background())
+					} else if pp.orderType == binance.OrderTypeLimit {
+						order, err = service.
+							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+							TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
 					}
+					if err != nil {
+						logrus.Errorf("Can't create order: %v", err)
+						logrus.Errorf("Order params: %v", params)
+						logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+							pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+						pp.stop <- os.Interrupt
+						return
+					}
+					pp.minuteOrderLimit.Limit++
+					pp.dayOrderLimit.Limit++
+					if order.Status == binance.OrderStatusTypeNew {
+						startBuyOrderEvent <- order
+					} else {
+						for _, fill := range order.Fills {
+							fillPrice := utils.ConvStrToFloat64(fill.Price)
+							fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
+							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
+							pp.pair.CalcMiddlePrice()
+							pp.pair.AddCommission(fill)
+						}
+						pp.config.Save()
+					}
+				} else {
+					pp.pair.SetBuyQuantity(params.Quantity)
+					pp.pair.SetBuyValue(params.Quantity * params.Price)
+					pp.pair.CalcMiddlePrice()
 					pp.config.Save()
 				}
 			}
@@ -179,40 +186,47 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.C
 						pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
 					continue
 				}
-				service :=
-					pp.client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-						Type(binance.OrderTypeLimit).
-						Side(binance.SideTypeSell).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-				if pp.orderType == binance.OrderTypeMarket {
-					order, err = service.Do(context.Background())
-				} else if pp.orderType == binance.OrderTypeLimit {
-					order, err = service.
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-				}
-				if err != nil {
-					logrus.Errorf("Can't create order: %v", err)
-					logrus.Errorf("Order params: %v", params)
-					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-					pp.stop <- os.Interrupt
-					return
-				}
-				pp.minuteOrderLimit.Limit++
-				pp.dayOrderLimit.Limit++
-				if order.Status == binance.OrderStatusTypeNew {
-					startSellOrderEvent <- order
-				} else {
-					for _, fill := range order.Fills {
-						fillPrice := utils.ConvStrToFloat64(fill.Price)
-						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-						pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-						pp.pair.CalcMiddlePrice()
-						pp.pair.AddCommission(fill)
+				if !pp.debug {
+					service :=
+						pp.client.NewCreateOrderService().
+							Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+							Type(binance.OrderTypeLimit).
+							Side(binance.SideTypeSell).
+							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
+					if pp.orderType == binance.OrderTypeMarket {
+						order, err = service.Do(context.Background())
+					} else if pp.orderType == binance.OrderTypeLimit {
+						order, err = service.
+							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+							TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
 					}
+					if err != nil {
+						logrus.Errorf("Can't create order: %v", err)
+						logrus.Errorf("Order params: %v", params)
+						logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+							pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
+						pp.stop <- os.Interrupt
+						return
+					}
+					pp.minuteOrderLimit.Limit++
+					pp.dayOrderLimit.Limit++
+					if order.Status == binance.OrderStatusTypeNew {
+						startSellOrderEvent <- order
+					} else {
+						for _, fill := range order.Fills {
+							fillPrice := utils.ConvStrToFloat64(fill.Price)
+							fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
+							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
+							pp.pair.CalcMiddlePrice()
+							pp.pair.AddCommission(fill)
+						}
+						pp.config.Save()
+					}
+				} else {
+					pp.pair.SetBuyQuantity(params.Quantity)
+					pp.pair.SetBuyValue(params.Quantity * params.Price)
+					pp.pair.CalcMiddlePrice()
 					pp.config.Save()
 				}
 			}
@@ -246,37 +260,44 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startPostProcessOrderEvent
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
 					continue
 				}
-				order, err :=
-					pp.client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-						Type(binance.OrderTypeTakeProfit).
-						Side(binance.SideTypeBuy).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-				if err != nil {
-					logrus.Errorf("Can't create order: %v", err)
-					logrus.Errorf("Order params: %v", params)
-					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-					pp.stop <- os.Interrupt
-					return
-				}
-				pp.minuteOrderLimit.Limit++
-				pp.dayOrderLimit.Limit++
-				if order.Status == binance.OrderStatusTypeNew {
-					orderExecutionGuard := pp.OrderExecutionGuard(order)
-					<-orderExecutionGuard
-					startPostProcessOrderEvent <- order
-				} else {
-					for _, fill := range order.Fills {
-						fillPrice := utils.ConvStrToFloat64(fill.Price)
-						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-						pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-						pp.pair.CalcMiddlePrice()
-						pp.pair.AddCommission(fill)
+				if !pp.debug {
+					order, err :=
+						pp.client.NewCreateOrderService().
+							Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+							Type(binance.OrderTypeTakeProfit).
+							Side(binance.SideTypeBuy).
+							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
+							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+							TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+					if err != nil {
+						logrus.Errorf("Can't create order: %v", err)
+						logrus.Errorf("Order params: %v", params)
+						logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+							pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+						pp.stop <- os.Interrupt
+						return
 					}
+					pp.minuteOrderLimit.Limit++
+					pp.dayOrderLimit.Limit++
+					if order.Status == binance.OrderStatusTypeNew {
+						orderExecutionGuard := pp.OrderExecutionGuard(order)
+						<-orderExecutionGuard
+						startPostProcessOrderEvent <- order
+					} else {
+						for _, fill := range order.Fills {
+							fillPrice := utils.ConvStrToFloat64(fill.Price)
+							fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
+							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
+							pp.pair.CalcMiddlePrice()
+							pp.pair.AddCommission(fill)
+						}
+						pp.config.Save()
+					}
+				} else {
+					pp.pair.SetBuyQuantity(params.Quantity)
+					pp.pair.SetBuyValue(params.Quantity * params.Price)
+					pp.pair.CalcMiddlePrice()
 					pp.config.Save()
 				}
 			}
@@ -310,37 +331,44 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startBuyOrderEvent chan *
 					logrus.Warn("Order limits has been out!!!, waiting for update...")
 					continue
 				}
-				order, err :=
-					pp.client.NewCreateOrderService().
-						Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-						Type(binance.OrderTypeTakeProfit).
-						Side(binance.SideTypeSell).
-						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-				if err != nil {
-					logrus.Errorf("Can't create order: %v", err)
-					logrus.Errorf("Order params: %v", params)
-					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-					pp.stop <- os.Interrupt
-					return
-				}
-				pp.minuteOrderLimit.Limit++
-				pp.dayOrderLimit.Limit++
-				if order.Status == binance.OrderStatusTypeNew {
-					orderExecutionGuard := pp.OrderExecutionGuard(order)
-					<-orderExecutionGuard
-					startBuyOrderEvent <- order
-				} else {
-					for _, fill := range order.Fills {
-						fillPrice := utils.ConvStrToFloat64(fill.Price)
-						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-						pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-						pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-						pp.pair.CalcMiddlePrice()
-						pp.pair.AddCommission(fill)
+				if !pp.debug {
+					order, err :=
+						pp.client.NewCreateOrderService().
+							Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+							Type(binance.OrderTypeTakeProfit).
+							Side(binance.SideTypeSell).
+							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
+							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+							TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+					if err != nil {
+						logrus.Errorf("Can't create order: %v", err)
+						logrus.Errorf("Order params: %v", params)
+						logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+							pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
+						pp.stop <- os.Interrupt
+						return
 					}
+					pp.minuteOrderLimit.Limit++
+					pp.dayOrderLimit.Limit++
+					if order.Status == binance.OrderStatusTypeNew {
+						orderExecutionGuard := pp.OrderExecutionGuard(order)
+						<-orderExecutionGuard
+						startBuyOrderEvent <- order
+					} else {
+						for _, fill := range order.Fills {
+							fillPrice := utils.ConvStrToFloat64(fill.Price)
+							fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
+							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
+							pp.pair.CalcMiddlePrice()
+							pp.pair.AddCommission(fill)
+						}
+						pp.config.Save()
+					}
+				} else {
+					pp.pair.SetBuyQuantity(params.Quantity)
+					pp.pair.SetBuyValue(params.Quantity * params.Price)
+					pp.pair.CalcMiddlePrice()
 					pp.config.Save()
 				}
 			}
