@@ -30,10 +30,6 @@ import (
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 )
 
-const (
-	errorMsg = "Error: %v"
-)
-
 func LimitRead(degree int, symbols []string, client *futures.Client) (
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
