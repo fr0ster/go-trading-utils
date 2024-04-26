@@ -316,12 +316,12 @@ func (pp *PairProcessor) StartBuyOrSellByDepthSignal() (
 }
 
 func (pp *PairProcessor) StartPriceSignal() (
-	up chan *pair_price_types.PairPrice,
-	down chan *pair_price_types.PairPrice,
-	wait chan *pair_price_types.PairPrice) {
-	up = make(chan *pair_price_types.PairPrice, 1)
-	down = make(chan *pair_price_types.PairPrice, 1)
-	wait = make(chan *pair_price_types.PairPrice, 1)
+	up chan *pair_price_types.AskBid,
+	down chan *pair_price_types.AskBid,
+	wait chan *pair_price_types.AskBid) {
+	up = make(chan *pair_price_types.AskBid, 1)
+	down = make(chan *pair_price_types.AskBid, 1)
+	wait = make(chan *pair_price_types.AskBid, 1)
 	bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
 	if bookTicker == nil {
 		logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pp.pair.GetPair())
@@ -329,7 +329,7 @@ func (pp *PairProcessor) StartPriceSignal() (
 		return
 	}
 	go func() {
-		var last_bid, last_ask, lastPrice float64
+		var last_bid, last_ask float64
 		for {
 			select {
 			case <-pp.stop:
@@ -350,29 +350,24 @@ func (pp *PairProcessor) StartPriceSignal() (
 					last_bid = bid
 					last_ask = ask
 				}
-				if lastPrice == 0 {
-					lastPrice = (ask + bid) / 2
-				}
-				if ask == last_ask && bid == last_bid {
-					wait <- &pair_price_types.PairPrice{
-						Price: (ask + bid) / 2,
+				if ask > last_ask*(1+pp.deltaUp) || bid > last_bid*(1+pp.deltaUp) {
+					up <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairPrice{Price: ask},
+						Bid: &pair_price_types.PairPrice{Price: bid},
 					}
+					last_ask = ask
+					last_bid = bid
+				} else if ask < last_ask*(1-pp.deltaDown) || bid < last_bid*(1-pp.deltaDown) {
+					down <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairPrice{Price: ask},
+						Bid: &pair_price_types.PairPrice{Price: bid},
+					}
+					last_ask = ask
+					last_bid = bid
 				} else {
-					currentPrice := (ask + bid) / 2
-					if currentPrice > lastPrice*(1+pp.deltaUp) {
-						up <- &pair_price_types.PairPrice{
-							Price: currentPrice,
-						}
-						lastPrice = currentPrice
-					} else if currentPrice < lastPrice*(1-pp.deltaDown) {
-						down <- &pair_price_types.PairPrice{
-							Price: currentPrice,
-						}
-						lastPrice = currentPrice
-					} else {
-						wait <- &pair_price_types.PairPrice{
-							Price: currentPrice,
-						}
+					wait <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairPrice{Price: ask},
+						Bid: &pair_price_types.PairPrice{Price: bid},
 					}
 				}
 			}

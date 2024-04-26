@@ -11,6 +11,10 @@ type (
 		Price    float64
 		Quantity float64
 	}
+	AskBid struct {
+		Ask *PairPrice
+		Bid *PairPrice
+	}
 )
 
 // DepthItemType - тип для зберігання заявок в стакані
@@ -33,4 +37,12 @@ func Binance2PairPrice(binancePairPrice interface{}) (*PairPrice, error) {
 		return nil, err
 	}
 	return &val, nil
+}
+
+func (ab *AskBid) Less(than btree.Item) bool {
+	return ab.Ask.Price < than.(*AskBid).Ask.Price
+}
+
+func (ab *AskBid) Equal(than btree.Item) bool {
+	return ab.Ask.Price == than.(*AskBid).Ask.Price
 }
