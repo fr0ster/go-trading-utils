@@ -12,16 +12,20 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
+)
+
+const (
+	deltaUp   = 0.0005
+	deltaDown = 0.0005
+	degree    = 3
+	limit     = 1000
 )
 
 func RunSpotHolding(
@@ -52,17 +56,27 @@ func RunSpotHolding(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	bookTickers := book_types.New(degree)
+	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver.StartBookTickersUpdateGuard()
+	buyEvent, _ := pairObserver.StartBuyOrSellByBookTickerSignal()
 
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
+	triggerEvent := make(chan bool)
 
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-buyEvent:
+				triggerEvent <- true
+			case <-time.After(updateTime):
+				triggerEvent <- true
+			}
+		}
+	}()
 
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
-
-	collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
+	collectionOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -70,7 +84,7 @@ func RunSpotHolding(
 		buyEvent, nil, stopEvent)
 
 	<-collectionOutEvent
-	pair.SetStage(pairs_types.WorkInPositionStage)
+	pair.SetStage(pairs_types.PositionClosedStage)
 	config.Save()
 	stopEvent <- os.Interrupt
 	return nil
@@ -104,15 +118,24 @@ func RunSpotScalping(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	bookTickers := book_types.New(degree)
+	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver.StartBookTickersUpdateGuard()
+	buyEvent, sellEvent := pairObserver.StartBuyOrSellByDepthSignal()
 
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
-
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	triggerEvent := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-buyEvent:
+				triggerEvent <- true
+			case <-sellEvent:
+				triggerEvent <- true
+			}
+		}
+	}()
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -120,14 +143,14 @@ func RunSpotScalping(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
+		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.WorkInPositionStage)
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
-		workingOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
+		workingOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
 		_ = ProcessSellOrder(
 			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -166,15 +189,24 @@ func RunSpotTrading(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	bookTickers := book_types.New(degree)
+	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver.StartBookTickersUpdateGuard()
+	buyEvent, sellEvent := pairObserver.StartBuyOrSellByBookTickerSignal()
 
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
-
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
+	triggerEvent := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-buyEvent:
+				triggerEvent <- true
+			case <-sellEvent:
+				triggerEvent <- true
+			}
+		}
+	}()
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -182,7 +214,7 @@ func RunSpotTrading(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
+		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.OutputOfPositionStage)
@@ -215,102 +247,61 @@ func Run(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
-	var (
-		stopBuy         = make(chan bool)
-		stopSell        = make(chan bool)
-		stopProfitOrder = make(chan bool)
-	)
-
-	err = PairInit(client, config, account, pair)
-	if err != nil {
-		return err
-	}
-
-	RunConfigSaver(config, stopEvent, updateTime)
-
-	bookTickers := book_types.New(degree)
-
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := spot_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
-
-	triggerEvent := spot_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.GetDataChannel())
-
-	buyEvent, sellEvent := BuyOrSellSignal(account, bookTickers, pair, stopEvent, triggerEvent)
-
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
-
-			_ = ProcessBuyOrder(
-				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				buyEvent, stopBuy, stopEvent)
-
-			<-collectionOutEvent
-			pair.SetStage(pairs_types.WorkInPositionStage)
-			config.Save()
-			stopBuy <- true
-			stopEvent <- os.Interrupt
-		} else {
-			stopEvent <- os.Interrupt
-		}
+		RunSpotHolding(
+			config,
+			client,
+			degree,
+			limit,
+			pair,
+			pairInfo,
+			account,
+			stopEvent,
+			updateTime,
+			minuteOrderLimit,
+			dayOrderLimit,
+			minuteRawRequestLimit,
+			orderStatusEvent)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		_ = ProcessBuyOrder(
-			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			buyEvent, stopBuy, stopEvent)
-
-		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
-
-			<-collectionOutEvent
-			pair.SetStage(pairs_types.WorkInPositionStage)
-			config.Save()
-		}
-		if pair.GetStage() == pairs_types.WorkInPositionStage {
-			_ = ProcessSellOrder(
-				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				sellEvent, stopSell, stopEvent)
-		}
+		RunSpotScalping(
+			config,
+			client,
+			degree,
+			limit,
+			pair,
+			pairInfo,
+			account,
+			stopEvent,
+			updateTime,
+			minuteOrderLimit,
+			dayOrderLimit,
+			minuteRawRequestLimit,
+			orderStatusEvent)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		if pair.GetStage() == pairs_types.WorkInPositionStage {
-			stopEvent <- os.Interrupt
-			return fmt.Errorf("pair %v can't be in WorkInPositionStage for TradingStrategyType", pair.GetPair())
-		}
-		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, buyEvent, sellEvent)
 
-			_ = ProcessBuyOrder(
-				config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				buyEvent, stopBuy, stopEvent)
-
-			<-collectionOutEvent
-			stopBuy <- true
-			pair.SetStage(pairs_types.OutputOfPositionStage)
-			config.Save()
-		}
-		if pair.GetStage() == pairs_types.OutputOfPositionStage {
-			orderExecutionGuard := ProcessSellTakeProfitOrder(
-				config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
-				minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-				sellEvent, stopProfitOrder, stopEvent, orderStatusEvent)
-			<-orderExecutionGuard
-			pair.SetStage(pairs_types.PositionClosedStage)
-			config.Save()
-			stopEvent <- os.Interrupt
-		}
+		RunSpotTrading(
+			config,
+			client,
+			degree,
+			limit,
+			pair,
+			pairInfo,
+			account,
+			stopEvent,
+			updateTime,
+			minuteOrderLimit,
+			dayOrderLimit,
+			minuteRawRequestLimit,
+			orderStatusEvent)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

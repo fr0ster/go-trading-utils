@@ -24,7 +24,7 @@ import (
 )
 
 type (
-	PairProcessor struct {
+	PairObserver struct {
 		client           *binance.Client
 		pair             pairs_interfaces.Pairs
 		account          *spot_account.Account
@@ -46,7 +46,7 @@ type (
 	}
 )
 
-func (pp *PairProcessor) GetBookTicker() *book_ticker_types.BookTicker {
+func (pp *PairObserver) GetBookTicker() *book_ticker_types.BookTicker {
 	btk := pp.bookTickers.Get(pp.pair.GetPair())
 	if btk == nil {
 		return nil
@@ -54,19 +54,19 @@ func (pp *PairProcessor) GetBookTicker() *book_ticker_types.BookTicker {
 	return btk.(*book_ticker_types.BookTicker)
 }
 
-func (pp *PairProcessor) GetBookTickerStream() *spot_streams.BookTickerStream {
+func (pp *PairObserver) GetBookTickerStream() *spot_streams.BookTickerStream {
 	return pp.bookTickerStream
 }
 
-func (pp *PairProcessor) GetDepth() *depth_types.Depth {
+func (pp *PairObserver) GetDepth() *depth_types.Depth {
 	return pp.depths
 }
 
-func (pp *PairProcessor) GetDepthStream() *spot_streams.DepthStream {
+func (pp *PairObserver) GetDepthStream() *spot_streams.DepthStream {
 	return pp.depthsStream
 }
 
-func (pp *PairProcessor) GetBookTickerAskBid() (bid float64, ask float64, err error) {
+func (pp *PairObserver) GetBookTickerAskBid() (bid float64, ask float64, err error) {
 	btk := pp.bookTickers.Get(pp.pair.GetPair())
 	if btk == nil {
 		err = fmt.Errorf("can't get bookTicker for %s", pp.pair.GetPair())
@@ -77,7 +77,7 @@ func (pp *PairProcessor) GetBookTickerAskBid() (bid float64, ask float64, err er
 	return
 }
 
-func (pp *PairProcessor) GetDepthAskBid() (bid float64, ask float64, err error) {
+func (pp *PairObserver) GetDepthAskBid() (bid float64, ask float64, err error) {
 	minAsk := pp.depths.GetAsks().Min()
 	if minAsk == nil {
 		err = fmt.Errorf("can't get min ask")
@@ -91,7 +91,7 @@ func (pp *PairProcessor) GetDepthAskBid() (bid float64, ask float64, err error) 
 	return
 }
 
-func (pp *PairProcessor) StartBuyOrSellByBookTickerSignal() (
+func (pp *PairObserver) StartBuyOrSellByBookTickerSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 	buyEvent = make(chan *pair_price_types.PairPrice, 1)
@@ -207,7 +207,7 @@ func (pp *PairProcessor) StartBuyOrSellByBookTickerSignal() (
 	return
 }
 
-func (pp *PairProcessor) StartBuyOrSellByDepthSignal() (
+func (pp *PairObserver) StartBuyOrSellByDepthSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
 	buyEvent = make(chan *pair_price_types.PairPrice, 1)
@@ -319,7 +319,7 @@ func (pp *PairProcessor) StartBuyOrSellByDepthSignal() (
 	return
 }
 
-func (pp *PairProcessor) StartPriceSignal() (
+func (pp *PairObserver) StartPriceSignal() (
 	askUp chan *pair_price_types.AskBid,
 	askDown chan *pair_price_types.AskBid,
 	bidUp chan *pair_price_types.AskBid,
@@ -389,17 +389,17 @@ func (pp *PairProcessor) StartPriceSignal() (
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
-func (pp *PairProcessor) StartBookTickersUpdateGuard() chan bool {
+func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {
 	pp.bookTickerEvent = spot_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.GetDataChannel())
 	return pp.bookTickerEvent
 }
 
-func (pp *PairProcessor) StartDepthsUpdateGuard() chan bool {
+func (pp *PairObserver) StartDepthsUpdateGuard() chan bool {
 	pp.depthEvent = spot_handlers.GetDepthsUpdateGuard(pp.depths, pp.depthsStream.GetDataChannel())
 	return pp.depthEvent
 }
 
-func NewPairProcessor(
+func NewPairObserver(
 	client *binance.Client,
 	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
@@ -407,8 +407,8 @@ func NewPairProcessor(
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) *PairProcessor {
-	pp := &PairProcessor{
+	stop chan os.Signal) *PairObserver {
+	pp := &PairObserver{
 		client:           client,
 		pair:             pair,
 		account:          account,
