@@ -67,11 +67,12 @@ func NewPartialDepthStreamWithRate(symbol string, levels int, rate Rate, size in
 	}
 }
 
-func (u *PartialDepthServeWithRate) GetStreamEvent() (doneC, stopC chan struct{}, err error) {
-	wsHandler := func(event *futures.WsDepthEvent) {
-		u.DataChannel <- event
-	}
-	return futures.WsPartialDepthServe(u.symbol, u.levels, wsHandler, utils.HandleErr)
+func (u *PartialDepthServeWithRate) GetDataChannel() chan *futures.WsDepthEvent {
+	return u.DataChannel
+}
+
+func (u *PartialDepthServeWithRate) GetEventChannel() chan bool {
+	return u.EventChannel
 }
 
 func (u *PartialDepthServeWithRate) Start() (doneC, stopC chan struct{}, err error) {
@@ -100,7 +101,7 @@ func NewDiffDepthStream(symbol string, size int) *DiffDepthStream {
 	}
 }
 
-func (u *DiffDepthStream) GetStreamEvent() chan bool {
+func (u *DiffDepthStream) GetEventChannel() chan bool {
 	return u.EventChannel
 }
 

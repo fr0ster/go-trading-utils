@@ -12,16 +12,20 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	book_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
+)
+
+const (
+	deltaUp   = 0.0005
+	deltaDown = 0.0005
+	degree    = 3
+	limit     = 1000
 )
 
 func Run(
@@ -38,12 +42,6 @@ func Run(
 	dayOrderLimit *exchange_types.RateLimits,
 	minuteRawRequestLimit *exchange_types.RateLimits,
 	orderStatusEvent chan *futures.WsUserDataEvent) (err error) {
-	// var (
-	// 	depth           *depth_types.Depth
-	// 	stopBuy         = make(chan bool)
-	// 	stopSell        = make(chan bool)
-	// 	stopProfitOrder = make(chan bool)
-	// )
 
 	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
 	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
@@ -68,20 +66,39 @@ func Run(
 		config.Save()
 	}
 
-	bookTickers := book_types.New(degree)
+	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver.StartBookTickersUpdateGuard()
+	riskEvent := pairObserver.StartRiskSignal()
+	askUp, askDown, bidUp, bidDown := pairObserver.StartPriceSignal()
 
-	// Запускаємо потік для отримання оновлення bookTickers
-	bookTickerStream := futures_streams.NewBookTickerStream(pair.GetPair(), 1)
-	bookTickerStream.Start()
+	triggerEvent := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-riskEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-askUp:
+				triggerEvent <- true
+			case <-askDown:
+				triggerEvent <- true
+			case <-bidUp:
+				triggerEvent <- true
+			case <-bidDown:
+				triggerEvent <- true
+			}
+		}
+	}()
 
-	triggerEvent4Risk := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-	triggerEvent4Price := futures_handlers.GetBookTickersUpdateGuard(bookTickers, bookTickerStream.DataChannel)
-
-	// Запускаємо потік для контролю ризиків позиції
-	RiskSignal(account, pair, stopEvent, triggerEvent4Risk)
-
-	// Запускаємо потік для отримання сигналів росту та падіння ціни
-	_, _ = PriceSignal(bookTickers, pair, stopEvent, triggerEvent4Price)
+	pairProcessor, err :=
+		NewPairProcessor(
+			config, client, pair, futures.OrderTypeMarket, nil, nil, askUp, askDown, bidUp, bidDown)
+	if err != nil {
+		return err
+	}
 
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
@@ -99,21 +116,34 @@ func Run(
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		logrus.Warnf("Uncorrected strategy: %v", pair.GetStrategy())
+		collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
+
+		_ = pairProcessor.ProcessBuyOrder()
+
+		<-collectionOutEvent
+		pair.SetStage(pairs_types.PositionClosedStage)
+		config.Save()
 		stopEvent <- os.Interrupt
-		return fmt.Errorf("scalping strategy is not implemented yet for %v", pair.GetPair())
+		return nil
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
+		_ = pairProcessor.ProcessBuyOrder()
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
-			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
-		}
-		if pair.GetStage() == pairs_types.WorkInPositionStage {
-			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
+			collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
+
+			<-collectionOutEvent
+			pair.SetStage(pairs_types.OutputOfPositionStage)
+			config.Save()
 		}
 		if pair.GetStage() == pairs_types.OutputOfPositionStage {
-			logrus.Warnf("Stage %v is not implemented yet for %v", pair.GetStage(), pair.GetPair())
+			orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
+			<-orderExecutionGuard
+			pair.SetStage(pairs_types.PositionClosedStage)
+			config.Save()
+			stopEvent <- os.Interrupt
 		}
+		return nil
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

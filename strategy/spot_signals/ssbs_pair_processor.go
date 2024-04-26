@@ -285,143 +285,75 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startBuyOrderEvent chan *
 	return
 }
 
-// func ProcessAfterBuyOrder(
-// 	config *config_types.ConfigFile,
-// 	client *binance.Client,
-// 	pair pairs_interfaces.Pairs,
-// 	pairInfo *symbol_info_types.SpotSymbol,
-// 	minuteOrderLimit *exchange_types.RateLimits,
-// 	dayOrderLimit *exchange_types.RateLimits,
-// 	minuteRawRequestLimit *exchange_types.RateLimits,
-// 	buyEvent chan *pair_price_types.PairPrice,
-// 	stopEvent chan os.Signal,
-// 	orderStatusEvent chan *binance.WsUserDataEvent,
-// 	stopBuy chan bool,
-// 	stopSell chan bool,
-// 	startBuyOrderEvent chan *binance.CreateOrderResponse) {
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-stopBuy:
-// 				stopBuy <- true
-// 				return
-// 			case <-stopSell:
-// 				stopSell <- true
-// 				return
-// 			case <-stopEvent:
-// 				stopEvent <- os.Interrupt
-// 				return
-// 			case order := <-startBuyOrderEvent:
-// 				if order != nil {
-// 					for {
-// 						orderEvent := <-orderStatusEvent
-// 						logrus.Debug("Order status changed")
-// 						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-// 							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-// 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-// 								pair.SetBuyQuantity(pair.GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-// 								pair.SetBuyValue(pair.GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-// 								pair.CalcMiddlePrice()
-// 								config.Save()
-// 								break
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}()
-// }
+func (pp *PairProcessor) ProcessAfterBuyOrder(startBuyOrderEvent chan *binance.CreateOrderResponse) {
+	go func() {
+		for {
+			select {
+			case <-pp.stopBuy:
+				pp.stopBuy <- true
+				return
+			case <-pp.stopSell:
+				pp.stopSell <- true
+				return
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case order := <-startBuyOrderEvent:
+				if order != nil {
+					for {
+						orderEvent := <-pp.orderStatusEvent
+						logrus.Debug("Order status changed")
+						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
+							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
+								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
+								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+								pp.pair.SetBuyValue(pp.pair.GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								pp.pair.CalcMiddlePrice()
+								pp.config.Save()
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}()
+}
 
-// func ProcessAfterSellOrder(
-// 	config *config_types.ConfigFile,
-// 	client *binance.Client,
-// 	pair pairs_interfaces.Pairs,
-// 	pairInfo *symbol_info_types.SpotSymbol,
-// 	minuteOrderLimit *exchange_types.RateLimits,
-// 	dayOrderLimit *exchange_types.RateLimits,
-// 	minuteRawRequestLimit *exchange_types.RateLimits,
-// 	sellEvent chan *pair_price_types.PairPrice,
-// 	stopBuy chan bool,
-// 	stopSell chan bool,
-// 	stopEvent chan os.Signal,
-// 	orderStatusEvent chan *binance.WsUserDataEvent,
-// 	startSellOrderEvent chan *binance.CreateOrderResponse) {
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-stopBuy:
-// 				stopBuy <- true
-// 				return
-// 			case <-stopSell:
-// 				stopSell <- true
-// 				return
-// 			case <-stopEvent:
-// 				stopEvent <- os.Interrupt
-// 				return
-// 			case order := <-startSellOrderEvent:
-// 				if order != nil {
-// 					for {
-// 						orderEvent := <-orderStatusEvent
-// 						logrus.Debug("Order status changed")
-// 						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-// 							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-// 								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-// 								pair.SetSellQuantity(pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-// 								pair.SetSellValue(pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-// 								pair.CalcMiddlePrice()
-// 								config.Save()
-// 								break
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}()
-// }
-
-// func OrderExecutionGuard(
-// 	config *config_types.ConfigFile,
-// 	client *binance.Client,
-// 	pair pairs_interfaces.Pairs,
-// 	pairInfo *symbol_info_types.SpotSymbol,
-// 	minuteOrderLimit *exchange_types.RateLimits,
-// 	dayOrderLimit *exchange_types.RateLimits,
-// 	minuteRawRequestLimit *exchange_types.RateLimits,
-// 	stopProcess chan bool,
-// 	stopEvent chan os.Signal,
-// 	orderStatusEvent chan *binance.WsUserDataEvent,
-// 	order *binance.CreateOrderResponse) (orderExecuted chan bool) {
-// 	orderExecuted = make(chan bool)
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-stopProcess:
-// 				stopProcess <- true
-// 				return
-// 			case <-stopEvent:
-// 				stopEvent <- os.Interrupt
-// 				return
-// 			case orderEvent := <-orderStatusEvent:
-// 				logrus.Debug("Order status changed")
-// 				if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-// 					if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-// 						orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-// 						pair.SetSellQuantity(pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-// 						pair.SetSellValue(pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-// 						pair.CalcMiddlePrice()
-// 						pair.SetStage(pairs_types.PositionClosedStage)
-// 						config.Save()
-// 						orderExecuted <- true
-// 						return
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}()
-// 	return
-// }
+func (pp *PairProcessor) ProcessAfterSellOrder(startSellOrderEvent chan *binance.CreateOrderResponse) {
+	go func() {
+		for {
+			select {
+			case <-pp.stopBuy:
+				pp.stopBuy <- true
+				return
+			case <-pp.stopSell:
+				pp.stopSell <- true
+				return
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case order := <-startSellOrderEvent:
+				if order != nil {
+					for {
+						orderEvent := <-pp.orderStatusEvent
+						logrus.Debug("Order status changed")
+						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
+							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
+								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
+								pp.pair.SetSellQuantity(pp.pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
+								pp.pair.SetSellValue(pp.pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
+								pp.pair.CalcMiddlePrice()
+								pp.config.Save()
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}()
+}
 
 func (pp *PairProcessor) LimitUpdaterStream() {
 
@@ -456,18 +388,7 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 	}()
 }
 
-func (pp *PairProcessor) OrderExecutionGuard(
-	// config *config_types.ConfigFile,
-	// client *binance.Client,
-	// pair pairs_interfaces.Pairs,
-	// pairInfo *symbol_info_types.SpotSymbol,
-	// minuteOrderLimit *exchange_types.RateLimits,
-	// dayOrderLimit *exchange_types.RateLimits,
-	// minuteRawRequestLimit *exchange_types.RateLimits,
-	// stopProcess chan bool,
-	// stopEvent chan os.Signal,
-	// orderStatusEvent chan *binance.WsUserDataEvent,
-	order *binance.CreateOrderResponse) (orderExecuted chan bool) {
+func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse) (orderExecuted chan bool) {
 	orderExecuted = pp.orderExecuted
 	go func() {
 		for {
