@@ -76,7 +76,7 @@ func RunSpotHolding(
 		}
 	}()
 
-	collectionOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
+	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
 	_ = ProcessBuyOrder(
 		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
@@ -143,14 +143,14 @@ func RunSpotScalping(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
+		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.WorkInPositionStage)
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
-		workingOutEvent := StopWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
+		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 		_ = ProcessSellOrder(
 			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
 			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
@@ -214,7 +214,7 @@ func RunSpotTrading(
 		buyEvent, nil, stopEvent)
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
-		collectionOutEvent := StartWorkInPositionSignal(account, pair, stopEvent, triggerEvent)
+		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.OutputOfPositionStage)
