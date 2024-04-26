@@ -404,7 +404,7 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case <-pp.bookTickerEvent: // Чекаємо на спрацювання тригера на зміну ціни
+			case <-pp.depthEvent: // Чекаємо на спрацювання тригера на зміну ціни
 				// Ціна купівлі
 				ask,
 					// Ціна продажу
