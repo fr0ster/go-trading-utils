@@ -322,7 +322,7 @@ func (pp *PairObserver) StartBuyOrSellByDepthSignal() (
 	return
 }
 
-func (pp *PairObserver) StartPriceSignal() (
+func (pp *PairObserver) StartPriceByBookTickerSignal() (
 	askUp chan *pair_price_types.AskBid,
 	askDown chan *pair_price_types.AskBid,
 	bidUp chan *pair_price_types.AskBid,
@@ -351,6 +351,69 @@ func (pp *PairObserver) StartPriceSignal() (
 				ask := bookTicker.(*book_ticker_types.BookTicker).AskPrice
 				// Ціна продажу
 				bid := bookTicker.(*book_ticker_types.BookTicker).BidPrice
+				if last_bid == 0 || last_ask == 0 {
+					last_bid = bid
+					last_ask = ask
+				}
+				if ask > last_ask*(1+pp.deltaUp) {
+					pp.askUp <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
+					}
+					last_ask = ask
+					last_bid = bid
+				} else if ask < last_ask*(1-pp.deltaDown) {
+					pp.askDown <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
+					}
+					last_ask = ask
+					last_bid = bid
+				}
+				if bid > last_bid*(1+pp.deltaUp) {
+					pp.bidUp <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
+					}
+					last_ask = ask
+					last_bid = bid
+				} else if bid < last_bid*(1-pp.deltaDown) {
+					pp.bidDown <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
+					}
+					last_ask = ask
+					last_bid = bid
+				}
+			}
+			time.Sleep(pp.pair.GetSleepingTime())
+		}
+	}()
+	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
+}
+
+func (pp *PairObserver) StartPriceByDepthSignal() (
+	askUp chan *pair_price_types.AskBid,
+	askDown chan *pair_price_types.AskBid,
+	bidUp chan *pair_price_types.AskBid,
+	bidDown chan *pair_price_types.AskBid) {
+	go func() {
+		var last_bid, last_ask float64
+		for {
+			select {
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case <-pp.bookTickerEvent: // Чекаємо на спрацювання тригера на зміну ціни
+				// Ціна купівлі
+				ask,
+					// Ціна продажу
+					bid, err := pp.GetDepthAskBid()
+				if err != nil {
+					logrus.Errorf("Can't get ask and bid from depth: %v", err)
+					pp.stop <- os.Interrupt
+					return
+				}
 				if last_bid == 0 || last_ask == 0 {
 					last_bid = bid
 					last_ask = ask
