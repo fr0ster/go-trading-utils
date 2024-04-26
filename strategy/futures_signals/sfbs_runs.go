@@ -16,7 +16,6 @@ import (
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 const (
@@ -32,7 +31,6 @@ func Run(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.FuturesSymbol,
 	stopEvent chan os.Signal) (err error) {
 
 	account, err := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
