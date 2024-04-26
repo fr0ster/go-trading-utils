@@ -508,17 +508,16 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
 
 func NewPairObserver(
 	client *binance.Client,
-	account *spot_account.Account,
 	pair pairs_interfaces.Pairs,
 	degree int,
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) *PairObserver {
-	pp := &PairObserver{
+	stop chan os.Signal) (pp *PairObserver, err error) {
+	pp = &PairObserver{
 		client:           client,
 		pair:             pair,
-		account:          account,
+		account:          nil,
 		stop:             stop,
 		degree:           degree,
 		limit:            limit,
@@ -535,6 +534,11 @@ func NewPairObserver(
 		bidUp:            make(chan *pair_price_types.AskBid, 1),
 		bidDown:          make(chan *pair_price_types.AskBid, 1),
 	}
+	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
+	}
+
 	pp.bookTickers = book_ticker_types.New(degree)
 	pp.depths = depth_types.New(degree, pp.pair.GetPair())
 
@@ -548,5 +552,5 @@ func NewPairObserver(
 	pp.depthsStream.Start()
 	spot_depths.Init(pp.depths, client, pp.limit)
 
-	return pp
+	return
 }

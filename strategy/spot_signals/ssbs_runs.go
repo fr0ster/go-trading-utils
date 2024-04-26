@@ -18,7 +18,6 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 const (
@@ -34,7 +33,6 @@ func RunSpotHolding(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
@@ -56,7 +54,10 @@ func RunSpotHolding(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, _ := pairObserver.StartBuyOrSellByBookTickerSignal()
 
@@ -100,7 +101,6 @@ func RunSpotScalping(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
@@ -122,7 +122,10 @@ func RunSpotScalping(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, sellEvent := pairObserver.StartBuyOrSellByDepthSignal()
 
@@ -174,7 +177,6 @@ func RunSpotTrading(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
@@ -196,7 +198,10 @@ func RunSpotTrading(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
-	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, sellEvent := pairObserver.StartBuyOrSellByBookTickerSignal()
 
@@ -247,7 +252,6 @@ func Run(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	pairInfo *symbol_info_types.SpotSymbol,
 	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
@@ -267,7 +271,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			pairInfo,
 			account,
 			stopEvent,
 			updateTime,
@@ -284,7 +287,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			pairInfo,
 			account,
 			stopEvent,
 			updateTime,
@@ -302,7 +304,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			pairInfo,
 			account,
 			stopEvent,
 			updateTime,
