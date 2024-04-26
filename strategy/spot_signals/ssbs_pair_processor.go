@@ -52,6 +52,7 @@ type (
 		userDataStream4Order  *spot_streams.UserDataStream
 		pairInfo              *symbol_types.SpotSymbol
 		degree                int
+		debug                 bool
 	}
 )
 
@@ -489,7 +490,8 @@ func NewPairProcessor(
 	pair pairs_interfaces.Pairs,
 	orderType binance.OrderType,
 	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice) (pp *PairProcessor, err error) {
+	sellEvent chan *pair_price_types.PairPrice,
+	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		client:                client,
 		pair:                  pair,
@@ -510,6 +512,7 @@ func NewPairProcessor(
 		orderExecuted:         make(chan bool, 1),
 		orderStatusEvent:      nil,
 		degree:                3,
+		debug:                 debug,
 	}
 	pp.updateTime,
 		pp.minuteOrderLimit,

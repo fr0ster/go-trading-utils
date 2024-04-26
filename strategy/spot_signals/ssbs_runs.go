@@ -15,6 +15,7 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -32,7 +33,8 @@ func RunSpotHolding(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration) (err error) {
+	updateTime time.Duration,
+	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -58,6 +60,7 @@ func RunSpotHolding(
 	}
 	pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, _ := pairObserver.StartBuyOrSellByBookTickerSignal()
+	sellEvent := make(chan *pair_price_types.PairPrice)
 
 	triggerEvent := make(chan bool)
 
@@ -79,7 +82,7 @@ func RunSpotHolding(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, nil)
+			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -100,7 +103,8 @@ func RunSpotScalping(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration) (err error) {
+	updateTime time.Duration,
+	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -144,7 +148,7 @@ func RunSpotScalping(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent)
+			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -176,7 +180,8 @@ func RunSpotTrading(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration) (err error) {
+	updateTime time.Duration,
+	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -220,7 +225,7 @@ func RunSpotTrading(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent)
+			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -251,7 +256,8 @@ func Run(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration) (err error) {
+	updateTime time.Duration,
+	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
@@ -265,7 +271,8 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime)
+			updateTime,
+			debug)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
@@ -276,7 +283,8 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime)
+			updateTime,
+			debug)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
@@ -288,7 +296,8 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime)
+			updateTime,
+			debug)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

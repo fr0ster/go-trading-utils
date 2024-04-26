@@ -31,7 +31,8 @@ func Run(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	stopEvent chan os.Signal) (err error) {
+	stopEvent chan os.Signal,
+	debug bool) (err error) {
 
 	account, err := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {
@@ -69,7 +70,7 @@ func Run(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, futures.OrderTypeMarket, nil, nil, askUp, askDown, bidUp, bidDown)
+			config, client, pair, futures.OrderTypeMarket, nil, nil, askUp, askDown, bidUp, bidDown, debug)
 	if err != nil {
 		return err
 	}
