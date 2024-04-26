@@ -221,6 +221,70 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.C
 	return
 }
 
+func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startPostProcessOrderEvent chan *binance.CreateOrderResponse) {
+	symbol, err := (*pp.pairInfo).GetSpotSymbol()
+	if err != nil {
+		log.Printf(errorMsg, err)
+		return
+	}
+	var (
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
+	)
+	go func() {
+		for {
+			select {
+			case <-pp.stopAfterProcess:
+				pp.stopAfterProcess <- true
+				return
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case params := <-pp.buyEvent:
+				if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
+					logrus.Warn("Order limits has been out!!!, waiting for update...")
+					continue
+				}
+				order, err :=
+					pp.client.NewCreateOrderService().
+						Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+						Type(binance.OrderTypeTakeProfit).
+						Side(binance.SideTypeBuy).
+						Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
+						Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
+						TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+				if err != nil {
+					logrus.Errorf("Can't create order: %v", err)
+					logrus.Errorf("Order params: %v", params)
+					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
+						pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+					pp.stop <- os.Interrupt
+					return
+				}
+				pp.minuteOrderLimit.Limit++
+				pp.dayOrderLimit.Limit++
+				if order.Status == binance.OrderStatusTypeNew {
+					orderExecutionGuard := pp.OrderExecutionGuard(order)
+					<-orderExecutionGuard
+					startPostProcessOrderEvent <- order
+				} else {
+					for _, fill := range order.Fills {
+						fillPrice := utils.ConvStrToFloat64(fill.Price)
+						fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
+						pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
+						pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
+						pp.pair.CalcMiddlePrice()
+						pp.pair.AddCommission(fill)
+					}
+					pp.config.Save()
+				}
+			}
+			time.Sleep(pp.pair.GetSleepingTime())
+		}
+	}()
+	return
+}
+
 func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startBuyOrderEvent chan *binance.CreateOrderResponse) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
@@ -257,7 +321,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startBuyOrderEvent chan *
 					logrus.Errorf("Can't create order: %v", err)
 					logrus.Errorf("Order params: %v", params)
 					logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-						pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
+						pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
 					pp.stop <- os.Interrupt
 					return
 				}
