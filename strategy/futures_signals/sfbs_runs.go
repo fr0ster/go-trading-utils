@@ -91,6 +91,9 @@ func Run(
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
+		if pair.GetStage() == pairs_types.PositionClosedStage {
+			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+		}
 		collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
 		_ = pairProcessor.ProcessBuyOrder()
@@ -103,6 +106,9 @@ func Run(
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
+		if pair.GetStage() == pairs_types.PositionClosedStage {
+			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+		}
 		_ = pairProcessor.ProcessBuyOrder()
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)

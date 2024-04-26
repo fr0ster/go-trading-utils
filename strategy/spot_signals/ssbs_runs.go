@@ -41,6 +41,9 @@ func RunSpotHolding(
 	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
+	if pair.GetStage() == pairs_types.PositionClosedStage || pair.GetStage() == pairs_types.OutputOfPositionStage {
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {
@@ -110,6 +113,9 @@ func RunSpotScalping(
 	}
 	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+	if pair.GetStage() == pairs_types.PositionClosedStage {
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
@@ -187,6 +193,9 @@ func RunSpotTrading(
 	}
 	if pair.GetStrategy() != pairs_types.TradingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+	if pair.GetStage() == pairs_types.PositionClosedStage {
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
