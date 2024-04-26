@@ -12,7 +12,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -33,7 +32,6 @@ func RunSpotHolding(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -45,6 +43,11 @@ func RunSpotHolding(
 	}
 	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+
+	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
 	}
 
 	err = PairInit(client, config, account, pair)
@@ -101,7 +104,6 @@ func RunSpotScalping(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -113,6 +115,11 @@ func RunSpotScalping(
 	}
 	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+
+	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
 	}
 
 	err = PairInit(client, config, account, pair)
@@ -177,7 +184,6 @@ func RunSpotTrading(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -189,6 +195,11 @@ func RunSpotTrading(
 	}
 	if pair.GetStrategy() != pairs_types.TradingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+
+	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
 	}
 
 	err = PairInit(client, config, account, pair)
@@ -252,7 +263,6 @@ func Run(
 	degree int,
 	limit int,
 	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
@@ -271,7 +281,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			account,
 			stopEvent,
 			updateTime,
 			minuteOrderLimit,
@@ -287,7 +296,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			account,
 			stopEvent,
 			updateTime,
 			minuteOrderLimit,
@@ -304,7 +312,6 @@ func Run(
 			degree,
 			limit,
 			pair,
-			account,
 			stopEvent,
 			updateTime,
 			minuteOrderLimit,
