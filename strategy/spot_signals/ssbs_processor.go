@@ -39,6 +39,10 @@ type (
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
+		askUp            chan *pair_price_types.AskBid
+		askDown          chan *pair_price_types.AskBid
+		bidUp            chan *pair_price_types.AskBid
+		bidDown          chan *pair_price_types.AskBid
 	}
 )
 
@@ -316,12 +320,10 @@ func (pp *PairProcessor) StartBuyOrSellByDepthSignal() (
 }
 
 func (pp *PairProcessor) StartPriceSignal() (
-	up chan *pair_price_types.AskBid,
-	down chan *pair_price_types.AskBid,
-	wait chan *pair_price_types.AskBid) {
-	up = make(chan *pair_price_types.AskBid, 1)
-	down = make(chan *pair_price_types.AskBid, 1)
-	wait = make(chan *pair_price_types.AskBid, 1)
+	askUp chan *pair_price_types.AskBid,
+	askDown chan *pair_price_types.AskBid,
+	bidUp chan *pair_price_types.AskBid,
+	bidDown chan *pair_price_types.AskBid) {
 	bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
 	if bookTicker == nil {
 		logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pp.pair.GetPair())
@@ -350,31 +352,45 @@ func (pp *PairProcessor) StartPriceSignal() (
 					last_bid = bid
 					last_ask = ask
 				}
-				if ask > last_ask*(1+pp.deltaUp) || bid > last_bid*(1+pp.deltaUp) {
-					up <- &pair_price_types.AskBid{
+				if ask > last_ask*(1+pp.deltaUp) {
+					pp.askUp <- &pair_price_types.AskBid{
 						Ask: &pair_price_types.PairPrice{Price: ask},
 						Bid: &pair_price_types.PairPrice{Price: bid},
 					}
 					last_ask = ask
 					last_bid = bid
-				} else if ask < last_ask*(1-pp.deltaDown) || bid < last_bid*(1-pp.deltaDown) {
-					down <- &pair_price_types.AskBid{
+					continue
+				} else if ask < last_ask*(1-pp.deltaDown) {
+					pp.askDown <- &pair_price_types.AskBid{
 						Ask: &pair_price_types.PairPrice{Price: ask},
 						Bid: &pair_price_types.PairPrice{Price: bid},
 					}
 					last_ask = ask
 					last_bid = bid
-				} else {
-					wait <- &pair_price_types.AskBid{
+					continue
+				}
+				if bid > last_bid*(1+pp.deltaUp) {
+					pp.bidUp <- &pair_price_types.AskBid{
 						Ask: &pair_price_types.PairPrice{Price: ask},
 						Bid: &pair_price_types.PairPrice{Price: bid},
 					}
+					last_ask = ask
+					last_bid = bid
+					continue
+				} else if bid < last_bid*(1-pp.deltaDown) {
+					pp.bidDown <- &pair_price_types.AskBid{
+						Ask: &pair_price_types.PairPrice{Price: ask},
+						Bid: &pair_price_types.PairPrice{Price: bid},
+					}
+					last_ask = ask
+					last_bid = bid
+					continue
 				}
 			}
 			time.Sleep(pp.pair.GetSleepingTime())
 		}
 	}()
-	return
+	return pp.askDown, pp.askUp, pp.bidDown, pp.bidUp
 }
 
 func (pp *PairProcessor) StartBookTickersUpdateGuard() chan bool {
@@ -411,6 +427,10 @@ func NewPairProcessor(
 		depthsStream:     spot_streams.NewDepthStream(pair.GetPair(), true, 1),
 		bookTickerEvent:  make(chan bool),
 		depthEvent:       make(chan bool),
+		askUp:            make(chan *pair_price_types.AskBid, 1),
+		askDown:          make(chan *pair_price_types.AskBid, 1),
+		bidUp:            make(chan *pair_price_types.AskBid, 1),
+		bidDown:          make(chan *pair_price_types.AskBid, 1),
 	}
 	pp.bookTickers = book_ticker_types.New(degree)
 	pp.depths = depth_types.New(degree, pp.pair.GetPair())
