@@ -386,7 +386,7 @@ func (pp *PairProcessor) StartPriceSignal() (
 			time.Sleep(pp.pair.GetSleepingTime())
 		}
 	}()
-	return pp.askDown, pp.askUp, pp.bidDown, pp.bidUp
+	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
 func (pp *PairProcessor) StartBookTickersUpdateGuard() chan bool {
