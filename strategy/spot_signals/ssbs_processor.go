@@ -37,6 +37,8 @@ type (
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
 		stop             chan os.Signal
+		deltaUp          float64
+		deltaDown        float64
 	}
 )
 
@@ -357,16 +359,20 @@ func (pp *PairProcessor) StartPriceSignal() (
 					}
 				} else {
 					currentPrice := (ask + bid) / 2
-					if currentPrice > lastPrice {
+					if currentPrice > lastPrice*(1+pp.deltaUp) {
 						up <- &pair_price_types.PairPrice{
 							Price: currentPrice,
 						}
 						lastPrice = currentPrice
-					} else if currentPrice < lastPrice {
+					} else if currentPrice < lastPrice*(1-pp.deltaDown) {
 						down <- &pair_price_types.PairPrice{
 							Price: currentPrice,
 						}
 						lastPrice = currentPrice
+					} else {
+						wait <- &pair_price_types.PairPrice{
+							Price: currentPrice,
+						}
 					}
 				}
 			}
@@ -392,6 +398,8 @@ func NewPairProcessor(
 	pair pairs_interfaces.Pairs,
 	degree int,
 	limit int,
+	deltaUp float64,
+	deltaDown float64,
 	stop chan os.Signal) *PairProcessor {
 	pp := &PairProcessor{
 		client:           client,
@@ -400,6 +408,8 @@ func NewPairProcessor(
 		stop:             stop,
 		degree:           degree,
 		limit:            limit,
+		deltaUp:          deltaUp,
+		deltaDown:        deltaDown,
 		bookTickers:      nil,
 		bookTickerStream: spot_streams.NewBookTickerStream(pair.GetPair(), 1),
 		depths:           nil,
