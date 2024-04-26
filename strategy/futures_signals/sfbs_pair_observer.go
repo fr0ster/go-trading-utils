@@ -41,12 +41,10 @@ type (
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
-		// buyEvent         chan *pair_price_types.PairPrice
-		// sellEvent        chan *pair_price_types.PairPrice
-		askUp   chan *pair_price_types.AskBid
-		askDown chan *pair_price_types.AskBid
-		bidUp   chan *pair_price_types.AskBid
-		bidDown chan *pair_price_types.AskBid
+		askUp            chan *pair_price_types.AskBid
+		askDown          chan *pair_price_types.AskBid
+		bidUp            chan *pair_price_types.AskBid
+		bidDown          chan *pair_price_types.AskBid
 	}
 )
 
