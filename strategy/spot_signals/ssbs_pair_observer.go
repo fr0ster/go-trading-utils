@@ -357,30 +357,30 @@ func (pp *PairObserver) StartPriceSignal() (
 				}
 				if ask > last_ask*(1+pp.deltaUp) {
 					pp.askUp <- &pair_price_types.AskBid{
-						Ask: &pair_price_types.PairPrice{Price: ask},
-						Bid: &pair_price_types.PairPrice{Price: bid},
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) / last_bid},
 					}
 					last_ask = ask
 					last_bid = bid
 				} else if ask < last_ask*(1-pp.deltaDown) {
 					pp.askDown <- &pair_price_types.AskBid{
-						Ask: &pair_price_types.PairPrice{Price: ask},
-						Bid: &pair_price_types.PairPrice{Price: bid},
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) / last_bid},
 					}
 					last_ask = ask
 					last_bid = bid
 				}
 				if bid > last_bid*(1+pp.deltaUp) {
 					pp.bidUp <- &pair_price_types.AskBid{
-						Ask: &pair_price_types.PairPrice{Price: ask},
-						Bid: &pair_price_types.PairPrice{Price: bid},
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) / last_bid},
 					}
 					last_ask = ask
 					last_bid = bid
 				} else if bid < last_bid*(1-pp.deltaDown) {
 					pp.bidDown <- &pair_price_types.AskBid{
-						Ask: &pair_price_types.PairPrice{Price: ask},
-						Bid: &pair_price_types.PairPrice{Price: bid},
+						Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) / last_ask},
+						Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) / last_bid},
 					}
 					last_ask = ask
 					last_bid = bid

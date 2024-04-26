@@ -11,9 +11,13 @@ type (
 		Price    float64
 		Quantity float64
 	}
+	PairDelta struct {
+		Price   float64
+		Percent float64
+	}
 	AskBid struct {
-		Ask *PairPrice
-		Bid *PairPrice
+		Ask *PairDelta
+		Bid *PairDelta
 	}
 )
 
