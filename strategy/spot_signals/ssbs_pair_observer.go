@@ -474,10 +474,6 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
 			case <-triggerEvent: // Чекаємо на спрацювання тригера
 			case <-time.After(pp.pair.GetSleepingTime()): // Або просто чекаємо якийсь час
 			}
-			// Ліміт на вхід в позицію, відсоток від балансу базової валюти
-			// LimitInputIntoPosition := pair.GetLimitInputIntoPosition()
-			// Ліміт на позицію, відсоток від балансу базової валюти
-			// LimitOnPosition := pair.GetLimitOnPosition()
 			// Кількість базової валюти
 			baseBalance, err := GetBaseBalance(pp.account, pp.pair)
 			if err != nil {

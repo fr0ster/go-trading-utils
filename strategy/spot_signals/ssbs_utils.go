@@ -15,9 +15,6 @@ import (
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	spot_bookticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
-	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
-
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
@@ -45,59 +42,59 @@ func LimitRead(degree int, symbols []string, client *binance.Client) (
 	return
 }
 
-func RestBookTickerUpdater(
-	client *binance.Client,
-	stop chan os.Signal,
-	pair pairs_interfaces.Pairs,
-	limit int,
-	updateTime time.Duration,
-	bookTicker *book_ticker_types.BookTickers) {
-	go func() {
-		for {
-			select {
-			case <-stop:
-				// Якщо отримано сигнал з каналу stop, вийти з циклу
-				return
-			default:
-				err := spot_bookticker.Init(bookTicker, pair.GetPair(), client)
-				if err != nil {
-					logrus.Errorf(errorMsg, err)
-					stop <- os.Interrupt
-					return
-				}
+// func RestBookTickerUpdater(
+// 	client *binance.Client,
+// 	stop chan os.Signal,
+// 	pair pairs_interfaces.Pairs,
+// 	limit int,
+// 	updateTime time.Duration,
+// 	bookTicker *book_ticker_types.BookTickers) {
+// 	go func() {
+// 		for {
+// 			select {
+// 			case <-stop:
+// 				// Якщо отримано сигнал з каналу stop, вийти з циклу
+// 				return
+// 			default:
+// 				err := spot_bookticker.Init(bookTicker, pair.GetPair(), client)
+// 				if err != nil {
+// 					logrus.Errorf(errorMsg, err)
+// 					stop <- os.Interrupt
+// 					return
+// 				}
 
-				time.Sleep(updateTime)
-			}
-		}
-	}()
-}
+// 				time.Sleep(updateTime)
+// 			}
+// 		}
+// 	}()
+// }
 
-func RestDepthUpdater(
-	client *binance.Client,
-	stop chan os.Signal,
-	pair pairs_interfaces.Pairs,
-	limit int,
-	updateTime time.Duration,
-	depth *depth_types.Depth) {
-	go func() {
-		for {
-			select {
-			case <-stop:
-				// Якщо отримано сигнал з каналу stop, вийти з циклу
-				return
-			default:
-				err := spot_depth.Init(depth, client, limit)
-				if err != nil {
-					logrus.Errorf(errorMsg, err)
-					stop <- os.Interrupt
-					return
-				}
+// func RestDepthUpdater(
+// 	client *binance.Client,
+// 	stop chan os.Signal,
+// 	pair pairs_interfaces.Pairs,
+// 	limit int,
+// 	updateTime time.Duration,
+// 	depth *depth_types.Depth) {
+// 	go func() {
+// 		for {
+// 			select {
+// 			case <-stop:
+// 				// Якщо отримано сигнал з каналу stop, вийти з циклу
+// 				return
+// 			default:
+// 				err := spot_depth.Init(depth, client, limit)
+// 				if err != nil {
+// 					logrus.Errorf(errorMsg, err)
+// 					stop <- os.Interrupt
+// 					return
+// 				}
 
-				time.Sleep(1 * time.Second)
-			}
-		}
-	}()
-}
+// 				time.Sleep(1 * time.Second)
+// 			}
+// 		}
+// 	}()
+// }
 
 func GetPrice(client *binance.Client, symbol string) (float64, error) {
 	price, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())

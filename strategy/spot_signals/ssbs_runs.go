@@ -78,10 +78,14 @@ func RunSpotHolding(
 
 	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-	_ = ProcessBuyOrder(
-		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, nil, stopEvent)
+	pairProcessor, err :=
+		NewPairProcessor(
+			config, client, pair, binance.OrderTypeMarket, buyEvent, nil)
+	if err != nil {
+		return err
+	}
+
+	_ = pairProcessor.ProcessBuyOrder()
 
 	<-collectionOutEvent
 	pair.SetStage(pairs_types.PositionClosedStage)
@@ -137,10 +141,14 @@ func RunSpotScalping(
 		}
 	}()
 
-	_ = ProcessBuyOrder(
-		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, nil, stopEvent)
+	pairProcessor, err :=
+		NewPairProcessor(
+			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent)
+	if err != nil {
+		return err
+	}
+
+	_ = pairProcessor.ProcessBuyOrder()
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
@@ -151,12 +159,11 @@ func RunSpotScalping(
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
 		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
-		_ = ProcessSellOrder(
-			config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			sellEvent, nil, stopEvent)
+		_ = pairProcessor.ProcessSellOrder()
 
 		<-workingOutEvent
+		pair.SetStage(pairs_types.PositionClosedStage)
+		config.Save()
 	}
 	return nil
 }
@@ -208,10 +215,14 @@ func RunSpotTrading(
 		}
 	}()
 
-	_ = ProcessBuyOrder(
-		config, client, account, pair, pairInfo, binance.OrderTypeMarket,
-		minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-		buyEvent, nil, stopEvent)
+	pairProcessor, err :=
+		NewPairProcessor(
+			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent)
+	if err != nil {
+		return err
+	}
+
+	_ = pairProcessor.ProcessBuyOrder()
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
@@ -221,10 +232,7 @@ func RunSpotTrading(
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		orderExecutionGuard := ProcessSellTakeProfitOrder(
-			config, client, pair, pairInfo, binance.OrderTypeTakeProfit,
-			minuteOrderLimit, dayOrderLimit, minuteRawRequestLimit,
-			sellEvent, nil, stopEvent, orderStatusEvent)
+		orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
 		<-orderExecutionGuard
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
