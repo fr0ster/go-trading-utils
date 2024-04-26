@@ -15,7 +15,6 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -33,11 +32,7 @@ func RunSpotHolding(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
+	updateTime time.Duration) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -105,11 +100,7 @@ func RunSpotScalping(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
+	updateTime time.Duration) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -185,11 +176,7 @@ func RunSpotTrading(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
+	updateTime time.Duration) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -264,11 +251,7 @@ func Run(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *binance.WsUserDataEvent) (err error) {
+	updateTime time.Duration) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
@@ -282,11 +265,7 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime,
-			minuteOrderLimit,
-			dayOrderLimit,
-			minuteRawRequestLimit,
-			orderStatusEvent)
+			updateTime)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
@@ -297,11 +276,7 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime,
-			minuteOrderLimit,
-			dayOrderLimit,
-			minuteRawRequestLimit,
-			orderStatusEvent)
+			updateTime)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
@@ -313,11 +288,7 @@ func Run(
 			limit,
 			pair,
 			stopEvent,
-			updateTime,
-			minuteOrderLimit,
-			dayOrderLimit,
-			minuteRawRequestLimit,
-			orderStatusEvent)
+			updateTime)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
