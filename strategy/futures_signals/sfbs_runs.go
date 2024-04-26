@@ -3,7 +3,6 @@ package futures_signals
 import (
 	"fmt"
 	_ "net/http/pprof"
-	"time"
 
 	"os"
 
@@ -16,7 +15,6 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
@@ -35,36 +33,14 @@ func Run(
 	limit int,
 	pair pairs_interfaces.Pairs,
 	pairInfo *symbol_info_types.FuturesSymbol,
-	account *futures_account.Account,
-	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	minuteOrderLimit *exchange_types.RateLimits,
-	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits,
-	orderStatusEvent chan *futures.WsUserDataEvent) (err error) {
+	stopEvent chan os.Signal) (err error) {
 
-	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
-	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
-
-	if pair.GetInitialBalance() == 0 && pair.GetInitialPositionBalance() == 0 {
-		pair.SetInitialBalance(baseFree)
-		pair.SetInitialPositionBalance(targetFree * pair.GetLimitOnPosition())
-		config.Save()
+	account, err := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+	if err != nil {
+		return
 	}
 
-	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err = account.GetFreeAsset(pair.GetPair())
-		if err != nil {
-			return err
-		}
-		pair.SetBuyQuantity(targetFree)
-		price, err := GetPrice(client, pair.GetPair())
-		if err != nil {
-			return err
-		}
-		pair.SetBuyValue(targetFree * price)
-		config.Save()
-	}
+	PairInit(client, config, account, pair)
 
 	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	pairObserver.StartBookTickersUpdateGuard()

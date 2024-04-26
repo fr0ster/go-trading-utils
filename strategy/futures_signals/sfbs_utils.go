@@ -24,6 +24,7 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
@@ -220,4 +221,35 @@ func EvaluateMiddlePrice(
 	baseBalance, err := GetBaseBalance(account, pair)
 	middlePrice = (pair.GetInitialBalance() - baseBalance) / (pair.GetBuyQuantity() - pair.GetSellQuantity())
 	return
+}
+
+// Ініциалізація Pair
+func PairInit(
+	client *futures.Client,
+	config *config_types.ConfigFile,
+	account *futures_account.Account,
+	pair pairs_interfaces.Pairs) (err error) {
+	baseFree, _ := account.GetFreeAsset(pair.GetBaseSymbol())
+	targetFree, _ := account.GetFreeAsset(pair.GetTargetSymbol())
+
+	if pair.GetInitialBalance() == 0 && pair.GetInitialPositionBalance() == 0 {
+		pair.SetInitialBalance(baseFree)
+		pair.SetInitialPositionBalance(targetFree * pair.GetLimitOnPosition())
+		config.Save()
+	}
+
+	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
+		targetFree, err = account.GetFreeAsset(pair.GetPair())
+		if err != nil {
+			return err
+		}
+		pair.SetBuyQuantity(targetFree)
+		price, err := GetPrice(client, pair.GetPair())
+		if err != nil {
+			return err
+		}
+		pair.SetBuyValue(targetFree * price)
+		config.Save()
+	}
+	return nil
 }
