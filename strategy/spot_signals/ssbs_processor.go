@@ -359,7 +359,6 @@ func (pp *PairProcessor) StartPriceSignal() (
 					}
 					last_ask = ask
 					last_bid = bid
-					continue
 				} else if ask < last_ask*(1-pp.deltaDown) {
 					pp.askDown <- &pair_price_types.AskBid{
 						Ask: &pair_price_types.PairPrice{Price: ask},
@@ -367,7 +366,6 @@ func (pp *PairProcessor) StartPriceSignal() (
 					}
 					last_ask = ask
 					last_bid = bid
-					continue
 				}
 				if bid > last_bid*(1+pp.deltaUp) {
 					pp.bidUp <- &pair_price_types.AskBid{
@@ -376,7 +374,6 @@ func (pp *PairProcessor) StartPriceSignal() (
 					}
 					last_ask = ask
 					last_bid = bid
-					continue
 				} else if bid < last_bid*(1-pp.deltaDown) {
 					pp.bidDown <- &pair_price_types.AskBid{
 						Ask: &pair_price_types.PairPrice{Price: ask},
@@ -384,7 +381,6 @@ func (pp *PairProcessor) StartPriceSignal() (
 					}
 					last_ask = ask
 					last_bid = bid
-					continue
 				}
 			}
 			time.Sleep(pp.pair.GetSleepingTime())
