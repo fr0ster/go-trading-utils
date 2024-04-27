@@ -34,7 +34,7 @@ func (pcs *SymbolPrice) Equal(item btree.Item) bool {
 	return pcs.Symbol == item.(*SymbolPrice).Symbol
 }
 
-func Init24h(prc *price_types.PriceChangeStats, client futures.Client, symbols ...string) (err error) {
+func Init24h(prc *price_types.PriceChangeStats, client *futures.Client, symbols ...string) (err error) {
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
 	var pcss []*futures.PriceChangeStats
