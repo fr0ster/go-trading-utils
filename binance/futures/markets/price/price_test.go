@@ -3,12 +3,13 @@ package price_test
 import (
 	"testing"
 
+	futures_price "github.com/fr0ster/go-trading-utils/binance/futures/markets/price"
 	prices_interface "github.com/fr0ster/go-trading-utils/interfaces/price"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func getTestData() []*price_types.PriceChangeStat {
-	return append([]*price_types.PriceChangeStat{
+func getTestData() []*futures_price.PriceChangeStat {
+	return append([]*futures_price.PriceChangeStat{
 		{
 			Symbol:             "BTCUSDT",
 			PriceChange:        "0.00000000",
@@ -16,11 +17,7 @@ func getTestData() []*price_types.PriceChangeStat {
 			WeightedAvgPrice:   "0.00000000",
 			PrevClosePrice:     "0.00000000",
 			LastPrice:          "0.00000000",
-			LastQty:            "0.00000000",
-			BidPrice:           "0.00000000",
-			BidQty:             "0.00000000",
-			AskPrice:           "0.00000000",
-			AskQty:             "0.00000000",
+			LastQuantity:       "0.00000000",
 			OpenPrice:          "0.00000000",
 			HighPrice:          "0.00000000",
 			LowPrice:           "0.00000000",
@@ -39,11 +36,7 @@ func getTestData() []*price_types.PriceChangeStat {
 			WeightedAvgPrice:   "0.00000000",
 			PrevClosePrice:     "0.00000000",
 			LastPrice:          "0.00000000",
-			LastQty:            "0.00000000",
-			BidPrice:           "0.00000000",
-			BidQty:             "0.00000000",
-			AskPrice:           "0.00000000",
-			AskQty:             "0.00000000",
+			LastQuantity:       "0.00000000",
 			OpenPrice:          "0.00000000",
 			HighPrice:          "0.00000000",
 			LowPrice:           "0.00000000",
@@ -65,18 +58,14 @@ func TestPricesInterfaces(t *testing.T) {
 		defer p.Unlock()
 		// p.Init("test", "test", "BTCUSDT", true)
 		for _, k := range getTestData() {
-			p.Set(&price_types.PriceChangeStat{
+			p.Set(&futures_price.PriceChangeStat{
 				Symbol:             k.Symbol,
 				PriceChange:        k.PriceChange,
 				PriceChangePercent: k.PriceChangePercent,
 				WeightedAvgPrice:   k.WeightedAvgPrice,
 				PrevClosePrice:     k.PrevClosePrice,
 				LastPrice:          k.LastPrice,
-				LastQty:            k.LastQty,
-				BidPrice:           k.BidPrice,
-				BidQty:             k.BidQty,
-				AskPrice:           k.AskPrice,
-				AskQty:             k.AskQty,
+				LastQuantity:       k.LastQuantity,
 				OpenPrice:          k.OpenPrice,
 				HighPrice:          k.HighPrice,
 				LowPrice:           k.LowPrice,
@@ -90,7 +79,7 @@ func TestPricesInterfaces(t *testing.T) {
 			})
 		}
 		for _, k := range getTestData() {
-			if p.Get(k.Symbol) == nil {
+			if p.Get(&futures_price.PriceChangeStat{Symbol: k.Symbol}) == nil {
 				t.Error("Expected to find PriceChangeStatsItem")
 			}
 		}

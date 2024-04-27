@@ -6,7 +6,7 @@ type (
 	Prices interface {
 		Lock()
 		Unlock()
-		Get(symbol string) btree.Item
+		Get(value btree.Item) btree.Item
 		Set(value btree.Item)
 	}
 )
