@@ -466,8 +466,8 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
 
 	go func() {
+		var delta float64
 		for {
-			var delta float64
 			select {
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
