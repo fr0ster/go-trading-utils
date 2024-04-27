@@ -14,12 +14,16 @@ import (
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_book_ticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 	spot_depths "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
+	spot_price "github.com/fr0ster/go-trading-utils/binance/spot/markets/price"
+	"github.com/fr0ster/go-trading-utils/utils"
+
 	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	price_types "github.com/fr0ster/go-trading-utils/types/price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 )
@@ -37,6 +41,7 @@ type (
 		depthsStream     *spot_streams.DepthStream
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
+		priceChanges     chan *pair_price_types.PairDelta
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
@@ -455,6 +460,35 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
+// Запускаємо потік для оновлення ціни кожні updateTime
+func (pp *PairObserver) StartPriceChangesSignal(
+	client *binance.Client,
+	pair pairs_interfaces.Pairs,
+	account *spot_account.Account,
+	stop chan os.Signal) chan *pair_price_types.PairDelta {
+
+	go func() {
+		for {
+			select {
+			case <-stop:
+				stop <- os.Interrupt
+				return
+			case <-time.After(1 * time.Minute):
+				price := price_types.New(degree)
+				spot_price.Init(price, client, pair.GetPair())
+				if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pair.GetPair()}); priceVal != nil {
+					if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange) != 0 {
+						pp.priceChanges <- &pair_price_types.PairDelta{
+							Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
+							Percent: utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChangePercent)}
+					}
+				}
+			}
+		}
+	}()
+	return pp.priceChanges
+}
+
 func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {
 	pp.bookTickerEvent = spot_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.GetDataChannel())
 	return pp.bookTickerEvent
@@ -590,8 +624,9 @@ func NewPairObserver(
 		bookTickerStream: spot_streams.NewBookTickerStream(pair.GetPair(), 1),
 		depths:           nil,
 		depthsStream:     spot_streams.NewDepthStream(pair.GetPair(), true, 1),
-		bookTickerEvent:  make(chan bool),
-		depthEvent:       make(chan bool),
+		bookTickerEvent:  make(chan bool, 1),
+		depthEvent:       make(chan bool, 1),
+		priceChanges:     make(chan *pair_price_types.PairDelta, 1),
 		askUp:            make(chan *pair_price_types.AskBid, 1),
 		askDown:          make(chan *pair_price_types.AskBid, 1),
 		bidUp:            make(chan *pair_price_types.AskBid, 1),

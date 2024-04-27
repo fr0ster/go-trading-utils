@@ -14,13 +14,17 @@ import (
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_book_ticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 	futures_depths "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
+	futures_price "github.com/fr0ster/go-trading-utils/binance/futures/markets/price"
+
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
+
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	price_types "github.com/fr0ster/go-trading-utils/types/price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 )
@@ -38,6 +42,7 @@ type (
 		depthsStream     *futures_streams.PartialDepthServeWithRate
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
+		priceChanges     chan *pair_price_types.PairDelta
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
@@ -194,6 +199,38 @@ func (pp *PairObserver) StartPriceByBookTickerSignal() (
 		}
 	}()
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
+}
+
+// Запускаємо потік для оновлення ціни кожні updateTime
+func (pp *PairObserver) StartPriceChangesSignal(
+	client *futures.Client,
+	pair pairs_interfaces.Pairs,
+	account *futures_account.Account,
+	stop chan os.Signal) chan *pair_price_types.PairDelta {
+
+	go func() {
+		var last_price float64
+		for {
+			select {
+			case <-stop:
+				stop <- os.Interrupt
+				return
+			case <-time.After(1 * time.Minute):
+				price := price_types.New(degree)
+				futures_price.Init(price, client, pair.GetPair())
+				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pair.GetPair()}); priceVal != nil {
+					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
+						if last_price == 0 || last_price != utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) {
+							pp.priceChanges <- &pair_price_types.PairDelta{
+								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
+								Percent: (utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) - last_price) * 100 / last_price}
+						}
+					}
+				}
+			}
+		}
+	}()
+	return pp.priceChanges
 }
 
 func (pp *PairObserver) StartPriceByDepthSignal() (
@@ -403,8 +440,9 @@ func NewPairObserver(
 		bookTickerStream: nil,
 		depths:           nil,
 		depthsStream:     nil,
-		bookTickerEvent:  make(chan bool),
-		depthEvent:       make(chan bool),
+		bookTickerEvent:  make(chan bool, 1),
+		depthEvent:       make(chan bool, 1),
+		priceChanges:     make(chan *pair_price_types.PairDelta, 1),
 		askUp:            make(chan *pair_price_types.AskBid, 1),
 		askDown:          make(chan *pair_price_types.AskBid, 1),
 		bidUp:            make(chan *pair_price_types.AskBid, 1),

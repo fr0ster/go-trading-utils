@@ -15,6 +15,7 @@ import (
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
+
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
