@@ -7,7 +7,7 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func Init(prc *price_types.PriceChangeStats, client futures.Client, symbols ...string) (err error) {
+func Init24h(prc *price_types.PriceChangeStats, client futures.Client, symbols ...string) (err error) {
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
 	var pcss []*futures.PriceChangeStats
