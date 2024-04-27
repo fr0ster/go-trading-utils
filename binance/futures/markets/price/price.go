@@ -7,13 +7,22 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func Init(prc *price_types.PriceChangeStats, client futures.Client) error {
+func Init(prc *price_types.PriceChangeStats, client futures.Client, symbols ...string) (err error) {
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
-	pcss, err :=
-		client.NewListPriceChangeStatsService().Do(context.Background())
-	if err != nil {
-		return err
+	var pcss []*futures.PriceChangeStats
+	if len(symbols) > 0 {
+		for _, symbol := range symbols {
+			res, _ :=
+				client.NewListPriceChangeStatsService().Symbol(symbol).Do(context.Background())
+			pcss = append(pcss, res...)
+		}
+	} else {
+		pcss, err =
+			client.NewListPriceChangeStatsService().Do(context.Background())
+		if err != nil {
+			return err
+		}
 	}
 	for _, pcs := range pcss {
 		prc.Set(&price_types.PriceChangeStat{
