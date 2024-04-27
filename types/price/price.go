@@ -41,7 +41,12 @@ type (
 
 // Less implements btree.Item.
 func (p *PriceChangeStat) Less(than btree.Item) bool {
-	return p.OpenTime < than.(*PriceChangeStat).OpenTime
+	return p.Symbol < than.(*PriceChangeStat).Symbol
+}
+
+// Equal implements btree.Item.
+func (p *PriceChangeStat) Equal(than btree.Item) bool {
+	return p.Symbol == than.(*PriceChangeStat).Symbol
 }
 
 func (d *PriceChangeStats) Get(symbol string) btree.Item {
