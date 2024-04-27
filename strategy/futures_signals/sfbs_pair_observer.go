@@ -299,6 +299,7 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 							} else {
 								pp.priceDown <- true
 							}
+							delta = 0
 						}
 					}
 				}
