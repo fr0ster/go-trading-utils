@@ -220,6 +220,7 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 							pp.priceChanges <- &pair_price_types.PairDelta{
 								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
 								Percent: (utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) - last_price) * 100 / last_price}
+							last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
 						}
 					}
 				}
