@@ -7,7 +7,7 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func Init(kl *kline_types.Kline, client *binance.Client, symbolname string) (err error) {
+func Init(kl *kline_types.Klines, client *binance.Client, symbolname string) (err error) {
 	kl.Lock()         // Locking the klines
 	defer kl.Unlock() // Unlocking the klines
 	klines, _ :=

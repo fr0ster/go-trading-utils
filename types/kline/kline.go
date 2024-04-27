@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	KlineItem struct {
+	Kline struct {
 		OpenTime                 int64  `json:"openTime"`
 		Open                     string `json:"open"`
 		High                     string `json:"high"`
@@ -21,7 +21,7 @@ type (
 		TakerBuyBaseAssetVolume  string `json:"takerBuyBaseAssetVolume"`
 		TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
 	}
-	Kline struct {
+	Klines struct {
 		tree   btree.BTree
 		mutex  sync.Mutex
 		degree int
@@ -29,54 +29,54 @@ type (
 )
 
 // Kline - тип для зберігання свічок
-func (i *KlineItem) Less(than btree.Item) bool {
-	return i.OpenTime < than.(*KlineItem).OpenTime
+func (i *Kline) Less(than btree.Item) bool {
+	return i.OpenTime < than.(*Kline).OpenTime
 }
 
-func (i *KlineItem) Equal(than btree.Item) bool {
-	return i.OpenTime == than.(*KlineItem).OpenTime
+func (i *Kline) Equal(than btree.Item) bool {
+	return i.OpenTime == than.(*Kline).OpenTime
 }
 
-func (d *Kline) Ascend(f func(btree.Item) bool) {
+func (d *Klines) Ascend(f func(btree.Item) bool) {
 	d.tree.Ascend(f)
 }
 
-func (d *Kline) Descend(f func(btree.Item) bool) {
+func (d *Klines) Descend(f func(btree.Item) bool) {
 	d.tree.Descend(f)
 }
 
 // Lock implements depth_interface.Depths.
-func (d *Kline) Lock() {
+func (d *Klines) Lock() {
 	d.mutex.Lock()
 }
 
 // Unlock implements depth_interface.Depths.
-func (d *Kline) Unlock() {
+func (d *Klines) Unlock() {
 	d.mutex.Unlock()
 }
 
 // GetItem implements depth_interface.Depths.
-func (d *Kline) Get(openTime int64) btree.Item {
-	return d.tree.Get(&KlineItem{OpenTime: int64(openTime)})
+func (d *Klines) Get(openTime int64) btree.Item {
+	return d.tree.Get(&Kline{OpenTime: int64(openTime)})
 }
 
 // SetItem implements depth_interface.Depths.
-func (d *Kline) Set(value btree.Item) {
+func (d *Klines) Set(value btree.Item) {
 	d.tree.ReplaceOrInsert(value)
 }
 
 // Kline - B-дерево для зберігання стакана заявок
-func New(degree int) *Kline {
-	return &Kline{
+func New(degree int) *Klines {
+	return &Klines{
 		tree:   *btree.New(degree),
 		mutex:  sync.Mutex{},
 		degree: degree,
 	}
 }
 
-func Binance2kline(binanceKline interface{}) (*KlineItem, error) {
+func Binance2kline(binanceKline interface{}) (*Kline, error) {
 	switch binanceKline := binanceKline.(type) {
-	case *KlineItem:
+	case *Kline:
 		return binanceKline, nil
 	}
 	return nil, errors.New("it's not a KlineItem")

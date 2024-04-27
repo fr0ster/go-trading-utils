@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	PriceChangeStatsItem struct {
+	PriceChangeStat struct {
 		Symbol             string `json:"symbol"`
 		PriceChange        string `json:"priceChange"`
 		PriceChangePercent string `json:"priceChangePercent"`
@@ -40,12 +40,12 @@ type (
 )
 
 // Less implements btree.Item.
-func (p *PriceChangeStatsItem) Less(than btree.Item) bool {
-	return p.OpenTime < than.(*PriceChangeStatsItem).OpenTime
+func (p *PriceChangeStat) Less(than btree.Item) bool {
+	return p.OpenTime < than.(*PriceChangeStat).OpenTime
 }
 
 func (d *PriceChangeStats) Get(symbol string) btree.Item {
-	return d.tree.Get(&PriceChangeStatsItem{Symbol: symbol})
+	return d.tree.Get(&PriceChangeStat{Symbol: symbol})
 }
 
 func (d *PriceChangeStats) Set(value btree.Item) {
@@ -61,7 +61,7 @@ func (d *PriceChangeStats) Unlock() {
 }
 
 // PriceChangeStats - B-дерево для зберігання Цінових змін
-func NewPriceChangeStat(degree int) *PriceChangeStats {
+func New(degree int) *PriceChangeStats {
 	return &PriceChangeStats{
 		tree:   *btree.New(degree),
 		mutex:  sync.Mutex{},
@@ -69,9 +69,9 @@ func NewPriceChangeStat(degree int) *PriceChangeStats {
 	}
 }
 
-func Binance2PriceChangeStats(binancePriceChangeStats interface{}) (*PriceChangeStatsItem, error) {
+func Binance2PriceChangeStats(binancePriceChangeStats interface{}) (*PriceChangeStat, error) {
 	switch binancePriceChangeStats := binancePriceChangeStats.(type) {
-	case *PriceChangeStatsItem:
+	case *PriceChangeStat:
 		return binancePriceChangeStats, nil
 	}
 	return nil, errors.New("it's not a PriceChangeStatsItem")

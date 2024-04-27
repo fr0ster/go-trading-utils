@@ -3,25 +3,20 @@ package price
 import (
 	"context"
 
-	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func Init(prc *price_types.PriceChangeStats, apt_key string, secret_key string, symbolname string, UseTestnet bool) error {
+func Init(prc *price_types.PriceChangeStats, client futures.Client) error {
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
-	binance.UseTestnet = UseTestnet
 	pcss, err :=
-		futures.NewClient(apt_key, secret_key).
-			NewListPriceChangeStatsService().
-			Symbol(string(symbolname)).
-			Do(context.Background())
+		client.NewListPriceChangeStatsService().Do(context.Background())
 	if err != nil {
 		return err
 	}
 	for _, pcs := range pcss {
-		prc.Set(&price_types.PriceChangeStatsItem{
+		prc.Set(&price_types.PriceChangeStat{
 			Symbol:             pcs.Symbol,
 			PriceChange:        pcs.PriceChange,
 			PriceChangePercent: pcs.PriceChangePercent,

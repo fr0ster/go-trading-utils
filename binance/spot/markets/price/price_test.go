@@ -7,8 +7,8 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func getTestData() []*price_types.PriceChangeStatsItem {
-	return append([]*price_types.PriceChangeStatsItem{
+func getTestData() []*price_types.PriceChangeStat {
+	return append([]*price_types.PriceChangeStat{
 		{
 			Symbol:             "BTCUSDT",
 			PriceChange:        "0.00000000",
@@ -59,13 +59,13 @@ func getTestData() []*price_types.PriceChangeStatsItem {
 }
 
 func TestPricesInterfaces(t *testing.T) {
-	pcs := price_types.NewPriceChangeStat(2)
+	pcs := price_types.New(2)
 	test := func(p prices_interface.Prices) {
 		p.Lock()
 		defer p.Unlock()
 		// p.Init("test", "test", "BTCUSDT", true)
 		for _, k := range getTestData() {
-			p.Set(&price_types.PriceChangeStatsItem{
+			p.Set(&price_types.PriceChangeStat{
 				Symbol:             k.Symbol,
 				PriceChange:        k.PriceChange,
 				PriceChangePercent: k.PriceChangePercent,
