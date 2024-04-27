@@ -42,6 +42,8 @@ type (
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
 		priceChanges     chan *pair_price_types.PairDelta
+		priceUp          chan bool
+		priceDown        chan bool
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
@@ -479,6 +481,11 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
 							Percent: utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChangePercent)}
+						if delta > 0 {
+							pp.priceUp <- true
+						} else {
+							pp.priceDown <- true
+						}
 						delta = 0
 					}
 				}
@@ -626,6 +633,8 @@ func NewPairObserver(
 		bookTickerEvent:  make(chan bool, 1),
 		depthEvent:       make(chan bool, 1),
 		priceChanges:     make(chan *pair_price_types.PairDelta, 1),
+		priceUp:          make(chan bool, 1),
+		priceDown:        make(chan bool, 1),
 		askUp:            make(chan *pair_price_types.AskBid, 1),
 		askDown:          make(chan *pair_price_types.AskBid, 1),
 		bidUp:            make(chan *pair_price_types.AskBid, 1),

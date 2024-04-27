@@ -43,6 +43,8 @@ type (
 		bookTickerEvent  chan bool
 		depthEvent       chan bool
 		priceChanges     chan *pair_price_types.PairDelta
+		priceUp          chan bool
+		priceDown        chan bool
 		stop             chan os.Signal
 		deltaUp          float64
 		deltaDown        float64
@@ -201,42 +203,6 @@ func (pp *PairObserver) StartPriceByBookTickerSignal() (
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
-// Запускаємо потік для оновлення ціни кожні updateTime
-func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
-
-	go func() {
-		var last_price float64
-		var price *price_types.PriceChangeStats
-		price = price_types.New(degree)
-		futures_price.Init(price, pp.client, pp.pair.GetPair())
-		if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
-			last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
-		}
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-time.After(1 * time.Minute):
-				price = price_types.New(degree)
-				futures_price.Init(price, pp.client, pp.pair.GetPair())
-				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
-					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
-						delta := (utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) - last_price) * 100 / last_price
-						if delta > pp.deltaUp*100 || delta < pp.deltaDown*100 {
-							pp.priceChanges <- &pair_price_types.PairDelta{
-								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
-								Percent: utils.RoundToDecimalPlace(delta, 3)}
-							last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
-						}
-					}
-				}
-			}
-		}
-	}()
-	return pp.priceChanges
-}
-
 func (pp *PairObserver) StartPriceByDepthSignal() (
 	askUp chan *pair_price_types.AskBid,
 	askDown chan *pair_price_types.AskBid,
@@ -298,6 +264,48 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 		}
 	}()
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
+}
+
+// Запускаємо потік для оновлення ціни кожні updateTime
+func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
+
+	go func() {
+		var last_price float64
+		var price *price_types.PriceChangeStats
+		price = price_types.New(degree)
+		futures_price.Init(price, pp.client, pp.pair.GetPair())
+		if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
+			last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+		}
+		for {
+			var delta float64
+			select {
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case <-time.After(1 * time.Minute):
+				price = price_types.New(degree)
+				futures_price.Init(price, pp.client, pp.pair.GetPair())
+				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
+					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
+						delta += (utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) - last_price) * 100 / last_price
+						if delta > pp.deltaUp*100 || delta < pp.deltaDown*100 {
+							pp.priceChanges <- &pair_price_types.PairDelta{
+								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
+								Percent: utils.RoundToDecimalPlace(delta, 3)}
+							last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+							if delta > 0 {
+								pp.priceUp <- true
+							} else {
+								pp.priceDown <- true
+							}
+						}
+					}
+				}
+			}
+		}
+	}()
+	return pp.priceChanges
 }
 
 func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {
@@ -447,6 +455,8 @@ func NewPairObserver(
 		bookTickerEvent:  make(chan bool, 1),
 		depthEvent:       make(chan bool, 1),
 		priceChanges:     make(chan *pair_price_types.PairDelta, 1),
+		priceUp:          make(chan bool, 1),
+		priceDown:        make(chan bool, 1),
 		askUp:            make(chan *pair_price_types.AskBid, 1),
 		askDown:          make(chan *pair_price_types.AskBid, 1),
 		bidUp:            make(chan *pair_price_types.AskBid, 1),
