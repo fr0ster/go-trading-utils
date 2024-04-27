@@ -461,22 +461,18 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 }
 
 // Запускаємо потік для оновлення ціни кожні updateTime
-func (pp *PairObserver) StartPriceChangesSignal(
-	client *binance.Client,
-	pair pairs_interfaces.Pairs,
-	account *spot_account.Account,
-	stop chan os.Signal) chan *pair_price_types.PairDelta {
+func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
 
 	go func() {
 		for {
 			select {
-			case <-stop:
-				stop <- os.Interrupt
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
 				return
 			case <-time.After(1 * time.Minute):
 				price := price_types.New(degree)
-				spot_price.Init(price, client, pair.GetPair())
-				if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pair.GetPair()}); priceVal != nil {
+				spot_price.Init(price, pp.client, pp.pair.GetPair())
+				if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
 					if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange) != 0 {
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),

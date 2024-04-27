@@ -202,23 +202,19 @@ func (pp *PairObserver) StartPriceByBookTickerSignal() (
 }
 
 // Запускаємо потік для оновлення ціни кожні updateTime
-func (pp *PairObserver) StartPriceChangesSignal(
-	client *futures.Client,
-	pair pairs_interfaces.Pairs,
-	account *futures_account.Account,
-	stop chan os.Signal) chan *pair_price_types.PairDelta {
+func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
 
 	go func() {
 		var last_price float64
 		for {
 			select {
-			case <-stop:
-				stop <- os.Interrupt
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
 				return
 			case <-time.After(1 * time.Minute):
 				price := price_types.New(degree)
-				futures_price.Init(price, client, pair.GetPair())
-				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pair.GetPair()}); priceVal != nil {
+				futures_price.Init(price, pp.client, pp.pair.GetPair())
+				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
 					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
 						if last_price == 0 || last_price != utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) {
 							pp.priceChanges <- &pair_price_types.PairDelta{
