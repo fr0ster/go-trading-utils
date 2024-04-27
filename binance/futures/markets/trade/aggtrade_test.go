@@ -4,7 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot/markets/trade"
+	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/binance/futures/markets/trade"
 	trade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 	"github.com/google/btree"
@@ -14,9 +15,9 @@ import (
 func TestAggTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
+	futures.UseTestnet = false
 	trades := trade_types.NewAggTrades()
-	trade.AggTradeInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	trade.AggTradeInit(trades, futures.NewClient(api_key, secret_key), "BTCUSDT", 10)
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()

@@ -22,9 +22,7 @@ func tradesInit(trd []*futures.Trade, a *trade_types.Trades) (err error) {
 	return nil
 }
 
-func HistoricalTradesInit(a *trade_types.Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	futures.UseTestnet = UseTestnet
-	client := futures.NewClient(apt_key, secret_key)
+func HistoricalTradesInit(a *trade_types.Trades, client *futures.Client, symbolname string, limit int) (err error) {
 	res, err :=
 		client.NewHistoricalTradesService().
 			Symbol(string(symbolname)).
@@ -36,9 +34,7 @@ func HistoricalTradesInit(a *trade_types.Trades, apt_key, secret_key, symbolname
 	return tradesInit(res, a)
 }
 
-func RecentTradesInit(a *trade_types.Trades, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	futures.UseTestnet = UseTestnet
-	client := futures.NewClient(apt_key, secret_key)
+func RecentTradesInit(a *trade_types.Trades, client *futures.Client, symbolname string, limit int) (err error) {
 	res, err :=
 		client.NewRecentTradesService().
 			Symbol(string(symbolname)).

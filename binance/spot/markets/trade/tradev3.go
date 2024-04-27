@@ -20,9 +20,7 @@ func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
 	return nil
 }
 
-func ListTradesInit(a *trade_types.TradesV3, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	binance.UseTestnet = UseTestnet
-	client := binance.NewClient(apt_key, secret_key)
+func ListTradesInit(a *trade_types.TradesV3, client *binance.Client, symbolname string, limit int) (err error) {
 	res, err :=
 		client.NewListTradesService().
 			Symbol(string(symbolname)).
@@ -34,9 +32,7 @@ func ListTradesInit(a *trade_types.TradesV3, apt_key, secret_key, symbolname str
 	return tradesV3Init(res, a)
 }
 
-func ListMarginTradesInit(a *trade_types.TradesV3, apt_key, secret_key, symbolname string, limit int, UseTestnet bool) (err error) {
-	binance.UseTestnet = UseTestnet
-	client := binance.NewClient(apt_key, secret_key)
+func ListMarginTradesInit(a *trade_types.TradesV3, client *binance.Client, symbolname string, limit int) (err error) {
 	res, err :=
 		client.NewListMarginTradesService().
 			Symbol(string(symbolname)).

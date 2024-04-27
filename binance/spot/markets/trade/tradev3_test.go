@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/binance/spot/markets/trade"
 	trade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
@@ -14,9 +15,9 @@ import (
 func TestListTradeInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
+	binance.UseTestnet = false
 	trades := trade_types.NewTradesV3()
-	trade.ListTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	trade.ListTradesInit(trades, binance.NewClient(api_key, secret_key), "BTCUSDT", 10)
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
@@ -37,9 +38,9 @@ func TestListTradeInterface(t *testing.T) {
 func TestListMarginTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	UseTestnet := false
+	binance.UseTestnet = false
 	trades := trade_types.NewTradesV3()
-	trade.ListMarginTradesInit(trades, api_key, secret_key, "BTCUSDT", 10, UseTestnet)
+	trade.ListMarginTradesInit(trades, binance.NewClient(api_key, secret_key), "BTCUSDT", 10)
 	test := func(i trade_interface.Trades) {
 
 	}

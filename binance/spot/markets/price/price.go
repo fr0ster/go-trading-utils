@@ -7,13 +7,11 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
-func Init(prc *price_types.PriceChangeStats, apt_key string, secret_key string, symbolname string, UseTestnet bool) error {
+func Init(prc *price_types.PriceChangeStats, client *binance.Client, symbolname string) error {
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
-	binance.UseTestnet = UseTestnet
 	pcss, _ :=
-		binance.NewClient(apt_key, secret_key).
-			NewListPriceChangeStatsService().
+		client.NewListPriceChangeStatsService().
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, pcs := range pcss {
