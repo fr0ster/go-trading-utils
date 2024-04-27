@@ -1,11 +1,11 @@
 package price
 
 import (
-	"errors"
 	"sync"
 
 	// prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -70,9 +70,10 @@ func New(degree int) *PriceChangeStats {
 }
 
 func Binance2PriceChangeStats(binancePriceChangeStats interface{}) (*PriceChangeStat, error) {
-	switch binancePriceChangeStats := binancePriceChangeStats.(type) {
-	case *PriceChangeStat:
-		return binancePriceChangeStats, nil
+	var val PriceChangeStat
+	err := copier.Copy(&val, binancePriceChangeStats)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("it's not a PriceChangeStatsItem")
+	return &val, nil
 }
