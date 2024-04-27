@@ -473,7 +473,8 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 				price := price_types.New(degree)
 				spot_price.Init(price, pp.client, pp.pair.GetPair())
 				if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
-					if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange) != 0 {
+					if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange) > pp.deltaUp ||
+						utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange) < pp.deltaDown {
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
 							Percent: utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChangePercent)}
