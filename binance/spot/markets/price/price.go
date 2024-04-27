@@ -26,7 +26,7 @@ func Init(prc *price_types.PriceChangeStats, client *binance.Client, symbols ...
 	prc.Lock()         // Locking the price change stats
 	defer prc.Unlock() // Unlocking the price change stats
 	pcss, _ :=
-		client.NewListSymbolTickerService().Symbols(symbols).Do(context.Background())
+		client.NewListSymbolTickerService().WindowSize("1m").Symbols(symbols).Do(context.Background())
 	for _, pcs := range pcss {
 		price, err := price_types.Binance2PriceChangeStats(pcs)
 		if err != nil {
