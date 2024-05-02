@@ -528,6 +528,7 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 // Запускаємо потік для оновлення ціни кожні updateTime
 func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
 	if pp.priceChanges == nil {
+		pp.priceChanges = make(chan *pair_price_types.PairDelta, 1)
 		go func() {
 			var delta float64
 			for {
