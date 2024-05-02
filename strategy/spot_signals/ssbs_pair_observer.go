@@ -480,7 +480,7 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 					if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
-							Percent: utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChangePercent)}
+							Percent: utils.RoundToDecimalPlace(delta, 3)}
 						if delta > 0 {
 							pp.priceUp <- true
 						} else {
