@@ -61,7 +61,7 @@ func RunSpotHolding(
 	if err != nil {
 		return err
 	}
-	pairObserver.StartBookTickersUpdateGuard()
+	// pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, _ := pairObserver.StartBuyOrSellByBookTickerSignal()
 	sellEvent := make(chan *pair_price_types.PairPrice)
 
@@ -90,7 +90,10 @@ func RunSpotHolding(
 		return err
 	}
 
-	_ = pairProcessor.ProcessBuyOrder()
+	_, err = pairProcessor.ProcessBuyOrder()
+	if err != nil {
+		return err
+	}
 
 	<-collectionOutEvent
 	pair.SetStage(pairs_types.PositionClosedStage)
@@ -134,7 +137,7 @@ func RunSpotScalping(
 	if err != nil {
 		return err
 	}
-	pairObserver.StartBookTickersUpdateGuard()
+	// pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, sellEvent := pairObserver.StartBuyOrSellByDepthSignal()
 
 	triggerEvent := make(chan bool)
@@ -159,7 +162,10 @@ func RunSpotScalping(
 		return err
 	}
 
-	_ = pairProcessor.ProcessBuyOrder()
+	_, err = pairProcessor.ProcessBuyOrder()
+	if err != nil {
+		return err
+	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
@@ -170,7 +176,10 @@ func RunSpotScalping(
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
 		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
-		_ = pairProcessor.ProcessSellOrder()
+		_, err = pairProcessor.ProcessSellOrder()
+		if err != nil {
+			return err
+		}
 
 		<-workingOutEvent
 		pair.SetStage(pairs_types.PositionClosedStage)
@@ -214,7 +223,7 @@ func RunSpotTrading(
 	if err != nil {
 		return err
 	}
-	pairObserver.StartBookTickersUpdateGuard()
+	// pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, sellEvent := pairObserver.StartBuyOrSellByBookTickerSignal()
 
 	triggerEvent := make(chan bool)
@@ -239,7 +248,10 @@ func RunSpotTrading(
 		return err
 	}
 
-	_ = pairProcessor.ProcessBuyOrder()
+	_, err = pairProcessor.ProcessBuyOrder()
+	if err != nil {
+		return err
+	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
