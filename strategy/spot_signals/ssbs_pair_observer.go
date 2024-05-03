@@ -530,17 +530,26 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 	if pp.priceChanges == nil {
 		pp.priceChanges = make(chan *pair_price_types.PairDelta, 1)
 		go func() {
-			var delta float64
+			var (
+				price      *price_types.PriceChangeStats
+				last_price float64
+			)
+			price = price_types.New(degree)
+			spot_price.Init(price, pp.client, pp.pair.GetPair())
+			if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
+				last_price = utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
+			}
 			for {
 				select {
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
 					return
 				case <-time.After(1 * time.Minute):
-					price := price_types.New(degree)
+					price = price_types.New(degree)
 					spot_price.Init(price, pp.client, pp.pair.GetPair())
 					if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
-						delta += utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).PriceChange)
+						current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
+						delta := (current_price - last_price) * 100 / last_price
 						if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 							pp.priceChanges <- &pair_price_types.PairDelta{
 								Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
@@ -550,7 +559,7 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 							} else {
 								pp.priceDown <- true
 							}
-							delta = 0
+							last_price = current_price
 						}
 					}
 				}

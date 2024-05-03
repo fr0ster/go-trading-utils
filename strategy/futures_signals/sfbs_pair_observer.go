@@ -330,7 +330,6 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 		var (
 			last_price float64
 			price      *price_types.PriceChangeStats
-			delta      float64
 		)
 		price = price_types.New(degree)
 		futures_price.Init(price, pp.client, pp.pair.GetPair())
@@ -347,18 +346,19 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 				futures_price.Init(price, pp.client, pp.pair.GetPair())
 				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
 					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
-						delta += (utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) - last_price) * 100 / last_price
+						current_price := utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+						delta := (current_price - last_price) * 100 / last_price
+
 						if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 							pp.priceChanges <- &pair_price_types.PairDelta{
 								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
 								Percent: utils.RoundToDecimalPlace(delta, 3)}
-							last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
 							if delta > 0 {
 								pp.priceUp <- true
 							} else {
 								pp.priceDown <- true
 							}
-							delta = 0
+							last_price = current_price
 						}
 					}
 				}
