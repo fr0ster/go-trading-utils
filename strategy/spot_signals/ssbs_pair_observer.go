@@ -526,9 +526,11 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 }
 
 // Запускаємо потік для оновлення ціни кожні updateTime
-func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
-	if pp.priceChanges == nil {
+func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDelta, chan bool, chan bool) {
+	if pp.priceChanges == nil && pp.priceUp == nil && pp.priceDown == nil {
 		pp.priceChanges = make(chan *pair_price_types.PairDelta, 1)
+		pp.priceUp = make(chan bool, 1)
+		pp.priceDown = make(chan bool, 1)
 		go func() {
 			var (
 				price      *price_types.PriceChangeStats
@@ -566,7 +568,7 @@ func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDel
 			}
 		}()
 	}
-	return pp.priceChanges
+	return pp.priceChanges, pp.priceUp, pp.priceDown
 }
 
 func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {

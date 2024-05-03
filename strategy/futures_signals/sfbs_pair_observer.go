@@ -324,48 +324,52 @@ func (pp *PairObserver) StartPriceByDepthSignal() (
 }
 
 // Запускаємо потік для оновлення ціни кожні updateTime
-func (pp *PairObserver) StartPriceChangesSignal() chan *pair_price_types.PairDelta {
+func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDelta, chan bool, chan bool) {
+	if pp.priceChanges == nil && pp.priceUp == nil && pp.priceDown == nil {
+		pp.priceChanges = make(chan *pair_price_types.PairDelta, 1)
+		pp.priceUp = make(chan bool, 1)
+		pp.priceDown = make(chan bool, 1)
+		go func() {
+			var (
+				last_price float64
+				price      *price_types.PriceChangeStats
+			)
+			price = price_types.New(degree)
+			futures_price.Init(price, pp.client, pp.pair.GetPair())
+			if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
+				last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+			}
+			for {
+				select {
+				case <-pp.stop:
+					pp.stop <- os.Interrupt
+					return
+				case <-time.After(1 * time.Minute):
+					price = price_types.New(degree)
+					futures_price.Init(price, pp.client, pp.pair.GetPair())
+					if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
+						if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
+							current_price := utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+							delta := (current_price - last_price) * 100 / last_price
 
-	go func() {
-		var (
-			last_price float64
-			price      *price_types.PriceChangeStats
-		)
-		price = price_types.New(degree)
-		futures_price.Init(price, pp.client, pp.pair.GetPair())
-		if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
-			last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
-		}
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-time.After(1 * time.Minute):
-				price = price_types.New(degree)
-				futures_price.Init(price, pp.client, pp.pair.GetPair())
-				if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
-					if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
-						current_price := utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
-						delta := (current_price - last_price) * 100 / last_price
-
-						if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-							pp.priceChanges <- &pair_price_types.PairDelta{
-								Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
-								Percent: utils.RoundToDecimalPlace(delta, 3)}
-							if delta > 0 {
-								pp.priceUp <- true
-							} else {
-								pp.priceDown <- true
+							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
+								pp.priceChanges <- &pair_price_types.PairDelta{
+									Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
+									Percent: utils.RoundToDecimalPlace(delta, 3)}
+								if delta > 0 {
+									pp.priceUp <- true
+								} else {
+									pp.priceDown <- true
+								}
+								last_price = current_price
 							}
-							last_price = current_price
 						}
 					}
 				}
 			}
-		}
-	}()
-	return pp.priceChanges
+		}()
+	}
+	return pp.priceChanges, pp.priceUp, pp.priceDown
 }
 
 func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {
