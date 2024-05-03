@@ -553,8 +553,8 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 					if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
 						if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice) != 0 {
 							current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
-							logrus.Debugf("Current price for %s - %f", pp.pair.GetPair(), current_price)
 							delta := (current_price - last_price) * 100 / last_price
+							logrus.Debugf("Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta)
 							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 								logrus.Debugf("Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
 								pp.priceChanges <- &pair_price_types.PairDelta{
