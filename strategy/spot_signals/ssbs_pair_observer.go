@@ -540,6 +540,7 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 			spot_price.Init(price, pp.client, pp.pair.GetPair())
 			if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
 				last_price = utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
+				logrus.Debugf("Start price for %s - %f", pp.pair.GetPair(), last_price)
 			}
 			for {
 				select {
@@ -550,18 +551,22 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 					price = price_types.New(degree)
 					spot_price.Init(price, pp.client, pp.pair.GetPair())
 					if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
-						current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
-						delta := (current_price - last_price) * 100 / last_price
-						if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-							pp.priceChanges <- &pair_price_types.PairDelta{
-								Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
-								Percent: utils.RoundToDecimalPlace(delta, 3)}
-							if delta > 0 {
-								pp.priceUp <- true
-							} else {
-								pp.priceDown <- true
+						if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice) != 0 {
+							current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
+							logrus.Debugf("Current price for %s - %f", pp.pair.GetPair(), current_price)
+							delta := (current_price - last_price) * 100 / last_price
+							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
+								logrus.Debugf("Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+								pp.priceChanges <- &pair_price_types.PairDelta{
+									Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
+									Percent: utils.RoundToDecimalPlace(delta, 3)}
+								if delta > 0 {
+									pp.priceUp <- true
+								} else {
+									pp.priceDown <- true
+								}
+								last_price = current_price
 							}
-							last_price = current_price
 						}
 					}
 				}

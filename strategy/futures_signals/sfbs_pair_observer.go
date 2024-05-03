@@ -338,6 +338,7 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 			futures_price.Init(price, pp.client, pp.pair.GetPair())
 			if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
 				last_price = utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+				logrus.Debugf("Start price for %s - %f", pp.pair.GetPair(), last_price)
 			}
 			for {
 				select {
@@ -350,9 +351,11 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 					if priceVal := price.Get(&futures_price.SymbolPrice{Symbol: pp.pair.GetPair()}); priceVal != nil {
 						if utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price) != 0 {
 							current_price := utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
+							logrus.Debugf("Current price for %s - %f", pp.pair.GetPair(), current_price)
 							delta := (current_price - last_price) * 100 / last_price
 
 							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
+								logrus.Debugf("Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
 								pp.priceChanges <- &pair_price_types.PairDelta{
 									Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
 									Percent: utils.RoundToDecimalPlace(delta, 3)}
