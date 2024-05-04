@@ -55,11 +55,13 @@ func (pp *PairKlinesObserver) GetStream() *spot_streams.KlineStream {
 func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 	if pp.stream == nil {
 		if pp.data == nil {
+			logrus.Debugf("Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(degree, pp.interval)
 		}
 
 		// Запускаємо потік для отримання оновлення depths
 		pp.stream = spot_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
+		logrus.Debugf("Create kline data for %v", pp.pair.GetPair())
 		pp.stream.Start()
 		spot_kline.Init(pp.data, pp.client, pp.pair.GetPair())
 	}
@@ -116,8 +118,10 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
 	if pp.filledEvent == nil && pp.nonFilledEvent == nil {
 		if pp.stream == nil {
+			logrus.Debugf("Create Update Stream for %v", pp.pair.GetPair())
 			pp.StartStream()
 		}
+		logrus.Debugf("Create Update Guard for %v", pp.pair.GetPair())
 		pp.filledEvent, pp.nonFilledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
 	}
 	return pp.filledEvent, pp.nonFilledEvent

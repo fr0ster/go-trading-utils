@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
+	"github.com/sirupsen/logrus"
 )
 
 func Init(kl *kline_types.Klines, client *futures.Client, symbolname string) (err error) {
@@ -22,5 +23,6 @@ func Init(kl *kline_types.Klines, client *futures.Client, symbolname string) (er
 		}
 		kl.SetKline(klineItem)
 	}
+	logrus.Debugf("Klines size for %v Klines - %v", symbolname, kl.GetKlines().Len())
 	return nil
 }
