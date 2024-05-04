@@ -55,13 +55,13 @@ func (pp *PairKlinesObserver) GetStream() *spot_streams.KlineStream {
 func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 	if pp.stream == nil {
 		if pp.data == nil {
-			logrus.Debugf("Create kline data for %v", pp.pair.GetPair())
+			logrus.Debugf("Spot, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(degree, pp.interval)
 		}
 
 		// Запускаємо потік для отримання оновлення depths
 		pp.stream = spot_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
-		logrus.Debugf("Create kline data for %v", pp.pair.GetPair())
+		logrus.Debugf("Spot, Create 2 kline goroutines for %v", pp.pair.GetPair())
 		pp.stream.Start()
 		spot_kline.Init(pp.data, pp.client, pp.pair.GetPair())
 	}

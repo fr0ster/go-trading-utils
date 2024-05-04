@@ -23,6 +23,6 @@ func Init(kl *kline_types.Klines, client *binance.Client, symbolname string) (er
 		}
 		kl.SetKline(klineItem)
 	}
-	logrus.Debugf("Klines size for %v Klines - %v", symbolname, kl.GetKlines().Len())
+	logrus.Debugf("Spot, Klines size for %v - %v klines", symbolname, kl.GetKlines().Len())
 	return nil
 }
