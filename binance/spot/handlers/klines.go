@@ -7,8 +7,8 @@ import (
 
 func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKlineEvent, IsFinal bool) (
 	finalOut chan bool, nonFinalOut chan bool) {
-	finalOut = make(chan bool)
-	nonFinalOut = make(chan bool)
+	finalOut = make(chan bool, 1)
+	nonFinalOut = make(chan bool, 1)
 	go func() {
 		for {
 			event := <-source
