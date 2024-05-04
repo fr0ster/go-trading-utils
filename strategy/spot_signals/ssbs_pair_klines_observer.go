@@ -118,7 +118,6 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
 	if pp.filledEvent == nil && pp.nonFilledEvent == nil {
 		if pp.stream == nil {
-			logrus.Debugf("Spot, Create Update Stream for %v", pp.pair.GetPair())
 			pp.StartStream()
 		}
 		logrus.Debugf("Spot, Create Update Guard for %v", pp.pair.GetPair())
