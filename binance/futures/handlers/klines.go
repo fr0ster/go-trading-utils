@@ -5,11 +5,14 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKlineEvent) (out chan bool) {
+func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKlineEvent, IsFinal bool) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		for {
 			event := <-source
+			if IsFinal && !event.Kline.IsFinal {
+				continue
+			}
 			if klines.Time >= event.Time {
 				continue
 			}

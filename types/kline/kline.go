@@ -20,6 +20,7 @@ type (
 		TradeNum                 int64  `json:"tradeNum"`
 		TakerBuyBaseAssetVolume  string `json:"takerBuyBaseAssetVolume"`
 		TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
+		IsFinal                  bool   `json:"x"`
 	}
 	Klines struct {
 		Time   int64
