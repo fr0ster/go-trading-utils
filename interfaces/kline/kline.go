@@ -10,8 +10,9 @@ type (
 		Unlock()
 		Ascend(func(btree.Item) bool)
 		Descend(func(btree.Item) bool)
-		Get(openTime int64) btree.Item
-		Set(value btree.Item)
+		GetKline(openTime int64) btree.Item
+		SetKline(value btree.Item)
+		GetKlines() btree.BTree
 	}
 	// WsKline define websocket kline
 	WsKline struct {

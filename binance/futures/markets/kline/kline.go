@@ -19,7 +19,7 @@ func Init(kl *kline_types.Klines, client *futures.Client, symbolname string) (er
 		if err != nil {
 			return err
 		}
-		kl.Set(klineItem)
+		kl.SetKline(klineItem)
 	}
 	return nil
 }

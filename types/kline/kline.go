@@ -46,24 +46,29 @@ func (d *Klines) Descend(f func(btree.Item) bool) {
 	d.tree.Descend(f)
 }
 
-// Lock implements depth_interface.Depths.
+// Lock implements kline_interface.Klines.
 func (d *Klines) Lock() {
 	d.mutex.Lock()
 }
 
-// Unlock implements depth_interface.Depths.
+// Unlock implements kline_interface.Klines.
 func (d *Klines) Unlock() {
 	d.mutex.Unlock()
 }
 
-// GetItem implements depth_interface.Depths.
-func (d *Klines) Get(openTime int64) btree.Item {
+// GetItem implements kline_interface.Klines.
+func (d *Klines) GetKline(openTime int64) btree.Item {
 	return d.tree.Get(&Kline{OpenTime: int64(openTime)})
 }
 
-// SetItem implements depth_interface.Depths.
-func (d *Klines) Set(value btree.Item) {
+// SetItem implements kline_interface.Klines.
+func (d *Klines) SetKline(value btree.Item) {
 	d.tree.ReplaceOrInsert(value)
+}
+
+// GetKlines implements kline_interface.Klines.
+func (d *Klines) GetKlines() btree.BTree {
+	return d.tree
 }
 
 // Kline - B-дерево для зберігання стакана заявок

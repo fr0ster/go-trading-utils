@@ -27,7 +27,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKli
 				TakerBuyQuoteAssetVolume: event.Kline.ActiveBuyQuoteVolume,
 			}
 			klines.Lock() // Locking the bookTickers
-			klines.Set(kline)
+			klines.SetKline(kline)
 			klines.Unlock() // Unlocking the bookTickers
 			out <- true
 		}
