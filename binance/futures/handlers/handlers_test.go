@@ -8,11 +8,13 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/stretchr/testify/assert"
 
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
+	futures_kline "github.com/fr0ster/go-trading-utils/binance/futures/markets/kline"
+
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	"github.com/fr0ster/go-trading-utils/utils"
@@ -208,6 +210,57 @@ func TestDepthsUpdaterHandler(t *testing.T) {
 		case <-outChannel:
 			res = true
 		case <-time.After(10000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
+	}
+}
+
+func TestKlinesUpdateHandler(t *testing.T) {
+	api_key := os.Getenv("API_KEY")
+	secret_key := os.Getenv("SECRET_KEY")
+	futures.UseTestnet = false
+	spot := futures.NewClient(api_key, secret_key)
+
+	even := &futures.WsKlineEvent{
+		Event:  "kline",
+		Time:   1619260800000,
+		Symbol: "BTCUSDT",
+		Kline: futures.WsKline{
+			StartTime:            1619260800000,
+			EndTime:              1619260800000,
+			Symbol:               "BTCUSDT",
+			Interval:             "1m",
+			FirstTradeID:         1,
+			LastTradeID:          1,
+			Open:                 "10000.0",
+			Close:                "11000.0",
+			High:                 "12000.0",
+			Low:                  "9000.0",
+			Volume:               "1000.0",
+			TradeNum:             1,
+			IsFinal:              true,
+			QuoteVolume:          "10000.0",
+			ActiveBuyVolume:      "1000.0",
+			ActiveBuyQuoteVolume: "10000.0",
+		},
+	}
+	klines := kline_types.New(3)
+	futures_kline.Init(klines, spot, "BTCUSDT")
+
+	inChannel := make(chan *futures.WsKlineEvent, 1)
+	outChannel := futures_handlers.GetKlinesUpdateGuard(klines, inChannel)
+	inChannel <- even
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
 			res = false
 		}
 		if !res {

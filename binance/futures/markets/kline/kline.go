@@ -11,7 +11,9 @@ func Init(kl *kline_types.Klines, client *futures.Client, symbolname string) (er
 	kl.Lock()         // Locking the klines
 	defer kl.Unlock() // Unlocking the klines
 	klines, _ :=
-		client.NewKlinesService().Symbol(symbolname).Do(context.Background())
+		client.NewKlinesService().
+			Symbol(symbolname).
+			Do(context.Background())
 	for _, kline := range klines {
 		klineItem, err := kline_types.Binance2kline(kline)
 		if err != nil {

@@ -1,10 +1,10 @@
 package kline
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/google/btree"
+	"github.com/jinzhu/copier"
 )
 
 type (
@@ -22,6 +22,7 @@ type (
 		TakerBuyQuoteAssetVolume string `json:"takerBuyQuoteAssetVolume"`
 	}
 	Klines struct {
+		Time   int64
 		tree   btree.BTree
 		mutex  sync.Mutex
 		degree int
@@ -75,9 +76,10 @@ func New(degree int) *Klines {
 }
 
 func Binance2kline(binanceKline interface{}) (*Kline, error) {
-	switch binanceKline := binanceKline.(type) {
-	case *Kline:
-		return binanceKline, nil
+	var val Kline
+	err := copier.Copy(&val, binanceKline)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("it's not a KlineItem")
+	return &val, nil
 }

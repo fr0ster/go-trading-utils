@@ -10,7 +10,10 @@ import (
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
+	spot_kline "github.com/fr0ster/go-trading-utils/binance/spot/markets/kline"
+
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
 const (
@@ -110,6 +113,57 @@ func TestBookTickersUpdateHandler(t *testing.T) {
 		AskQuantity: 0.0,
 	})
 	outChannel := spot_handlers.GetBookTickersUpdateGuard(bookTicker, inChannel)
+	inChannel <- even
+	res := false
+	for {
+		select {
+		case <-outChannel:
+			res = true
+		case <-time.After(1000 * time.Millisecond):
+			res = false
+		}
+		if !res {
+			t.Fatal("Error sending order event to channel")
+		} else {
+			break
+		}
+	}
+}
+
+func TestKlinesUpdateHandler(t *testing.T) {
+	api_key := os.Getenv("API_KEY")
+	secret_key := os.Getenv("SECRET_KEY")
+	binance.UseTestnet = false
+	spot := binance.NewClient(api_key, secret_key)
+
+	even := &binance.WsKlineEvent{
+		Event:  "kline",
+		Time:   1619260800000,
+		Symbol: "BTCUSDT",
+		Kline: binance.WsKline{
+			StartTime:            1619260800000,
+			EndTime:              1619260800000,
+			Symbol:               "BTCUSDT",
+			Interval:             "1m",
+			FirstTradeID:         1,
+			LastTradeID:          1,
+			Open:                 "10000.0",
+			Close:                "11000.0",
+			High:                 "12000.0",
+			Low:                  "9000.0",
+			Volume:               "1000.0",
+			TradeNum:             1,
+			IsFinal:              true,
+			QuoteVolume:          "10000.0",
+			ActiveBuyVolume:      "1000.0",
+			ActiveBuyQuoteVolume: "10000.0",
+		},
+	}
+	klines := kline_types.New(3)
+	spot_kline.Init(klines, spot, "BTCUSDT")
+
+	inChannel := make(chan *binance.WsKlineEvent, 1)
+	outChannel := spot_handlers.GetKlinesUpdateGuard(klines, inChannel)
 	inChannel <- even
 	res := false
 	for {
