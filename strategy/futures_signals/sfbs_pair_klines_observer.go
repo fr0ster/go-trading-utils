@@ -54,7 +54,7 @@ func (pp *PairKlinesObserver) GetStream() *futures_streams.KlineStream {
 }
 
 func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
-	if pp.stream != nil {
+	if pp.stream == nil {
 		if pp.data == nil {
 			pp.data = kline_types.New(degree)
 		}
@@ -223,7 +223,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 }
 
 func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
-	if pp.filledEvent == nil {
+	if pp.filledEvent == nil || pp.nonFilledEvent == nil {
 		if pp.stream == nil {
 			pp.StartStream()
 		}

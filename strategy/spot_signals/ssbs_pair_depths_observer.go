@@ -52,6 +52,20 @@ func (pp *PairDepthsObserver) GetStream() *spot_streams.DepthStream {
 	return pp.stream
 }
 
+func (pp *PairDepthsObserver) StartStream() *spot_streams.DepthStream {
+	if pp.stream == nil {
+		if pp.data == nil {
+			pp.data = depth_types.New(degree, pp.pair.GetPair())
+		}
+
+		// Запускаємо потік для отримання оновлення depths
+		pp.stream = spot_streams.NewDepthStream(pp.pair.GetPair(), true, 1)
+		pp.stream.Start()
+		spot_depths.Init(pp.data, pp.client, pp.limit)
+	}
+	return pp.stream
+}
+
 func (pp *PairDepthsObserver) GetAskBid() (bid float64, ask float64, err error) {
 	minAsk := pp.data.GetAsks().Min()
 	if minAsk == nil {
@@ -64,20 +78,6 @@ func (pp *PairDepthsObserver) GetAskBid() (bid float64, ask float64, err error) 
 	}
 	bid = maxBid.(*pair_price_types.PairPrice).Price
 	return
-}
-
-func (pp *PairDepthsObserver) StartStream() *spot_streams.DepthStream {
-	if pp.stream != nil {
-		if pp.data == nil {
-			pp.data = depth_types.New(degree, pp.pair.GetPair())
-		}
-
-		// Запускаємо потік для отримання оновлення depths
-		pp.stream = spot_streams.NewDepthStream(pp.pair.GetPair(), true, 1)
-		pp.stream.Start()
-		spot_depths.Init(pp.data, pp.client, pp.limit)
-	}
-	return pp.stream
 }
 
 func (pp *PairDepthsObserver) StartBuyOrSellSignal() (

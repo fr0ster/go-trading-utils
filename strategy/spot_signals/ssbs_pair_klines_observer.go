@@ -54,7 +54,7 @@ func (pp *PairKlinesObserver) GetStream() *spot_streams.KlineStream {
 }
 
 func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
-	if pp.stream != nil {
+	if pp.stream == nil {
 		if pp.data == nil {
 			pp.data = kline_types.New(degree)
 		}

@@ -56,19 +56,8 @@ func (pp *PairBookTickersObserver) GetStream() *futures_streams.BookTickerStream
 	return pp.stream
 }
 
-func (pp *PairBookTickersObserver) GetAskBid() (bid float64, ask float64, err error) {
-	btk := pp.data.Get(pp.pair.GetPair())
-	if btk == nil {
-		err = fmt.Errorf("can't get bookTicker for %s", pp.pair.GetPair())
-		return
-	}
-	ask = btk.(*book_ticker_types.BookTicker).AskPrice
-	bid = btk.(*book_ticker_types.BookTicker).BidPrice
-	return
-}
-
 func (pp *PairBookTickersObserver) StartStream() *futures_streams.BookTickerStream {
-	if pp.stream != nil {
+	if pp.stream == nil {
 		if pp.data == nil {
 			pp.data = book_ticker_types.New(degree)
 		}
@@ -81,6 +70,16 @@ func (pp *PairBookTickersObserver) StartStream() *futures_streams.BookTickerStre
 	return pp.stream
 }
 
+func (pp *PairBookTickersObserver) GetAskBid() (bid float64, ask float64, err error) {
+	btk := pp.data.Get(pp.pair.GetPair())
+	if btk == nil {
+		err = fmt.Errorf("can't get bookTicker for %s", pp.pair.GetPair())
+		return
+	}
+	ask = btk.(*book_ticker_types.BookTicker).AskPrice
+	bid = btk.(*book_ticker_types.BookTicker).BidPrice
+	return
+}
 func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {

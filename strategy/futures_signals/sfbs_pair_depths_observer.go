@@ -52,6 +52,20 @@ func (pp *PairPartialDepthsObserver) GetStream() *futures_streams.PartialDepthSe
 	return pp.stream
 }
 
+func (pp *PairPartialDepthsObserver) StartStream() *futures_streams.PartialDepthServeWithRate {
+	if pp.stream == nil {
+		if pp.data == nil {
+			pp.data = depth_types.New(degree, pp.pair.GetPair())
+		}
+
+		// Запускаємо потік для отримання оновлення depths
+		pp.stream = futures_streams.NewPartialDepthStreamWithRate(pp.pair.GetPair(), 5, futures_streams.Rate100Ms, 1)
+		pp.stream.Start()
+		futures_depths.Init(pp.data, pp.client, pp.limit)
+	}
+	return pp.stream
+}
+
 func (pp *PairPartialDepthsObserver) GetAskBid() (bid float64, ask float64, err error) {
 	minAsk := pp.data.GetAsks().Min()
 	if minAsk == nil {
@@ -64,20 +78,6 @@ func (pp *PairPartialDepthsObserver) GetAskBid() (bid float64, ask float64, err 
 	}
 	bid = maxBid.(*pair_price_types.PairPrice).Price
 	return
-}
-
-func (pp *PairPartialDepthsObserver) StartStream() *futures_streams.PartialDepthServeWithRate {
-	if pp.stream != nil {
-		if pp.data == nil {
-			pp.data = depth_types.New(degree, pp.pair.GetPair())
-		}
-
-		// Запускаємо потік для отримання оновлення depths
-		pp.stream = futures_streams.NewPartialDepthStreamWithRate(pp.pair.GetPair(), 5, futures_streams.Rate100Ms, 1)
-		pp.stream.Start()
-		futures_depths.Init(pp.data, pp.client, pp.limit)
-	}
-	return pp.stream
 }
 
 func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
