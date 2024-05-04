@@ -29,6 +29,7 @@ type (
 		pair               pairs_interfaces.Pairs
 		degree             int
 		limit              int
+		interval           string
 		account            *futures_account.Account
 		data               *kline_types.Klines
 		stream             *futures_streams.KlineStream
@@ -57,7 +58,7 @@ func (pp *PairKlinesObserver) GetStream() *futures_streams.KlineStream {
 func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 	if pp.stream == nil {
 		if pp.data == nil {
-			pp.data = kline_types.New(degree)
+			pp.data = kline_types.New(pp.degree, pp.interval)
 		}
 
 		// Запускаємо потік для отримання оновлення depths
@@ -238,6 +239,7 @@ func NewPairKlinesObserver(
 	pair pairs_interfaces.Pairs,
 	degree int,
 	limit int,
+	interval string,
 	deltaUp float64,
 	deltaDown float64,
 	stop chan os.Signal,
@@ -252,6 +254,7 @@ func NewPairKlinesObserver(
 		stop:         stop,
 		degree:       degree,
 		limit:        limit,
+		interval:     interval,
 		deltaUp:      deltaUp,
 		deltaDown:    deltaDown,
 		priceChanges: nil,

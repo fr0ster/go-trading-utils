@@ -47,7 +47,7 @@ func TestKlineInterface(t *testing.T) {
 	binance.UseTestnet = false
 	spot := binance.NewClient(api_key, secret_key)
 
-	kline := kline_types.New(2)
+	kline := kline_types.New(2, "1m")
 	spot_kline.Init(kline, spot, "BTCUSDT")
 	test := func(k kline_interface.Klines) {
 	}

@@ -12,6 +12,7 @@ func Init(kl *kline_types.Klines, client *binance.Client, symbolname string) (er
 	defer kl.Unlock() // Unlocking the klines
 	klines, _ :=
 		client.NewKlinesService().
+			Interval(kl.GetInterval()).
 			Symbol(string(symbolname)).
 			Do(context.Background())
 	for _, kline := range klines {

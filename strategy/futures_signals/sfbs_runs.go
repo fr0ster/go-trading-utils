@@ -23,6 +23,7 @@ const (
 	deltaDown = 0.0005
 	degree    = 3
 	limit     = 1000
+	interval  = "1m"
 )
 
 func Run(

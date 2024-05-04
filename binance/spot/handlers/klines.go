@@ -15,7 +15,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKli
 			if IsFinal && !event.Kline.IsFinal {
 				continue
 			}
-			if klines.Time >= event.Time {
+			if klines.GetTime() >= event.Time {
 				continue
 			}
 			kline := &kline_types.Kline{
@@ -34,6 +34,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKli
 			}
 			klines.Lock() // Locking the bookTickers
 			klines.SetKline(kline)
+			klines.SetTime(event.Time)
 			klines.Unlock() // Unlocking the bookTickers
 			if event.Kline.IsFinal {
 				finalOut <- true

@@ -23,10 +23,11 @@ type (
 		IsFinal                  bool   `json:"x"`
 	}
 	Klines struct {
-		Time   int64
-		tree   *btree.BTree
-		mutex  sync.Mutex
-		degree int
+		interval string
+		time     int64
+		tree     *btree.BTree
+		mutex    sync.Mutex
+		degree   int
 	}
 )
 
@@ -72,12 +73,34 @@ func (d *Klines) GetKlines() *btree.BTree {
 	return d.tree
 }
 
+// GetTime implements kline_interface.Klines.
+func (d *Klines) GetTime() int64 {
+	return d.time
+}
+
+// SetTime implements kline_interface.Klines.
+func (d *Klines) SetTime(time int64) {
+	d.time = time
+}
+
+// GetInterval implements kline_interface.Klines.
+func (d *Klines) GetInterval() string {
+	return d.interval
+}
+
+// SetInterval implements kline_interface.Klines.
+func (d *Klines) SetInterval(interval string) {
+	d.interval = interval
+}
+
 // Kline - B-дерево для зберігання стакана заявок
-func New(degree int) *Klines {
+func New(degree int, interval string) *Klines {
 	return &Klines{
-		tree:   btree.New(degree),
-		mutex:  sync.Mutex{},
-		degree: degree,
+		interval: interval,
+		time:     0,
+		tree:     btree.New(degree),
+		mutex:    sync.Mutex{},
+		degree:   degree,
 	}
 }
 

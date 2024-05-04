@@ -159,7 +159,7 @@ func TestKlinesUpdateHandler(t *testing.T) {
 			ActiveBuyQuoteVolume: "10000.0",
 		},
 	}
-	klines := kline_types.New(3)
+	klines := kline_types.New(3, "1m")
 	spot_kline.Init(klines, spot, "BTCUSDT")
 
 	inChannel := make(chan *binance.WsKlineEvent, 1)

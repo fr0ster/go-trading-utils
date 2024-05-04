@@ -14,7 +14,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKli
 			if IsFinal && !event.Kline.IsFinal {
 				continue
 			}
-			if klines.Time >= event.Time {
+			if klines.GetTime() >= event.Time {
 				continue
 			}
 			kline := &kline_types.Kline{
