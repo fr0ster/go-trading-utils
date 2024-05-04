@@ -12,7 +12,7 @@ type (
 		Descend(func(btree.Item) bool)
 		GetKline(openTime int64) btree.Item
 		SetKline(value btree.Item)
-		GetKlines() btree.BTree
+		GetKlines() *btree.BTree
 	}
 	// WsKline define websocket kline
 	WsKline struct {

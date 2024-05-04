@@ -23,7 +23,7 @@ type (
 	}
 	Klines struct {
 		Time   int64
-		tree   btree.BTree
+		tree   *btree.BTree
 		mutex  sync.Mutex
 		degree int
 	}
@@ -67,14 +67,14 @@ func (d *Klines) SetKline(value btree.Item) {
 }
 
 // GetKlines implements kline_interface.Klines.
-func (d *Klines) GetKlines() btree.BTree {
+func (d *Klines) GetKlines() *btree.BTree {
 	return d.tree
 }
 
 // Kline - B-дерево для зберігання стакана заявок
 func New(degree int) *Klines {
 	return &Klines{
-		tree:   *btree.New(degree),
+		tree:   btree.New(degree),
 		mutex:  sync.Mutex{},
 		degree: degree,
 	}
