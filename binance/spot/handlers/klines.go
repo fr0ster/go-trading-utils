@@ -32,15 +32,16 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKli
 				TakerBuyQuoteAssetVolume: event.Kline.ActiveBuyQuoteVolume,
 				IsFinal:                  event.Kline.IsFinal,
 			}
-			klines.Lock() // Locking the bookTickers
-			klines.SetKline(kline)
+			klines.Lock() // Locking the klines
 			klines.SetTime(event.Time)
-			klines.Unlock() // Unlocking the bookTickers
 			if event.Kline.IsFinal {
+				klines.SetKline(kline)
 				finalOut <- true
 			} else {
+				klines.SetLastKline(kline)
 				nonFinalOut <- true
 			}
+			klines.Unlock() // Unlocking the klines
 		}
 	}()
 	return

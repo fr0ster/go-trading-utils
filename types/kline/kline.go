@@ -23,11 +23,12 @@ type (
 		IsFinal                  bool   `json:"x"`
 	}
 	Klines struct {
-		interval string
-		time     int64
-		tree     *btree.BTree
-		mutex    sync.Mutex
-		degree   int
+		interval     string
+		time         int64
+		klines_final *btree.BTree
+		last_kline   *Kline
+		mutex        sync.Mutex
+		degree       int
 	}
 )
 
@@ -41,11 +42,11 @@ func (i *Kline) Equal(than btree.Item) bool {
 }
 
 func (d *Klines) Ascend(f func(btree.Item) bool) {
-	d.tree.Ascend(f)
+	d.klines_final.Ascend(f)
 }
 
 func (d *Klines) Descend(f func(btree.Item) bool) {
-	d.tree.Descend(f)
+	d.klines_final.Descend(f)
 }
 
 // Lock implements kline_interface.Klines.
@@ -60,17 +61,27 @@ func (d *Klines) Unlock() {
 
 // GetItem implements kline_interface.Klines.
 func (d *Klines) GetKline(openTime int64) btree.Item {
-	return d.tree.Get(&Kline{OpenTime: int64(openTime)})
+	return d.klines_final.Get(&Kline{OpenTime: int64(openTime)})
 }
 
 // SetItem implements kline_interface.Klines.
 func (d *Klines) SetKline(value btree.Item) {
-	d.tree.ReplaceOrInsert(value)
+	d.klines_final.ReplaceOrInsert(value)
+}
+
+// GetLastKline implements kline_interface.Klines.
+func (d *Klines) GetLastKline() *Kline {
+	return d.last_kline
+}
+
+// SetLastKline implements kline_interface.Klines.
+func (d *Klines) SetLastKline(value *Kline) {
+	d.last_kline = value
 }
 
 // GetKlines implements kline_interface.Klines.
 func (d *Klines) GetKlines() *btree.BTree {
-	return d.tree
+	return d.klines_final
 }
 
 // GetTime implements kline_interface.Klines.
@@ -96,11 +107,11 @@ func (d *Klines) SetInterval(interval string) {
 // Kline - B-дерево для зберігання стакана заявок
 func New(degree int, interval string) *Klines {
 	return &Klines{
-		interval: interval,
-		time:     0,
-		tree:     btree.New(degree),
-		mutex:    sync.Mutex{},
-		degree:   degree,
+		interval:     interval,
+		time:         0,
+		klines_final: btree.New(degree),
+		mutex:        sync.Mutex{},
+		degree:       degree,
 	}
 }
 
