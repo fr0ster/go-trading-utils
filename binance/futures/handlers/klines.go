@@ -10,7 +10,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKli
 	finalOut chan bool, nonFinalOut chan bool) {
 	finalOut = make(chan bool, 1)
 	nonFinalOut = make(chan bool, 1)
-	logrus.Debug("Create Kline updater goroutine")
+	logrus.Debug("Futures, Create Update Guard goroutine")
 	go func() {
 		for {
 			event := <-source
