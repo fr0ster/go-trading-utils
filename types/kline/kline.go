@@ -34,11 +34,11 @@ type (
 
 // Kline - тип для зберігання свічок
 func (i *Kline) Less(than btree.Item) bool {
-	return i.OpenTime < than.(*Kline).OpenTime
+	return i.OpenTime < than.(*Kline).OpenTime || i.CloseTime < than.(*Kline).CloseTime
 }
 
 func (i *Kline) Equal(than btree.Item) bool {
-	return i.OpenTime == than.(*Kline).OpenTime
+	return i.OpenTime == than.(*Kline).OpenTime && i.CloseTime == than.(*Kline).CloseTime
 }
 
 func (d *Klines) Ascend(f func(btree.Item) bool) {
