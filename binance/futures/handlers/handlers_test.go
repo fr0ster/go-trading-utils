@@ -253,7 +253,7 @@ func TestKlinesUpdateHandler(t *testing.T) {
 	futures_kline.Init(klines, spot, "BTCUSDT")
 
 	inChannel := make(chan *futures.WsKlineEvent, 1)
-	outChannel := futures_handlers.GetKlinesUpdateGuard(klines, inChannel, true)
+	outChannel, _ := futures_handlers.GetKlinesUpdateGuard(klines, inChannel, true)
 	inChannel <- even
 	res := false
 	for {

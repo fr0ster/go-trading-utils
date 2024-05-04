@@ -5,8 +5,10 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 )
 
-func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKlineEvent, IsFinal bool) (out chan bool) {
-	out = make(chan bool)
+func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKlineEvent, IsFinal bool) (
+	finalOut chan bool, nonFinalOut chan bool) {
+	finalOut = make(chan bool)
+	nonFinalOut = make(chan bool)
 	go func() {
 		for {
 			event := <-source
@@ -33,7 +35,11 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKli
 			klines.Lock() // Locking the bookTickers
 			klines.SetKline(kline)
 			klines.Unlock() // Unlocking the bookTickers
-			out <- true
+			if event.Kline.IsFinal {
+				finalOut <- true
+			} else {
+				nonFinalOut <- true
+			}
 		}
 	}()
 	return
