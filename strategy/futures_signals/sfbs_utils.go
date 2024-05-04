@@ -114,6 +114,12 @@ func getPrice(val btree.Item) (float64, error) {
 	return val.(*pair_price_types.PairPrice).Price, nil
 }
 
+func GetCommission(
+	account account_interfaces.Accounts) (
+	commission float64) { // Комісія за покупку/Комісія за продаж)
+	return account.GetMakerCommission()
+}
+
 func GetDepthAsk(depths *depth_types.Depth) (ask float64, err error) {
 	ask, err = getPrice(depths.GetAsks().Min())
 	return
@@ -135,6 +141,18 @@ func GetBookTickerBid(bookTicker *book_ticker_types.BookTicker) (price float64, 
 func GetBound(pair pairs_interfaces.Pairs) (boundAsk float64, boundBid float64, err error) {
 	boundAsk = pair.GetMiddlePrice() * (1 - pair.GetBuyDelta())
 	logrus.Debugf("Ask bound: %f", boundAsk)
+	boundBid = pair.GetMiddlePrice() * (1 + pair.GetSellDelta())
+	logrus.Debugf("Bid bound: %f", boundBid)
+	return
+}
+
+func GetAskBound(pair pairs_interfaces.Pairs) (boundAsk float64, err error) {
+	boundAsk = pair.GetMiddlePrice() * (1 - pair.GetBuyDelta())
+	logrus.Debugf("Ask bound: %f", boundAsk)
+	return
+}
+
+func GetBidBound(pair pairs_interfaces.Pairs) (boundBid float64, err error) {
 	boundBid = pair.GetMiddlePrice() * (1 + pair.GetSellDelta())
 	logrus.Debugf("Bid bound: %f", boundBid)
 	return

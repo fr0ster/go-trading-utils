@@ -6,32 +6,36 @@ import (
 )
 
 type KlineStream struct {
-	DataChannel  chan *futures.WsKlineEvent
-	EventChannel chan bool
+	dataChannel  chan *futures.WsKlineEvent
+	eventChannel chan bool
 	interval     string
 	symbol       string
 }
 
 func NewKlineStream(symbol, interval string, size int) *KlineStream {
 	return &KlineStream{
-		DataChannel:  make(chan *futures.WsKlineEvent, size),
-		EventChannel: make(chan bool, size),
+		dataChannel:  make(chan *futures.WsKlineEvent, size),
+		eventChannel: make(chan bool, size),
 		interval:     interval,
 		symbol:       symbol,
 	}
 }
 
-func (u *KlineStream) GetStreamEvent() chan bool {
-	return u.EventChannel
+func (u *KlineStream) GetDataChannel() chan *futures.WsKlineEvent {
+	return u.dataChannel
+}
+
+func (u *KlineStream) GetEventChannel() chan bool {
+	return u.eventChannel
 }
 
 func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
 	wsHandler := func(event *futures.WsKlineEvent) {
 		go func() {
-			u.DataChannel <- event
+			u.dataChannel <- event
 		}()
 		go func() {
-			u.EventChannel <- true
+			u.eventChannel <- true
 		}()
 	}
 	return futures.WsKlineServe(u.symbol, u.interval, wsHandler, utils.HandleErr)
