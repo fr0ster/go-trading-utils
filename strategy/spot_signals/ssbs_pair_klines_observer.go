@@ -18,7 +18,6 @@ import (
 
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 )
@@ -69,114 +68,6 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 	return pp.stream
 }
 
-func (pp *PairKlinesObserver) StartWorkInPositionSignal(triggerEvent chan bool) (
-	collectionOutEvent chan bool) { // Виходимо з накопичення
-	if pp.pair.GetStage() != pair_types.InputIntoPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.InputIntoPositionStage)
-		pp.stop <- os.Interrupt
-		return
-	}
-
-	if pp.collectionOutEvent == nil {
-		pp.collectionOutEvent = make(chan bool, 1)
-
-		go func() {
-			for {
-				select {
-				case <-pp.stop:
-					pp.stop <- os.Interrupt
-					return
-				case <-triggerEvent: // Чекаємо на спрацювання тригера
-				case <-time.After(pp.pair.GetTakingPositionSleepingTime()): // Або просто чекаємо якийсь час
-				}
-				// Кількість базової валюти
-				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
-				// Кількість торгової валюти
-				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Верхня межа ціни купівлі
-				boundAsk, err := GetAskBound(pp.pair)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Якшо вартість купівлі цільової валюти більша
-				// за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію
-				// - переходимо в режим спекуляції
-				if targetBalance*boundAsk >= baseBalance*pp.pair.GetLimitInputIntoPosition() {
-					pp.pair.SetStage(pair_types.WorkInPositionStage)
-					collectionOutEvent <- true
-					return
-				}
-				time.Sleep(pp.pair.GetSleepingTime())
-			}
-		}()
-	}
-	return pp.collectionOutEvent
-}
-
-func (pp *PairKlinesObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
-	workingOutEvent chan bool) { // Виходимо з спекуляції
-	if pp.pair.GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.WorkInPositionStage)
-		pp.stop <- os.Interrupt
-		return
-	}
-
-	if pp.workingOutEvent == nil {
-		pp.workingOutEvent = make(chan bool, 1)
-
-		go func() {
-			for {
-				select {
-				case <-pp.stop:
-					pp.stop <- os.Interrupt
-					return
-				case <-triggerEvent: // Чекаємо на спрацювання тригера
-				case <-time.After(pp.pair.GetSleepingTime()): // Або просто чекаємо якийсь час
-				}
-				// Кількість базової валюти
-				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
-				if err != nil {
-					logrus.Warnf("Can't get data for analysis: %v", err)
-					continue
-				}
-				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
-				// Кількість торгової валюти
-				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Нижня межа ціни продажу
-				boundBid, err := GetBidBound(pp.pair)
-				if err != nil {
-					logrus.Errorf("Can't get data for analysis: %v", err)
-					continue
-				}
-				// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
-				if targetBalance*boundBid >= baseBalance*pp.pair.GetLimitOutputOfPosition() {
-					pp.pair.SetStage(pair_types.OutputOfPositionStage)
-					workingOutEvent <- true
-					return
-				}
-				time.Sleep(pp.pair.GetSleepingTime())
-			}
-		}()
-	}
-	return pp.workingOutEvent
-}
-
 func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 	priceChanges chan *pair_price_types.PairDelta,
 	priceUp chan bool,
@@ -225,7 +116,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 }
 
 func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
-	if pp.filledEvent == nil {
+	if pp.filledEvent == nil && pp.nonFilledEvent == nil {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
