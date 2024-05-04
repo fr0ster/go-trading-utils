@@ -50,12 +50,6 @@ type (
 		stop               chan os.Signal
 		deltaUp            float64
 		deltaDown          float64
-		buyEvent           chan *pair_price_types.PairPrice
-		sellEvent          chan *pair_price_types.PairPrice
-		askUp              chan *pair_price_types.AskBid
-		askDown            chan *pair_price_types.AskBid
-		bidUp              chan *pair_price_types.AskBid
-		bidDown            chan *pair_price_types.AskBid
 	}
 )
 
@@ -247,10 +241,6 @@ func NewPairObserver(
 		priceChanges:     nil,
 		priceUp:          nil,
 		priceDown:        nil,
-		askUp:            nil,
-		askDown:          nil,
-		bidUp:            nil,
-		bidDown:          nil,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {
