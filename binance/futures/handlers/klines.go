@@ -33,6 +33,7 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKli
 			}
 			klines.Lock() // Locking the bookTickers
 			klines.SetKline(kline)
+			klines.SetTime(event.Time)
 			klines.Unlock() // Unlocking the bookTickers
 			if event.Kline.IsFinal {
 				finalOut <- true
