@@ -62,7 +62,7 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 		}
 
 		// Запускаємо потік для отримання оновлення depths
-		pp.stream = futures_streams.NewKlineStream(pp.pair.GetPair(), "1m", 1)
+		pp.stream = futures_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
 		pp.stream.Start()
 		futures_kline.Init(pp.data, pp.client, pp.pair.GetPair())
 	}
