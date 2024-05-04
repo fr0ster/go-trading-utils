@@ -47,7 +47,7 @@ type (
 	}
 )
 
-func (pp *PairKlinesObserver) Get() *kline_types.Klines {
+func (pp *PairKlinesObserver) GetKlines() *kline_types.Klines {
 	return pp.data
 }
 
@@ -194,7 +194,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					return
 				case <-pp.filledEvent: // Чекаємо на спрацювання тригера на зміну ціни
 					// Остання ціна
-					val := pp.Get().GetKlines().Max()
+					val := pp.GetKlines().GetKlines().Max()
 					if val == nil {
 						logrus.Error("Can't get Close from klines")
 						pp.stop <- os.Interrupt

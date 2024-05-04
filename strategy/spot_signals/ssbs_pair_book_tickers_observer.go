@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func (pp *PairBookTickersObserver) Get() *book_ticker_types.BookTicker {
+func (pp *PairBookTickersObserver) GetBookTickers() *book_ticker_types.BookTicker {
 	btk := pp.data.Get(pp.pair.GetPair())
 	if btk == nil {
 		return nil

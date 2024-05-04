@@ -44,7 +44,7 @@ type (
 	}
 )
 
-func (pp *PairDepthsObserver) Get() *depth_types.Depth {
+func (pp *PairDepthsObserver) GetDepths() *depth_types.Depth {
 	return pp.data
 }
 
