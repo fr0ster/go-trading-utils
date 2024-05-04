@@ -41,10 +41,11 @@ func Run(
 
 	PairInit(client, config, account, pair)
 
+	pairBookTickerObserver, _ := NewPairBookTickerObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairBookTickerObserver.StartUpdateGuard()
 	pairObserver := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
-	pairObserver.StartBookTickersUpdateGuard()
 	riskEvent := pairObserver.StartRiskSignal()
-	askUp, askDown, bidUp, bidDown := pairObserver.StartPriceByBookTickerSignal()
+	askUp, askDown, bidUp, bidDown := pairBookTickerObserver.StartPriceChangesSignal()
 
 	triggerEvent := make(chan bool)
 	go func() {

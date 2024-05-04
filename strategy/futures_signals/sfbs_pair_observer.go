@@ -1,7 +1,6 @@
 package futures_signals
 
 import (
-	"fmt"
 	_ "net/http/pprof"
 	"time"
 
@@ -11,9 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
-	futures_book_ticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
-	futures_depths "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	futures_price "github.com/fr0ster/go-trading-utils/binance/futures/markets/price"
 
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
@@ -21,7 +17,6 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
@@ -38,10 +33,6 @@ type (
 		bookTickerStream   *futures_streams.BookTickerStream
 		degree             int
 		limit              int
-		depths             *depth_types.Depth
-		depthsStream       *futures_streams.PartialDepthServeWithRate
-		bookTickerEvent    chan bool
-		depthEvent         chan bool
 		collectionOutEvent chan bool
 		positionOutEvent   chan bool
 		priceChanges       chan *pair_price_types.PairDelta
@@ -51,85 +42,8 @@ type (
 		stop               chan os.Signal
 		deltaUp            float64
 		deltaDown          float64
-		askUp              chan *pair_price_types.AskBid
-		askDown            chan *pair_price_types.AskBid
-		bidUp              chan *pair_price_types.AskBid
-		bidDown            chan *pair_price_types.AskBid
 	}
 )
-
-func (pp *PairObserver) GetBookTicker() *book_ticker_types.BookTicker {
-	btk := pp.bookTickers.Get(pp.pair.GetPair())
-	if btk == nil {
-		return nil
-	}
-	return btk.(*book_ticker_types.BookTicker)
-}
-
-func (pp *PairObserver) GetBookTickerStream() *futures_streams.BookTickerStream {
-	return pp.bookTickerStream
-}
-
-func (pp *PairObserver) GetDepth() *depth_types.Depth {
-	return pp.depths
-}
-
-func (pp *PairObserver) GetDepthStream() *futures_streams.PartialDepthServeWithRate {
-	return pp.depthsStream
-}
-
-func (pp *PairObserver) GetBookTickerAskBid() (bid float64, ask float64, err error) {
-	btk := pp.bookTickers.Get(pp.pair.GetPair())
-	if btk == nil {
-		err = fmt.Errorf("can't get bookTicker for %s", pp.pair.GetPair())
-		return
-	}
-	ask = btk.(*book_ticker_types.BookTicker).AskPrice
-	bid = btk.(*book_ticker_types.BookTicker).BidPrice
-	return
-}
-
-func (pp *PairObserver) GetDepthAskBid() (bid float64, ask float64, err error) {
-	minAsk := pp.depths.GetAsks().Min()
-	if minAsk == nil {
-		err = fmt.Errorf("can't get min ask")
-	}
-	ask = minAsk.(*pair_price_types.PairPrice).Price
-	maxBid := pp.depths.GetBids().Max()
-	if maxBid == nil {
-		err = fmt.Errorf("can't get max bid")
-	}
-	bid = maxBid.(*pair_price_types.PairPrice).Price
-	return
-}
-
-func (pp *PairObserver) StartBookTickerStream() *futures_streams.BookTickerStream {
-	if pp.bookTickerStream != nil {
-		if pp.bookTickers == nil {
-			pp.bookTickers = book_ticker_types.New(degree)
-		}
-
-		// Запускаємо потік для отримання оновлення bookTickers
-		pp.bookTickerStream = futures_streams.NewBookTickerStream(pp.pair.GetPair(), 1)
-		pp.bookTickerStream.Start()
-		futures_book_ticker.Init(pp.bookTickers, pp.pair.GetPair(), pp.client)
-	}
-	return pp.bookTickerStream
-}
-
-func (pp *PairObserver) StartDepthsStream() *futures_streams.PartialDepthServeWithRate {
-	if pp.depthsStream != nil {
-		if pp.depths == nil {
-			pp.depths = depth_types.New(degree, pp.pair.GetPair())
-		}
-
-		// Запускаємо потік для отримання оновлення depths
-		pp.depthsStream = futures_streams.NewPartialDepthStreamWithRate(pp.pair.GetPair(), 5, 100, 1)
-		pp.depthsStream.Start()
-		futures_depths.Init(pp.depths, pp.client, pp.limit)
-	}
-	return pp.depthsStream
-}
 
 func (pp *PairObserver) StartRiskSignal() chan bool {
 	if pp.riskEvent == nil {
@@ -165,162 +79,6 @@ func (pp *PairObserver) StartRiskSignal() chan bool {
 		}()
 	}
 	return pp.riskEvent
-}
-
-func (pp *PairObserver) StartPriceByBookTickerSignal() (
-	askUp chan *pair_price_types.AskBid,
-	askDown chan *pair_price_types.AskBid,
-	bidUp chan *pair_price_types.AskBid,
-	bidDown chan *pair_price_types.AskBid) {
-	if pp.bookTickers == nil {
-		pp.bookTickers = book_ticker_types.New(degree)
-	}
-	bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
-	if bookTicker == nil {
-		logrus.Errorf("Can't get bookTicker for %s when read for last price, spot strategy", pp.pair.GetPair())
-		pp.stop <- os.Interrupt
-		return
-	}
-	if pp.bookTickerStream == nil {
-		pp.bookTickerStream = futures_streams.NewBookTickerStream(pp.pair.GetPair(), 1)
-		pp.bookTickerStream.Start()
-		futures_book_ticker.Init(pp.bookTickers, pp.pair.GetPair(), pp.client)
-	}
-	if pp.bookTickerEvent == nil {
-		pp.bookTickerEvent = pp.StartBookTickersUpdateGuard()
-	}
-	if pp.askUp == nil && pp.askDown == nil && pp.bidUp == nil && pp.bidDown == nil {
-		pp.askUp = make(chan *pair_price_types.AskBid, 1)
-		pp.askDown = make(chan *pair_price_types.AskBid, 1)
-		pp.bidUp = make(chan *pair_price_types.AskBid, 1)
-		pp.bidDown = make(chan *pair_price_types.AskBid, 1)
-		go func() {
-			var last_bid, last_ask float64
-			for {
-				select {
-				case <-pp.stop:
-					pp.stop <- os.Interrupt
-					return
-				case <-pp.bookTickerEvent: // Чекаємо на спрацювання тригера на зміну ціни
-					bookTicker := pp.bookTickers.Get(pp.pair.GetPair())
-					if bookTicker == nil {
-						logrus.Errorf("Can't get bookTicker for %s", pp.pair.GetPair())
-						pp.stop <- os.Interrupt
-						return
-					}
-					// Ціна купівлі
-					ask := bookTicker.(*book_ticker_types.BookTicker).AskPrice
-					// Ціна продажу
-					bid := bookTicker.(*book_ticker_types.BookTicker).BidPrice
-					if last_bid == 0 || last_ask == 0 {
-						last_bid = bid
-						last_ask = ask
-					}
-					if ask > last_ask*(1+pp.deltaUp) {
-						pp.askUp <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					} else if ask < last_ask*(1-pp.deltaDown) {
-						pp.askDown <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					}
-					if bid > last_bid*(1+pp.deltaUp) {
-						pp.bidUp <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					} else if bid < last_bid*(1-pp.deltaDown) {
-						pp.bidDown <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					}
-				}
-				time.Sleep(pp.pair.GetSleepingTime())
-			}
-		}()
-	}
-	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
-}
-
-func (pp *PairObserver) StartPriceByDepthSignal() (
-	askUp chan *pair_price_types.AskBid,
-	askDown chan *pair_price_types.AskBid,
-	bidUp chan *pair_price_types.AskBid,
-	bidDown chan *pair_price_types.AskBid) {
-	if pp.askUp == nil && pp.askDown == nil && pp.bidUp == nil && pp.bidDown == nil {
-		pp.askUp = make(chan *pair_price_types.AskBid, 1)
-		pp.askDown = make(chan *pair_price_types.AskBid, 1)
-		pp.bidUp = make(chan *pair_price_types.AskBid, 1)
-		pp.bidDown = make(chan *pair_price_types.AskBid, 1)
-		go func() {
-			var last_bid, last_ask float64
-			for {
-				select {
-				case <-pp.stop:
-					pp.stop <- os.Interrupt
-					return
-				case <-pp.depthEvent: // Чекаємо на спрацювання тригера на зміну ціни
-					// Ціна купівлі
-					ask,
-						// Ціна продажу
-						bid, err := pp.GetDepthAskBid()
-					if err != nil {
-						logrus.Errorf("Can't get depth for %s", pp.pair.GetPair())
-						pp.stop <- os.Interrupt
-						return
-					}
-					if last_bid == 0 || last_ask == 0 {
-						last_bid = bid
-						last_ask = ask
-					}
-					if ask > last_ask*(1+pp.deltaUp) {
-						pp.askUp <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					} else if ask < last_ask*(1-pp.deltaDown) {
-						pp.askDown <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					}
-					if bid > last_bid*(1+pp.deltaUp) {
-						pp.bidUp <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					} else if bid < last_bid*(1-pp.deltaDown) {
-						pp.bidDown <- &pair_price_types.AskBid{
-							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
-							Bid: &pair_price_types.PairDelta{Price: bid, Percent: (bid - last_bid) * 100 / last_bid},
-						}
-						last_ask = ask
-						last_bid = bid
-					}
-				}
-				time.Sleep(pp.pair.GetSleepingTime())
-			}
-		}()
-	}
-	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
 // Запускаємо потік для оновлення ціни кожні updateTime
@@ -372,20 +130,6 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 		}()
 	}
 	return pp.priceChanges, pp.priceUp, pp.priceDown
-}
-
-func (pp *PairObserver) StartBookTickersUpdateGuard() chan bool {
-	if pp.bookTickerEvent == nil {
-		pp.bookTickerEvent = futures_handlers.GetBookTickersUpdateGuard(pp.bookTickers, pp.bookTickerStream.GetDataChannel())
-	}
-	return pp.bookTickerEvent
-}
-
-func (pp *PairObserver) StartDepthsUpdateGuard() chan bool {
-	if pp.depthEvent == nil {
-		pp.depthEvent = futures_handlers.GetDepthsUpdateGuard(pp.depths, pp.depthsStream.GetDataChannel())
-	}
-	return pp.depthEvent
 }
 
 func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) (collectionOutEvent chan bool) { // Виходимо з накопичення
@@ -524,17 +268,9 @@ func NewPairObserver(
 		deltaDown:        deltaDown,
 		bookTickers:      nil,
 		bookTickerStream: nil,
-		depths:           nil,
-		depthsStream:     nil,
-		bookTickerEvent:  nil,
-		depthEvent:       nil,
 		priceChanges:     nil,
 		priceUp:          nil,
 		priceDown:        nil,
-		askUp:            nil,
-		askDown:          nil,
-		bidUp:            nil,
-		bidDown:          nil,
 	}
 
 	return pp

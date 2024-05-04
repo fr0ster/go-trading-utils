@@ -296,7 +296,7 @@ func (pp *PairBookTickersObserver) StartUpdateGuard() chan bool {
 	return pp.event
 }
 
-func NewPairBookTickerObserver(
+func NewPairBookTickersObserver(
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
 	degree int,

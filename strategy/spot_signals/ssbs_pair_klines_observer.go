@@ -42,6 +42,7 @@ type (
 		stop               chan os.Signal
 		deltaUp            float64
 		deltaDown          float64
+		isFilledOnly       bool
 	}
 )
 
@@ -227,7 +228,7 @@ func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
-		pp.filledEvent, pp.nonFilledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), true)
+		pp.filledEvent, pp.nonFilledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
 	}
 	return pp.filledEvent, pp.nonFilledEvent
 }
@@ -239,7 +240,8 @@ func NewPairKlinesObserver(
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) (pp *PairKlinesObserver, err error) {
+	stop chan os.Signal,
+	isFilledOnly bool) (pp *PairKlinesObserver, err error) {
 	pp = &PairKlinesObserver{
 		client:       client,
 		pair:         pair,
@@ -255,6 +257,7 @@ func NewPairKlinesObserver(
 		priceChanges: nil,
 		priceUp:      nil,
 		priceDown:    nil,
+		isFilledOnly: isFilledOnly,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

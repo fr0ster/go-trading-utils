@@ -57,12 +57,16 @@ func RunSpotHolding(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
+	pairBookTickerObserver, err := NewPairBookTickersObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	if err != nil {
 		return err
 	}
 	// pairObserver.StartBookTickersUpdateGuard()
-	buyEvent, _ := pairObserver.StartBuyOrSellByBookTickerSignal()
+	buyEvent, _ := pairBookTickerObserver.StartBuyOrSellSignal()
 	sellEvent := make(chan *pair_price_types.PairPrice)
 
 	triggerEvent := make(chan bool)
@@ -133,12 +137,16 @@ func RunSpotScalping(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
+	pairBookTickerObserver, err := NewPairBookTickersObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	if err != nil {
 		return err
 	}
 	// pairObserver.StartBookTickersUpdateGuard()
-	buyEvent, sellEvent := pairObserver.StartBuyOrSellByDepthSignal()
+	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
 
 	triggerEvent := make(chan bool)
 	go func() {
@@ -219,12 +227,16 @@ func RunSpotTrading(
 
 	RunConfigSaver(config, stopEvent, updateTime)
 
+	pairBookTickerObserver, err := NewPairBookTickersObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
 	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	if err != nil {
 		return err
 	}
 	// pairObserver.StartBookTickersUpdateGuard()
-	buyEvent, sellEvent := pairObserver.StartBuyOrSellByBookTickerSignal()
+	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
 
 	triggerEvent := make(chan bool)
 	go func() {
