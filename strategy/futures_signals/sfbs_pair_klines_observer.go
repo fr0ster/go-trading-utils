@@ -24,25 +24,23 @@ import (
 
 type (
 	PairKlinesObserver struct {
-		client             *futures.Client
-		pair               pairs_interfaces.Pairs
-		degree             int
-		limit              int
-		interval           string
-		account            *futures_account.Account
-		data               *kline_types.Klines
-		stream             *futures_streams.KlineStream
-		filledEvent        chan bool
-		nonFilledEvent     chan bool
-		collectionOutEvent chan bool
-		workingOutEvent    chan bool
-		priceChanges       chan *pair_price_types.PairDelta
-		priceUp            chan bool
-		priceDown          chan bool
-		stop               chan os.Signal
-		deltaUp            float64
-		deltaDown          float64
-		isFilledOnly       bool
+		client         *futures.Client
+		pair           pairs_interfaces.Pairs
+		degree         int
+		limit          int
+		interval       string
+		account        *futures_account.Account
+		data           *kline_types.Klines
+		stream         *futures_streams.KlineStream
+		filledEvent    chan bool
+		nonFilledEvent chan bool
+		priceChanges   chan *pair_price_types.PairDelta
+		priceUp        chan bool
+		priceDown      chan bool
+		stop           chan os.Signal
+		deltaUp        float64
+		deltaDown      float64
+		isFilledOnly   bool
 	}
 )
 
