@@ -94,13 +94,13 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
 					if last_close == 0 {
 						last_close = current_price
-					} else if last_close > current_price*(1+pp.deltaUp) {
+					} else if current_price > last_close*(1+pp.deltaUp) {
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
 						}
 						last_close = current_price
 						pp.priceUp <- true
-					} else if last_close < current_price*(1-pp.deltaDown) {
+					} else if current_price < last_close*(1-pp.deltaDown) {
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
 						}
