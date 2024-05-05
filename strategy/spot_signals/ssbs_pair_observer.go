@@ -2,7 +2,6 @@ package spot_signals
 
 import (
 	_ "net/http/pprof"
-	"reflect"
 	"time"
 
 	"os"
@@ -84,10 +83,8 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 							current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
 							delta := (current_price - last_price) * 100 / last_price
 							logrus.Debugf("Spot, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta)
-							logrus.Debugf("This method is implemented for %s", reflect.TypeOf(pp).Name())
 							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 								logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
-								logrus.Debugf("This method is implemented for %s", reflect.TypeOf(pp).Name())
 								pp.priceChanges <- &pair_price_types.PairDelta{
 									Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
 									Percent: utils.RoundToDecimalPlace(delta, 3)}
