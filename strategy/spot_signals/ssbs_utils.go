@@ -2,13 +2,9 @@ package spot_signals
 
 import (
 	"context"
-	"errors"
-	_ "net/http/pprof"
+	"os"
 	"time"
 
-	"os"
-
-	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2"
@@ -21,11 +17,8 @@ import (
 	account_interfaces "github.com/fr0ster/go-trading-utils/interfaces/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
-	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 )
 
 func LimitRead(degree int, symbols []string, client *binance.Client) (
@@ -43,91 +36,12 @@ func LimitRead(degree int, symbols []string, client *binance.Client) (
 	return
 }
 
-// func RestBookTickerUpdater(
-// 	client *binance.Client,
-// 	stop chan os.Signal,
-// 	pair pairs_interfaces.Pairs,
-// 	limit int,
-// 	updateTime time.Duration,
-// 	bookTicker *book_ticker_types.BookTickers) {
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-stop:
-// 				// Якщо отримано сигнал з каналу stop, вийти з циклу
-// 				return
-// 			default:
-// 				err := spot_bookticker.Init(bookTicker, pair.GetPair(), client)
-// 				if err != nil {
-// 					logrus.Errorf(errorMsg, err)
-// 					stop <- os.Interrupt
-// 					return
-// 				}
-
-// 				time.Sleep(updateTime)
-// 			}
-// 		}
-// 	}()
-// }
-
-// func RestDepthUpdater(
-// 	client *binance.Client,
-// 	stop chan os.Signal,
-// 	pair pairs_interfaces.Pairs,
-// 	limit int,
-// 	updateTime time.Duration,
-// 	depth *depth_types.Depth) {
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-stop:
-// 				// Якщо отримано сигнал з каналу stop, вийти з циклу
-// 				return
-// 			default:
-// 				err := spot_depth.Init(depth, client, limit)
-// 				if err != nil {
-// 					logrus.Errorf(errorMsg, err)
-// 					stop <- os.Interrupt
-// 					return
-// 				}
-
-// 				time.Sleep(1 * time.Second)
-// 			}
-// 		}
-// 	}()
-// }
-
 func GetPrice(client *binance.Client, symbol string) (float64, error) {
 	price, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
 	}
 	return utils.ConvStrToFloat64(price[0].Price), nil
-}
-
-func getPrice(val btree.Item) (float64, error) {
-	if val == nil {
-		return 0, errors.New("value is nil")
-	}
-	return val.(*pair_price_types.PairPrice).Price, nil
-}
-
-func GetDepthAsk(depths *depth_types.Depth) (ask float64, err error) {
-	ask, err = getPrice(depths.GetAsks().Min())
-	return
-}
-
-func GetBookTickerAsk(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
-	return bookTicker.AskPrice, bookTicker.AskQuantity
-}
-
-func GetDepthBid(depths *depth_types.Depth) (bid float64, err error) {
-	bid, err = getPrice(depths.GetBids().Max())
-	return
-}
-
-func GetBookTickerBid(bookTicker *book_ticker_types.BookTicker) (price float64, quantity float64) {
-	return bookTicker.BidPrice, bookTicker.BidQuantity
 }
 
 func GetAskBound(pair pairs_interfaces.Pairs) (boundAsk float64, err error) {
@@ -220,15 +134,6 @@ func GetBuyAndSellQuantity(
 	return
 }
 
-func EvaluateMiddlePrice(
-	account account_interfaces.Accounts,
-	depths *depth_types.Depth,
-	pair pairs_interfaces.Pairs) (middlePrice float64, err error) {
-	baseBalance, err := GetBaseBalance(account, pair)
-	middlePrice = (pair.GetInitialBalance() - baseBalance) / (pair.GetBuyQuantity() - pair.GetSellQuantity())
-	return
-}
-
 // Ініциалізація Pair
 func PairInit(
 	client *binance.Client,
@@ -273,31 +178,4 @@ func RunConfigSaver(config *config_types.ConfigFile, stopEvent chan os.Signal, u
 			}
 		}
 	}()
-}
-
-// Виводимо інформацію про позицію
-func PositionInfoOut(
-	account *spot_account.Account,
-	pair pairs_interfaces.Pairs,
-	stopEvent chan os.Signal,
-	updateTime time.Duration) {
-	for {
-		baseBalance, err := account.GetFreeAsset(pair.GetBaseSymbol())
-		if err != nil {
-			logrus.Errorf("Can't get %s asset: %v", pair.GetBaseSymbol(), err)
-			stopEvent <- os.Interrupt
-			return
-		}
-		select {
-		case <-stopEvent:
-			stopEvent <- os.Interrupt
-			return
-		default:
-			if val := pair.GetMiddlePrice(); val != 0 {
-				logrus.Infof("Middle %s price: %f, available USDT: %f",
-					pair.GetPair(), val, baseBalance)
-			}
-		}
-		time.Sleep(updateTime)
-	}
 }

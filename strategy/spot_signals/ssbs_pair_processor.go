@@ -4,10 +4,8 @@ import (
 	"context"
 	"log"
 	"math"
-	_ "net/http/pprof"
-	"time"
-
 	"os"
+	"time"
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"

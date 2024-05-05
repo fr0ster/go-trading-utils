@@ -2,10 +2,8 @@ package spot_signals
 
 import (
 	"fmt"
-	_ "net/http/pprof"
-	"time"
-
 	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 

@@ -2,8 +2,6 @@ package futures_signals
 
 import (
 	"fmt"
-	_ "net/http/pprof"
-
 	"os"
 
 	"github.com/sirupsen/logrus"
