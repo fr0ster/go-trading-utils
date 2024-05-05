@@ -81,14 +81,16 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 					if priceVal := price.Get(&spot_price.SymbolTicker{Symbol: pp.pair.GetPair()}); priceVal != nil {
 						if utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice) != 0 {
 							current_price := utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice)
-							delta := (current_price - last_price) * 100 / last_price
-							logrus.Debugf("Spot, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta)
-							if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-								logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+							delta := func() float64 { return (current_price - last_price) * 100 / last_price }
+							if last_price != 0 {
+								logrus.Debugf("Spot, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta())
+							}
+							if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
+								logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
 								pp.priceChanges <- &pair_price_types.PairDelta{
 									Price:   utils.ConvStrToFloat64(priceVal.(*spot_price.SymbolTicker).LastPrice),
-									Percent: utils.RoundToDecimalPlace(delta, 3)}
-								if delta > 0 {
+									Percent: utils.RoundToDecimalPlace(delta(), 3)}
+								if delta() > 0 {
 									pp.priceUp <- true
 								} else {
 									pp.priceDown <- true
