@@ -256,8 +256,8 @@ func NewPairObserver(
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) *PairObserver {
-	pp := &PairObserver{
+	stop chan os.Signal) (pp *PairObserver, err error) {
+	pp = &PairObserver{
 		client:           client,
 		pair:             pair,
 		account:          account,
@@ -272,6 +272,14 @@ func NewPairObserver(
 		priceUp:          nil,
 		priceDown:        nil,
 	}
+	pp.account, err = futures_account.New(
+		pp.client,
+		pp.degree,
+		[]string{pair.GetBaseSymbol()},
+		[]string{pair.GetTargetSymbol()})
+	if err != nil {
+		return
+	}
 
-	return pp
+	return
 }
