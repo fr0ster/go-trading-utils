@@ -44,7 +44,7 @@ func Run(
 
 	pairBookTickerObserver, _ := NewPairBookTickerObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	pairBookTickerObserver.StartUpdateGuard()
-	pairObserver, _ := NewPairObserver(client, account, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	pairObserver, _ := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	riskEvent := pairObserver.StartRiskSignal()
 	askUp, askDown, bidUp, bidDown := pairBookTickerObserver.StartPriceChangesSignal()
 

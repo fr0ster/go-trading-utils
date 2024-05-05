@@ -250,7 +250,6 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (positi
 
 func NewPairObserver(
 	client *futures.Client,
-	account *futures_account.Account,
 	pair pairs_interfaces.Pairs,
 	degree int,
 	limit int,
@@ -260,7 +259,7 @@ func NewPairObserver(
 	pp = &PairObserver{
 		client:           client,
 		pair:             pair,
-		account:          account,
+		account:          nil,
 		stop:             stop,
 		degree:           degree,
 		limit:            limit,
