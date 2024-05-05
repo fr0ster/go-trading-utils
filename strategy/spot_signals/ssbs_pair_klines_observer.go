@@ -2,6 +2,7 @@ package spot_signals
 
 import (
 	_ "net/http/pprof"
+	"reflect"
 	"time"
 
 	"os"
@@ -92,15 +93,22 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						return
 					}
 					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
+					delta := func() float64 { return (current_price - last_close) * 100 / last_close }
+					logrus.Debugf("Spot, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta())
+					logrus.Debugf("This method is implemented for %s", reflect.TypeOf(pp).Name())
 					if last_close == 0 {
 						last_close = current_price
 					} else if current_price > last_close*(1+pp.deltaUp) {
+						logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
+						logrus.Debugf("This method is implemented for %s", reflect.TypeOf(pp).Name())
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
 						}
 						last_close = current_price
 						pp.priceUp <- true
 					} else if current_price < last_close*(1-pp.deltaDown) {
+						logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
+						logrus.Debugf("This method is implemented for %s", reflect.TypeOf(pp).Name())
 						pp.priceChanges <- &pair_price_types.PairDelta{
 							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
 						}
