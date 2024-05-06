@@ -92,14 +92,14 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
 					delta := func() float64 { return (current_price - last_close) * 100 / last_close }
 					if last_close != 0 {
-						logrus.Debugf("Spot for %s, Current price - %f, last price - %f, delta - %f",
+						logrus.Debugf("Future for %s, Current price - %f, last price - %f, delta - %f",
 							pp.pair.GetPair(), current_price, last_close, delta())
 					}
 					if last_close == 0 {
 						last_close = current_price
 					}
 					if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
-						logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
+						logrus.Debugf("Future, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
 						pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta()}
 						if delta() > 0 {
 							pp.priceUp <- true
