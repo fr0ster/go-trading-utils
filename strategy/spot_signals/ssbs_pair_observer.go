@@ -83,6 +83,9 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 							if last_price != 0 {
 								logrus.Debugf("Spot, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta())
 							}
+							if last_price == 0 {
+								last_price = current_price
+							}
 							if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
 								logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
 								pp.priceChanges <- &pair_price_types.PairDelta{
