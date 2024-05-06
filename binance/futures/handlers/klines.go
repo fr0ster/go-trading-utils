@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/adshao/go-binance/v2/futures"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
+	"github.com/sirupsen/logrus"
 )
 
 func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKlineEvent, IsFinal bool) (
@@ -12,12 +13,15 @@ func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *futures.WsKli
 	go func() {
 		for {
 			event := <-source
+			logrus.Debugf("Futures, WsKlineEvent for %v happened", event.Symbol)
 			if IsFinal && !event.Kline.IsFinal {
 				continue
 			}
+			logrus.Debugf("Futures, Kline for %v was filled", event.Symbol)
 			if klines.GetTime() >= event.Time {
 				continue
 			}
+			logrus.Debugf("Futures, Kline Time for %v was more than event time", event.Symbol)
 			kline := &kline_types.Kline{
 				OpenTime:                 event.Kline.StartTime,
 				CloseTime:                event.Kline.EndTime,
