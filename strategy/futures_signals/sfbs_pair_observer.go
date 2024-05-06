@@ -116,9 +116,7 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 							}
 							if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
 								logrus.Debugf("Futures, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
-								pp.priceChanges <- &pair_price_types.PairDelta{
-									Price:   utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price),
-									Percent: utils.RoundToDecimalPlace(delta(), 3)}
+								pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta()}
 								if delta() > 0 {
 									pp.priceUp <- true
 								} else {
