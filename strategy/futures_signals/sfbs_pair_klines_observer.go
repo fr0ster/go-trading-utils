@@ -96,20 +96,16 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					}
 					if last_close == 0 {
 						last_close = current_price
-					} else if current_price > last_close*(1+pp.deltaUp) {
-						logrus.Debugf("Futures, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
-						pp.priceChanges <- &pair_price_types.PairDelta{
-							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
+					}
+					if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
+						logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
+						pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta()}
+						if delta() > 0 {
+							pp.priceUp <- true
+						} else {
+							pp.priceDown <- true
 						}
 						last_close = current_price
-						pp.priceUp <- true
-					} else if current_price < last_close*(1-pp.deltaDown) {
-						logrus.Debugf("Futures, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
-						pp.priceChanges <- &pair_price_types.PairDelta{
-							Price: current_price, Percent: (current_price - last_close) * 100 / last_close,
-						}
-						last_close = current_price
-						pp.priceDown <- true
 					}
 				}
 				time.Sleep(pp.pair.GetSleepingTime())
