@@ -69,17 +69,26 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 func delta(current_price, last_close float64) float64 {
 	return (current_price - last_close) * 100 / last_close
 }
-func eventProcess(pp *PairKlinesObserver, current_price, last_close float64) (float64, error) {
+func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
 	if last_close != 0 {
-		logrus.Debugf("Spot for %s, Current price - %f, last price - %f, delta - %f",
-			pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
+		if filled {
+			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
+		} else {
+			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
+		}
 	}
 	if last_close == 0 {
 		last_close = current_price
 	}
 	delta := delta(current_price, last_close)
 	if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-		logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+		if filled {
+			logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+		} else {
+			logrus.Debugf("Spot, kline is not filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+		}
 		pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
 		if delta > 0 {
 			pp.priceUp <- true
@@ -117,7 +126,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						return
 					}
 					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
-					last_close, err = eventProcess(pp, current_price, last_close)
+					last_close, err = eventProcess(pp, current_price, last_close, true)
 					if err != nil {
 						logrus.Error(err)
 						pp.stop <- os.Interrupt
@@ -128,7 +137,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						// Остання ціна
 						val := pp.GetKlines().GetLastKline()
 						current_price := utils.ConvStrToFloat64(val.Close)
-						last_close, err = eventProcess(pp, current_price, last_close)
+						last_close, err = eventProcess(pp, current_price, last_close, false)
 						if err != nil {
 							logrus.Error(err)
 							pp.stop <- os.Interrupt
