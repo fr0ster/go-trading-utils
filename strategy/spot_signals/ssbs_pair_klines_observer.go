@@ -79,6 +79,7 @@ func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, fil
 		}
 	}
 	if last_close == 0 {
+		logrus.Debugf("Spot, Initialization for %s, last price - %f, %v", pp.pair.GetPair(), current_price, filled)
 		last_close = current_price
 	} else {
 		delta := delta(current_price, last_close)
