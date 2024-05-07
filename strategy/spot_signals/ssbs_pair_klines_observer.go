@@ -80,21 +80,22 @@ func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, fil
 	}
 	if last_close == 0 {
 		last_close = current_price
-	}
-	delta := delta(current_price, last_close)
-	if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-		if filled {
-			logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
-		} else {
-			logrus.Debugf("Spot, kline is not filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+	} else {
+		delta := delta(current_price, last_close)
+		if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
+			if filled {
+				logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+			} else {
+				logrus.Debugf("Spot, kline is not filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+			}
+			pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
+			if delta > 0 {
+				pp.priceUp <- true
+			} else {
+				pp.priceDown <- true
+			}
+			last_close = current_price
 		}
-		pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
-		if delta > 0 {
-			pp.priceUp <- true
-		} else {
-			pp.priceDown <- true
-		}
-		last_close = current_price
 	}
 	return last_close, nil
 }
