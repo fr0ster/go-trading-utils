@@ -163,7 +163,7 @@ func TestKlinesUpdateHandler(t *testing.T) {
 	spot_kline.Init(klines, spot, "BTCUSDT")
 
 	inChannel := make(chan *binance.WsKlineEvent, 1)
-	outChannel, _ := spot_handlers.GetKlinesUpdateGuard(klines, inChannel, true)
+	outChannel := spot_handlers.GetKlinesUpdateGuard(klines, inChannel, true)
 	inChannel <- even
 	res := false
 	for {

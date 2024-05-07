@@ -22,23 +22,22 @@ import (
 
 type (
 	PairKlinesObserver struct {
-		client         *futures.Client
-		pair           pairs_interfaces.Pairs
-		degree         int
-		limit          int
-		interval       string
-		account        *futures_account.Account
-		data           *kline_types.Klines
-		stream         *futures_streams.KlineStream
-		filledEvent    chan bool
-		nonFilledEvent chan bool
-		priceChanges   chan *pair_price_types.PairDelta
-		priceUp        chan bool
-		priceDown      chan bool
-		stop           chan os.Signal
-		deltaUp        float64
-		deltaDown      float64
-		isFilledOnly   bool
+		client       *futures.Client
+		pair         pairs_interfaces.Pairs
+		degree       int
+		limit        int
+		interval     string
+		account      *futures_account.Account
+		data         *kline_types.Klines
+		stream       *futures_streams.KlineStream
+		filledEvent  chan bool
+		priceChanges chan *pair_price_types.PairDelta
+		priceUp      chan bool
+		priceDown    chan bool
+		stop         chan os.Signal
+		deltaUp      float64
+		deltaDown    float64
+		isFilledOnly bool
 	}
 )
 
@@ -117,27 +116,27 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
 					return
-				case <-pp.filledEvent: // Чекаємо на заповнення свічки
-					// Остання ціна
-					val := pp.GetKlines().GetKlines().Max()
-					if val == nil {
-						logrus.Errorf("can't get Close from klines")
-						pp.stop <- os.Interrupt
-						return
-					}
-					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
-					last_close, err = eventProcess(pp, current_price, last_close, true)
-					if err != nil {
-						logrus.Error(err)
-						pp.stop <- os.Interrupt
-						return
-					}
-				case <-pp.nonFilledEvent: // Обробляемо незаповнену свічку
-					if !pp.isFilledOnly {
+				case filled := <-pp.filledEvent: // Чекаємо на заповнення свічки
+					if filled {
+						// Остання ціна
+						val := pp.GetKlines().GetKlines().Max()
+						if val == nil {
+							logrus.Errorf("can't get Close from klines")
+							pp.stop <- os.Interrupt
+							return
+						}
+						current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
+						last_close, err = eventProcess(pp, current_price, last_close, filled)
+						if err != nil {
+							logrus.Error(err)
+							pp.stop <- os.Interrupt
+							return
+						}
+					} else if !filled && !pp.isFilledOnly { // Обробляемо незаповнену свічку
 						// Остання ціна
 						val := pp.GetKlines().GetLastKline()
 						current_price := utils.ConvStrToFloat64(val.Close)
-						last_close, err = eventProcess(pp, current_price, last_close, false)
+						last_close, err = eventProcess(pp, current_price, last_close, !filled)
 						if err != nil {
 							logrus.Error(err)
 							pp.stop <- os.Interrupt
@@ -152,15 +151,15 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 	return pp.priceChanges, pp.priceUp, pp.priceDown
 }
 
-func (pp *PairKlinesObserver) StartUpdateGuard() (chan bool, chan bool) {
-	if pp.filledEvent == nil && pp.nonFilledEvent == nil {
+func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
+	if pp.filledEvent == nil {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
 		logrus.Debugf("Futures, Create Update Guard for %v", pp.pair.GetPair())
-		pp.filledEvent, pp.nonFilledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
+		pp.filledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
 	}
-	return pp.filledEvent, pp.nonFilledEvent
+	return pp.filledEvent
 }
 
 func NewPairKlinesObserver(
