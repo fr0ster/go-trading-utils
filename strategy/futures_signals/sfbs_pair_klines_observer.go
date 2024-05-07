@@ -71,7 +71,7 @@ func delta(current_price, last_close float64) float64 {
 }
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64) (float64, error) {
 	if last_close != 0 {
-		logrus.Debugf("Spot for %s, Current price - %f, last price - %f, delta - %f",
+		logrus.Debugf("Futures for %s, Current price - %f, last price - %f, delta - %f",
 			pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
 	}
 	if last_close == 0 {
@@ -79,7 +79,7 @@ func eventProcess(pp *PairKlinesObserver, current_price, last_close float64) (fl
 	}
 	delta := delta(current_price, last_close)
 	if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
-		logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+		logrus.Debugf("Futures, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
 		pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
 		if delta > 0 {
 			pp.priceUp <- true
