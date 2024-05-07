@@ -14,8 +14,6 @@ import (
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
-	// futures_book_ticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
-	// futures_depths "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -55,7 +53,7 @@ type (
 		orderExecuted                   chan bool
 		orderStatusEvent                chan *futures.WsUserDataEvent
 		userDataStream4Order            *futures_streams.UserDataStream
-		pairInfo                        *symbol_types.SpotSymbol
+		pairInfo                        *symbol_types.FuturesSymbol
 		degree                          int
 		debug                           bool
 		startProcessSellTakeProfitEvent chan *futures.CreateOrderResponse
@@ -562,7 +560,7 @@ func NewPairProcessor(
 	}
 
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
+		&symbol_types.FuturesSymbol{Symbol: pair.GetPair()}).(*symbol_types.FuturesSymbol)
 
 	pp.LimitUpdaterStream()
 
