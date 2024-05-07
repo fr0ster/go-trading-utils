@@ -1,7 +1,6 @@
 package spot_signals
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -70,15 +69,7 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 func delta(current_price, last_close float64) float64 {
 	return (current_price - last_close) * 100 / last_close
 }
-func eventProcess(pp *PairKlinesObserver, last_close float64) (float64, error) {
-	// Остання ціна
-	val := pp.GetKlines().GetKlines().Max()
-	if val == nil {
-		err := fmt.Errorf("can't get Close from klines")
-		return 0, err
-	}
-	current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
-
+func eventProcess(pp *PairKlinesObserver, current_price, last_close float64) (float64, error) {
 	if last_close != 0 {
 		logrus.Debugf("Spot for %s, Current price - %f, last price - %f, delta - %f",
 			pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
@@ -118,7 +109,15 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					pp.stop <- os.Interrupt
 					return
 				case <-pp.filledEvent: // Чекаємо на заповнення свічки
-					last_close, err = eventProcess(pp, last_close)
+					// Остання ціна
+					val := pp.GetKlines().GetKlines().Max()
+					if val == nil {
+						logrus.Errorf("can't get Close from klines")
+						pp.stop <- os.Interrupt
+						return
+					}
+					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
+					last_close, err = eventProcess(pp, current_price, last_close)
 					if err != nil {
 						logrus.Error(err)
 						pp.stop <- os.Interrupt
@@ -126,7 +125,10 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 					}
 				case <-pp.nonFilledEvent: // Обробляемо незаповнену свічку
 					if !pp.isFilledOnly {
-						last_close, err = eventProcess(pp, last_close)
+						// Остання ціна
+						val := pp.GetKlines().GetLastKline()
+						current_price := utils.ConvStrToFloat64(val.Close)
+						last_close, err = eventProcess(pp, current_price, last_close)
 						if err != nil {
 							logrus.Error(err)
 							pp.stop <- os.Interrupt
