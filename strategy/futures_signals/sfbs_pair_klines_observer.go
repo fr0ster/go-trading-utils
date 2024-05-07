@@ -1,6 +1,7 @@
 package futures_signals
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -66,6 +67,38 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 	return pp.stream
 }
 
+func delta(current_price, last_close float64) float64 {
+	return (current_price - last_close) * 100 / last_close
+}
+func eventProcess(pp *PairKlinesObserver, last_close float64) (float64, error) {
+	// Остання ціна
+	val := pp.GetKlines().GetKlines().Max()
+	if val == nil {
+		err := fmt.Errorf("can't get Close from klines")
+		return 0, err
+	}
+	current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
+
+	if last_close != 0 {
+		logrus.Debugf("Spot for %s, Current price - %f, last price - %f, delta - %f",
+			pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
+	}
+	if last_close == 0 {
+		last_close = current_price
+	}
+	delta := delta(current_price, last_close)
+	if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
+		logrus.Debugf("Spot, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+		pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
+		if delta > 0 {
+			pp.priceUp <- true
+		} else {
+			pp.priceDown <- true
+		}
+		last_close = current_price
+	}
+	return last_close, nil
+}
 func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 	priceChanges chan *pair_price_types.PairDelta,
 	priceUp chan bool,
@@ -75,38 +108,30 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 		pp.priceUp = make(chan bool, 1)
 		pp.priceDown = make(chan bool, 1)
 		go func() {
-			var last_close float64
+			var (
+				last_close float64
+				err        error
+			)
 			for {
 				select {
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
 					return
-				case <-pp.filledEvent: // Чекаємо на спрацювання тригера на зміну ціни
-					// Остання ціна
-					val := pp.GetKlines().GetKlines().Max()
-					if val == nil {
-						logrus.Error("Can't get Close from klines")
+				case <-pp.filledEvent: // Чекаємо на заповнення свічки
+					last_close, err = eventProcess(pp, last_close)
+					if err != nil {
+						logrus.Error(err)
 						pp.stop <- os.Interrupt
 						return
 					}
-					current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
-					delta := func() float64 { return (current_price - last_close) * 100 / last_close }
-					if last_close != 0 {
-						logrus.Debugf("Future for %s, Current price - %f, last price - %f, delta - %f",
-							pp.pair.GetPair(), current_price, last_close, delta())
-					}
-					if last_close == 0 {
-						last_close = current_price
-					}
-					if delta() > pp.deltaUp*100 || delta() < -pp.deltaDown*100 {
-						logrus.Debugf("Future, Price for %s is changed on %f%%", pp.pair.GetPair(), delta())
-						pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta()}
-						if delta() > 0 {
-							pp.priceUp <- true
-						} else {
-							pp.priceDown <- true
+				case <-pp.nonFilledEvent: // Обробляемо незаповнену свічку
+					if !pp.isFilledOnly {
+						last_close, err = eventProcess(pp, last_close)
+						if err != nil {
+							logrus.Error(err)
+							pp.stop <- os.Interrupt
+							return
 						}
-						last_close = current_price
 					}
 				}
 				time.Sleep(pp.pair.GetSleepingTime())
