@@ -343,7 +343,7 @@ func New(
 		Pair:                   pair,
 		TargetSymbol:           targetSymbol,
 		BaseSymbol:             baseSymbol,
-		SleepingTime:           3 * time.Minute,
+		SleepingTime:           10,
 		LimitInputIntoPosition: 0.1,
 		LimitOutputOfPosition:  0.5,
 		LimitOnPosition:        1.0,
