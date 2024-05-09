@@ -32,6 +32,7 @@ func (u *KlineStream) GetEventChannel() chan bool {
 
 func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
 	logrus.Debugf("Futures, Start stream for %v Klines", u.symbol)
+
 	wsHandler := func(event *futures.WsKlineEvent) {
 		if u.dataChannel != nil {
 			u.dataChannel <- event
