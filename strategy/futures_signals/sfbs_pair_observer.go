@@ -106,7 +106,7 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 							current_price := utils.ConvStrToFloat64(priceVal.(*futures_price.SymbolPrice).Price)
 							delta := func() float64 { return (current_price - last_price) * 100 / last_price }
 							if last_price != 0 {
-								logrus.Debugf("Futures, Current price for %s - %f, delta - %f", pp.pair.GetPair(), current_price, delta())
+								logrus.Debugf("Futures, Current price for %s - %f, delta - %f%%", pp.pair.GetPair(), current_price, delta())
 							}
 							if last_price == 0 {
 								last_price = current_price

@@ -72,15 +72,15 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
 	if last_close == 0 {
-		logrus.Debugf("Spot, Initialization for %s, last price - %f, %v", pp.pair.GetPair(), current_price, filled)
+		logrus.Debugf("Spot, Initialization for %s, last price - %f, filled is %v", pp.pair.GetPair(), current_price, filled)
 		last_close = current_price
 	} else {
 		delta := (current_price - last_close) * 100 / last_close
 		if filled {
-			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
+			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f%%",
 				pp.pair.GetPair(), current_price, last_close, delta)
 		} else {
-			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
+			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f%%",
 				pp.pair.GetPair(), current_price, last_close, delta)
 		}
 		if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
