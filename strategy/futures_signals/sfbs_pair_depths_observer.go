@@ -65,7 +65,6 @@ func (pp *PairPartialDepthsObserver) StartStream() chan *futures.WsDepthEvent {
 		wsHandler := func(event *futures.WsDepthEvent) {
 			pp.depthsEvent <- event
 		}
-		// futures.WsBookTickerServe(pp.pair.GetPair(), wsHandler, utils.HandleErr)
 		futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, utils.HandleErr)
 		futures_depths.Init(pp.data, pp.client, pp.limit)
 	}
