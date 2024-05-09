@@ -139,6 +139,7 @@ func (pp *PairDepthsObserver) StartBuyOrSellSignal() (
 						pp.stop <- os.Interrupt
 						return
 					}
+					logrus.Debugf("Spot, Ask is %f, boundAsk is %f, bid is %f, boundBid is %f", ask, boundAsk, bid, boundBid)
 					// Кількість торгової валюти для продажу
 					sellQuantity,
 						// Кількість торгової валюти для купівлі
@@ -242,6 +243,8 @@ func (pp *PairDepthsObserver) StartPriceChangesSignal() (
 						last_bid = bid
 						last_ask = ask
 					}
+					logrus.Debugf("Spot, Ask is %f, Last Ask is %f, Delta Ask is%f, Bid is %f, Last Bid is %f, Delta Bid is %f",
+						ask, last_ask, (ask-last_ask)*100/last_ask, bid, last_bid, (bid-last_bid)*100/last_bid)
 					if ask > last_ask*(1+pp.deltaUp) {
 						pp.askUp <- &pair_price_types.AskBid{
 							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
