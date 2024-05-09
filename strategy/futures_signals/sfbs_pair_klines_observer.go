@@ -65,24 +65,19 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 	return pp.stream
 }
 
-func delta(current_price, last_close float64) float64 {
-	return (current_price - last_close) * 100 / last_close
-}
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
-	if last_close != 0 {
-		if filled {
-			logrus.Debugf("Futures for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
-				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
-		} else {
-			logrus.Debugf("Futures for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
-				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
-		}
-	}
 	if last_close == 0 {
 		logrus.Debugf("Futures, Initialization for %s, last price - %f, %v", pp.pair.GetPair(), current_price, filled)
 		last_close = current_price
 	} else {
-		delta := delta(current_price, last_close)
+		delta := (current_price - last_close) * 100 / last_close
+		if filled {
+			logrus.Debugf("Futures for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta)
+		} else {
+			logrus.Debugf("Futures for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta)
+		}
 		if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 			if filled {
 				logrus.Debugf("Futures, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
@@ -108,6 +103,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 		pp.priceChanges = make(chan *pair_price_types.PairDelta, 1)
 		pp.priceUp = make(chan bool, 1)
 		pp.priceDown = make(chan bool, 1)
+		logrus.Debugf("Futures, Create KLine Update Signaler for %v", pp.pair.GetPair())
 		go func() {
 			var (
 				last_close float64
@@ -121,16 +117,16 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 				case filled := <-pp.filledEvent: // Чекаємо на заповнення свічки
 					if filled {
 						// Остання ціна
-						val := pp.GetKlines().GetKlines().Max()
-						if val == nil {
+						if val := pp.data.GetKlines().Max(); val != nil {
+							current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
+							last_close, err = eventProcess(pp, current_price, last_close, filled)
+							if err != nil {
+								logrus.Error(err)
+								pp.stop <- os.Interrupt
+								return
+							}
+						} else {
 							logrus.Errorf("can't get Close from klines")
-							pp.stop <- os.Interrupt
-							return
-						}
-						current_price := utils.ConvStrToFloat64(val.(*kline_types.Kline).Close)
-						last_close, err = eventProcess(pp, current_price, last_close, filled)
-						if err != nil {
-							logrus.Error(err)
 							pp.stop <- os.Interrupt
 							return
 						}

@@ -65,24 +65,19 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 	return pp.stream
 }
 
-func delta(current_price, last_close float64) float64 {
-	return (current_price - last_close) * 100 / last_close
-}
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
-	if last_close != 0 {
-		if filled {
-			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
-				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
-		} else {
-			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
-				pp.pair.GetPair(), current_price, last_close, delta(current_price, last_close))
-		}
-	}
 	if last_close == 0 {
 		logrus.Debugf("Spot, Initialization for %s, last price - %f, %v", pp.pair.GetPair(), current_price, filled)
 		last_close = current_price
 	} else {
-		delta := delta(current_price, last_close)
+		delta := (current_price - last_close) * 100 / last_close
+		if filled {
+			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta)
+		} else {
+			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f",
+				pp.pair.GetPair(), current_price, last_close, delta)
+		}
 		if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 			if filled {
 				logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
