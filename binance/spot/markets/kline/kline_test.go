@@ -53,7 +53,7 @@ func getTestData() []*kline_types.Kline {
 }
 
 func TestKlineInterface(t *testing.T) {
-	klines := kline_types.New(2, "1m")
+	klines := kline_types.New(2, "1m", "BTCUSDT")
 
 	test := func(k kline_interface.Klines) {
 		val1 := k.GetKlines().Max().(*kline_types.Kline)

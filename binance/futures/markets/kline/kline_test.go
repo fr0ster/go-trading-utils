@@ -47,8 +47,8 @@ func TestKlineInterface(t *testing.T) {
 	futures.UseTestnet = false
 	futures := futures.NewClient(api_key, secret_key)
 
-	kline := kline_types.New(2, "1m")
-	futures_kline.Init(kline, futures, "BTCUSDT")
+	kline := kline_types.New(2, "1m", "BTCUSDT")
+	futures_kline.Init(kline, futures)
 
 	test := func(k kline_interface.Klines) {
 	}

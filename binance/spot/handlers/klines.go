@@ -3,11 +3,13 @@ package handlers
 import (
 	"github.com/adshao/go-binance/v2"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
+	"github.com/sirupsen/logrus"
 )
 
 func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKlineEvent, IsFinal bool) (
 	finalOut chan bool) {
 	finalOut = make(chan bool, 1)
+	logrus.Debugf("Spot, Create Update Guard for %v", klines.GetSymbolname())
 	go func() {
 		for {
 			event := <-source

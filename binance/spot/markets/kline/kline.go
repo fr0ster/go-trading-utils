@@ -8,13 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Init(kl *kline_types.Klines, client *binance.Client, symbolname string) (err error) {
+func Init(kl *kline_types.Klines, client *binance.Client) (err error) {
 	kl.Lock()         // Locking the klines
 	defer kl.Unlock() // Unlocking the klines
 	klines, _ :=
 		client.NewKlinesService().
 			Interval(kl.GetInterval()).
-			Symbol(string(symbolname)).
+			Symbol(kl.GetSymbolname()).
 			Do(context.Background())
 	for _, kline := range klines {
 		klineItem, err := kline_types.Binance2kline(kline)
@@ -23,6 +23,6 @@ func Init(kl *kline_types.Klines, client *binance.Client, symbolname string) (er
 		}
 		kl.SetKline(klineItem)
 	}
-	logrus.Debugf("Spot, Klines size for %v - %v klines", symbolname, kl.GetKlines().Len())
+	logrus.Debugf("Spot, Klines size for %v - %v klines", kl.GetSymbolname(), kl.GetKlines().Len())
 	return nil
 }

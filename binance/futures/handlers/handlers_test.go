@@ -249,8 +249,8 @@ func TestKlinesUpdateHandler(t *testing.T) {
 			ActiveBuyQuoteVolume: "10000.0",
 		},
 	}
-	klines := kline_types.New(3, "1m")
-	futures_kline.Init(klines, spot, "BTCUSDT")
+	klines := kline_types.New(3, "1m", "BTCUSDT")
+	futures_kline.Init(klines, spot)
 
 	inChannel := make(chan *futures.WsKlineEvent, 1)
 	outChannel := futures_handlers.GetKlinesUpdateGuard(klines, inChannel, true)

@@ -53,14 +53,14 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 	if pp.stream == nil {
 		if pp.data == nil {
 			logrus.Debugf("Futures, Create kline data for %v", pp.pair.GetPair())
-			pp.data = kline_types.New(pp.degree, pp.interval)
+			pp.data = kline_types.New(pp.degree, pp.interval, pp.pair.GetPair())
 		}
 
 		// Запускаємо потік для отримання оновлення depths
 		pp.stream = futures_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
 		logrus.Debugf("Futures, Create 2 goroutine for %v Klines", pp.pair.GetPair())
 		pp.stream.Start()
-		futures_kline.Init(pp.data, pp.client, pp.pair.GetPair())
+		futures_kline.Init(pp.data, pp.client)
 	}
 	return pp.stream
 }

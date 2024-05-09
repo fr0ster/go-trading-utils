@@ -23,6 +23,7 @@ type (
 		IsFinal                  bool   `json:"x"`
 	}
 	Klines struct {
+		symbolname   string
 		interval     string
 		time         int64
 		klines_final *btree.BTree
@@ -57,6 +58,11 @@ func (d *Klines) Lock() {
 // Unlock implements kline_interface.Klines.
 func (d *Klines) Unlock() {
 	d.mutex.Unlock()
+}
+
+// GetSymbolname implements kline_interface.Klines.
+func (d *Klines) GetSymbolname() string {
+	return d.symbolname
 }
 
 // GetItem implements kline_interface.Klines.
@@ -105,8 +111,9 @@ func (d *Klines) SetInterval(interval string) {
 }
 
 // Kline - B-дерево для зберігання стакана заявок
-func New(degree int, interval string) *Klines {
+func New(degree int, interval, symbolname string) *Klines {
 	return &Klines{
+		symbolname:   symbolname,
 		interval:     interval,
 		time:         0,
 		klines_final: btree.New(degree),
