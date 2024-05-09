@@ -61,8 +61,8 @@ func (pp *PairBookTickersObserver) StartStream() chan *binance.WsBookTickerEvent
 		}
 
 		// Запускаємо потік для отримання оновлення bookTickers
-		pp.bookTickerEvent = make(chan *binance.WsBookTickerEvent, 1)
 		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+		pp.bookTickerEvent = make(chan *binance.WsBookTickerEvent, 1)
 		wsHandler := func(event *binance.WsBookTickerEvent) {
 			pp.bookTickerEvent <- event
 		}
