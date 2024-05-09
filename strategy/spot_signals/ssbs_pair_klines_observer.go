@@ -56,10 +56,15 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 			logrus.Debugf("Spot, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(degree, pp.interval, pp.pair.GetPair())
 		}
-
-		// Запускаємо потік для отримання оновлення depths
-		pp.stream = spot_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
-		pp.stream.Start(func(event *binance.WsKlineEvent) { pp.klineEvent <- event })
+		// Запускаємо потік для отримання оновлення klines
+		if pp.klineEvent == nil {
+			pp.klineEvent = make(chan *binance.WsKlineEvent, 1)
+			logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+			wsHandler := func(event *binance.WsKlineEvent) {
+				pp.klineEvent <- event
+			}
+			binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
+		}
 		spot_kline.Init(pp.data, pp.client)
 	}
 	return pp.stream

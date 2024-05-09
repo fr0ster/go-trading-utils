@@ -7,27 +7,15 @@ import (
 )
 
 type KlineStream struct {
-	dataChannel  chan *futures.WsKlineEvent
-	eventChannel chan bool
-	interval     string
-	symbol       string
+	interval string
+	symbol   string
 }
 
 func NewKlineStream(symbol, interval string, size int) *KlineStream {
 	return &KlineStream{
-		dataChannel:  make(chan *futures.WsKlineEvent, size),
-		eventChannel: make(chan bool, size),
-		interval:     interval,
-		symbol:       symbol,
+		interval: interval,
+		symbol:   symbol,
 	}
-}
-
-func (u *KlineStream) GetDataChannel() chan *futures.WsKlineEvent {
-	return u.dataChannel
-}
-
-func (u *KlineStream) GetEventChannel() chan bool {
-	return u.eventChannel
 }
 
 func (u *KlineStream) Start(handler futures.WsKlineHandler) (doneC, stopC chan struct{}, err error) {

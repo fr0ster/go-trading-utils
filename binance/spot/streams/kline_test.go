@@ -16,7 +16,9 @@ func TestNewKlineStream(t *testing.T) {
 
 func TestKlineStream_Start(t *testing.T) {
 	stream := streams.NewKlineStream("BTCUSDT", "1m", 1)
-	doneC, stopC, err := stream.Start(func(event *binance.WsKlineEvent) { t.Log(event) })
+	doneC, stopC, err := stream.Start(func(event *binance.WsKlineEvent) {
+		t.Log(event)
+	})
 	if err != nil {
 		t.Error(err)
 	}

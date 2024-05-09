@@ -56,10 +56,15 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 			logrus.Debugf("Futures, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(pp.degree, pp.interval, pp.pair.GetPair())
 		}
-
-		// Запускаємо потік для отримання оновлення depths
-		pp.stream = futures_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
-		pp.stream.Start(func(event *futures.WsKlineEvent) { pp.klineEvent <- event })
+		// Запускаємо потік для отримання оновлення klines
+		if pp.klineEvent == nil {
+			pp.klineEvent = make(chan *futures.WsKlineEvent, 1)
+			logrus.Debugf("Futures, Start stream for %v Klines", pp.pair.GetPair())
+			wsHandler := func(event *futures.WsKlineEvent) {
+				pp.klineEvent <- event
+			}
+			futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
+		}
 		futures_kline.Init(pp.data, pp.client)
 	}
 	return pp.stream
@@ -154,7 +159,7 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
-		pp.filledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
+		pp.filledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.klineEvent, pp.isFilledOnly)
 	}
 	return pp.filledEvent
 }
