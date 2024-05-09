@@ -3,7 +3,7 @@ package streams_test
 import (
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/futures/streams"
+	"github.com/fr0ster/go-trading-utils/binance/futures/deprecated/streams"
 )
 
 func TestNewPartialDepthStream(t *testing.T) {

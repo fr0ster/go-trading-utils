@@ -14,7 +14,7 @@ import (
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
+	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/deprecated/streams"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 

@@ -12,33 +12,33 @@ import (
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_book_ticker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
-
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
 	PairBookTickersObserver struct {
-		client    *futures.Client
-		pair      pairs_interfaces.Pairs
-		degree    int
-		limit     int
-		account   *futures_account.Account
-		data      *book_ticker_types.BookTickers
-		stream    *futures_streams.BookTickerStream
-		event     chan bool
-		stop      chan os.Signal
-		deltaUp   float64
-		deltaDown float64
-		buyEvent  chan *pair_price_types.PairPrice
-		sellEvent chan *pair_price_types.PairPrice
-		askUp     chan *pair_price_types.AskBid
-		askDown   chan *pair_price_types.AskBid
-		bidUp     chan *pair_price_types.AskBid
-		bidDown   chan *pair_price_types.AskBid
+		client          *futures.Client
+		pair            pairs_interfaces.Pairs
+		degree          int
+		limit           int
+		account         *futures_account.Account
+		data            *book_ticker_types.BookTickers
+		bookTickerEvent chan *futures.WsBookTickerEvent
+		event           chan bool
+		stop            chan os.Signal
+		deltaUp         float64
+		deltaDown       float64
+		buyEvent        chan *pair_price_types.PairPrice
+		sellEvent       chan *pair_price_types.PairPrice
+		askUp           chan *pair_price_types.AskBid
+		askDown         chan *pair_price_types.AskBid
+		bidUp           chan *pair_price_types.AskBid
+		bidDown         chan *pair_price_types.AskBid
 	}
 )
 
@@ -50,22 +50,26 @@ func (pp *PairBookTickersObserver) GetBookTickers() *book_ticker_types.BookTicke
 	return btk.(*book_ticker_types.BookTicker)
 }
 
-func (pp *PairBookTickersObserver) GetStream() *futures_streams.BookTickerStream {
-	return pp.stream
+func (pp *PairBookTickersObserver) GetStream() chan *futures.WsBookTickerEvent {
+	return pp.bookTickerEvent
 }
 
-func (pp *PairBookTickersObserver) StartStream() *futures_streams.BookTickerStream {
-	if pp.stream == nil {
+func (pp *PairBookTickersObserver) StartStream() chan *futures.WsBookTickerEvent {
+	if pp.bookTickerEvent == nil {
 		if pp.data == nil {
 			pp.data = book_ticker_types.New(degree)
 		}
 
-		// Запускаємо потік для отримання оновлення bookTickers
-		pp.stream = futures_streams.NewBookTickerStream(pp.pair.GetPair(), 1)
-		pp.stream.Start()
+		// Запускаємо потік для отримання оновлення klines
+		pp.bookTickerEvent = make(chan *futures.WsBookTickerEvent, 1)
+		logrus.Debugf("Futures, Start stream for %v Klines", pp.pair.GetPair())
+		wsHandler := func(event *futures.WsBookTickerEvent) {
+			pp.bookTickerEvent <- event
+		}
+		futures.WsBookTickerServe(pp.pair.GetPair(), wsHandler, utils.HandleErr)
 		futures_book_ticker.Init(pp.data, pp.pair.GetPair(), pp.client)
 	}
-	return pp.stream
+	return pp.bookTickerEvent
 }
 
 func (pp *PairBookTickersObserver) GetAskBid() (bid float64, ask float64, err error) {
@@ -81,7 +85,7 @@ func (pp *PairBookTickersObserver) GetAskBid() (bid float64, ask float64, err er
 func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
-	if pp.stream == nil {
+	if pp.bookTickerEvent == nil {
 		pp.StartStream()
 	}
 	if pp.event == nil {
@@ -285,10 +289,10 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 
 func (pp *PairBookTickersObserver) StartUpdateGuard() chan bool {
 	if pp.event == nil {
-		if pp.stream == nil {
+		if pp.bookTickerEvent == nil {
 			pp.StartStream()
 		}
-		pp.event = futures_handlers.GetBookTickersUpdateGuard(pp.data, pp.stream.GetDataChannel())
+		pp.event = futures_handlers.GetBookTickersUpdateGuard(pp.data, pp.bookTickerEvent)
 	}
 	return pp.event
 }
@@ -302,21 +306,21 @@ func NewPairBookTickerObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairBookTickersObserver, err error) {
 	pp = &PairBookTickersObserver{
-		client:    client,
-		pair:      pair,
-		account:   nil,
-		data:      nil,
-		stream:    nil,
-		event:     nil,
-		stop:      stop,
-		degree:    degree,
-		limit:     limit,
-		deltaUp:   deltaUp,
-		deltaDown: deltaDown,
-		askUp:     nil,
-		askDown:   nil,
-		bidUp:     nil,
-		bidDown:   nil,
+		client:          client,
+		pair:            pair,
+		account:         nil,
+		data:            nil,
+		bookTickerEvent: nil,
+		event:           nil,
+		stop:            stop,
+		degree:          degree,
+		limit:           limit,
+		deltaUp:         deltaUp,
+		deltaDown:       deltaDown,
+		askUp:           nil,
+		askDown:         nil,
+		bidUp:           nil,
+		bidDown:         nil,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {

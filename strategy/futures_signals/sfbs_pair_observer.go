@@ -10,16 +10,14 @@ import (
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_price "github.com/fr0ster/go-trading-utils/binance/futures/markets/price"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
-
-	utils "github.com/fr0ster/go-trading-utils/utils"
-
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -28,7 +26,6 @@ type (
 		pair               pairs_interfaces.Pairs
 		account            *futures_account.Account
 		bookTickers        *book_ticker_types.BookTickers
-		bookTickerStream   *futures_streams.BookTickerStream
 		degree             int
 		limit              int
 		collectionOutEvent chan bool
@@ -258,19 +255,18 @@ func NewPairObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairObserver, err error) {
 	pp = &PairObserver{
-		client:           client,
-		pair:             pair,
-		account:          nil,
-		stop:             stop,
-		degree:           degree,
-		limit:            limit,
-		deltaUp:          deltaUp,
-		deltaDown:        deltaDown,
-		bookTickers:      nil,
-		bookTickerStream: nil,
-		priceChanges:     nil,
-		priceUp:          nil,
-		priceDown:        nil,
+		client:       client,
+		pair:         pair,
+		account:      nil,
+		stop:         stop,
+		degree:       degree,
+		limit:        limit,
+		deltaUp:      deltaUp,
+		deltaDown:    deltaDown,
+		bookTickers:  nil,
+		priceChanges: nil,
+		priceUp:      nil,
+		priceDown:    nil,
 	}
 	pp.account, err = futures_account.New(
 		pp.client,

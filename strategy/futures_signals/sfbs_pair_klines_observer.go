@@ -12,8 +12,6 @@ import (
 	futures_kline "github.com/fr0ster/go-trading-utils/binance/futures/markets/kline"
 	"github.com/fr0ster/go-trading-utils/utils"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
-
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
@@ -29,7 +27,6 @@ type (
 		interval     string
 		account      *futures_account.Account
 		data         *kline_types.Klines
-		stream       *futures_streams.KlineStream
 		klineEvent   chan *futures.WsKlineEvent
 		filledEvent  chan bool
 		priceChanges chan *pair_price_types.PairDelta
@@ -46,12 +43,12 @@ func (pp *PairKlinesObserver) GetKlines() *kline_types.Klines {
 	return pp.data
 }
 
-func (pp *PairKlinesObserver) GetStream() *futures_streams.KlineStream {
-	return pp.stream
+func (pp *PairKlinesObserver) GetStream() chan *futures.WsKlineEvent {
+	return pp.klineEvent
 }
 
-func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
-	if pp.stream == nil {
+func (pp *PairKlinesObserver) StartStream() chan *futures.WsKlineEvent {
+	if pp.klineEvent == nil {
 		if pp.data == nil {
 			logrus.Debugf("Futures, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(pp.degree, pp.interval, pp.pair.GetPair())
@@ -67,7 +64,7 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 		}
 		futures_kline.Init(pp.data, pp.client)
 	}
-	return pp.stream
+	return pp.klineEvent
 }
 
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
@@ -156,7 +153,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 
 func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	if pp.filledEvent == nil {
-		if pp.stream == nil {
+		if pp.klineEvent == nil {
 			pp.StartStream()
 		}
 		pp.filledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.klineEvent, pp.isFilledOnly)
@@ -179,7 +176,7 @@ func NewPairKlinesObserver(
 		pair:         pair,
 		account:      nil,
 		data:         nil,
-		stream:       nil,
+		klineEvent:   nil,
 		filledEvent:  nil,
 		stop:         stop,
 		degree:       degree,

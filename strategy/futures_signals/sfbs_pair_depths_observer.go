@@ -12,23 +12,26 @@ import (
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_depths "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/streams"
-
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
 	PairPartialDepthsObserver struct {
-		client    *futures.Client
-		pair      pairs_interfaces.Pairs
-		degree    int
-		limit     int
-		account   *futures_account.Account
-		data      *depth_types.Depth
-		stream    *futures_streams.PartialDepthServeWithRate
+		client      *futures.Client
+		pair        pairs_interfaces.Pairs
+		degree      int
+		limit       int
+		levels      int
+		rate        time.Duration
+		account     *futures_account.Account
+		data        *depth_types.Depth
+		depthsEvent chan *futures.WsDepthEvent
+		// stream      *futures_streams.PartialDepthServeWithRate
 		event     chan bool
 		stop      chan os.Signal
 		deltaUp   float64
@@ -46,22 +49,27 @@ func (pp *PairPartialDepthsObserver) GetDepths() *depth_types.Depth {
 	return pp.data
 }
 
-func (pp *PairPartialDepthsObserver) GetStream() *futures_streams.PartialDepthServeWithRate {
-	return pp.stream
+func (pp *PairPartialDepthsObserver) GetStream() chan *futures.WsDepthEvent {
+	return pp.depthsEvent
 }
 
-func (pp *PairPartialDepthsObserver) StartStream() *futures_streams.PartialDepthServeWithRate {
-	if pp.stream == nil {
+func (pp *PairPartialDepthsObserver) StartStream() chan *futures.WsDepthEvent {
+	if pp.depthsEvent == nil {
 		if pp.data == nil {
 			pp.data = depth_types.New(degree, pp.pair.GetPair())
 		}
 
 		// Запускаємо потік для отримання оновлення depths
-		pp.stream = futures_streams.NewPartialDepthStreamWithRate(pp.pair.GetPair(), 5, futures_streams.Rate100Ms, 1)
-		pp.stream.Start()
+		logrus.Debugf("Futures, Start stream for %v Klines", pp.pair.GetPair())
+		pp.depthsEvent = make(chan *futures.WsDepthEvent, 1)
+		wsHandler := func(event *futures.WsDepthEvent) {
+			pp.depthsEvent <- event
+		}
+		// futures.WsBookTickerServe(pp.pair.GetPair(), wsHandler, utils.HandleErr)
+		futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, utils.HandleErr)
 		futures_depths.Init(pp.data, pp.client, pp.limit)
 	}
-	return pp.stream
+	return pp.depthsEvent
 }
 
 func (pp *PairPartialDepthsObserver) GetAskBid() (bid float64, ask float64, err error) {
@@ -81,7 +89,7 @@ func (pp *PairPartialDepthsObserver) GetAskBid() (bid float64, ask float64, err 
 func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
-	if pp.stream == nil {
+	if pp.depthsEvent == nil {
 		pp.StartStream()
 	}
 	if pp.buyEvent == nil && pp.sellEvent == nil {
@@ -199,10 +207,10 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 
 func (pp *PairPartialDepthsObserver) StartUpdateGuard() chan bool {
 	if pp.event == nil {
-		if pp.stream == nil {
+		if pp.depthsEvent == nil {
 			pp.StartStream()
 		}
-		pp.event = futures_handlers.GetDepthsUpdateGuard(pp.data, pp.stream.GetDataChannel())
+		pp.event = futures_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
 	}
 	return pp.event
 }
@@ -281,25 +289,29 @@ func NewPairDepthsObserver(
 	pair pairs_interfaces.Pairs,
 	degree int,
 	limit int,
+	levels int,
+	rate time.Duration,
 	deltaUp float64,
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairPartialDepthsObserver, err error) {
 	pp = &PairPartialDepthsObserver{
-		client:    client,
-		pair:      pair,
-		account:   nil,
-		data:      nil,
-		stream:    nil,
-		event:     nil,
-		stop:      stop,
-		degree:    degree,
-		limit:     limit,
-		deltaUp:   deltaUp,
-		deltaDown: deltaDown,
-		askUp:     nil,
-		askDown:   nil,
-		bidUp:     nil,
-		bidDown:   nil,
+		client:      client,
+		pair:        pair,
+		account:     nil,
+		data:        nil,
+		depthsEvent: nil,
+		event:       nil,
+		stop:        stop,
+		degree:      degree,
+		limit:       limit,
+		levels:      levels,
+		rate:        rate,
+		deltaUp:     deltaUp,
+		deltaDown:   deltaDown,
+		askUp:       nil,
+		askDown:     nil,
+		bidUp:       nil,
+		bidDown:     nil,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {

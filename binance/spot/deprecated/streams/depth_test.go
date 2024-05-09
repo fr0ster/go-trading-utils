@@ -3,7 +3,7 @@ package streams_test
 import (
 	"testing"
 
-	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
+	"github.com/fr0ster/go-trading-utils/binance/spot/deprecated/streams"
 )
 
 func TestNewDepthStream(t *testing.T) {

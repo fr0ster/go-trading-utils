@@ -11,11 +11,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/deprecated/streams"
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
-
-	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
@@ -24,6 +22,8 @@ import (
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (

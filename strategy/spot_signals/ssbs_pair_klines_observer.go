@@ -10,9 +10,12 @@ import (
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_kline "github.com/fr0ster/go-trading-utils/binance/spot/markets/kline"
+
+	// spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
+
 	"github.com/fr0ster/go-trading-utils/utils"
 
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
+	// spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
 
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
@@ -29,7 +32,6 @@ type (
 		interval     string
 		account      *spot_account.Account
 		data         *kline_types.Klines
-		stream       *spot_streams.KlineStream
 		klineEvent   chan *binance.WsKlineEvent
 		filledEvent  chan bool
 		priceChanges chan *pair_price_types.PairDelta
@@ -46,28 +48,26 @@ func (pp *PairKlinesObserver) GetKlines() *kline_types.Klines {
 	return pp.data
 }
 
-func (pp *PairKlinesObserver) GetStream() *spot_streams.KlineStream {
-	return pp.stream
+func (pp *PairKlinesObserver) GetStream() chan *binance.WsKlineEvent {
+	return pp.klineEvent
 }
 
-func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
-	if pp.stream == nil {
+func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
+	if pp.klineEvent == nil {
 		if pp.data == nil {
 			logrus.Debugf("Spot, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(degree, pp.interval, pp.pair.GetPair())
 		}
 		// Запускаємо потік для отримання оновлення klines
-		if pp.klineEvent == nil {
-			pp.klineEvent = make(chan *binance.WsKlineEvent, 1)
-			logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
-			wsHandler := func(event *binance.WsKlineEvent) {
-				pp.klineEvent <- event
-			}
-			binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
+		pp.klineEvent = make(chan *binance.WsKlineEvent, 1)
+		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+		wsHandler := func(event *binance.WsKlineEvent) {
+			pp.klineEvent <- event
 		}
+		binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
 		spot_kline.Init(pp.data, pp.client)
 	}
-	return pp.stream
+	return pp.klineEvent
 }
 
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
@@ -155,7 +155,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 
 func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	if pp.filledEvent == nil {
-		if pp.stream == nil {
+		if pp.klineEvent == nil {
 			pp.StartStream()
 		}
 		pp.filledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.klineEvent, pp.isFilledOnly)
@@ -174,11 +174,11 @@ func NewPairKlinesObserver(
 	stop chan os.Signal,
 	isFilledOnly bool) (pp *PairKlinesObserver, err error) {
 	pp = &PairKlinesObserver{
-		client:       client,
-		pair:         pair,
-		account:      nil,
-		data:         nil,
-		stream:       nil,
+		client:  client,
+		pair:    pair,
+		account: nil,
+		data:    nil,
+		// stream:       nil,
 		filledEvent:  nil,
 		stop:         stop,
 		degree:       degree,

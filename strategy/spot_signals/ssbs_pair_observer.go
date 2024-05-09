@@ -10,10 +10,6 @@ import (
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_price "github.com/fr0ster/go-trading-utils/binance/spot/markets/price"
 
-	"github.com/fr0ster/go-trading-utils/utils"
-
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
-
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
@@ -22,6 +18,8 @@ import (
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -32,13 +30,10 @@ type (
 		limit              int
 		account            *spot_account.Account
 		bookTickers        *book_ticker_types.BookTickers
-		bookTickerStream   *spot_streams.BookTickerStream
 		bookTickerEvent    chan bool
 		depths             *depth_types.Depth
-		depthsStream       *spot_streams.DepthStream
 		depthEvent         chan bool
 		klines             *kline_types.Klines
-		klineStream        *spot_streams.KlineStream
 		klineEvent         chan bool
 		priceChanges       chan *pair_price_types.PairDelta
 		collectionOutEvent chan bool
@@ -222,26 +217,23 @@ func NewPairObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairObserver, err error) {
 	pp = &PairObserver{
-		client:           client,
-		pair:             pair,
-		account:          nil,
-		bookTickers:      nil,
-		bookTickerStream: nil,
-		bookTickerEvent:  nil,
-		depths:           nil,
-		depthsStream:     nil,
-		depthEvent:       nil,
-		klines:           nil,
-		klineStream:      nil,
-		klineEvent:       nil,
-		stop:             stop,
-		degree:           degree,
-		limit:            limit,
-		deltaUp:          deltaUp,
-		deltaDown:        deltaDown,
-		priceChanges:     nil,
-		priceUp:          nil,
-		priceDown:        nil,
+		client:          client,
+		pair:            pair,
+		account:         nil,
+		bookTickers:     nil,
+		bookTickerEvent: nil,
+		depths:          nil,
+		depthEvent:      nil,
+		klines:          nil,
+		klineEvent:      nil,
+		stop:            stop,
+		degree:          degree,
+		limit:           limit,
+		deltaUp:         deltaUp,
+		deltaDown:       deltaDown,
+		priceChanges:    nil,
+		priceUp:         nil,
+		priceDown:       nil,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

@@ -12,33 +12,33 @@ import (
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_depths "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/streams"
-
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
 	PairDepthsObserver struct {
-		client    *binance.Client
-		pair      pairs_interfaces.Pairs
-		degree    int
-		limit     int
-		account   *spot_account.Account
-		data      *depth_types.Depth
-		stream    *spot_streams.DepthStream
-		event     chan bool
-		stop      chan os.Signal
-		deltaUp   float64
-		deltaDown float64
-		buyEvent  chan *pair_price_types.PairPrice
-		sellEvent chan *pair_price_types.PairPrice
-		askUp     chan *pair_price_types.AskBid
-		askDown   chan *pair_price_types.AskBid
-		bidUp     chan *pair_price_types.AskBid
-		bidDown   chan *pair_price_types.AskBid
+		client      *binance.Client
+		pair        pairs_interfaces.Pairs
+		degree      int
+		limit       int
+		account     *spot_account.Account
+		data        *depth_types.Depth
+		depthsEvent chan *binance.WsDepthEvent
+		event       chan bool
+		stop        chan os.Signal
+		deltaUp     float64
+		deltaDown   float64
+		buyEvent    chan *pair_price_types.PairPrice
+		sellEvent   chan *pair_price_types.PairPrice
+		askUp       chan *pair_price_types.AskBid
+		askDown     chan *pair_price_types.AskBid
+		bidUp       chan *pair_price_types.AskBid
+		bidDown     chan *pair_price_types.AskBid
 	}
 )
 
@@ -46,22 +46,26 @@ func (pp *PairDepthsObserver) GetDepths() *depth_types.Depth {
 	return pp.data
 }
 
-func (pp *PairDepthsObserver) GetStream() *spot_streams.DepthStream {
-	return pp.stream
+func (pp *PairDepthsObserver) GetStream() chan *binance.WsDepthEvent {
+	return pp.depthsEvent
 }
 
-func (pp *PairDepthsObserver) StartStream() *spot_streams.DepthStream {
-	if pp.stream == nil {
+func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
+	if pp.depthsEvent == nil {
 		if pp.data == nil {
 			pp.data = depth_types.New(degree, pp.pair.GetPair())
 		}
 
 		// Запускаємо потік для отримання оновлення depths
-		pp.stream = spot_streams.NewDepthStream(pp.pair.GetPair(), true, 1)
-		pp.stream.Start()
+		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+		pp.depthsEvent = make(chan *binance.WsDepthEvent, 1)
+		wsHandler := func(event *binance.WsDepthEvent) {
+			pp.depthsEvent <- event
+		}
+		binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, utils.HandleErr)
 		spot_depths.Init(pp.data, pp.client, pp.limit)
 	}
-	return pp.stream
+	return pp.depthsEvent
 }
 
 func (pp *PairDepthsObserver) GetAskBid() (bid float64, ask float64, err error) {
@@ -81,7 +85,7 @@ func (pp *PairDepthsObserver) GetAskBid() (bid float64, ask float64, err error) 
 func (pp *PairDepthsObserver) StartBuyOrSellSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
-	if pp.stream == nil {
+	if pp.depthsEvent == nil {
 		pp.StartStream()
 	}
 	if pp.buyEvent == nil && pp.sellEvent == nil {
@@ -199,10 +203,10 @@ func (pp *PairDepthsObserver) StartBuyOrSellSignal() (
 
 func (pp *PairDepthsObserver) StartUpdateGuard() chan bool {
 	if pp.event == nil {
-		if pp.stream == nil {
+		if pp.depthsEvent == nil {
 			pp.StartStream()
 		}
-		pp.event = spot_handlers.GetDepthsUpdateGuard(pp.data, pp.stream.GetDataChannel())
+		pp.event = spot_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
 	}
 	return pp.event
 }
@@ -285,21 +289,21 @@ func NewPairDepthsObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairDepthsObserver, err error) {
 	pp = &PairDepthsObserver{
-		client:    client,
-		pair:      pair,
-		account:   nil,
-		data:      nil,
-		stream:    nil,
-		event:     nil,
-		stop:      stop,
-		degree:    degree,
-		limit:     limit,
-		deltaUp:   deltaUp,
-		deltaDown: deltaDown,
-		askUp:     nil,
-		askDown:   nil,
-		bidUp:     nil,
-		bidDown:   nil,
+		client:      client,
+		pair:        pair,
+		account:     nil,
+		data:        nil,
+		depthsEvent: nil,
+		event:       nil,
+		stop:        stop,
+		degree:      degree,
+		limit:       limit,
+		deltaUp:     deltaUp,
+		deltaDown:   deltaDown,
+		askUp:       nil,
+		askDown:     nil,
+		bidUp:       nil,
+		bidDown:     nil,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {
