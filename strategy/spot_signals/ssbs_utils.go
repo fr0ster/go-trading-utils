@@ -150,10 +150,6 @@ func PairInit(
 	}
 
 	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
-		targetFree, err = account.GetFreeAsset(pair.GetPair())
-		if err != nil {
-			return err
-		}
 		pair.SetBuyQuantity(targetFree)
 		price, err := GetPrice(client, pair.GetPair())
 		if err != nil {
