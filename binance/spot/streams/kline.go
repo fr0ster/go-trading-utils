@@ -3,6 +3,7 @@ package streams
 import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type KlineStream struct {
@@ -30,13 +31,14 @@ func (u *KlineStream) GetEventChannel() chan bool {
 }
 
 func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
+	logrus.Debugf("Spot, Start stream for %v Klines", u.symbol)
 	wsHandler := func(event *binance.WsKlineEvent) {
-		go func() {
+		if u.dataChannel != nil {
 			u.dataChannel <- event
-		}()
-		go func() {
+		}
+		if u.eventChannel != nil {
 			u.eventChannel <- true
-		}()
+		}
 	}
 	return binance.WsKlineServe(u.symbol, u.interval, wsHandler, utils.HandleErr)
 }
