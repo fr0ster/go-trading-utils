@@ -154,7 +154,6 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
-		logrus.Debugf("Futures, Create Update Guard for %v", pp.pair.GetPair())
 		pp.filledEvent = futures_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
 	}
 	return pp.filledEvent

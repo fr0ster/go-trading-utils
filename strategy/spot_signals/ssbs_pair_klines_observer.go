@@ -153,7 +153,6 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
-		logrus.Debugf("Spot, Create Update Guard for %v", pp.pair.GetPair())
 		pp.filledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
 	}
 	return pp.filledEvent
