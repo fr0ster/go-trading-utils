@@ -250,7 +250,8 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 						last_bid = bid
 						last_ask = ask
 					}
-					logrus.Debugf("Futures, Ask is %f, Last Ask is %f, Bid is %f, Last Bid is %f", ask, last_ask, bid, last_bid)
+					logrus.Debugf("Futures, Ask is %f, Last Ask is %f, Delta Ask is%f, Bid is %f, Last Bid is %f, Delta Bid is %f",
+						ask, last_ask, (ask-last_ask)*100/last_ask, bid, last_bid, (bid-last_bid)*100/last_bid)
 					if ask > last_ask*(1+pp.deltaUp) {
 						pp.askUp <- &pair_price_types.AskBid{
 							Ask: &pair_price_types.PairDelta{Price: ask, Percent: (ask - last_ask) * 100 / last_ask},
