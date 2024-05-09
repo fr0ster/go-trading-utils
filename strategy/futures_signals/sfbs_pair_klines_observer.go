@@ -30,6 +30,7 @@ type (
 		account      *futures_account.Account
 		data         *kline_types.Klines
 		stream       *futures_streams.KlineStream
+		klineEvent   chan *futures.WsKlineEvent
 		filledEvent  chan bool
 		priceChanges chan *pair_price_types.PairDelta
 		priceUp      chan bool
@@ -58,7 +59,7 @@ func (pp *PairKlinesObserver) StartStream() *futures_streams.KlineStream {
 
 		// Запускаємо потік для отримання оновлення depths
 		pp.stream = futures_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
-		pp.stream.Start()
+		pp.stream.Start(func(event *futures.WsKlineEvent) { pp.klineEvent <- event })
 		futures_kline.Init(pp.data, pp.client)
 	}
 	return pp.stream

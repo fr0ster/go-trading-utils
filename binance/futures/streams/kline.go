@@ -30,16 +30,7 @@ func (u *KlineStream) GetEventChannel() chan bool {
 	return u.eventChannel
 }
 
-func (u *KlineStream) Start() (doneC, stopC chan struct{}, err error) {
+func (u *KlineStream) Start(handler futures.WsKlineHandler) (doneC, stopC chan struct{}, err error) {
 	logrus.Debugf("Futures, Start stream for %v Klines", u.symbol)
-
-	wsHandler := func(event *futures.WsKlineEvent) {
-		if u.dataChannel != nil {
-			u.dataChannel <- event
-		}
-		if u.eventChannel != nil {
-			u.eventChannel <- true
-		}
-	}
-	return futures.WsKlineServe(u.symbol, u.interval, wsHandler, utils.HandleErr)
+	return futures.WsKlineServe(u.symbol, u.interval, handler, utils.HandleErr)
 }

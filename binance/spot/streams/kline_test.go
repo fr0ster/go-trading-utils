@@ -3,6 +3,7 @@ package streams_test
 import (
 	"testing"
 
+	"github.com/adshao/go-binance/v2"
 	"github.com/fr0ster/go-trading-utils/binance/spot/streams"
 )
 
@@ -14,8 +15,8 @@ func TestNewKlineStream(t *testing.T) {
 }
 
 func TestKlineStream_Start(t *testing.T) {
-	stream := streams.NewDepthStream("BTCUSDT", false, 1)
-	doneC, stopC, err := stream.Start()
+	stream := streams.NewKlineStream("BTCUSDT", "1m", 1)
+	doneC, stopC, err := stream.Start(func(event *binance.WsKlineEvent) { t.Log(event) })
 	if err != nil {
 		t.Error(err)
 	}

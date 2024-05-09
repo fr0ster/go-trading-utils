@@ -30,6 +30,7 @@ type (
 		account      *spot_account.Account
 		data         *kline_types.Klines
 		stream       *spot_streams.KlineStream
+		klineEvent   chan *binance.WsKlineEvent
 		filledEvent  chan bool
 		priceChanges chan *pair_price_types.PairDelta
 		priceUp      chan bool
@@ -58,7 +59,7 @@ func (pp *PairKlinesObserver) StartStream() *spot_streams.KlineStream {
 
 		// Запускаємо потік для отримання оновлення depths
 		pp.stream = spot_streams.NewKlineStream(pp.pair.GetPair(), pp.interval, 1)
-		pp.stream.Start()
+		pp.stream.Start(func(event *binance.WsKlineEvent) { pp.klineEvent <- event })
 		spot_kline.Init(pp.data, pp.client)
 	}
 	return pp.stream
@@ -152,7 +153,7 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 		if pp.stream == nil {
 			pp.StartStream()
 		}
-		pp.filledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.stream.GetDataChannel(), pp.isFilledOnly)
+		pp.filledEvent = spot_handlers.GetKlinesUpdateGuard(pp.data, pp.klineEvent, pp.isFilledOnly)
 	}
 	return pp.filledEvent
 }
