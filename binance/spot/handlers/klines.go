@@ -9,8 +9,8 @@ import (
 func GetKlinesUpdateGuard(klines *kline_types.Klines, source chan *binance.WsKlineEvent, IsFinal bool) (
 	finalOut chan bool) {
 	finalOut = make(chan bool, 1)
-	logrus.Debugf("Spot, Create Update Guard for %v", klines.GetSymbolname())
 	go func() {
+		logrus.Debugf("Spot, Create Update Guard for %v", klines.GetSymbolname())
 		for {
 			event := <-source
 			if IsFinal && !event.Kline.IsFinal {
