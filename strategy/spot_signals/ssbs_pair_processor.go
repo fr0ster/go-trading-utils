@@ -11,7 +11,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_streams "github.com/fr0ster/go-trading-utils/binance/spot/deprecated/streams"
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 
@@ -50,8 +49,8 @@ type (
 		stopSell                             chan bool
 		stopAfterProcess                     chan bool
 		orderExecuted                        chan bool
+		userDataEvent                        chan *binance.WsUserDataEvent
 		orderStatusEvent                     chan *binance.WsUserDataEvent
-		userDataStream4Order                 *spot_streams.UserDataStream
 		pairInfo                             *symbol_types.SpotSymbol
 		degree                               int
 		debug                                bool
@@ -597,16 +596,19 @@ func NewPairProcessor(
 	if err != nil {
 		return
 	}
-	pp.userDataStream4Order = spot_streams.NewUserDataStream(listenKey, 1)
-	pp.userDataStream4Order.Start()
+	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
+	_, _, err = binance.WsUserDataServe(listenKey, func(event *binance.WsUserDataEvent) {
+		pp.userDataEvent <- event
+	}, utils.HandleErr)
+	if err != nil {
+		return
+	}
 
 	orderStatuses := []binance.OrderStatusType{
 		binance.OrderStatusTypeFilled,
 		binance.OrderStatusTypePartiallyFilled,
 	}
-	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(
-		pp.userDataStream4Order.GetDataChannel(),
-		orderStatuses)
+	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
 
 	return
 }

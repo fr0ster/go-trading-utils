@@ -14,8 +14,6 @@ import (
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
-	futures_streams "github.com/fr0ster/go-trading-utils/binance/futures/deprecated/streams"
-
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -51,8 +49,8 @@ type (
 		bidDown                         chan *pair_price_types.AskBid
 		stopAfterProcess                chan bool
 		orderExecuted                   chan bool
+		userDataEvent                   chan *futures.WsUserDataEvent
 		orderStatusEvent                chan *futures.WsUserDataEvent
-		userDataStream4Order            *futures_streams.UserDataStream
 		pairInfo                        *symbol_types.FuturesSymbol
 		degree                          int
 		debug                           bool
@@ -568,16 +566,19 @@ func NewPairProcessor(
 	if err != nil {
 		return
 	}
-	pp.userDataStream4Order = futures_streams.NewUserDataStream(listenKey, 1)
-	pp.userDataStream4Order.Start()
+	pp.userDataEvent = make(chan *futures.WsUserDataEvent)
+	_, _, err = futures.WsUserDataServe(listenKey, func(event *futures.WsUserDataEvent) {
+		pp.userDataEvent <- event
+	}, utils.HandleErr)
+	if err != nil {
+		return
+	}
 
 	orderStatuses := []futures.OrderStatusType{
 		futures.OrderStatusTypeFilled,
 		futures.OrderStatusTypePartiallyFilled,
 	}
-	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(
-		pp.userDataStream4Order.GetDataChannel(),
-		orderStatuses)
+	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
 
 	return
 }
