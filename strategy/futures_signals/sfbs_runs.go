@@ -132,13 +132,19 @@ func Run(
 		if pair.GetStage() == pairs_types.WorkInPositionStage {
 			workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 			<-workingOutEvent
-			pairProcessor.StopBuySignal()
 			pair.SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
 		}
 		if pair.GetStage() == pairs_types.OutputOfPositionStage {
-			orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
-			<-orderExecutionGuard
+			workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
+			<-workingOutEvent
+			pairProcessor.StopBuySignal()
+			pair.SetStage(pairs_types.PositionClosedStage)
+			config.Save()
+		}
+		if pair.GetStage() == pairs_types.OutputOfPositionStage {
+			positionClosed := pairObserver.ClosePositionSignal(triggerEvent)
+			<-positionClosed
 			pair.SetStage(pairs_types.PositionClosedStage)
 			config.Save()
 			stopEvent <- os.Interrupt

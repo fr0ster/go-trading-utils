@@ -200,8 +200,8 @@ func RunSpotScalping(
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
-		<-orderExecutionGuard
+		positionClosed := pairObserver.ClosePositionSignal(triggerEvent)
+		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
 		stopEvent <- os.Interrupt
@@ -282,14 +282,19 @@ func RunSpotTrading(
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
-
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.OutputOfPositionStage)
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
-		<-orderExecutionGuard
+		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
+		<-workingOutEvent
+		pair.SetStage(pairs_types.OutputOfPositionStage)
+		config.Save()
+	}
+	if pair.GetStage() == pairs_types.OutputOfPositionStage {
+		positionClosed := pairObserver.ClosePositionSignal(triggerEvent)
+		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
 		stopEvent <- os.Interrupt
