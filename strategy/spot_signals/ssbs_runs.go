@@ -144,7 +144,7 @@ func RunSpotScalping(
 	if err != nil {
 		return err
 	}
-	// pairObserver.StartBookTickersUpdateGuard()
+
 	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
 
 	triggerEvent := make(chan bool)
@@ -178,16 +178,19 @@ func RunSpotScalping(
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
+		<-collectionOutEvent
 		_, err = pairProcessor.ProcessSellOrder()
 		if err != nil {
 			return err
 		}
-
-		<-collectionOutEvent
 		pair.SetStage(pairs_types.WorkInPositionStage)
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
+		_, err = pairProcessor.ProcessSellOrder() // Все одно другий раз не запустится, бо вже працює горутина
+		if err != nil {
+			return err
+		}
 		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 		_, err = pairProcessor.ProcessSellOrder()
 		if err != nil {
@@ -200,7 +203,11 @@ func RunSpotScalping(
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		positionClosed := pairObserver.ClosePositionSignal(triggerEvent)
+		pairProcessor.StopBuySignal() // Зупиняємо купівлю, продаємо поки є шо продавати
+		if err != nil {
+			return err
+		}
+		positionClosed := pairObserver.ClosePositionSignal(triggerEvent) // Чекаємо на закриття позиції
 		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
@@ -278,22 +285,15 @@ func RunSpotTrading(
 		if err != nil {
 			return err
 		}
-	}
-
-	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
 		<-collectionOutEvent
-		pair.SetStage(pairs_types.OutputOfPositionStage)
-		config.Save()
-	}
-	if pair.GetStage() == pairs_types.WorkInPositionStage {
-		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
-		<-workingOutEvent
-		pair.SetStage(pairs_types.OutputOfPositionStage)
+		pair.SetStage(pairs_types.OutputOfPositionStage) // В trading стратегії не спекулюємо, накопили позицію і закриваемо продажем лімітним ордером
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		positionClosed := pairObserver.ClosePositionSignal(triggerEvent)
+		pairProcessor.StopBuySignal() // Зупиняємо купівлю, продаємо поки є шо продавати
+		// TODO: Закриття позиції лімітним trailing ордером
+		positionClosed := pairObserver.ClosePositionSignal(triggerEvent) // Чекаємо на закриття позиції
 		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()

@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -53,6 +54,7 @@ type (
 		orderStatusEvent                     chan *binance.WsUserDataEvent
 		pairInfo                             *symbol_types.SpotSymbol
 		degree                               int
+		trailingDelta                        int
 		debug                                bool
 	}
 )
@@ -65,7 +67,7 @@ func (pp *PairProcessor) StopSellSignal() {
 	pp.stopSell <- true
 }
 
-func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.CreateOrderResponse, err error) {
+func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
 		return
@@ -74,9 +76,8 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.Cre
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
-	if pp.buyEvent == nil && pp.sellEvent == nil && pp.startBuyOrderEvent == nil {
+	if pp.buyEvent == nil && pp.startBuyOrderEvent == nil {
 		pp.buyEvent = make(chan *pair_price_types.PairPrice)
-		pp.sellEvent = make(chan *pair_price_types.PairPrice)
 		pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
 		go func() {
 			var order *binance.CreateOrderResponse
@@ -96,15 +97,15 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.Cre
 					if params.Price == 0 || params.Quantity == 0 {
 						continue
 					}
-					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
+					baseBalance, err := GetBaseBalance(pp.account, pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
 						pp.stop <- os.Interrupt
 						return
 					}
-					if targetBalance > pp.pair.GetLimitInputIntoPosition() || targetBalance > pp.pair.GetLimitOutputOfPosition() {
-						logrus.Warnf("We'd buy %s lots of %s, but we have not enough %s",
-							pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
+					if baseBalance < params.Quantity*params.Price {
+						logrus.Warnf("We don't buy, we need %v of %s for buy %v of %s",
+							baseBalance, pp.pair.GetTargetSymbol(), params.Quantity*params.Price, pp.pair.GetTargetSymbol())
 						continue
 					}
 					if !pp.debug {
@@ -155,12 +156,12 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.Cre
 			}
 		}()
 	} else {
-		startBuyOrderEvent = pp.startBuyOrderEvent
+		nextTriggerEvent = pp.startBuyOrderEvent
 	}
 	return
 }
 
-func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.CreateOrderResponse, err error) {
+func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
 		return
@@ -170,11 +171,10 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.C
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
 
-	if pp.buyEvent == nil && pp.sellEvent == nil && pp.startSellOrderEvent == nil {
-		pp.buyEvent = make(chan *pair_price_types.PairPrice)
+	if pp.sellEvent == nil && pp.startSellOrderEvent == nil {
 		pp.sellEvent = make(chan *pair_price_types.PairPrice)
 		pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
-		startSellOrderEvent = pp.startSellOrderEvent
+		nextTriggerEvent = pp.startSellOrderEvent
 		go func() {
 			var order *binance.CreateOrderResponse
 			// var err error
@@ -230,7 +230,7 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.C
 						pp.minuteOrderLimit.Limit++
 						pp.dayOrderLimit.Limit++
 						if order.Status == binance.OrderStatusTypeNew {
-							startSellOrderEvent <- order
+							nextTriggerEvent <- order
 						} else {
 							for _, fill := range order.Fills {
 								fillPrice := utils.ConvStrToFloat64(fill.Price)
@@ -253,12 +253,12 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *binance.C
 			}
 		}()
 	} else {
-		startSellOrderEvent = pp.startSellOrderEvent
+		nextTriggerEvent = pp.startSellOrderEvent
 	}
 	return
 }
 
-func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitOrderEvent chan *binance.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
@@ -270,7 +270,8 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitO
 	)
 	if pp.startProcessBuyTakeProfitOrderEvent == nil {
 		pp.startProcessBuyTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		startProcessBuyTakeProfitOrderEvent = pp.startProcessBuyTakeProfitOrderEvent
+		pp.trailingDelta = trailingDelta
+		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
 		go func() {
 			for {
 				select {
@@ -293,7 +294,9 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitO
 								Side(binance.SideTypeBuy).
 								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
 								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+								TimeInForce(binance.TimeInForceTypeGTC).
+								TrailingDelta(strconv.Itoa(pp.trailingDelta)).
+								Do(context.Background())
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -307,7 +310,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitO
 						if order.Status == binance.OrderStatusTypeNew {
 							orderExecutionGuard := pp.OrderExecutionGuard(order)
 							<-orderExecutionGuard
-							startProcessBuyTakeProfitOrderEvent <- order
+							nextTriggerEvent <- order
 						} else {
 							for _, fill := range order.Fills {
 								fillPrice := utils.ConvStrToFloat64(fill.Price)
@@ -330,12 +333,12 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitO
 			}
 		}()
 	} else {
-		startProcessBuyTakeProfitOrderEvent = pp.startProcessBuyTakeProfitOrderEvent
+		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
 	}
 	return
 }
 
-func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfitOrderEvent chan *binance.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
@@ -347,7 +350,8 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfi
 	)
 	if pp.startProcessSellTakeProfitOrderEvent == nil {
 		pp.startProcessSellTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		startProcessSellTakeProfitOrderEvent = pp.startProcessSellTakeProfitOrderEvent
+		pp.trailingDelta = trailingDelta
+		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
 		go func() {
 			for {
 				select {
@@ -370,7 +374,9 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfi
 								Side(binance.SideTypeSell).
 								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
 								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
+								TimeInForce(binance.TimeInForceTypeGTC).
+								TrailingDelta(strconv.Itoa(pp.trailingDelta)).
+								Do(context.Background())
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -384,7 +390,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfi
 						if order.Status == binance.OrderStatusTypeNew {
 							orderExecutionGuard := pp.OrderExecutionGuard(order)
 							<-orderExecutionGuard
-							startProcessSellTakeProfitOrderEvent <- order
+							nextTriggerEvent <- order
 						} else {
 							for _, fill := range order.Fills {
 								fillPrice := utils.ConvStrToFloat64(fill.Price)
@@ -407,12 +413,12 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfi
 			}
 		}()
 	} else {
-		startProcessSellTakeProfitOrderEvent = pp.startProcessSellTakeProfitOrderEvent
+		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
 	}
 	return
 }
 
-func (pp *PairProcessor) ProcessAfterBuyOrder(startBuyOrderEvent chan *binance.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *binance.CreateOrderResponse) {
 	go func() {
 		for {
 			select {
@@ -425,7 +431,7 @@ func (pp *PairProcessor) ProcessAfterBuyOrder(startBuyOrderEvent chan *binance.C
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case order := <-startBuyOrderEvent:
+			case order := <-triggerEvent:
 				if order != nil {
 					for {
 						orderEvent := <-pp.orderStatusEvent
@@ -447,7 +453,7 @@ func (pp *PairProcessor) ProcessAfterBuyOrder(startBuyOrderEvent chan *binance.C
 	}()
 }
 
-func (pp *PairProcessor) ProcessAfterSellOrder(startPostProcessOrderEvent chan *binance.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *binance.CreateOrderResponse) {
 	go func() {
 		for {
 			select {
@@ -460,7 +466,7 @@ func (pp *PairProcessor) ProcessAfterSellOrder(startPostProcessOrderEvent chan *
 			case <-pp.stop:
 				pp.stop <- os.Interrupt
 				return
-			case order := <-startPostProcessOrderEvent:
+			case order := <-triggerEvent:
 				if order != nil {
 					for {
 						orderEvent := <-pp.orderStatusEvent
