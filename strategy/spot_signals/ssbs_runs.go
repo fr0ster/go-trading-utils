@@ -98,6 +98,7 @@ func RunSpotHolding(
 	}
 
 	<-collectionOutEvent
+	pairProcessor.StopBuySignal()
 	pair.SetStage(pairs_types.PositionClosedStage)
 	config.Save()
 	stopEvent <- os.Interrupt
@@ -168,13 +169,19 @@ func RunSpotScalping(
 		return err
 	}
 
-	_, err = pairProcessor.ProcessBuyOrder()
-	if err != nil {
-		return err
+	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
+		_, err = pairProcessor.ProcessBuyOrder()
+		if err != nil {
+			return err
+		}
 	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
+		_, err = pairProcessor.ProcessSellOrder()
+		if err != nil {
+			return err
+		}
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.WorkInPositionStage)
@@ -188,8 +195,16 @@ func RunSpotScalping(
 		}
 
 		<-workingOutEvent
+		pairProcessor.StopBuySignal()
+		pair.SetStage(pairs_types.OutputOfPositionStage)
+		config.Save()
+	}
+	if pair.GetStage() == pairs_types.OutputOfPositionStage {
+		orderExecutionGuard := pairProcessor.ProcessSellTakeProfitOrder()
+		<-orderExecutionGuard
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
+		stopEvent <- os.Interrupt
 	}
 	return nil
 }
@@ -258,9 +273,11 @@ func RunSpotTrading(
 		return err
 	}
 
-	_, err = pairProcessor.ProcessBuyOrder()
-	if err != nil {
-		return err
+	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
+		_, err = pairProcessor.ProcessBuyOrder()
+		if err != nil {
+			return err
+		}
 	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {

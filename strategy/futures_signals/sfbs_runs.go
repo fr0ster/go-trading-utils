@@ -32,6 +32,15 @@ func Run(
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal,
 	debug bool) (err error) {
+	if pair.GetAccountType() != pairs_types.USDTFutureType {
+		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
+	}
+	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
+		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+	if pair.GetStage() == pairs_types.PositionClosedStage {
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
 
 	account, err := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {
@@ -109,11 +118,21 @@ func Run(
 		if pair.GetStage() == pairs_types.PositionClosedStage {
 			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 		}
-		_ = pairProcessor.ProcessBuyOrder()
+		if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
+			_ = pairProcessor.ProcessBuyOrder()  // Запускаємо процес купівлі
+			_ = pairProcessor.ProcessSellOrder() // Запускаємо процес продажу
+		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
 
 			<-collectionOutEvent
+			pair.SetStage(pairs_types.WorkInPositionStage)
+			config.Save()
+		}
+		if pair.GetStage() == pairs_types.WorkInPositionStage {
+			workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
+			<-workingOutEvent
+			pairProcessor.StopBuySignal()
 			pair.SetStage(pairs_types.OutputOfPositionStage)
 			config.Save()
 		}

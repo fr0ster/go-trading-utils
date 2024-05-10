@@ -59,6 +59,14 @@ type (
 	}
 )
 
+func (pp *PairProcessor) StopBuySignal() {
+	pp.stopBuy <- true
+}
+
+func (pp *PairProcessor) StopSellSignal() {
+	pp.stopSell <- true
+}
+
 func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.CreateOrderResponse) {
 	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
 	if err != nil {

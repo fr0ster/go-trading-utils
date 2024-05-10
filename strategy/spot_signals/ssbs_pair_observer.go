@@ -38,6 +38,7 @@ type (
 		priceChanges       chan *pair_price_types.PairDelta
 		collectionOutEvent chan bool
 		workingOutEvent    chan bool
+		positionCloseEvent chan bool
 		priceUp            chan bool
 		priceDown          chan bool
 		stop               chan os.Signal
@@ -100,12 +101,11 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 	return pp.priceChanges, pp.priceUp, pp.priceDown
 }
 
-func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) (
-	collectionOutEvent chan bool) { // Виходимо з накопичення
+func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з накопичення
 	if pp.pair.GetStage() != pair_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.InputIntoPositionStage)
 		pp.stop <- os.Interrupt
-		return
+		return nil
 	}
 
 	if pp.collectionOutEvent == nil {
@@ -145,7 +145,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) (
 				// - переходимо в режим спекуляції
 				if targetBalance*boundAsk >= baseBalance*pp.pair.GetLimitInputIntoPosition() {
 					pp.pair.SetStage(pair_types.WorkInPositionStage)
-					collectionOutEvent <- true
+					pp.collectionOutEvent <- true
 					return
 				}
 				time.Sleep(pp.pair.GetSleepingTime())
@@ -155,12 +155,11 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) (
 	return pp.collectionOutEvent
 }
 
-func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
-	workingOutEvent chan bool) { // Виходимо з спекуляції
+func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
 	if pp.pair.GetStage() != pair_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.WorkInPositionStage)
 		pp.stop <- os.Interrupt
-		return
+		return nil
 	}
 
 	if pp.workingOutEvent == nil {
@@ -198,7 +197,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
 				// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 				if targetBalance*boundBid >= baseBalance*pp.pair.GetLimitOutputOfPosition() {
 					pp.pair.SetStage(pair_types.OutputOfPositionStage)
-					workingOutEvent <- true
+					pp.workingOutEvent <- true
 					return
 				}
 				time.Sleep(pp.pair.GetSleepingTime())
@@ -206,6 +205,52 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) (
 		}()
 	}
 	return pp.workingOutEvent
+}
+
+func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
+	if pp.pair.GetStage() != pair_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.WorkInPositionStage)
+		pp.stop <- os.Interrupt
+		return nil
+	}
+
+	if pp.positionCloseEvent == nil {
+		pp.positionCloseEvent = make(chan bool, 1)
+
+		go func() {
+			for {
+				select {
+				case <-pp.stop:
+					pp.stop <- os.Interrupt
+					return
+				case <-triggerEvent: // Чекаємо на спрацювання тригера
+				case <-time.After(pp.pair.GetSleepingTime()): // Або просто чекаємо якийсь час
+				}
+				// Кількість базової валюти
+				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
+				if err != nil {
+					logrus.Warnf("Can't get data for analysis: %v", err)
+					continue
+				}
+				pp.pair.SetCurrentBalance(baseBalance)
+				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
+				// Кількість торгової валюти
+				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
+				if err != nil {
+					logrus.Errorf("Can't get data for analysis: %v", err)
+					continue
+				}
+				//
+				if targetBalance == 0 {
+					pp.pair.SetStage(pair_types.PositionClosedStage)
+					pp.positionCloseEvent <- true
+					return
+				}
+				time.Sleep(pp.pair.GetSleepingTime())
+			}
+		}()
+	}
+	return pp.positionCloseEvent
 }
 
 func NewPairObserver(

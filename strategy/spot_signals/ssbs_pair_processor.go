@@ -57,6 +57,14 @@ type (
 	}
 )
 
+func (pp *PairProcessor) StopBuySignal() {
+	pp.stopBuy <- true
+}
+
+func (pp *PairProcessor) StopSellSignal() {
+	pp.stopSell <- true
+}
+
 func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *binance.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
