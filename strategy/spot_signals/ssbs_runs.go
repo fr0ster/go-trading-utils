@@ -248,7 +248,7 @@ func RunSpotTrading(
 	if err != nil {
 		return err
 	}
-	// pairObserver.StartBookTickersUpdateGuard()
+
 	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
 
 	triggerEvent := make(chan bool)
@@ -286,7 +286,7 @@ func RunSpotTrading(
 		pair.SetStage(pairs_types.OutputOfPositionStage)
 		config.Save()
 	}
-	if pair.GetStage() == pairs_types.OutputOfPositionStage {
+	if pair.GetStage() == pairs_types.WorkInPositionStage {
 		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 		<-workingOutEvent
 		pair.SetStage(pairs_types.OutputOfPositionStage)

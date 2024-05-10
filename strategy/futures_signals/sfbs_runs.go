@@ -124,7 +124,6 @@ func Run(
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
-
 			<-collectionOutEvent
 			pair.SetStage(pairs_types.WorkInPositionStage)
 			config.Save()
@@ -133,13 +132,6 @@ func Run(
 			workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 			<-workingOutEvent
 			pair.SetStage(pairs_types.OutputOfPositionStage)
-			config.Save()
-		}
-		if pair.GetStage() == pairs_types.OutputOfPositionStage {
-			workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
-			<-workingOutEvent
-			pairProcessor.StopBuySignal()
-			pair.SetStage(pairs_types.PositionClosedStage)
 			config.Save()
 		}
 		if pair.GetStage() == pairs_types.OutputOfPositionStage {
