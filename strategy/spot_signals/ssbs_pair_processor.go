@@ -51,7 +51,10 @@ type (
 		sellTakeProfitProcessRun             bool
 		stopSellTakeProfitProcess            chan bool
 
-		stopAfterProcess chan bool
+		orderExecuted                  chan bool
+		stopOrderExecutionGuardProcess chan bool
+		orderExecutionGuardProcessRun  bool
+
 		userDataEvent    chan *binance.WsUserDataEvent
 		orderStatusEvent chan *binance.WsUserDataEvent
 
@@ -60,9 +63,8 @@ type (
 		dayOrderLimit         *exchange_types.RateLimits
 		minuteRawRequestLimit *exchange_types.RateLimits
 
-		stop          chan os.Signal
-		limitsOut     chan bool
-		orderExecuted chan bool
+		stop      chan os.Signal
+		limitsOut chan bool
 
 		pairInfo *symbol_types.SpotSymbol
 		degree   int
@@ -612,12 +614,14 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 }
 
 func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse) chan bool {
-	if pp.orderExecuted == nil {
-		pp.orderExecuted = make(chan bool, 1)
+	if !pp.orderExecutionGuardProcessRun {
+		if pp.orderExecuted == nil {
+			pp.orderExecuted = make(chan bool, 1)
+		}
 		go func() {
 			for {
 				select {
-				case <-pp.stopAfterProcess:
+				case <-pp.stopOrderExecutionGuardProcess:
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -639,8 +643,16 @@ func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse)
 				}
 			}
 		}()
+		pp.orderExecutionGuardProcessRun = true
 	}
 	return pp.orderExecuted
+}
+
+func (pp *PairProcessor) StopOrderExecutionGuard() {
+	if pp.orderExecutionGuardProcessRun {
+		pp.orderExecutionGuardProcessRun = false
+		pp.stopOrderExecutionGuardProcess <- true
+	}
 }
 
 func NewPairProcessor(
@@ -671,9 +683,9 @@ func NewPairProcessor(
 		dayOrderLimit:         &exchange_types.RateLimits{},
 		minuteRawRequestLimit: &exchange_types.RateLimits{},
 
-		stopBuy:          make(chan bool, 1),
-		stopSell:         make(chan bool, 1),
-		stopAfterProcess: make(chan bool, 1),
+		stopBuy:                        make(chan bool, 1),
+		stopSell:                       make(chan bool, 1),
+		stopOrderExecutionGuardProcess: make(chan bool, 1),
 
 		orderExecuted:    nil,
 		orderStatusEvent: nil,
