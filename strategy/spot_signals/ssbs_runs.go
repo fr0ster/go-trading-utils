@@ -293,7 +293,24 @@ func RunSpotTrading(
 	if pair.GetStage() == pairs_types.OutputOfPositionStage {
 		pairProcessor.StopBuySignal() // Зупиняємо купівлю, продаємо поки є шо продавати
 		// TODO: Закриття позиції лімітним trailing ордером
-		positionClosed := pairObserver.ClosePositionSignal(triggerEvent) // Чекаємо на закриття позиції
+		quantity, err := GetTargetBalance(account, pair)
+		if err != nil {
+			return err
+		}
+		order, err := pairProcessor.CreateOrder(
+			binance.OrderTypeTakeProfit,
+			binance.SideTypeSell,
+			binance.TimeInForceTypeGTC,
+			// STOP_LOSS/TAKE_PROFIT quantity, stopPrice or trailingDelta must be sent.
+			quantity,
+			0,   // quantityQty
+			0,   // price
+			0,   // stopPrice
+			100) // trailingDelta
+		if err != nil {
+			return err
+		}
+		positionClosed := pairProcessor.OrderExecutionGuard(order) // Чекаємо на закриття позиції
 		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()

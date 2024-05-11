@@ -144,7 +144,7 @@ func (pp *PairProcessor) CreateOrder(
 			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
 			Price(utils.ConvFloat64ToStr(price, priceRound))
 	} else if orderType == binance.OrderTypeStopLoss || orderType == binance.OrderTypeTakeProfit {
-		// STOP_LOSS	quantity, stopPrice or trailingDelta
+		// STOP_LOSS/TAKE_PROFIT quantity, stopPrice or trailingDelta
 		service = service.
 			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
 		if stopPrice != 0 {
@@ -156,7 +156,7 @@ func (pp *PairProcessor) CreateOrder(
 			return
 		}
 	} else if orderType == binance.OrderTypeStopLossLimit || orderType == binance.OrderTypeTakeProfitLimit {
-		// STOP_LOSS_LIMIT	timeInForce, quantity, price, stopPrice or trailingDelta
+		// STOP_LOSS_LIMIT/TAKE_PROFIT_LIMIT timeInForce, quantity, price, stopPrice or trailingDelta
 		service = service.
 			TimeInForce(timeInForce).
 			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
