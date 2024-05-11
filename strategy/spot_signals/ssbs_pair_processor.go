@@ -165,8 +165,7 @@ func (pp *PairProcessor) CreateOrder(
 			return
 		}
 	}
-	order, err = service.Do(context.Background())
-	return
+	return service.Do(context.Background())
 }
 
 func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {

@@ -67,7 +67,54 @@ func (pp *PairProcessor) StopSellSignal() {
 	pp.stopSell <- true
 }
 
-func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.CreateOrderResponse) {
+//  1. Order with type STOP, parameter timeInForce can be sent ( default GTC).
+//  2. Order with type TAKE_PROFIT, parameter timeInForce can be sent ( default GTC).
+//  3. Condition orders will be triggered when:
+//     a) If parameterpriceProtectis sent as true:
+//     when price reaches the stopPrice ，the difference rate between "MARK_PRICE" and
+//     "CONTRACT_PRICE" cannot be larger than the "triggerProtect" of the symbol
+//     "triggerProtect" of a symbol can be got from GET /fapi/v1/exchangeInfo
+//     b) STOP, STOP_MARKET:
+//     BUY: latest price ("MARK_PRICE" or "CONTRACT_PRICE") >= stopPrice
+//     SELL: latest price ("MARK_PRICE" or "CONTRACT_PRICE") <= stopPrice
+//     c) TAKE_PROFIT, TAKE_PROFIT_MARKET:
+//     BUY: latest price ("MARK_PRICE" or "CONTRACT_PRICE") <= stopPrice
+//     SELL: latest price ("MARK_PRICE" or "CONTRACT_PRICE") >= stopPrice
+//     d) TRAILING_STOP_MARKET:
+//     BUY: the lowest price after order placed <= activationPrice,
+//     and the latest price >= the lowest price * (1 + callbackRate)
+//     SELL: the highest price after order placed >= activationPrice,
+//     and the latest price <= the highest price * (1 - callbackRate)
+//  4. For TRAILING_STOP_MARKET, if you got such error code.
+//     {"code": -2021, "msg": "Order would immediately trigger."}
+//     means that the parameters you send do not meet the following requirements:
+//     BUY: activationPrice should be smaller than latest price.
+//     SELL: activationPrice should be larger than latest price.
+//     If newOrderRespType is sent as RESULT :
+//     MARKET order: the final FILLED result of the order will be return directly.
+//     LIMIT order with special timeInForce:
+//     the final status result of the order(FILLED or EXPIRED)
+//     will be returned directly.
+//  5. STOP_MARKET, TAKE_PROFIT_MARKET with closePosition=true:
+//     Follow the same rules for condition orders.
+//     If triggered，close all current long position( if SELL) or current short position( if BUY).
+//     Cannot be used with quantity parameter
+//     Cannot be used with reduceOnly parameter
+//     In Hedge Mode,cannot be used with BUY orders in LONG position side
+//     and cannot be used with SELL orders in SHORT position side
+//  6. selfTradePreventionMode is only effective when timeInForce set to IOC or GTC or GTD.
+//  7. In extreme market conditions,
+//     timeInForce GTD order auto cancel time might be delayed comparing to goodTillDate
+func (pp *PairProcessor) CreateOrder(
+	orderType futures.OrderType,
+	sideType futures.SideType,
+	timeInForce futures.TimeInForceType,
+	quantity float64,
+	closePosition bool,
+	price float64,
+	stopPrice float64,
+	callbackRate float64) (
+	order *futures.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
@@ -77,8 +124,51 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.Cre
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
+	service :=
+		pp.client.NewCreateOrderService().
+			Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
+			Type(orderType).
+			Side(sideType)
+	// Additional mandatory parameters based on type:
+	// Type	Additional mandatory parameters
+	if orderType == futures.OrderTypeMarket {
+		// MARKET	quantity
+		service = service.Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+	} else if orderType == futures.OrderTypeLimit {
+		// LIMIT	timeInForce, quantity, price
+		service = service.
+			TimeInForce(timeInForce).
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Price(utils.ConvFloat64ToStr(price, priceRound))
+	} else if orderType == futures.OrderTypeStop || orderType == futures.OrderTypeTakeProfit {
+		// STOP/TAKE_PROFIT	quantity, price, stopPrice
+		service = service.
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Price(utils.ConvFloat64ToStr(price, priceRound)).
+			StopPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+	} else if orderType == futures.OrderTypeStopMarket || orderType == futures.OrderTypeTakeProfitMarket {
+		// STOP_MARKET/TAKE_PROFIT_MARKET	stopPrice
+		service = service.
+			StopPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+		if closePosition {
+			service = service.ClosePosition(closePosition)
+		}
+	} else if orderType == futures.OrderTypeTrailingStopMarket {
+		// TRAILING_STOP_MARKET	quantity,callbackRate
+		service = service.
+			TimeInForce(futures.TimeInForceTypeGTC).
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			CallbackRate(utils.ConvFloat64ToStr(callbackRate, priceRound))
+		if stopPrice != 0 {
+			service = service.
+				ActivationPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+		}
+	}
+	return service.Do(context.Background())
+}
+
+func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.CreateOrderResponse) {
 	go func() {
-		var order *futures.CreateOrderResponse
 		for {
 			select {
 			case <-pp.stopBuy:
@@ -96,19 +186,15 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.Cre
 					continue
 				}
 				if !pp.debug {
-					service :=
-						pp.client.NewCreateOrderService().
-							Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
-							Type(pp.orderType).
-							Side(futures.SideTypeBuy).
-							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-					if pp.orderType == futures.OrderTypeMarket {
-						order, err = service.Do(context.Background())
-					} else if pp.orderType == futures.OrderTypeLimit {
-						order, err = service.
-							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-							TimeInForce(futures.TimeInForceTypeGTC).Do(context.Background())
-					}
+					order, err := pp.CreateOrder(
+						pp.orderType,
+						futures.SideTypeBuy,
+						futures.TimeInForceTypeGTC,
+						params.Quantity,
+						false, // We close position manually
+						params.Price,
+						0,
+						0)
 					if err != nil {
 						logrus.Errorf("Can't create order: %v", err)
 						logrus.Errorf("Order params: %v", params)
@@ -143,19 +229,8 @@ func (pp *PairProcessor) ProcessBuyOrder() (startBuyOrderEvent chan *futures.Cre
 }
 
 func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
 	startSellOrderEvent = make(chan *futures.CreateOrderResponse)
 	go func() {
-		var order *futures.CreateOrderResponse
-		// var err error
 		for {
 			select {
 			case <-pp.stopSell:
@@ -184,19 +259,15 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.C
 					continue
 				}
 				if !pp.debug {
-					service :=
-						pp.client.NewCreateOrderService().
-							Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
-							Type(futures.OrderTypeLimit).
-							Side(futures.SideTypeSell).
-							Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-					if pp.orderType == futures.OrderTypeMarket {
-						order, err = service.Do(context.Background())
-					} else if pp.orderType == futures.OrderTypeLimit {
-						order, err = service.
-							Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-							TimeInForce(futures.TimeInForceTypeGTC).Do(context.Background())
-					}
+					order, err := pp.CreateOrder(
+						pp.orderType,
+						futures.SideTypeBuy,
+						futures.TimeInForceTypeGTC,
+						params.Quantity,
+						false, // We close position manually
+						params.Price,
+						0,
+						0)
 					if err != nil {
 						logrus.Errorf("Can't create order: %v", err)
 						logrus.Errorf("Order params: %v", params)
@@ -230,16 +301,7 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.C
 	return
 }
 
-func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
+func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (startProcessBuyTakeProfitEvent chan *futures.CreateOrderResponse) {
 	if pp.startProcessBuyTakeProfitEvent == nil {
 		pp.startProcessBuyTakeProfitEvent = make(chan *futures.CreateOrderResponse)
 		startProcessBuyTakeProfitEvent = pp.startProcessBuyTakeProfitEvent
@@ -258,14 +320,15 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitE
 						continue
 					}
 					if !pp.debug {
-						order, err :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
-								Type(futures.OrderTypeTakeProfit).
-								Side(futures.SideTypeBuy).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(futures.TimeInForceTypeGTC).Do(context.Background())
+						order, err := pp.CreateOrder(
+							futures.OrderTypeTakeProfit,
+							futures.SideTypeBuy,
+							futures.TimeInForceTypeGTC,
+							params.Quantity,
+							false, // We close position manually
+							params.Price,
+							params.Price*(1-float64(trailingDelta)/100),
+							0)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -302,16 +365,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder() (startProcessBuyTakeProfitE
 	return
 }
 
-func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfitEvent chan *futures.CreateOrderResponse) {
-	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
+func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (startProcessSellTakeProfitEvent chan *futures.CreateOrderResponse) {
 	if pp.startProcessSellTakeProfitEvent == nil {
 		pp.startProcessSellTakeProfitEvent = make(chan *futures.CreateOrderResponse)
 		startProcessSellTakeProfitEvent = pp.startProcessSellTakeProfitEvent
@@ -330,14 +384,15 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder() (startProcessSellTakeProfi
 						continue
 					}
 					if !pp.debug {
-						order, err :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
-								Type(futures.OrderTypeTakeProfit).
-								Side(futures.SideTypeSell).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(futures.TimeInForceTypeGTC).Do(context.Background())
+						order, err := pp.CreateOrder(
+							futures.OrderTypeTakeProfit,
+							futures.SideTypeSell,
+							futures.TimeInForceTypeGTC,
+							params.Quantity,
+							false, // We close position manually
+							params.Price,
+							params.Price*(1+float64(trailingDelta)/100),
+							0)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
