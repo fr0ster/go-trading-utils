@@ -2,6 +2,7 @@ package spot_signals
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -28,12 +29,12 @@ import (
 
 type (
 	PairProcessor struct {
-		config                               *config_types.ConfigFile
-		client                               *binance.Client
-		pair                                 pairs_interfaces.Pairs
-		exchangeInfo                         *exchange_types.ExchangeInfo
-		account                              *spot_account.Account
-		orderType                            binance.OrderType
+		config       *config_types.ConfigFile
+		client       *binance.Client
+		pair         pairs_interfaces.Pairs
+		exchangeInfo *exchange_types.ExchangeInfo
+		account      *spot_account.Account
+		// orderType                            binance.OrderType
 		buyEvent                             chan *pair_price_types.PairPrice
 		sellEvent                            chan *pair_price_types.PairPrice
 		startBuyOrderEvent                   chan *binance.CreateOrderResponse
@@ -54,7 +55,6 @@ type (
 		orderStatusEvent                     chan *binance.WsUserDataEvent
 		pairInfo                             *symbol_types.SpotSymbol
 		degree                               int
-		trailingDelta                        int
 		debug                                bool
 	}
 )
@@ -67,15 +67,109 @@ func (pp *PairProcessor) StopSellSignal() {
 	pp.stopSell <- true
 }
 
-func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
+//  1. LIMIT_MAKER are LIMIT orders that will be rejected if they would immediately match and trade as a taker.
+//  2. STOP_LOSS and TAKE_PROFIT will execute a MARKET order when the stopPrice is reached.
+//     Any LIMIT or LIMIT_MAKER type order can be made an iceberg order by sending an icebergQty.
+//     Any order with an icebergQty MUST have timeInForce set to GTC.
+//  3. MARKET orders using the quantity field specifies the amount of the base asset the user wants to buy or sell at the market price.
+//     For example, sending a MARKET order on BTCUSDT will specify how much BTC the user is buying or selling.
+//  4. MARKET orders using quoteOrderQty specifies the amount the user wants to spend (when buying) or receive (when selling) the quote asset;
+//     the correct quantity will be determined based on the market liquidity and quoteOrderQty.
+//     Using BTCUSDT as an example:
+//     On the BUY side, the order will buy as many BTC as quoteOrderQty USDT can.
+//     On the SELL side, the order will sell as much BTC needed to receive quoteOrderQty USDT.
+//  5. MARKET orders using quoteOrderQty will not break LOT_SIZE filter rules; the order will execute a quantity that will have the notional value as close as possible to quoteOrderQty.
+//     same newClientOrderId can be accepted only when the previous one is filled, otherwise the order will be rejected.
+//  6. For STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT and TAKE_PROFIT orders, trailingDelta can be combined with stopPrice.
+//
+//  7. Trigger order price rules against market price for both MARKET and LIMIT versions:
+//     Price above market price: STOP_LOSS BUY, TAKE_PROFIT SELL
+//     Price below market price: STOP_LOSS SELL, TAKE_PROFIT BUY
+func (pp *PairProcessor) CreateOrder(
+	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	sideType binance.SideType, // BUY, SELL
+	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
+	quantity float64, // BTC for example if we buy or sell BTC
+	quantityQty float64, // USDT for example if we buy or sell BTC
+	// price for 1 BTC
+	// it's price of order execution for LIMIT, LIMIT_MAKER
+	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
+	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
+	price float64,
+	stopPrice float64, // price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	trailingDelta int) ( // trailingDelta for stop loss or take profit
+	order *binance.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
+		log.Printf(errorMsg, err)
 		return
 	}
 	var (
 		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
 	)
+	service :=
+		pp.client.NewCreateOrderService().
+			Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+			Type(orderType).
+			Side(sideType)
+	// Additional mandatory parameters based on type:
+	// Type	Additional mandatory parameters
+	if orderType == binance.OrderTypeMarket {
+		// MARKET	quantity or quoteOrderQty
+		if quantity != 0 {
+			service = service.
+				Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+		} else if quantityQty != 0 {
+			service = service.
+				QuoteOrderQty(utils.ConvFloat64ToStr(quantityQty, quantityRound))
+		} else {
+			err = fmt.Errorf("quantity or quoteOrderQty must be set")
+			return
+		}
+	} else if orderType == binance.OrderTypeLimit {
+		// LIMIT	timeInForce, quantity, price
+		service = service.
+			TimeInForce(timeInForce).
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Price(utils.ConvFloat64ToStr(price, priceRound))
+	} else if orderType == binance.OrderTypeLimitMaker {
+		// LIMIT_MAKER	quantity, price
+		service = service.
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Price(utils.ConvFloat64ToStr(price, priceRound))
+	} else if orderType == binance.OrderTypeStopLoss || orderType == binance.OrderTypeTakeProfit {
+		// STOP_LOSS	quantity, stopPrice or trailingDelta
+		service = service.
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+		if stopPrice != 0 {
+			service = service.StopPrice(utils.ConvFloat64ToStr(price, priceRound))
+		} else if trailingDelta != 0 {
+			service = service.TrailingDelta(strconv.Itoa(trailingDelta))
+		} else {
+			err = fmt.Errorf("stopPrice or trailingDelta must be set")
+			return
+		}
+	} else if orderType == binance.OrderTypeStopLossLimit || orderType == binance.OrderTypeTakeProfitLimit {
+		// STOP_LOSS_LIMIT	timeInForce, quantity, price, stopPrice or trailingDelta
+		service = service.
+			TimeInForce(timeInForce).
+			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Price(utils.ConvFloat64ToStr(price, priceRound))
+		if stopPrice != 0 {
+			service = service.StopPrice(utils.ConvFloat64ToStr(price, priceRound))
+		} else if trailingDelta != 0 {
+			service = service.TrailingDelta(strconv.Itoa(trailingDelta))
+		} else {
+			err = fmt.Errorf("stopPrice or trailingDelta must be set")
+			return
+		}
+	}
+	order, err = service.Do(context.Background())
+	return
+}
+
+func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
 	if pp.buyEvent == nil && pp.startBuyOrderEvent == nil {
 		pp.buyEvent = make(chan *pair_price_types.PairPrice)
 		pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
@@ -109,19 +203,15 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 						continue
 					}
 					if !pp.debug {
-						service :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-								Type(pp.orderType).
-								Side(binance.SideTypeBuy).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-						if pp.orderType == binance.OrderTypeMarket {
-							order, err = service.Do(context.Background())
-						} else if pp.orderType == binance.OrderTypeLimit {
-							order, err = service.
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-						}
+						order, err = pp.CreateOrder(
+							binance.OrderTypeMarket,
+							binance.SideTypeBuy,
+							binance.TimeInForceTypeGTC,
+							params.Quantity,
+							0,
+							params.Price,
+							0,
+							0)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -162,15 +252,6 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 }
 
 func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
-	symbol, err := (*pp.pairInfo).GetSpotSymbol()
-	if err != nil {
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
-
 	if pp.sellEvent == nil && pp.startSellOrderEvent == nil {
 		pp.sellEvent = make(chan *pair_price_types.PairPrice)
 		pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
@@ -206,19 +287,15 @@ func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.Crea
 						continue
 					}
 					if !pp.debug {
-						service :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-								Type(binance.OrderTypeLimit).
-								Side(binance.SideTypeSell).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound))
-						if pp.orderType == binance.OrderTypeMarket {
-							order, err = service.Do(context.Background())
-						} else if pp.orderType == binance.OrderTypeLimit {
-							order, err = service.
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).Do(context.Background())
-						}
+						order, err = pp.CreateOrder(
+							binance.OrderTypeMarket,
+							binance.SideTypeBuy,
+							binance.TimeInForceTypeGTC,
+							params.Quantity,
+							0,
+							params.Price,
+							0,
+							0)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -259,18 +336,8 @@ func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.Crea
 }
 
 func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	symbol, err := (*pp.pairInfo).GetSpotSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
 	if pp.startProcessBuyTakeProfitOrderEvent == nil {
 		pp.startProcessBuyTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		pp.trailingDelta = trailingDelta
 		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
 		go func() {
 			for {
@@ -287,16 +354,15 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 						continue
 					}
 					if !pp.debug {
-						order, err :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-								Type(binance.OrderTypeTakeProfit).
-								Side(binance.SideTypeBuy).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).
-								TrailingDelta(strconv.Itoa(pp.trailingDelta)).
-								Do(context.Background())
+						order, err := pp.CreateOrder(
+							binance.OrderTypeTakeProfit,
+							binance.SideTypeBuy,
+							binance.TimeInForceTypeGTC,
+							params.Quantity,
+							0, // We don't use quoteOrderQty
+							params.Price,
+							0, // We don't use stopPrice
+							trailingDelta)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -339,18 +405,8 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 }
 
 func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	symbol, err := (*pp.pairInfo).GetSpotSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
-	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
-	)
 	if pp.startProcessSellTakeProfitOrderEvent == nil {
 		pp.startProcessSellTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		pp.trailingDelta = trailingDelta
 		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
 		go func() {
 			for {
@@ -367,16 +423,15 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 						continue
 					}
 					if !pp.debug {
-						order, err :=
-							pp.client.NewCreateOrderService().
-								Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
-								Type(binance.OrderTypeTakeProfit).
-								Side(binance.SideTypeSell).
-								Quantity(utils.ConvFloat64ToStr(params.Quantity, quantityRound)).
-								Price(utils.ConvFloat64ToStr(params.Price, priceRound)).
-								TimeInForce(binance.TimeInForceTypeGTC).
-								TrailingDelta(strconv.Itoa(pp.trailingDelta)).
-								Do(context.Background())
+						order, err := pp.CreateOrder(
+							binance.OrderTypeTakeProfit,
+							binance.SideTypeBuy,
+							binance.TimeInForceTypeGTC,
+							params.Quantity,
+							0, // We don't use quoteOrderQty
+							params.Price,
+							0, // We don't use stopPrice
+							trailingDelta)
 						if err != nil {
 							logrus.Errorf("Can't create order: %v", err)
 							logrus.Errorf("Order params: %v", params)
@@ -489,7 +544,6 @@ func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *binance.Create
 }
 
 func (pp *PairProcessor) LimitUpdaterStream() {
-
 	go func() {
 		for {
 			select {
@@ -558,18 +612,18 @@ func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
-	orderType binance.OrderType,
+	// orderType binance.OrderType,
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
-		client:                client,
-		pair:                  pair,
-		account:               nil,
-		stop:                  make(chan os.Signal, 1),
-		limitsOut:             make(chan bool, 1),
-		pairInfo:              nil,
-		orderType:             orderType,
+		client:    client,
+		pair:      pair,
+		account:   nil,
+		stop:      make(chan os.Signal, 1),
+		limitsOut: make(chan bool, 1),
+		pairInfo:  nil,
+		// orderType:             orderType,
 		buyEvent:              buyEvent,
 		sellEvent:             sellEvent,
 		updateTime:            0,

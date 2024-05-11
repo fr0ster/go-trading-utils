@@ -87,7 +87,7 @@ func RunSpotHolding(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
+			config, client, pair, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func RunSpotScalping(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
+			config, client, pair, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func RunSpotTrading(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, binance.OrderTypeMarket, buyEvent, sellEvent, debug)
+			config, client, pair, buyEvent, sellEvent, debug)
 	if err != nil {
 		return err
 	}
