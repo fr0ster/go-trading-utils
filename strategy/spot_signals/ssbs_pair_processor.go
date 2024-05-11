@@ -34,38 +34,41 @@ type (
 		pair         pairs_interfaces.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *spot_account.Account
-		// orderType                            binance.OrderType
-		buyEvent                             chan *pair_price_types.PairPrice
-		sellEvent                            chan *pair_price_types.PairPrice
-		startBuyOrderEvent                   chan *binance.CreateOrderResponse
-		startSellOrderEvent                  chan *binance.CreateOrderResponse
+
+		buyEvent            chan *pair_price_types.PairPrice
+		buyProcessRun       bool
+		stopBuy             chan bool
+		startBuyOrderEvent  chan *binance.CreateOrderResponse
+		sellEvent           chan *pair_price_types.PairPrice
+		sellProcessRun      bool
+		startSellOrderEvent chan *binance.CreateOrderResponse
+		stopSell            chan bool
+
 		startProcessBuyTakeProfitOrderEvent  chan *binance.CreateOrderResponse
+		buyTakeProfitProcessRun              bool
+		stopBuyTakeProfitProcess             chan bool
 		startProcessSellTakeProfitOrderEvent chan *binance.CreateOrderResponse
-		updateTime                           time.Duration
-		minuteOrderLimit                     *exchange_types.RateLimits
-		dayOrderLimit                        *exchange_types.RateLimits
-		minuteRawRequestLimit                *exchange_types.RateLimits
-		stop                                 chan os.Signal
-		limitsOut                            chan bool
-		stopBuy                              chan bool
-		stopSell                             chan bool
-		stopAfterProcess                     chan bool
-		orderExecuted                        chan bool
-		userDataEvent                        chan *binance.WsUserDataEvent
-		orderStatusEvent                     chan *binance.WsUserDataEvent
-		pairInfo                             *symbol_types.SpotSymbol
-		degree                               int
-		debug                                bool
+		sellTakeProfitProcessRun             bool
+		stopSellTakeProfitProcess            chan bool
+
+		stopAfterProcess chan bool
+		userDataEvent    chan *binance.WsUserDataEvent
+		orderStatusEvent chan *binance.WsUserDataEvent
+
+		updateTime            time.Duration
+		minuteOrderLimit      *exchange_types.RateLimits
+		dayOrderLimit         *exchange_types.RateLimits
+		minuteRawRequestLimit *exchange_types.RateLimits
+
+		stop          chan os.Signal
+		limitsOut     chan bool
+		orderExecuted chan bool
+
+		pairInfo *symbol_types.SpotSymbol
+		degree   int
+		debug    bool
 	}
 )
-
-func (pp *PairProcessor) StopBuySignal() {
-	pp.stopBuy <- true
-}
-
-func (pp *PairProcessor) StopSellSignal() {
-	pp.stopSell <- true
-}
 
 //  1. LIMIT_MAKER are LIMIT orders that will be rejected if they would immediately match and trade as a taker.
 //  2. STOP_LOSS and TAKE_PROFIT will execute a MARKET order when the stopPrice is reached.
@@ -169,15 +172,16 @@ func (pp *PairProcessor) CreateOrder(
 }
 
 func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
-	if pp.buyEvent == nil && pp.startBuyOrderEvent == nil {
-		pp.buyEvent = make(chan *pair_price_types.PairPrice)
-		pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
+	if !pp.buyProcessRun {
+		if pp.startBuyOrderEvent == nil {
+			pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
+		}
+		nextTriggerEvent = pp.startBuyOrderEvent
 		go func() {
 			var order *binance.CreateOrderResponse
 			for {
 				select {
 				case <-pp.stopBuy:
-					pp.stopBuy <- true
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -222,7 +226,7 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 						pp.minuteOrderLimit.Limit++
 						pp.dayOrderLimit.Limit++
 						if order.Status == binance.OrderStatusTypeNew {
-							pp.startBuyOrderEvent <- order
+							nextTriggerEvent <- order
 						} else {
 							for _, fill := range order.Fills {
 								fillPrice := utils.ConvStrToFloat64(fill.Price)
@@ -244,6 +248,7 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 				time.Sleep(pp.pair.GetSleepingTime())
 			}
 		}()
+		pp.buyProcessRun = true
 	} else {
 		nextTriggerEvent = pp.startBuyOrderEvent
 	}
@@ -251,17 +256,16 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 }
 
 func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
-	if pp.sellEvent == nil && pp.startSellOrderEvent == nil {
-		pp.sellEvent = make(chan *pair_price_types.PairPrice)
-		pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
+	if !pp.sellProcessRun {
+		if pp.startSellOrderEvent == nil {
+			pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
+		}
 		nextTriggerEvent = pp.startSellOrderEvent
 		go func() {
 			var order *binance.CreateOrderResponse
-			// var err error
 			for {
 				select {
 				case <-pp.stopSell:
-					pp.stopSell <- true
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -328,21 +332,37 @@ func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.Crea
 				time.Sleep(pp.pair.GetSleepingTime())
 			}
 		}()
+		pp.sellProcessRun = true
 	} else {
 		nextTriggerEvent = pp.startSellOrderEvent
 	}
 	return
 }
 
+func (pp *PairProcessor) StopBuySignal() {
+	if pp.buyProcessRun {
+		pp.buyProcessRun = false
+		pp.stopBuy <- true
+	}
+}
+
+func (pp *PairProcessor) StopSellSignal() {
+	if pp.sellProcessRun {
+		pp.sellProcessRun = false
+		pp.stopSell <- true
+	}
+}
+
 func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	if pp.startProcessBuyTakeProfitOrderEvent == nil {
-		pp.startProcessBuyTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
+	if !pp.buyTakeProfitProcessRun {
+		if pp.startProcessBuyTakeProfitOrderEvent == nil {
+			pp.startProcessBuyTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
+		}
 		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
 		go func() {
 			for {
 				select {
-				case <-pp.stopAfterProcess:
-					pp.stopAfterProcess <- true
+				case <-pp.stopBuyTakeProfitProcess:
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -397,6 +417,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 				time.Sleep(pp.pair.GetSleepingTime())
 			}
 		}()
+		pp.buyTakeProfitProcessRun = true
 	} else {
 		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
 	}
@@ -404,14 +425,15 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 }
 
 func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	if pp.startProcessSellTakeProfitOrderEvent == nil {
-		pp.startProcessSellTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
+	if !pp.sellTakeProfitProcessRun {
+		if pp.startProcessSellTakeProfitOrderEvent == nil {
+			pp.startProcessSellTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
+		}
 		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
 		go func() {
 			for {
 				select {
-				case <-pp.stopAfterProcess:
-					pp.stopAfterProcess <- true
+				case <-pp.stopSellTakeProfitProcess:
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -466,10 +488,25 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 				time.Sleep(pp.pair.GetSleepingTime())
 			}
 		}()
+		pp.sellTakeProfitProcessRun = true
 	} else {
 		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
 	}
 	return
+}
+
+func (pp *PairProcessor) StopBuyTakeProfitSignal() {
+	if pp.buyTakeProfitProcessRun {
+		pp.buyTakeProfitProcessRun = false
+		pp.stopBuyTakeProfitProcess <- true
+	}
+}
+
+func (pp *PairProcessor) StopSellTakeProfitSignal() {
+	if pp.sellTakeProfitProcessRun {
+		pp.sellTakeProfitProcessRun = false
+		pp.stopSellTakeProfitProcess <- true
+	}
 }
 
 func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *binance.CreateOrderResponse) {
@@ -581,7 +618,6 @@ func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse)
 			for {
 				select {
 				case <-pp.stopAfterProcess:
-					pp.stopAfterProcess <- true
 					return
 				case <-pp.stop:
 					pp.stop <- os.Interrupt
@@ -622,21 +658,29 @@ func NewPairProcessor(
 		stop:      make(chan os.Signal, 1),
 		limitsOut: make(chan bool, 1),
 		pairInfo:  nil,
-		// orderType:             orderType,
-		buyEvent:              buyEvent,
-		sellEvent:             sellEvent,
+
+		buyEvent:                 buyEvent,
+		buyProcessRun:            false,
+		sellEvent:                sellEvent,
+		sellProcessRun:           false,
+		buyTakeProfitProcessRun:  false,
+		sellTakeProfitProcessRun: false,
+
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},
 		dayOrderLimit:         &exchange_types.RateLimits{},
 		minuteRawRequestLimit: &exchange_types.RateLimits{},
-		stopBuy:               make(chan bool, 1),
-		stopSell:              make(chan bool, 1),
-		stopAfterProcess:      make(chan bool, 1),
-		orderExecuted:         nil,
-		orderStatusEvent:      nil,
-		degree:                3,
-		debug:                 debug,
+
+		stopBuy:          make(chan bool, 1),
+		stopSell:         make(chan bool, 1),
+		stopAfterProcess: make(chan bool, 1),
+
+		orderExecuted:    nil,
+		orderStatusEvent: nil,
+		degree:           3,
+		debug:            debug,
 	}
+
 	pp.updateTime,
 		pp.minuteOrderLimit,
 		pp.dayOrderLimit,
