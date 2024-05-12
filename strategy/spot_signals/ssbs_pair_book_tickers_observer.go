@@ -16,8 +16,6 @@ import (
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
-
-	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -66,7 +64,19 @@ func (pp *PairBookTickersObserver) StartStream() chan *binance.WsBookTickerEvent
 		wsHandler := func(event *binance.WsBookTickerEvent) {
 			pp.bookTickerEvent <- event
 		}
-		binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, utils.HandleErr)
+		resetEvent := make(chan bool, 1)
+		wsErrorHandler := func(err error) {
+			resetEvent <- true
+		}
+		var stopC chan struct{}
+		_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+		go func() {
+			for {
+				<-resetEvent
+				stopC <- struct{}{}
+				_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+			}
+		}()
 		spot_book_ticker.Init(pp.data, pp.pair.GetPair(), pp.client)
 	}
 	return pp.bookTickerEvent

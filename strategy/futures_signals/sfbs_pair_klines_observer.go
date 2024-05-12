@@ -60,7 +60,19 @@ func (pp *PairKlinesObserver) StartStream() chan *futures.WsKlineEvent {
 			wsHandler := func(event *futures.WsKlineEvent) {
 				pp.klineEvent <- event
 			}
-			futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
+			resetEvent := make(chan bool, 1)
+			wsErrorHandler := func(err error) {
+				resetEvent <- true
+			}
+			var stopC chan struct{}
+			_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+			go func() {
+				for {
+					<-resetEvent
+					stopC <- struct{}{}
+					_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+				}
+			}()
 		}
 		futures_kline.Init(pp.data, pp.client)
 	}

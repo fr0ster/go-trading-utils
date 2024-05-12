@@ -16,8 +16,6 @@ import (
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
-
-	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -65,7 +63,19 @@ func (pp *PairPartialDepthsObserver) StartStream() chan *futures.WsDepthEvent {
 		wsHandler := func(event *futures.WsDepthEvent) {
 			pp.depthsEvent <- event
 		}
-		futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, utils.HandleErr)
+		resetEvent := make(chan bool, 1)
+		wsErrorHandler := func(err error) {
+			resetEvent <- true
+		}
+		var stopC chan struct{}
+		_, stopC, _ = futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, wsErrorHandler)
+		go func() {
+			for {
+				<-resetEvent
+				stopC <- struct{}{}
+				_, stopC, _ = futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, wsErrorHandler)
+			}
+		}()
 		futures_depths.Init(pp.data, pp.client, pp.limit)
 	}
 	return pp.depthsEvent

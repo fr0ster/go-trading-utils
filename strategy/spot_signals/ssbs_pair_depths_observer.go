@@ -16,8 +16,6 @@ import (
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
-
-	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -62,7 +60,19 @@ func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 		wsHandler := func(event *binance.WsDepthEvent) {
 			pp.depthsEvent <- event
 		}
-		binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, utils.HandleErr)
+		resetEvent := make(chan bool, 1)
+		wsErrorHandler := func(err error) {
+			resetEvent <- true
+		}
+		var stopC chan struct{}
+		_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+		go func() {
+			for {
+				<-resetEvent
+				stopC <- struct{}{}
+				_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+			}
+		}()
 		spot_depths.Init(pp.data, pp.client, pp.limit)
 	}
 	return pp.depthsEvent

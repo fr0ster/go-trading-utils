@@ -64,7 +64,19 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 		wsHandler := func(event *binance.WsKlineEvent) {
 			pp.klineEvent <- event
 		}
-		binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, utils.HandleErr)
+		resetEvent := make(chan bool, 1)
+		wsErrorHandler := func(err error) {
+			resetEvent <- true
+		}
+		var stopC chan struct{}
+		_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+		go func() {
+			for {
+				<-resetEvent
+				stopC <- struct{}{}
+				_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+			}
+		}()
 		spot_kline.Init(pp.data, pp.client)
 	}
 	return pp.klineEvent

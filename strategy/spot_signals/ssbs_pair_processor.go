@@ -101,8 +101,11 @@ func (pp *PairProcessor) CreateOrder(
 	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
 	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
 	price float64,
-	stopPrice float64, // price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
-	trailingDelta int) ( // trailingDelta for stop loss or take profit
+	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	stopPrice float64,
+	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
+	trailingDelta int) (
 	order *binance.CreateOrderResponse, err error) {
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
