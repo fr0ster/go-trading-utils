@@ -9,13 +9,19 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
+	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_book_ticker "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
+	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -25,6 +31,7 @@ type (
 		degree          int
 		limit           int
 		account         *spot_account.Account
+		exchangeInfo    *exchange_info.ExchangeInfo
 		data            *book_ticker_types.BookTickers
 		bookTickerEvent chan *binance.WsBookTickerEvent
 		event           chan bool
@@ -173,7 +180,7 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					// Кількість торгової валюти для продажу
 					sellQuantity,
 						// Кількість торгової валюти для купівлі
-						buyQuantity, err := GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
+						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
 						pp.stop <- os.Interrupt
@@ -323,6 +330,66 @@ func (pp *PairBookTickersObserver) StartUpdateGuard() chan bool {
 	return pp.event
 }
 
+func (pp *PairBookTickersObserver) getLotSizeFilter() (lotSizeFilter *binance.LotSizeFilter, err error) {
+	var val *binance.Symbol
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+		val, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
+		if err != nil {
+			logrus.Errorf(errorMsg, err)
+			return
+		}
+		lotSizeFilter = val.LotSizeFilter()
+	}
+	return
+}
+
+func (pp *PairBookTickersObserver) GetMaxQuantity() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.MaxQuantity)
+}
+
+func (pp *PairBookTickersObserver) GetMinQuantity() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.MinQuantity)
+}
+
+func (pp *PairBookTickersObserver) GetStepSize() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.StepSize)
+}
+
+func (pp *PairBookTickersObserver) GetBuyAndSellQuantity(
+	pair pairs_interfaces.Pairs,
+	baseBalance float64,
+	targetBalance float64,
+	buyCommission float64,
+	sellCommission float64,
+	ask float64,
+	bid float64) (
+	sellQuantity float64, // Кількість торгової валюти для продажу
+	buyQuantity float64, // Кількість торгової валюти для купівлі
+	err error) { // Кількість торгової валюти для продажу
+	sellQuantity,
+		// Кількість торгової валюти для купівлі
+		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
+	if sellQuantity < pp.GetMinQuantity() {
+		sellQuantity = 0
+	}
+	if buyQuantity < pp.GetMinQuantity() {
+		buyQuantity = 0
+	}
+	return
+}
+
 func (pp *PairBookTickersObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
@@ -359,6 +426,11 @@ func NewPairBookTickersObserver(
 		timeOut:         1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
+	}
+	pp.exchangeInfo = exchange_info.New()
+	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
 	}

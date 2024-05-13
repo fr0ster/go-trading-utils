@@ -9,13 +9,19 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	futures_depths "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
+	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
@@ -27,6 +33,7 @@ type (
 		levels       int
 		rate         time.Duration
 		account      *futures_account.Account
+		exchangeInfo *exchange_info.ExchangeInfo
 		data         *depth_types.Depth
 		depthsEvent  chan *futures.WsDepthEvent
 		event        chan bool
@@ -167,7 +174,7 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 					// Кількість торгової валюти для продажу
 					sellQuantity,
 						// Кількість торгової валюти для купівлі
-						buyQuantity, err := GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, ask, bid)
+						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, ask, bid)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
 						pp.stop <- os.Interrupt
@@ -224,16 +231,6 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 		}()
 	}
 	return
-}
-
-func (pp *PairPartialDepthsObserver) StartUpdateGuard() chan bool {
-	if pp.event == nil {
-		if pp.depthsEvent == nil {
-			pp.StartStream()
-		}
-		pp.event = futures_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
-	}
-	return pp.event
 }
 
 func (pp *PairPartialDepthsObserver) StartPriceChangesSignal() (
@@ -307,6 +304,74 @@ func (pp *PairPartialDepthsObserver) StartPriceChangesSignal() (
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
 }
 
+func (pp *PairPartialDepthsObserver) StartUpdateGuard() chan bool {
+	if pp.event == nil {
+		if pp.depthsEvent == nil {
+			pp.StartStream()
+		}
+		pp.event = futures_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
+	}
+	return pp.event
+}
+
+func (pp *PairPartialDepthsObserver) getLotSizeFilter() (lotSizeFilter *futures.LotSizeFilter, err error) {
+	var val *futures.Symbol
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+		val, err = symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
+		if err != nil {
+			logrus.Errorf(errorMsg, err)
+			return
+		}
+		lotSizeFilter = val.LotSizeFilter()
+	}
+	return
+}
+
+func (pp *PairPartialDepthsObserver) GetMaxQuantity() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.MaxQuantity)
+}
+
+func (pp *PairPartialDepthsObserver) GetMinQuantity() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.MinQuantity)
+}
+
+func (pp *PairPartialDepthsObserver) GetStepSize() float64 {
+	lotSizeFilter, err := pp.getLotSizeFilter()
+	if err != nil {
+		return 0
+	}
+	return utils.ConvStrToFloat64(lotSizeFilter.StepSize)
+}
+
+func (pp *PairPartialDepthsObserver) GetBuyAndSellQuantity(
+	pair pairs_interfaces.Pairs,
+	baseBalance float64,
+	targetBalance float64,
+	ask float64,
+	bid float64) (
+	sellQuantity float64, // Кількість торгової валюти для продажу
+	buyQuantity float64, // Кількість торгової валюти для купівлі
+	err error) { // Кількість торгової валюти для продажу
+	sellQuantity,
+		// Кількість торгової валюти для купівлі
+		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, ask, bid)
+	if sellQuantity < pp.GetMinQuantity() {
+		sellQuantity = 0
+	}
+	if buyQuantity < pp.GetMinQuantity() {
+		buyQuantity = 0
+	}
+	return
+}
+
 func (pp *PairPartialDepthsObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
@@ -347,6 +412,11 @@ func NewPairDepthsObserver(
 		timeOut:      1 * time.Hour,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+	if err != nil {
+		return
+	}
+	pp.exchangeInfo = exchange_info.New()
+	err = futures_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
 	}
