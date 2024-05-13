@@ -38,7 +38,7 @@ type (
 		bidUp           chan *pair_price_types.AskBid
 		bidDown         chan *pair_price_types.AskBid
 		sleepingTime    time.Duration
-		updateTime      time.Duration
+		timeOut         time.Duration
 	}
 )
 
@@ -60,10 +60,13 @@ func (pp *PairBookTickersObserver) StartStream() chan *binance.WsBookTickerEvent
 			pp.data = book_ticker_types.New(degree)
 		}
 
+		ticker := time.NewTicker(pp.timeOut)
+		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення bookTickers
 		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
 		pp.bookTickerEvent = make(chan *binance.WsBookTickerEvent, 1)
 		wsHandler := func(event *binance.WsBookTickerEvent) {
+			lastResponse = time.Now()
 			pp.bookTickerEvent <- event
 		}
 		resetEvent := make(chan bool, 1)
@@ -76,10 +79,14 @@ func (pp *PairBookTickersObserver) StartStream() chan *binance.WsBookTickerEvent
 			for {
 				select {
 				case <-resetEvent:
-				case <-time.After(pp.updateTime * time.Minute):
+					stopC <- struct{}{}
+					_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+				case <-ticker.C:
+					if time.Since(lastResponse) > pp.timeOut {
+						stopC <- struct{}{}
+						_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+					}
 				}
-				stopC <- struct{}{}
-				_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 			}
 		}()
 		spot_book_ticker.Init(pp.data, pp.pair.GetPair(), pp.client)
@@ -320,8 +327,8 @@ func (pp *PairBookTickersObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
-func (pp *PairBookTickersObserver) SetUpdateTime(updateTime time.Duration) {
-	pp.updateTime = updateTime
+func (pp *PairBookTickersObserver) SetTimeOut(timeOut time.Duration) {
+	pp.timeOut = timeOut
 }
 
 func NewPairBookTickersObserver(
@@ -349,7 +356,7 @@ func NewPairBookTickersObserver(
 		bidUp:           nil,
 		bidDown:         nil,
 		sleepingTime:    1 * time.Second,
-		updateTime:      1 * time.Hour,
+		timeOut:         1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

@@ -38,7 +38,7 @@ type (
 		bidUp        chan *pair_price_types.AskBid
 		bidDown      chan *pair_price_types.AskBid
 		sleepingTime time.Duration
-		updateTime   time.Duration
+		timeOut      time.Duration
 	}
 )
 
@@ -56,10 +56,13 @@ func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 			pp.data = depth_types.New(degree, pp.pair.GetPair())
 		}
 
+		ticker := time.NewTicker(pp.timeOut)
+		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення depths
 		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
 		pp.depthsEvent = make(chan *binance.WsDepthEvent, 1)
 		wsHandler := func(event *binance.WsDepthEvent) {
+			lastResponse = time.Now()
 			pp.depthsEvent <- event
 		}
 		resetEvent := make(chan bool, 1)
@@ -72,10 +75,14 @@ func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 			for {
 				select {
 				case <-resetEvent:
-				case <-time.After(pp.updateTime * time.Minute):
+					stopC <- struct{}{}
+					_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+				case <-ticker.C:
+					if time.Since(lastResponse) > pp.timeOut {
+						stopC <- struct{}{}
+						_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+					}
 				}
-				stopC <- struct{}{}
-				_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 			}
 		}()
 		spot_depths.Init(pp.data, pp.client, pp.limit)
@@ -302,8 +309,8 @@ func (pp *PairDepthsObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
-func (pp *PairDepthsObserver) SetUpdateTime(updateTime time.Duration) {
-	pp.updateTime = updateTime
+func (pp *PairDepthsObserver) SetTimeOut(timeOut time.Duration) {
+	pp.timeOut = timeOut
 }
 
 func NewPairDepthsObserver(
@@ -331,7 +338,7 @@ func NewPairDepthsObserver(
 		bidUp:        nil,
 		bidDown:      nil,
 		sleepingTime: 1 * time.Second,
-		updateTime:   1 * time.Hour,
+		timeOut:      1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

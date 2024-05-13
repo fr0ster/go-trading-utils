@@ -37,7 +37,7 @@ type (
 		deltaDown    float64
 		isFilledOnly bool
 		sleepingTime time.Duration
-		updateTime   time.Duration
+		timeOut      time.Duration
 	}
 )
 
@@ -55,11 +55,15 @@ func (pp *PairKlinesObserver) StartStream() chan *futures.WsKlineEvent {
 			logrus.Debugf("Futures, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(pp.degree, pp.interval, pp.pair.GetPair())
 		}
+
+		ticker := time.NewTicker(pp.timeOut)
+		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення klines
 		if pp.klineEvent == nil {
 			pp.klineEvent = make(chan *futures.WsKlineEvent, 1)
 			logrus.Debugf("Futures, Start stream for %v Klines", pp.pair.GetPair())
 			wsHandler := func(event *futures.WsKlineEvent) {
+				lastResponse = time.Now()
 				pp.klineEvent <- event
 			}
 			resetEvent := make(chan bool, 1)
@@ -72,10 +76,14 @@ func (pp *PairKlinesObserver) StartStream() chan *futures.WsKlineEvent {
 				for {
 					select {
 					case <-resetEvent:
-					case <-time.After(pp.updateTime * time.Minute):
+						stopC <- struct{}{}
+						_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+					case <-ticker.C:
+						if time.Since(lastResponse) > pp.timeOut {
+							stopC <- struct{}{}
+							_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+						}
 					}
-					stopC <- struct{}{}
-					_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 				}
 			}()
 		}
@@ -178,6 +186,14 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	return pp.filledEvent
 }
 
+func (pp *PairKlinesObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairKlinesObserver) SetTimeOut(timeOut time.Duration) {
+	pp.timeOut = timeOut
+}
+
 func NewPairKlinesObserver(
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
@@ -206,7 +222,7 @@ func NewPairKlinesObserver(
 		priceDown:    nil,
 		isFilledOnly: isFilledOnly,
 		sleepingTime: 1 * time.Second,
-		updateTime:   1 * time.Hour,
+		timeOut:      1 * time.Hour,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {

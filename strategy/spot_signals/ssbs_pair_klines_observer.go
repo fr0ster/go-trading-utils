@@ -42,7 +42,7 @@ type (
 		deltaDown    float64
 		isFilledOnly bool
 		sleepingTime time.Duration
-		updateTime   time.Duration
+		timeOut      time.Duration
 	}
 )
 
@@ -60,10 +60,14 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 			logrus.Debugf("Spot, Create kline data for %v", pp.pair.GetPair())
 			pp.data = kline_types.New(degree, pp.interval, pp.pair.GetPair())
 		}
+
+		ticker := time.NewTicker(pp.timeOut)
+		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення klines
 		pp.klineEvent = make(chan *binance.WsKlineEvent, 1)
 		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
 		wsHandler := func(event *binance.WsKlineEvent) {
+			lastResponse = time.Now()
 			pp.klineEvent <- event
 		}
 		resetEvent := make(chan bool, 1)
@@ -76,10 +80,14 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 			for {
 				select {
 				case <-resetEvent:
-				case <-time.After(pp.updateTime * time.Minute):
+					stopC <- struct{}{}
+					_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+				case <-ticker.C:
+					if time.Since(lastResponse) > pp.timeOut {
+						stopC <- struct{}{}
+						_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+					}
 				}
-				stopC <- struct{}{}
-				_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 			}
 		}()
 		spot_kline.Init(pp.data, pp.client)
@@ -184,8 +192,8 @@ func (pp *PairKlinesObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
-func (pp *PairKlinesObserver) SetUpdateTime(updateTime time.Duration) {
-	pp.updateTime = updateTime
+func (pp *PairKlinesObserver) SetTimeOut(timeOut time.Duration) {
+	pp.timeOut = timeOut
 }
 
 func NewPairKlinesObserver(
@@ -215,7 +223,7 @@ func NewPairKlinesObserver(
 		priceDown:    nil,
 		isFilledOnly: isFilledOnly,
 		sleepingTime: 1 * time.Second,
-		updateTime:   1 * time.Hour,
+		timeOut:      1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {
