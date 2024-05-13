@@ -41,6 +41,8 @@ type (
 		deltaUp      float64
 		deltaDown    float64
 		isFilledOnly bool
+		sleepingTime time.Duration
+		updateTime   time.Duration
 	}
 )
 
@@ -72,7 +74,10 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 		_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 		go func() {
 			for {
-				<-resetEvent
+				select {
+				case <-resetEvent:
+				case <-time.After(pp.updateTime * time.Minute):
+				}
 				stopC <- struct{}{}
 				_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 			}
@@ -158,7 +163,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						}
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -175,6 +180,14 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	return pp.filledEvent
 }
 
+func (pp *PairKlinesObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairKlinesObserver) SetUpdateTime(updateTime time.Duration) {
+	pp.updateTime = updateTime
+}
+
 func NewPairKlinesObserver(
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
@@ -186,11 +199,10 @@ func NewPairKlinesObserver(
 	stop chan os.Signal,
 	isFilledOnly bool) (pp *PairKlinesObserver, err error) {
 	pp = &PairKlinesObserver{
-		client:  client,
-		pair:    pair,
-		account: nil,
-		data:    nil,
-		// stream:       nil,
+		client:       client,
+		pair:         pair,
+		account:      nil,
+		data:         nil,
 		filledEvent:  nil,
 		stop:         stop,
 		degree:       degree,
@@ -202,6 +214,8 @@ func NewPairKlinesObserver(
 		priceUp:      nil,
 		priceDown:    nil,
 		isFilledOnly: isFilledOnly,
+		sleepingTime: 1 * time.Second,
+		updateTime:   1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

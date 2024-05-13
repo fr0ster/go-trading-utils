@@ -37,6 +37,8 @@ type (
 		askDown         chan *pair_price_types.AskBid
 		bidUp           chan *pair_price_types.AskBid
 		bidDown         chan *pair_price_types.AskBid
+		sleepingTime    time.Duration
+		updateTime      time.Duration
 	}
 )
 
@@ -72,7 +74,10 @@ func (pp *PairBookTickersObserver) StartStream() chan *binance.WsBookTickerEvent
 		_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 		go func() {
 			for {
-				<-resetEvent
+				select {
+				case <-resetEvent:
+				case <-time.After(pp.updateTime * time.Minute):
+				}
 				stopC <- struct{}{}
 				_, stopC, _ = binance.WsBookTickerServe(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 			}
@@ -213,7 +218,7 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 						}
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -294,7 +299,7 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 						last_bid = bid
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -309,6 +314,14 @@ func (pp *PairBookTickersObserver) StartUpdateGuard() chan bool {
 		pp.event = spot_handlers.GetBookTickersUpdateGuard(pp.data, pp.bookTickerEvent)
 	}
 	return pp.event
+}
+
+func (pp *PairBookTickersObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairBookTickersObserver) SetUpdateTime(updateTime time.Duration) {
+	pp.updateTime = updateTime
 }
 
 func NewPairBookTickersObserver(
@@ -335,6 +348,8 @@ func NewPairBookTickersObserver(
 		askDown:         nil,
 		bidUp:           nil,
 		bidDown:         nil,
+		sleepingTime:    1 * time.Second,
+		updateTime:      1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

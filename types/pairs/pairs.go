@@ -2,7 +2,6 @@ package pairs
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/adshao/go-binance/v2"
 
@@ -44,20 +43,18 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		Connection                 *connection_types.Connection `json:"connection"`
-		AccountType                AccountType                  `json:"account_type"`                  // Тип акаунта
-		StrategyType               StrategyType                 `json:"strategy_type"`                 // Тип стратегії
-		StageType                  StageType                    `json:"stage_type"`                    // Cтадія стратегії
-		Pair                       string                       `json:"symbol"`                        // Пара
-		TargetSymbol               string                       `json:"target_symbol"`                 // Цільовий токен
-		BaseSymbol                 string                       `json:"base_symbol"`                   // Базовий токен
-		InitialBalance             float64                      `json:"initial_balance"`               // Початковий баланс
-		CurrentBalance             float64                      `json:"current_balance"`               // Поточний баланс
-		InitialPositionBalance     float64                      `json:"initial_position_balance"`      // Початковий баланс позиції
-		CurrentPositionBalance     float64                      `json:"current_position_balance"`      // Поточний баланс позиції
-		SleepingTime               time.Duration                `json:"sleeping_time"`                 // Час сплячки, міллісекунди!!!
-		TakingPositionSleepingTime time.Duration                `json:"taking_position_sleeping_time"` // Час сплячки при вході в позицію, хвилини!!!
-		MiddlePrice                float64                      `json:"middle_price"`                  // Середня ціна купівлі по позиції
+		Connection             *connection_types.Connection `json:"connection"`
+		AccountType            AccountType                  `json:"account_type"`             // Тип акаунта
+		StrategyType           StrategyType                 `json:"strategy_type"`            // Тип стратегії
+		StageType              StageType                    `json:"stage_type"`               // Cтадія стратегії
+		Pair                   string                       `json:"symbol"`                   // Пара
+		TargetSymbol           string                       `json:"target_symbol"`            // Цільовий токен
+		BaseSymbol             string                       `json:"base_symbol"`              // Базовий токен
+		InitialBalance         float64                      `json:"initial_balance"`          // Початковий баланс
+		CurrentBalance         float64                      `json:"current_balance"`          // Поточний баланс
+		InitialPositionBalance float64                      `json:"initial_position_balance"` // Початковий баланс позиції
+		CurrentPositionBalance float64                      `json:"current_position_balance"` // Поточний баланс позиції
+		MiddlePrice            float64                      `json:"middle_price"`             // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -84,244 +81,234 @@ type (
 )
 
 // Less implements btree.Item.
-func (cr *Pairs) Less(item btree.Item) bool {
+func (pr *Pairs) Less(item btree.Item) bool {
 	other := item.(*Pairs)
-	if cr.AccountType != other.AccountType && cr.AccountType != "" && other.AccountType != "" {
-		return cr.AccountType < other.AccountType
+	if pr.AccountType != other.AccountType && pr.AccountType != "" && other.AccountType != "" {
+		return pr.AccountType < other.AccountType
 	}
-	if cr.StrategyType != other.StrategyType && cr.StrategyType != "" && other.StrategyType != "" {
-		return cr.StrategyType < other.StrategyType
+	if pr.StrategyType != other.StrategyType && pr.StrategyType != "" && other.StrategyType != "" {
+		return pr.StrategyType < other.StrategyType
 	}
-	if cr.StageType != other.StageType && cr.StageType != "" && other.StageType != "" {
-		return cr.StageType < other.StageType
+	if pr.StageType != other.StageType && pr.StageType != "" && other.StageType != "" {
+		return pr.StageType < other.StageType
 	}
-	return cr.Pair < other.Pair
+	return pr.Pair < other.Pair
 }
 
 // Equals implements btree.Item.
-func (cr *Pairs) Equals(item btree.Item) bool {
+func (pr *Pairs) Equals(item btree.Item) bool {
 	other := item.(*Pairs)
-	return cr.AccountType == other.AccountType &&
-		cr.StrategyType == other.StrategyType &&
-		cr.StageType == other.StageType &&
-		cr.Pair == other.Pair
+	return pr.AccountType == other.AccountType &&
+		pr.StrategyType == other.StrategyType &&
+		pr.StageType == other.StageType &&
+		pr.Pair == other.Pair
 }
 
-func (cr *Pairs) GetConnection() *connection_types.Connection {
-	return cr.Connection
+func (pr *Pairs) GetConnection() *connection_types.Connection {
+	return pr.Connection
 }
 
-func (cr *Pairs) SetConnection(connection *connection_types.Connection) {
-	cr.Connection = connection
+func (pr *Pairs) SetConnection(connection *connection_types.Connection) {
+	pr.Connection = connection
 }
 
-// GetInitialBalance implements Configuration.
-func (cr *Pairs) GetInitialBalance() float64 {
-	return cr.InitialBalance
+// GetInitialBalance implements Pairs.
+func (pr *Pairs) GetInitialBalance() float64 {
+	return pr.InitialBalance
 }
 
-// SetInitialBalance implements Configuration.
-func (cr *Pairs) SetInitialBalance(balance float64) {
-	cr.InitialBalance = balance
+// SetInitialBalance implements Pairs.
+func (pr *Pairs) SetInitialBalance(balance float64) {
+	pr.InitialBalance = balance
 }
 
-// GetCurrentBalance implements Configuration.
-func (cr *Pairs) GetCurrentBalance() float64 {
-	return cr.CurrentBalance
+// GetCurrentBalance implements Pairs.
+func (pr *Pairs) GetCurrentBalance() float64 {
+	return pr.CurrentBalance
 }
 
-// SetCurrentBalance implements Configuration.
-func (cr *Pairs) SetCurrentBalance(balance float64) {
-	cr.CurrentBalance = balance
+// SetCurrentBalance implements Pairs.
+func (pr *Pairs) SetCurrentBalance(balance float64) {
+	pr.CurrentBalance = balance
 }
 
-// GetInitialPositionBalance implements Configuration.
-func (cr *Pairs) GetInitialPositionBalance() float64 {
-	return cr.InitialPositionBalance
+// GetInitialPositionBalance implements Pairs.
+func (pr *Pairs) GetInitialPositionBalance() float64 {
+	return pr.InitialPositionBalance
 }
 
-// SetInitialPositionBalance implements Configuration.
-func (cr *Pairs) SetInitialPositionBalance(balance float64) {
-	cr.InitialPositionBalance = balance
+// SetInitialPositionBalance implements Pairs.
+func (pr *Pairs) SetInitialPositionBalance(balance float64) {
+	pr.InitialPositionBalance = balance
 }
 
-// GetCurrentPositionBalance implements Configuration.
-func (cr *Pairs) GetCurrentPositionBalance() float64 {
-	return cr.CurrentPositionBalance
+// GetCurrentPositionBalance implements Pairs.
+func (pr *Pairs) GetCurrentPositionBalance() float64 {
+	return pr.CurrentPositionBalance
 }
 
-// SetCurrentPositionBalance implements Configuration.
-func (cr *Pairs) SetCurrentPositionBalance(balance float64) {
-	cr.CurrentPositionBalance = balance
+// SetCurrentPositionBalance implements Pairs.
+func (pr *Pairs) SetCurrentPositionBalance(balance float64) {
+	pr.CurrentPositionBalance = balance
 }
 
-// Get AccountType implements Configuration.
-func (cr *Pairs) GetAccountType() AccountType {
-	return cr.AccountType
+// Get AccountType implements Pairs.
+func (pr *Pairs) GetAccountType() AccountType {
+	return pr.AccountType
 }
 
-// GetStrategy implements Configuration.
-func (cr *Pairs) GetStrategy() StrategyType {
-	return cr.StrategyType
+// GetStrategy implements Pairs.
+func (pr *Pairs) GetStrategy() StrategyType {
+	return pr.StrategyType
 }
 
-// GetStage implements Configuration.
-func (cr *Pairs) GetStage() StageType {
-	return cr.StageType
+// GetStage implements Pairs.
+func (pr *Pairs) GetStage() StageType {
+	return pr.StageType
 }
 
-// SetStage implements Configuration.
-func (cr *Pairs) SetStage(stage StageType) {
-	cr.StageType = stage
+// SetStage implements Pairs.
+func (pr *Pairs) SetStage(stage StageType) {
+	pr.StageType = stage
 }
 
-// GetSymbol implements Configuration.
-func (cr *Pairs) GetPair() string {
-	return cr.Pair
+// GetSymbol implements Pairs.
+func (pr *Pairs) GetPair() string {
+	return pr.Pair
 }
 
 // GetTargetSymbol implements config.Configuration.
-func (cr *Pairs) GetTargetSymbol() string {
-	return cr.TargetSymbol
+func (pr *Pairs) GetTargetSymbol() string {
+	return pr.TargetSymbol
 }
 
 // GetBaseSymbol implements config.Configuration.
-func (cr *Pairs) GetBaseSymbol() string {
-	return cr.BaseSymbol
+func (pr *Pairs) GetBaseSymbol() string {
+	return pr.BaseSymbol
 }
 
-// GetSleepingTime implements Configuration.
-func (cr *Pairs) GetSleepingTime() time.Duration {
-	return cr.SleepingTime * time.Millisecond
+func (pr *Pairs) GetLimitInputIntoPosition() float64 {
+	return pr.LimitInputIntoPosition
 }
 
-// GetTakingPositionSleepingTime implements Configuration.
-func (cr *Pairs) GetTakingPositionSleepingTime() time.Duration {
-	return cr.TakingPositionSleepingTime * time.Minute
+func (pr *Pairs) GetLimitOutputOfPosition() float64 {
+	return pr.LimitOutputOfPosition
 }
 
-func (cr *Pairs) GetLimitInputIntoPosition() float64 {
-	return cr.LimitInputIntoPosition
+func (pr *Pairs) GetLimitOnPosition() float64 {
+	return pr.LimitOnPosition
 }
 
-func (cr *Pairs) GetLimitOutputOfPosition() float64 {
-	return cr.LimitOutputOfPosition
+func (pr *Pairs) GetLimitOnTransaction() float64 {
+	return pr.LimitOnTransaction
 }
 
-func (cr *Pairs) GetLimitOnPosition() float64 {
-	return cr.LimitOnPosition
+func (pr *Pairs) GetBuyDelta() float64 {
+	return pr.BuyDelta
 }
 
-func (cr *Pairs) GetLimitOnTransaction() float64 {
-	return cr.LimitOnTransaction
+func (pr *Pairs) GetSellDelta() float64 {
+	return pr.SellDelta
 }
 
-func (cr *Pairs) GetBuyDelta() float64 {
-	return cr.BuyDelta
+func (pr *Pairs) GetBuyQuantity() float64 {
+	return pr.BuyQuantity
 }
 
-func (cr *Pairs) GetSellDelta() float64 {
-	return cr.SellDelta
+func (pr *Pairs) GetSellQuantity() float64 {
+	return pr.SellQuantity
 }
 
-func (cr *Pairs) GetBuyQuantity() float64 {
-	return cr.BuyQuantity
+func (pr *Pairs) GetBuyValue() float64 {
+	return pr.BuyValue
 }
 
-func (cr *Pairs) GetSellQuantity() float64 {
-	return cr.SellQuantity
+func (pr *Pairs) GetSellValue() float64 {
+	return pr.SellValue
 }
 
-func (cr *Pairs) GetBuyValue() float64 {
-	return cr.BuyValue
+func (pr *Pairs) SetBuyQuantity(quantity float64) {
+	pr.BuyQuantity = quantity
 }
 
-func (cr *Pairs) GetSellValue() float64 {
-	return cr.SellValue
+func (pr *Pairs) SetSellQuantity(quantity float64) {
+	pr.SellQuantity = quantity
 }
 
-func (cr *Pairs) SetBuyQuantity(quantity float64) {
-	cr.BuyQuantity = quantity
+func (pr *Pairs) SetBuyValue(value float64) {
+	pr.BuyValue = value
 }
 
-func (cr *Pairs) SetSellQuantity(quantity float64) {
-	cr.SellQuantity = quantity
+func (pr *Pairs) SetSellValue(value float64) {
+	pr.SellValue = value
 }
 
-func (cr *Pairs) SetBuyValue(value float64) {
-	cr.BuyValue = value
+func (pr *Pairs) GetBuyCommission() float64 {
+	return pr.BuyCommission
 }
 
-func (cr *Pairs) SetSellValue(value float64) {
-	cr.SellValue = value
+func (pr *Pairs) SetBuyCommission(commission float64) {
+	pr.BuyCommission = commission
 }
 
-func (cr *Pairs) GetBuyCommission() float64 {
-	return cr.BuyCommission
+func (pr *Pairs) GetSellCommission() float64 {
+	return pr.SellCommission
 }
 
-func (cr *Pairs) SetBuyCommission(commission float64) {
-	cr.BuyCommission = commission
+func (pr *Pairs) SetSellCommission(commission float64) {
+	pr.SellCommission = commission
 }
 
-func (cr *Pairs) GetSellCommission() float64 {
-	return cr.SellCommission
+func (pr *Pairs) SetBuyData(quantity, value, commission float64) {
+	pr.BuyQuantity = quantity
+	pr.BuyValue = value
+	pr.BuyCommission = commission
 }
 
-func (cr *Pairs) SetSellCommission(commission float64) {
-	cr.SellCommission = commission
+func (pr *Pairs) SetSellData(quantity, value, commission float64) {
+	pr.SellQuantity = quantity
+	pr.SellValue = value
+	pr.SellCommission = commission
 }
 
-func (cr *Pairs) SetBuyData(quantity, value, commission float64) {
-	cr.BuyQuantity = quantity
-	cr.BuyValue = value
-	cr.BuyCommission = commission
+func (pr *Pairs) AddCommission(commission *binance.Fill) {
+	pr.Commission[commission.CommissionAsset] += float64(utils.ConvStrToFloat64(commission.Commission))
 }
 
-func (cr *Pairs) SetSellData(quantity, value, commission float64) {
-	cr.SellQuantity = quantity
-	cr.SellValue = value
-	cr.SellCommission = commission
+func (pr *Pairs) GetCommission() Commission {
+	return pr.Commission
 }
 
-func (cr *Pairs) AddCommission(commission *binance.Fill) {
-	cr.Commission[commission.CommissionAsset] += float64(utils.ConvStrToFloat64(commission.Commission))
+func (pr *Pairs) SetCommission(commission Commission) {
+	pr.Commission = commission
 }
 
-func (cr *Pairs) GetCommission() Commission {
-	return cr.Commission
-}
-
-func (cr *Pairs) SetCommission(commission Commission) {
-	cr.Commission = commission
-}
-
-func (cr *Pairs) CalcMiddlePrice() error {
-	if cr.BuyQuantity == cr.SellQuantity {
-		return fmt.Errorf("BuyQuantity: %f and SellQuantity %f, can't calculate middle price", cr.BuyQuantity, cr.SellQuantity)
+func (pr *Pairs) CalcMiddlePrice() error {
+	if pr.BuyQuantity == pr.SellQuantity {
+		return fmt.Errorf("BuyQuantity: %f and SellQuantity %f, can't calculate middle price", pr.BuyQuantity, pr.SellQuantity)
 	}
 
-	cr.MiddlePrice = (cr.BuyValue - cr.SellValue) / (cr.BuyQuantity - cr.SellQuantity)
+	pr.MiddlePrice = (pr.BuyValue - pr.SellValue) / (pr.BuyQuantity - pr.SellQuantity)
 	return nil
 }
 
-func (cr *Pairs) GetMiddlePrice() float64 {
-	return cr.MiddlePrice
+func (pr *Pairs) GetMiddlePrice() float64 {
+	return pr.MiddlePrice
 }
 
-func (cr *Pairs) SetMiddlePrice(price float64) {
-	cr.MiddlePrice = price
+func (pr *Pairs) SetMiddlePrice(price float64) {
+	pr.MiddlePrice = price
 }
 
-func (cr *Pairs) GetProfit(currentPrice float64) float64 {
-	return (currentPrice - cr.GetMiddlePrice()) * (cr.BuyQuantity - cr.SellQuantity)
+func (pr *Pairs) GetProfit(currentPrice float64) float64 {
+	return (currentPrice - pr.GetMiddlePrice()) * (pr.BuyQuantity - pr.SellQuantity)
 }
 
-func (cr *Pairs) CheckingPair() bool {
-	return cr.MiddlePrice != 0 &&
-		cr.LimitInputIntoPosition != 0 &&
-		cr.LimitOutputOfPosition != 0 &&
-		cr.LimitInputIntoPosition < cr.LimitOutputOfPosition
+func (pr *Pairs) CheckingPair() bool {
+	return pr.MiddlePrice != 0 &&
+		pr.LimitInputIntoPosition != 0 &&
+		pr.LimitOutputOfPosition != 0 &&
+		pr.LimitInputIntoPosition < pr.LimitOutputOfPosition
 }
 
 func New(
@@ -343,7 +330,6 @@ func New(
 		Pair:                   pair,
 		TargetSymbol:           targetSymbol,
 		BaseSymbol:             baseSymbol,
-		SleepingTime:           10,
 		LimitInputIntoPosition: 0.1,
 		LimitOutputOfPosition:  0.5,
 		LimitOnPosition:        1.0,

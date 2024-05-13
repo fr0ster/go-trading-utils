@@ -20,26 +20,27 @@ import (
 
 type (
 	PairPartialDepthsObserver struct {
-		client      *futures.Client
-		pair        pairs_interfaces.Pairs
-		degree      int
-		limit       int
-		levels      int
-		rate        time.Duration
-		account     *futures_account.Account
-		data        *depth_types.Depth
-		depthsEvent chan *futures.WsDepthEvent
-		// stream      *futures_streams.PartialDepthServeWithRate
-		event     chan bool
-		stop      chan os.Signal
-		deltaUp   float64
-		deltaDown float64
-		buyEvent  chan *pair_price_types.PairPrice
-		sellEvent chan *pair_price_types.PairPrice
-		askUp     chan *pair_price_types.AskBid
-		askDown   chan *pair_price_types.AskBid
-		bidUp     chan *pair_price_types.AskBid
-		bidDown   chan *pair_price_types.AskBid
+		client       *futures.Client
+		pair         pairs_interfaces.Pairs
+		degree       int
+		limit        int
+		levels       int
+		rate         time.Duration
+		account      *futures_account.Account
+		data         *depth_types.Depth
+		depthsEvent  chan *futures.WsDepthEvent
+		event        chan bool
+		stop         chan os.Signal
+		deltaUp      float64
+		deltaDown    float64
+		buyEvent     chan *pair_price_types.PairPrice
+		sellEvent    chan *pair_price_types.PairPrice
+		askUp        chan *pair_price_types.AskBid
+		askDown      chan *pair_price_types.AskBid
+		bidUp        chan *pair_price_types.AskBid
+		bidDown      chan *pair_price_types.AskBid
+		sleepingTime time.Duration
+		updateTime   time.Duration
 	}
 )
 
@@ -71,7 +72,10 @@ func (pp *PairPartialDepthsObserver) StartStream() chan *futures.WsDepthEvent {
 		_, stopC, _ = futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, wsErrorHandler)
 		go func() {
 			for {
-				<-resetEvent
+				select {
+				case <-resetEvent:
+				case <-time.After(pp.updateTime * time.Minute):
+				}
 				stopC <- struct{}{}
 				_, stopC, _ = futures.WsPartialDepthServeWithRate(pp.pair.GetPair(), pp.levels, pp.rate, wsHandler, wsErrorHandler)
 			}
@@ -208,7 +212,7 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 						}
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -289,11 +293,19 @@ func (pp *PairPartialDepthsObserver) StartPriceChangesSignal() (
 						last_bid = bid
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
+}
+
+func (pp *PairPartialDepthsObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairPartialDepthsObserver) SetUpdateTime(updateTime time.Duration) {
+	pp.updateTime = updateTime
 }
 
 func NewPairDepthsObserver(
@@ -307,23 +319,25 @@ func NewPairDepthsObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairPartialDepthsObserver, err error) {
 	pp = &PairPartialDepthsObserver{
-		client:      client,
-		pair:        pair,
-		account:     nil,
-		data:        nil,
-		depthsEvent: nil,
-		event:       nil,
-		stop:        stop,
-		degree:      degree,
-		limit:       limit,
-		levels:      levels,
-		rate:        rate,
-		deltaUp:     deltaUp,
-		deltaDown:   deltaDown,
-		askUp:       nil,
-		askDown:     nil,
-		bidUp:       nil,
-		bidDown:     nil,
+		client:       client,
+		pair:         pair,
+		account:      nil,
+		data:         nil,
+		depthsEvent:  nil,
+		event:        nil,
+		stop:         stop,
+		degree:       degree,
+		limit:        limit,
+		levels:       levels,
+		rate:         rate,
+		deltaUp:      deltaUp,
+		deltaDown:    deltaDown,
+		askUp:        nil,
+		askDown:      nil,
+		bidUp:        nil,
+		bidDown:      nil,
+		sleepingTime: 1 * time.Second,
+		updateTime:   1 * time.Hour,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {

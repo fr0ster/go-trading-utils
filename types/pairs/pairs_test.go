@@ -3,7 +3,6 @@ package pairs_test
 import (
 	"math"
 	"testing"
-	"time"
 
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	"github.com/google/btree"
@@ -13,58 +12,60 @@ import (
 func getTestData() *btree.BTree {
 	res := btree.New(2)
 	res.ReplaceOrInsert(&pairs_types.Pairs{
-		AccountType:                pairs_types.SpotAccountType,
-		StrategyType:               pairs_types.HoldingStrategyType,
-		StageType:                  pairs_types.InputIntoPositionStage,
-		Pair:                       "BTCUSDT",
-		TargetSymbol:               "BTC",
-		BaseSymbol:                 "USDT",
-		InitialBalance:             1000.0,
-		InitialPositionBalance:     900.0,
-		SleepingTime:               1,
-		TakingPositionSleepingTime: 1,
-		MiddlePrice:                50000.0,
-		LimitInputIntoPosition:     0.5,
-		LimitOutputOfPosition:      0.8,
-		LimitOnPosition:            0.9,
-		LimitOnTransaction:         0.1,
-		BuyDelta:                   0.01,
-		BuyQuantity:                0.3,
-		BuyValue:                   200.0,
-		BuyCommission:              0.001,
-		SellDelta:                  0.05,
-		SellQuantity:               0.2,
-		SellValue:                  200.0,
-		SellCommission:             0.001,
+		AccountType:            pairs_types.SpotAccountType,
+		StrategyType:           pairs_types.HoldingStrategyType,
+		StageType:              pairs_types.InputIntoPositionStage,
+		Pair:                   "BTCUSDT",
+		TargetSymbol:           "BTC",
+		BaseSymbol:             "USDT",
+		InitialBalance:         1000.0,
+		InitialPositionBalance: 900.0,
+		// SleepingTime:               1,
+		// UpdateTime:                 60,
+		// TakingPositionSleepingTime: 1,
+		MiddlePrice:            50000.0,
+		LimitInputIntoPosition: 0.5,
+		LimitOutputOfPosition:  0.8,
+		LimitOnPosition:        0.9,
+		LimitOnTransaction:     0.1,
+		BuyDelta:               0.01,
+		BuyQuantity:            0.3,
+		BuyValue:               200.0,
+		BuyCommission:          0.001,
+		SellDelta:              0.05,
+		SellQuantity:           0.2,
+		SellValue:              200.0,
+		SellCommission:         0.001,
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
 		},
 	})
 	res.ReplaceOrInsert(&pairs_types.Pairs{
-		AccountType:                pairs_types.USDTFutureType,
-		StrategyType:               pairs_types.ScalpingStrategyType,
-		StageType:                  pairs_types.WorkInPositionStage,
-		Pair:                       "BTCUSDT",
-		TargetSymbol:               "BTC",
-		BaseSymbol:                 "USDT",
-		InitialBalance:             1000.0,
-		InitialPositionBalance:     900.0,
-		SleepingTime:               1,
-		TakingPositionSleepingTime: 1,
-		MiddlePrice:                50000.0,
-		LimitInputIntoPosition:     0.5,
-		LimitOutputOfPosition:      0.8,
-		LimitOnPosition:            0.9,
-		LimitOnTransaction:         0.1,
-		BuyDelta:                   0.01,
-		BuyQuantity:                0.3,
-		BuyValue:                   200.0,
-		BuyCommission:              0.001,
-		SellDelta:                  0.05,
-		SellQuantity:               0.2,
-		SellValue:                  200.0,
-		SellCommission:             0.001,
+		AccountType:            pairs_types.USDTFutureType,
+		StrategyType:           pairs_types.ScalpingStrategyType,
+		StageType:              pairs_types.WorkInPositionStage,
+		Pair:                   "BTCUSDT",
+		TargetSymbol:           "BTC",
+		BaseSymbol:             "USDT",
+		InitialBalance:         1000.0,
+		InitialPositionBalance: 900.0,
+		// SleepingTime:               1,
+		// UpdateTime:                 60,
+		// TakingPositionSleepingTime: 1,
+		MiddlePrice:            50000.0,
+		LimitInputIntoPosition: 0.5,
+		LimitOutputOfPosition:  0.8,
+		LimitOnPosition:        0.9,
+		LimitOnTransaction:     0.1,
+		BuyDelta:               0.01,
+		BuyQuantity:            0.3,
+		BuyValue:               200.0,
+		BuyCommission:          0.001,
+		SellDelta:              0.05,
+		SellQuantity:           0.2,
+		SellValue:              200.0,
+		SellCommission:         0.001,
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
@@ -114,12 +115,6 @@ func assertPair(
 
 	// Test GetBaseSymbol
 	assert.Equal(t, "USDT", pair.GetBaseSymbol())
-
-	// Test GetSleepingTime
-	assert.Equal(t, time.Millisecond, pair.GetSleepingTime())
-
-	// Test GetTakingPositionSleepingTime
-	assert.Equal(t, time.Minute, pair.GetTakingPositionSleepingTime())
 
 	// Test GetLimitInputIntoPosition
 	assert.Equal(t, 0.5, pair.GetLimitInputIntoPosition())

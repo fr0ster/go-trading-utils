@@ -22,22 +22,24 @@ import (
 
 type (
 	PairObserver struct {
-		client             *futures.Client
-		pair               pairs_interfaces.Pairs
-		account            *futures_account.Account
-		bookTickers        *book_ticker_types.BookTickers
-		degree             int
-		limit              int
-		collectionOutEvent chan bool
-		positionOutEvent   chan bool
-		positionCloseEvent chan bool
-		priceChanges       chan *pair_price_types.PairDelta
-		riskEvent          chan bool
-		priceUp            chan bool
-		priceDown          chan bool
-		stop               chan os.Signal
-		deltaUp            float64
-		deltaDown          float64
+		client                   *futures.Client
+		pair                     pairs_interfaces.Pairs
+		account                  *futures_account.Account
+		bookTickers              *book_ticker_types.BookTickers
+		degree                   int
+		limit                    int
+		collectionOutEvent       chan bool
+		positionOutEvent         chan bool
+		positionCloseEvent       chan bool
+		priceChanges             chan *pair_price_types.PairDelta
+		riskEvent                chan bool
+		priceUp                  chan bool
+		priceDown                chan bool
+		stop                     chan os.Signal
+		deltaUp                  float64
+		deltaDown                float64
+		sleepingTime             time.Duration
+		takePositionSleepingTime time.Duration
 	}
 )
 
@@ -148,7 +150,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 					pp.stop <- os.Interrupt
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
-				case <-time.After(pp.pair.GetTakingPositionSleepingTime()): // Або просто чекаємо якийсь час
+				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
 				}
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
@@ -183,7 +185,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 					pp.collectionOutEvent <- true
 					return
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -207,7 +209,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 					pp.stop <- os.Interrupt
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
-				case <-time.After(pp.pair.GetSleepingTime()): // Або просто чекаємо якийсь час
+				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
 				}
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
@@ -240,7 +242,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 					pp.positionOutEvent <- true
 					return
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -264,7 +266,7 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 					pp.stop <- os.Interrupt
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
-				case <-time.After(pp.pair.GetSleepingTime()): // Або просто чекаємо якийсь час
+				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
 				}
 				// Кількість базової валюти
 				baseBalance, err := GetBaseBalance(pp.account, pp.pair)
@@ -286,11 +288,19 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 					pp.positionCloseEvent <- true
 					return
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
 	return pp.positionCloseEvent
+}
+
+func (pp *PairObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairObserver) SetTakePositionSleepingTime(sleepingTime time.Duration) {
+	pp.takePositionSleepingTime = sleepingTime
 }
 
 func NewPairObserver(
@@ -302,18 +312,20 @@ func NewPairObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairObserver, err error) {
 	pp = &PairObserver{
-		client:       client,
-		pair:         pair,
-		account:      nil,
-		stop:         stop,
-		degree:       degree,
-		limit:        limit,
-		deltaUp:      deltaUp,
-		deltaDown:    deltaDown,
-		bookTickers:  nil,
-		priceChanges: nil,
-		priceUp:      nil,
-		priceDown:    nil,
+		client:                   client,
+		pair:                     pair,
+		account:                  nil,
+		stop:                     stop,
+		degree:                   degree,
+		limit:                    limit,
+		deltaUp:                  deltaUp,
+		deltaDown:                deltaDown,
+		bookTickers:              nil,
+		priceChanges:             nil,
+		priceUp:                  nil,
+		priceDown:                nil,
+		sleepingTime:             1 * time.Second,
+		takePositionSleepingTime: 1 * time.Hour,
 	}
 	pp.account, err = futures_account.New(
 		pp.client,

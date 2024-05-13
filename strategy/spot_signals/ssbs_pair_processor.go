@@ -66,9 +66,10 @@ type (
 		stop      chan os.Signal
 		limitsOut chan bool
 
-		pairInfo *symbol_types.SpotSymbol
-		degree   int
-		debug    bool
+		pairInfo     *symbol_types.SpotSymbol
+		degree       int
+		debug        bool
+		sleepingTime time.Duration
 	}
 )
 
@@ -250,7 +251,7 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.buyProcessRun = true
@@ -334,7 +335,7 @@ func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.Crea
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.sellProcessRun = true
@@ -419,7 +420,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.buyTakeProfitProcessRun = true
@@ -490,7 +491,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.sellTakeProfitProcessRun = true
@@ -658,6 +659,10 @@ func (pp *PairProcessor) StopOrderExecutionGuard() {
 	}
 }
 
+func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,
@@ -694,6 +699,7 @@ func NewPairProcessor(
 		orderStatusEvent: nil,
 		degree:           3,
 		debug:            debug,
+		sleepingTime:     1 * time.Second,
 	}
 
 	pp.updateTime,

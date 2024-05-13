@@ -36,6 +36,8 @@ type (
 		deltaUp      float64
 		deltaDown    float64
 		isFilledOnly bool
+		sleepingTime time.Duration
+		updateTime   time.Duration
 	}
 )
 
@@ -68,7 +70,10 @@ func (pp *PairKlinesObserver) StartStream() chan *futures.WsKlineEvent {
 			_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 			go func() {
 				for {
-					<-resetEvent
+					select {
+					case <-resetEvent:
+					case <-time.After(pp.updateTime * time.Minute):
+					}
 					stopC <- struct{}{}
 					_, stopC, _ = futures.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
 				}
@@ -156,7 +161,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						}
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
@@ -200,6 +205,8 @@ func NewPairKlinesObserver(
 		priceUp:      nil,
 		priceDown:    nil,
 		isFilledOnly: isFilledOnly,
+		sleepingTime: 1 * time.Second,
+		updateTime:   1 * time.Hour,
 	}
 	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 	if err != nil {

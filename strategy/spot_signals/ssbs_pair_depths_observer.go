@@ -20,23 +20,25 @@ import (
 
 type (
 	PairDepthsObserver struct {
-		client      *binance.Client
-		pair        pairs_interfaces.Pairs
-		degree      int
-		limit       int
-		account     *spot_account.Account
-		data        *depth_types.Depth
-		depthsEvent chan *binance.WsDepthEvent
-		event       chan bool
-		stop        chan os.Signal
-		deltaUp     float64
-		deltaDown   float64
-		buyEvent    chan *pair_price_types.PairPrice
-		sellEvent   chan *pair_price_types.PairPrice
-		askUp       chan *pair_price_types.AskBid
-		askDown     chan *pair_price_types.AskBid
-		bidUp       chan *pair_price_types.AskBid
-		bidDown     chan *pair_price_types.AskBid
+		client       *binance.Client
+		pair         pairs_interfaces.Pairs
+		degree       int
+		limit        int
+		account      *spot_account.Account
+		data         *depth_types.Depth
+		depthsEvent  chan *binance.WsDepthEvent
+		event        chan bool
+		stop         chan os.Signal
+		deltaUp      float64
+		deltaDown    float64
+		buyEvent     chan *pair_price_types.PairPrice
+		sellEvent    chan *pair_price_types.PairPrice
+		askUp        chan *pair_price_types.AskBid
+		askDown      chan *pair_price_types.AskBid
+		bidUp        chan *pair_price_types.AskBid
+		bidDown      chan *pair_price_types.AskBid
+		sleepingTime time.Duration
+		updateTime   time.Duration
 	}
 )
 
@@ -68,7 +70,10 @@ func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 		_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 		go func() {
 			for {
-				<-resetEvent
+				select {
+				case <-resetEvent:
+				case <-time.After(pp.updateTime * time.Minute):
+				}
 				stopC <- struct{}{}
 				_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
 			}
@@ -205,21 +210,11 @@ func (pp *PairDepthsObserver) StartBuyOrSellSignal() (
 						}
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
 	return
-}
-
-func (pp *PairDepthsObserver) StartUpdateGuard() chan bool {
-	if pp.event == nil {
-		if pp.depthsEvent == nil {
-			pp.StartStream()
-		}
-		pp.event = spot_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
-	}
-	return pp.event
 }
 
 func (pp *PairDepthsObserver) StartPriceChangesSignal() (
@@ -286,11 +281,29 @@ func (pp *PairDepthsObserver) StartPriceChangesSignal() (
 						last_bid = bid
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	}
 	return pp.askUp, pp.askDown, pp.bidUp, pp.bidDown
+}
+
+func (pp *PairDepthsObserver) StartUpdateGuard() chan bool {
+	if pp.event == nil {
+		if pp.depthsEvent == nil {
+			pp.StartStream()
+		}
+		pp.event = spot_handlers.GetDepthsUpdateGuard(pp.data, pp.depthsEvent)
+	}
+	return pp.event
+}
+
+func (pp *PairDepthsObserver) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
+func (pp *PairDepthsObserver) SetUpdateTime(updateTime time.Duration) {
+	pp.updateTime = updateTime
 }
 
 func NewPairDepthsObserver(
@@ -302,21 +315,23 @@ func NewPairDepthsObserver(
 	deltaDown float64,
 	stop chan os.Signal) (pp *PairDepthsObserver, err error) {
 	pp = &PairDepthsObserver{
-		client:      client,
-		pair:        pair,
-		account:     nil,
-		data:        nil,
-		depthsEvent: nil,
-		event:       nil,
-		stop:        stop,
-		degree:      degree,
-		limit:       limit,
-		deltaUp:     deltaUp,
-		deltaDown:   deltaDown,
-		askUp:       nil,
-		askDown:     nil,
-		bidUp:       nil,
-		bidDown:     nil,
+		client:       client,
+		pair:         pair,
+		account:      nil,
+		data:         nil,
+		depthsEvent:  nil,
+		event:        nil,
+		stop:         stop,
+		degree:       degree,
+		limit:        limit,
+		deltaUp:      deltaUp,
+		deltaDown:    deltaDown,
+		askUp:        nil,
+		askDown:      nil,
+		bidUp:        nil,
+		bidDown:      nil,
+		sleepingTime: 1 * time.Second,
+		updateTime:   1 * time.Hour,
 	}
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {

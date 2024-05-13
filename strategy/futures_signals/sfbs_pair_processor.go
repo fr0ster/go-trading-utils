@@ -64,9 +64,10 @@ type (
 		stop      chan os.Signal
 		limitsOut chan bool
 
-		pairInfo *symbol_types.FuturesSymbol
-		degree   int
-		debug    bool
+		pairInfo     *symbol_types.FuturesSymbol
+		degree       int
+		debug        bool
+		sleepingTime time.Duration
 	}
 )
 
@@ -230,7 +231,7 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *futures.Creat
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 	} else {
@@ -310,7 +311,7 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.C
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.sellProcessRun = true
@@ -392,7 +393,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (startProc
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.buyTakeProfitProcessRun = true
@@ -460,7 +461,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (startPro
 						pp.config.Save()
 					}
 				}
-				time.Sleep(pp.pair.GetSleepingTime())
+				time.Sleep(pp.sleepingTime)
 			}
 		}()
 		pp.sellTakeProfitProcessRun = true
@@ -629,6 +630,10 @@ func (pp *PairProcessor) StopOrderExecutionGuard() {
 	}
 }
 
+func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
+	pp.sleepingTime = sleepingTime
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
@@ -642,19 +647,15 @@ func NewPairProcessor(
 	bidDown chan *pair_price_types.AskBid,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
-		client:    client,
-		pair:      pair,
-		account:   nil,
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
-		pairInfo:  nil,
-		orderType: orderType,
-		buyEvent:  buyEvent,
-		sellEvent: sellEvent,
-		// askUp:                 askUp,
-		// askDown:               askDown,
-		// bidUp:                 bidUp,
-		// bidDown:               bidDown,
+		client:                         client,
+		pair:                           pair,
+		account:                        nil,
+		stop:                           make(chan os.Signal, 1),
+		limitsOut:                      make(chan bool, 1),
+		pairInfo:                       nil,
+		orderType:                      orderType,
+		buyEvent:                       buyEvent,
+		sellEvent:                      sellEvent,
 		updateTime:                     0,
 		minuteOrderLimit:               &exchange_types.RateLimits{},
 		dayOrderLimit:                  &exchange_types.RateLimits{},
@@ -666,6 +667,7 @@ func NewPairProcessor(
 		orderStatusEvent:               nil,
 		degree:                         3,
 		debug:                          debug,
+		sleepingTime:                   1 * time.Second,
 	}
 	pp.updateTime,
 		pp.minuteOrderLimit,
