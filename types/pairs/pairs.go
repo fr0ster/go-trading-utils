@@ -21,11 +21,20 @@ const (
 	USDTFutureType     AccountType = "USDT_FUTURE"
 	CoinFutureType     AccountType = "COIN_FUTURE"
 	// SpotStrategyType is a constant for spot strategy type.
-	// HOLDING/SCALPING/ARBITRAGE/TRADING
+	// HOLDING - Накопичуємо цільовий токен
+	// SCALPING - Купуємо/продаемо цільовий токен за базовий
+	// ARBITRAGE - Арбітраж, поки не реалізовано
+	// TRADING - Трейдинг, накопичуємо цільовий токен, потім продаємо лімітним ордером
+	// GRID - Грід, розміщуємо лімітні ордери на купівлю/продажу по сітці,
+	// як спрацює ордер, ставимо новий, поки не вийдемо з позиції
+	// Відслідковуємо рівень можливих втрат, якщо втрати перевищують ліміт, зупиняемо збільшення позиції
+	// Коли ціна ліквідаціі починає наближатися, зменшуємо позицію
+	// HOLDING/SCALPING/ARBITRAGE/TRADING/GRID
 	HoldingStrategyType   StrategyType = "HOLDING"
 	ScalpingStrategyType  StrategyType = "SCALPING"
 	ArbitrageStrategyType StrategyType = "ARBITRAGE"
 	TradingStrategyType   StrategyType = "TRADING"
+	GridStrategyType      StrategyType = "GRID"
 	// INPUT_INTO_POSITION - Режим входу - накопичуємо цільовий токен
 	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
 	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
