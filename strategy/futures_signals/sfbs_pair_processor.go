@@ -643,7 +643,6 @@ func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
-	orderType futures.OrderType,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		client:                         client,

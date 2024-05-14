@@ -78,9 +78,7 @@ func Run(
 		}
 	}()
 
-	pairProcessor, err :=
-		NewPairProcessor(
-			config, client, pair, futures.OrderTypeMarket, debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
 	if err != nil {
 		return err
 	}

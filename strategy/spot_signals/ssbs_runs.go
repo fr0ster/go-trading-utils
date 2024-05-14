@@ -82,9 +82,7 @@ func RunSpotHolding(
 
 	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-	pairProcessor, err :=
-		NewPairProcessor(
-			config, client, pair, debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
 	if err != nil {
 		return err
 	}
@@ -159,9 +157,7 @@ func RunSpotScalping(
 		}
 	}()
 
-	pairProcessor, err :=
-		NewPairProcessor(
-			config, client, pair, debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
 	if err != nil {
 		return err
 	}
@@ -270,9 +266,7 @@ func RunSpotTrading(
 		}
 	}()
 
-	pairProcessor, err :=
-		NewPairProcessor(
-			config, client, pair, debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
 	if err != nil {
 		return err
 	}
