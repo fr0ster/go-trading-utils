@@ -150,7 +150,7 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 						pp.stop <- os.Interrupt
 						return
 					}
-					// commission := GetCommission(pp.account)
+					commission := GetCommission(pp.account)
 					bookTicker := pp.data.Get(pp.pair.GetPair())
 					if bookTicker == nil {
 						logrus.Errorf("Can't get bookTicker for %s", pp.pair.GetPair())
@@ -179,7 +179,7 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					// Кількість торгової валюти для продажу
 					sellQuantity,
 						// Кількість торгової валюти для купівлі
-						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, ask, bid)
+						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
 						pp.stop <- os.Interrupt
@@ -329,7 +329,7 @@ func (pp *PairBookTickersObserver) StartUpdateGuard() chan bool {
 	return pp.event
 }
 
-func (pp *PairBookTickersObserver) getNotional() (lotSizeFilter *futures.MinNotionalFilter, err error) {
+func (pp *PairBookTickersObserver) getNotional() (res *futures.MinNotionalFilter, err error) {
 	var val *futures.Symbol
 	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
 		val, err = symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
@@ -337,23 +337,25 @@ func (pp *PairBookTickersObserver) getNotional() (lotSizeFilter *futures.MinNoti
 			logrus.Errorf(errorMsg, err)
 			return
 		}
-		lotSizeFilter = val.MinNotionalFilter()
+		res = val.MinNotionalFilter()
 	}
 	return
 }
 
-func (pp *PairBookTickersObserver) GetMinQuantity() float64 {
+func (pp *PairBookTickersObserver) GetMinQuantity(price float64) float64 {
 	notional, err := pp.getNotional()
 	if err != nil {
 		return 0
 	}
-	return utils.ConvStrToFloat64(notional.Notional)
+	return utils.ConvStrToFloat64(notional.Notional) / price
 }
 
 func (pp *PairBookTickersObserver) GetBuyAndSellQuantity(
 	pair pairs_interfaces.Pairs,
 	baseBalance float64,
 	targetBalance float64,
+	buyCommission float64,
+	sellCommission float64,
 	ask float64,
 	bid float64) (
 	sellQuantity float64, // Кількість торгової валюти для продажу
@@ -361,11 +363,11 @@ func (pp *PairBookTickersObserver) GetBuyAndSellQuantity(
 	err error) { // Кількість торгової валюти для продажу
 	sellQuantity,
 		// Кількість торгової валюти для купівлі
-		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, ask, bid)
-	if sellQuantity < pp.GetMinQuantity() {
+		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
+	if sellQuantity < pp.GetMinQuantity(bid) {
 		sellQuantity = 0
 	}
-	if buyQuantity < pp.GetMinQuantity() {
+	if buyQuantity < pp.GetMinQuantity(ask) {
 		buyQuantity = 0
 	}
 	return

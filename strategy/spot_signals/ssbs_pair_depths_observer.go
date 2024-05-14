@@ -311,7 +311,7 @@ func (pp *PairDepthsObserver) StartUpdateGuard() chan bool {
 	return pp.event
 }
 
-func (pp *PairDepthsObserver) getNotional() (lotSizeFilter *binance.NotionalFilter, err error) {
+func (pp *PairDepthsObserver) getNotional() (res *binance.NotionalFilter, err error) {
 	var val *binance.Symbol
 	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
 		val, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
@@ -319,17 +319,17 @@ func (pp *PairDepthsObserver) getNotional() (lotSizeFilter *binance.NotionalFilt
 			logrus.Errorf(errorMsg, err)
 			return
 		}
-		lotSizeFilter = val.NotionalFilter()
+		res = val.NotionalFilter()
 	}
 	return
 }
 
-func (pp *PairDepthsObserver) GetMinQuantity() float64 {
+func (pp *PairDepthsObserver) GetMinQuantity(price float64) float64 {
 	notional, err := pp.getNotional()
 	if err != nil {
 		return 0
 	}
-	return utils.ConvStrToFloat64(notional.MinNotional)
+	return utils.ConvStrToFloat64(notional.MinNotional) / price
 }
 
 func (pp *PairDepthsObserver) GetBuyAndSellQuantity(
@@ -346,10 +346,10 @@ func (pp *PairDepthsObserver) GetBuyAndSellQuantity(
 	sellQuantity,
 		// Кількість торгової валюти для купівлі
 		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
-	if sellQuantity < pp.GetMinQuantity() {
+	if sellQuantity < pp.GetMinQuantity(bid) {
 		sellQuantity = 0
 	}
-	if buyQuantity < pp.GetMinQuantity() {
+	if buyQuantity < pp.GetMinQuantity(ask) {
 		buyQuantity = 0
 	}
 	return

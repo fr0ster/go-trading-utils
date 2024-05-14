@@ -118,6 +118,8 @@ func GetBuyAndSellQuantity(
 	pair pairs_interfaces.Pairs,
 	baseBalance float64,
 	targetBalance float64,
+	buyCommission float64,
+	sellCommission float64,
 	ask float64,
 	bid float64) (
 	sellQuantity float64, // Кількість торгової валюти для продажу
