@@ -311,7 +311,7 @@ func (pp *PairDepthsObserver) StartUpdateGuard() chan bool {
 	return pp.event
 }
 
-func (pp *PairDepthsObserver) getLotSizeFilter() (lotSizeFilter *binance.LotSizeFilter, err error) {
+func (pp *PairDepthsObserver) getNotional() (lotSizeFilter *binance.NotionalFilter, err error) {
 	var val *binance.Symbol
 	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
 		val, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
@@ -319,33 +319,17 @@ func (pp *PairDepthsObserver) getLotSizeFilter() (lotSizeFilter *binance.LotSize
 			logrus.Errorf(errorMsg, err)
 			return
 		}
-		lotSizeFilter = val.LotSizeFilter()
+		lotSizeFilter = val.NotionalFilter()
 	}
 	return
 }
 
-func (pp *PairDepthsObserver) GetMaxQuantity() float64 {
-	lotSizeFilter, err := pp.getLotSizeFilter()
-	if err != nil {
-		return 0
-	}
-	return utils.ConvStrToFloat64(lotSizeFilter.MaxQuantity)
-}
-
 func (pp *PairDepthsObserver) GetMinQuantity() float64 {
-	lotSizeFilter, err := pp.getLotSizeFilter()
+	notional, err := pp.getNotional()
 	if err != nil {
 		return 0
 	}
-	return utils.ConvStrToFloat64(lotSizeFilter.MinQuantity)
-}
-
-func (pp *PairDepthsObserver) GetStepSize() float64 {
-	lotSizeFilter, err := pp.getLotSizeFilter()
-	if err != nil {
-		return 0
-	}
-	return utils.ConvStrToFloat64(lotSizeFilter.StepSize)
+	return utils.ConvStrToFloat64(notional.MinNotional)
 }
 
 func (pp *PairDepthsObserver) GetBuyAndSellQuantity(
