@@ -54,6 +54,7 @@ func Run(
 	pairObserver, _ := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
 	riskEvent := pairObserver.StartRiskSignal()
 	askUp, askDown, bidUp, bidDown := pairBookTickerObserver.StartPriceChangesSignal()
+	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
 
 	triggerEvent := make(chan bool)
 	go func() {
@@ -79,7 +80,7 @@ func Run(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, futures.OrderTypeMarket, nil, nil, askUp, askDown, bidUp, bidDown, debug)
+			config, client, pair, futures.OrderTypeMarket, debug)
 	if err != nil {
 		return err
 	}
@@ -105,7 +106,7 @@ func Run(
 		}
 		collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-		_ = pairProcessor.ProcessBuyOrder()
+		_ = pairProcessor.ProcessBuyOrder(buyEvent)
 
 		<-collectionOutEvent
 		pair.SetStage(pairs_types.PositionClosedStage)
@@ -119,8 +120,8 @@ func Run(
 			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
-			_ = pairProcessor.ProcessBuyOrder()  // Запускаємо процес купівлі
-			_ = pairProcessor.ProcessSellOrder() // Запускаємо процес продажу
+			_ = pairProcessor.ProcessBuyOrder(buyEvent)   // Запускаємо процес купівлі
+			_ = pairProcessor.ProcessSellOrder(sellEvent) // Запускаємо процес продажу
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage {
 			collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)

@@ -177,8 +177,11 @@ func (pp *PairProcessor) CreateOrder(
 	return service.Do(context.Background())
 }
 
-func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
+func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
 	if !pp.buyProcessRun {
+		if pp.buyEvent == nil {
+			pp.buyEvent = triggerEvent
+		}
 		if pp.startBuyOrderEvent == nil {
 			pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
 		}
@@ -261,8 +264,11 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *binance.Creat
 	return
 }
 
-func (pp *PairProcessor) ProcessSellOrder() (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
+func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
 	if !pp.sellProcessRun {
+		if pp.sellEvent == nil {
+			pp.sellEvent = triggerEvent
+		}
 		if pp.startSellOrderEvent == nil {
 			pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
 		}
@@ -667,9 +673,6 @@ func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
-	// orderType binance.OrderType,
-	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		client:    client,
@@ -679,9 +682,9 @@ func NewPairProcessor(
 		limitsOut: make(chan bool, 1),
 		pairInfo:  nil,
 
-		buyEvent:                 buyEvent,
+		buyEvent:                 nil,
 		buyProcessRun:            false,
-		sellEvent:                sellEvent,
+		sellEvent:                nil,
 		sellProcessRun:           false,
 		buyTakeProfitProcessRun:  false,
 		sellTakeProfitProcessRun: false,

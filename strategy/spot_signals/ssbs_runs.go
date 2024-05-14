@@ -13,7 +13,6 @@ import (
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -63,9 +62,7 @@ func RunSpotHolding(
 	if err != nil {
 		return err
 	}
-	// pairObserver.StartBookTickersUpdateGuard()
 	buyEvent, _ := pairBookTickerObserver.StartBuyOrSellSignal()
-	sellEvent := make(chan *pair_price_types.PairPrice)
 
 	triggerEvent := make(chan bool)
 
@@ -87,12 +84,12 @@ func RunSpotHolding(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, buyEvent, sellEvent, debug)
+			config, client, pair, debug)
 	if err != nil {
 		return err
 	}
 
-	_, err = pairProcessor.ProcessBuyOrder()
+	_, err = pairProcessor.ProcessBuyOrder(buyEvent)
 	if err != nil {
 		return err
 	}
@@ -164,13 +161,13 @@ func RunSpotScalping(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, buyEvent, sellEvent, debug)
+			config, client, pair, debug)
 	if err != nil {
 		return err
 	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
-		_, err = pairProcessor.ProcessBuyOrder()
+		_, err = pairProcessor.ProcessBuyOrder(buyEvent)
 		if err != nil {
 			return err
 		}
@@ -179,7 +176,7 @@ func RunSpotScalping(
 	if pair.GetStage() == pairs_types.InputIntoPositionStage {
 		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
 		<-collectionOutEvent
-		_, err = pairProcessor.ProcessSellOrder()
+		_, err = pairProcessor.ProcessSellOrder(sellEvent)
 		if err != nil {
 			return err
 		}
@@ -187,12 +184,12 @@ func RunSpotScalping(
 		config.Save()
 	}
 	if pair.GetStage() == pairs_types.WorkInPositionStage {
-		_, err = pairProcessor.ProcessSellOrder() // Все одно другий раз не запустится, бо вже працює горутина
+		_, err = pairProcessor.ProcessSellOrder(sellEvent) // Все одно другий раз не запустится, бо вже працює горутина
 		if err != nil {
 			return err
 		}
 		workingOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
-		_, err = pairProcessor.ProcessSellOrder()
+		_, err = pairProcessor.ProcessSellOrder(sellEvent)
 		if err != nil {
 			return err
 		}
@@ -275,13 +272,13 @@ func RunSpotTrading(
 
 	pairProcessor, err :=
 		NewPairProcessor(
-			config, client, pair, buyEvent, sellEvent, debug)
+			config, client, pair, debug)
 	if err != nil {
 		return err
 	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
-		_, err = pairProcessor.ProcessBuyOrder()
+		_, err = pairProcessor.ProcessBuyOrder(buyEvent)
 		if err != nil {
 			return err
 		}

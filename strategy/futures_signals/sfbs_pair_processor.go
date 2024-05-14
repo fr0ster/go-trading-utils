@@ -32,7 +32,6 @@ type (
 		pair                  pairs_interfaces.Pairs
 		exchangeInfo          *exchange_types.ExchangeInfo
 		account               *futures_account.Account
-		orderType             futures.OrderType
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
 		dayOrderLimit         *exchange_types.RateLimits
@@ -171,8 +170,11 @@ func (pp *PairProcessor) CreateOrder(
 	return service.Do(context.Background())
 }
 
-func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *futures.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *futures.CreateOrderResponse) {
 	if !pp.buyProcessRun {
+		if pp.buyEvent == nil {
+			pp.buyEvent = triggerEvent
+		}
 		if pp.buyOrderEvent == nil {
 			pp.buyOrderEvent = make(chan *futures.CreateOrderResponse)
 		}
@@ -196,7 +198,7 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *futures.Creat
 					}
 					if !pp.debug {
 						order, err := pp.CreateOrder(
-							pp.orderType,
+							futures.OrderTypeMarket,
 							futures.SideTypeBuy,
 							futures.TimeInForceTypeGTC,
 							params.Quantity,
@@ -240,8 +242,11 @@ func (pp *PairProcessor) ProcessBuyOrder() (nextTriggerEvent chan *futures.Creat
 	return
 }
 
-func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.CreateOrderResponse) {
+func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.PairPrice) (startSellOrderEvent chan *futures.CreateOrderResponse) {
 	if !pp.sellProcessRun {
+		if pp.sellEvent == nil {
+			pp.sellEvent = triggerEvent
+		}
 		if pp.sellOrderEvent == nil {
 			pp.sellOrderEvent = make(chan *futures.CreateOrderResponse, 1)
 		}
@@ -276,7 +281,7 @@ func (pp *PairProcessor) ProcessSellOrder() (startSellOrderEvent chan *futures.C
 					}
 					if !pp.debug {
 						order, err := pp.CreateOrder(
-							pp.orderType,
+							futures.OrderTypeMarket,
 							futures.SideTypeBuy,
 							futures.TimeInForceTypeGTC,
 							params.Quantity,
@@ -639,12 +644,6 @@ func NewPairProcessor(
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
 	orderType futures.OrderType,
-	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice,
-	askUp chan *pair_price_types.AskBid,
-	askDown chan *pair_price_types.AskBid,
-	bidUp chan *pair_price_types.AskBid,
-	bidDown chan *pair_price_types.AskBid,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		client:                         client,
@@ -653,9 +652,8 @@ func NewPairProcessor(
 		stop:                           make(chan os.Signal, 1),
 		limitsOut:                      make(chan bool, 1),
 		pairInfo:                       nil,
-		orderType:                      orderType,
-		buyEvent:                       buyEvent,
-		sellEvent:                      sellEvent,
+		buyEvent:                       nil,
+		sellEvent:                      nil,
 		updateTime:                     0,
 		minuteOrderLimit:               &exchange_types.RateLimits{},
 		dayOrderLimit:                  &exchange_types.RateLimits{},
