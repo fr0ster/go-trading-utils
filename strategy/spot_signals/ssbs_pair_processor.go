@@ -674,6 +674,31 @@ func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
+func (pp *PairProcessor) CheckOrderType(orderType binance.OrderType) bool {
+	_, ok := pp.orderTypes[string(orderType)]
+	return ok
+}
+
+func (pp *PairProcessor) GetOpenOrders() (orders []*binance.Order, err error) {
+	return pp.client.NewListOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetAllOrders() (orders []*binance.Order, err error) {
+	return pp.client.NewListOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetOrder(orderID int64) (order *binance.Order, err error) {
+	return pp.client.NewGetOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+}
+
+func (pp *PairProcessor) CancelOrder(orderID int64) (order *binance.CancelOrderResponse, err error) {
+	return pp.client.NewCancelOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+}
+
+func (pp *PairProcessor) CancelAllOrders() (orders *binance.CancelOpenOrdersResponse, err error) {
+	return pp.client.NewCancelOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,

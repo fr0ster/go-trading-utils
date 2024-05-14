@@ -87,6 +87,10 @@ func RunSpotHolding(
 		return err
 	}
 
+	if !pairProcessor.CheckOrderType(binance.OrderTypeMarket) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeMarket)
+	}
+
 	_, err = pairProcessor.ProcessBuyOrder(buyEvent)
 	if err != nil {
 		return err
@@ -160,6 +164,10 @@ func RunSpotScalping(
 	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
 	if err != nil {
 		return err
+	}
+
+	if !pairProcessor.CheckOrderType(binance.OrderTypeMarket) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeMarket)
 	}
 
 	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
@@ -271,6 +279,14 @@ func RunSpotTrading(
 		return err
 	}
 
+	if !pairProcessor.CheckOrderType(binance.OrderTypeMarket) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeMarket)
+	}
+
+	if !pairProcessor.CheckOrderType(binance.OrderTypeTakeProfit) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeTakeProfitLimit)
+	}
+
 	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
 		_, err = pairProcessor.ProcessBuyOrder(buyEvent)
 		if err != nil {
@@ -289,10 +305,10 @@ func RunSpotTrading(
 			return err
 		}
 		order, err := pairProcessor.CreateOrder(
-			binance.OrderTypeTakeProfit,
+			binance.OrderTypeTakeProfitLimit,
 			binance.SideTypeSell,
 			binance.TimeInForceTypeGTC,
-			// STOP_LOSS/TAKE_PROFIT quantity, stopPrice or trailingDelta must be sent.
+			// STOP_LOSS_LIMIT/TAKE_PROFIT_LIMIT timeInForce, quantity, price, stopPrice or trailingDelta
 			quantity,
 			0,   // quantityQty
 			0,   // price

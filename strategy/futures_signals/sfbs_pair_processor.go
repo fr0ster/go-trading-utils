@@ -645,6 +645,31 @@ func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
+func (pp *PairProcessor) CheckOrderType(orderType futures.OrderType) bool {
+	_, ok := pp.orderTypes[orderType]
+	return ok
+}
+
+func (pp *PairProcessor) GetOpenOrders() (orders []*futures.Order, err error) {
+	return pp.client.NewListOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetAllOrders() (orders []*futures.Order, err error) {
+	return pp.client.NewListOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetOrder(orderID int64) (order *futures.Order, err error) {
+	return pp.client.NewGetOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+}
+
+func (pp *PairProcessor) CancelOrder(orderID int64) (order *futures.CancelOrderResponse, err error) {
+	return pp.client.NewCancelOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+}
+
+func (pp *PairProcessor) CancelAllOrders() (err error) {
+	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,

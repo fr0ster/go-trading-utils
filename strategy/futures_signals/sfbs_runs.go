@@ -97,6 +97,10 @@ func Run(
 			return fmt.Errorf("holding strategy should not be used for %v", pair.GetPair())
 		}
 
+		if !pairProcessor.CheckOrderType(futures.OrderTypeMarket) {
+			return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), futures.OrderTypeMarket)
+		}
+
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
 		if pair.GetStage() == pairs_types.PositionClosedStage {
@@ -116,6 +120,12 @@ func Run(
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
 		if pair.GetStage() == pairs_types.PositionClosedStage {
 			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+		}
+		if !pairProcessor.CheckOrderType(futures.OrderTypeMarket) {
+			return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), futures.OrderTypeMarket)
+		}
+		if !pairProcessor.CheckOrderType(futures.OrderTypeTakeProfit) {
+			return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), futures.OrderTypeMarket)
 		}
 		if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
 			_ = pairProcessor.ProcessBuyOrder(buyEvent)   // Запускаємо процес купівлі
