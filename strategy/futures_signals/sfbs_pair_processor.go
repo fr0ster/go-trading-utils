@@ -2,6 +2,7 @@ package futures_signals
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -64,6 +65,7 @@ type (
 		limitsOut chan bool
 
 		pairInfo     *symbol_types.FuturesSymbol
+		orderTypes   map[futures.OrderType]bool
 		degree       int
 		debug        bool
 		sleepingTime time.Duration
@@ -121,6 +123,10 @@ func (pp *PairProcessor) CreateOrder(
 	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
+		return
+	}
+	if _, ok := pp.orderTypes[orderType]; !ok {
+		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pair.GetPair())
 		return
 	}
 	var (
@@ -685,6 +691,11 @@ func NewPairProcessor(
 
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
 		&symbol_types.FuturesSymbol{Symbol: pair.GetPair()}).(*symbol_types.FuturesSymbol)
+
+	pp.orderTypes = make(map[futures.OrderType]bool, 0)
+	for _, orderType := range pp.pairInfo.OrderType {
+		pp.orderTypes[orderType] = true
+	}
 
 	pp.LimitUpdaterStream()
 
