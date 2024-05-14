@@ -43,6 +43,7 @@ type (
 		isFilledOnly bool
 		sleepingTime time.Duration
 		timeOut      time.Duration
+		symbol       *binance.Symbol
 	}
 )
 
@@ -188,25 +189,12 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	return pp.filledEvent
 }
 
-func (pp *PairKlinesObserver) getNotional() (res *binance.NotionalFilter, err error) {
-	var val *binance.Symbol
-	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
-		val, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
-		if err != nil {
-			logrus.Errorf(errorMsg, err)
-			return
-		}
-		res = val.NotionalFilter()
-	}
-	return
+func (pp *PairKlinesObserver) GetMinQuantity(price float64) float64 {
+	return utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MinNotional) / price
 }
 
-func (pp *PairKlinesObserver) GetMinQuantity(price float64) float64 {
-	notional, err := pp.getNotional()
-	if err != nil {
-		return 0
-	}
-	return utils.ConvStrToFloat64(notional.MinNotional) / price
+func (pp *PairKlinesObserver) GetMaxQuantity(price float64) float64 {
+	return utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MaxNotional) / price
 }
 
 func (pp *PairKlinesObserver) GetBuyAndSellQuantity(
@@ -223,10 +211,10 @@ func (pp *PairKlinesObserver) GetBuyAndSellQuantity(
 	sellQuantity,
 		// Кількість торгової валюти для купівлі
 		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
-	if sellQuantity < pp.GetMinQuantity(bid) {
+	if sellQuantity < pp.GetMinQuantity(bid) || buyQuantity < pp.GetMinQuantity(ask) {
 		sellQuantity = 0
 	}
-	if buyQuantity < pp.GetMinQuantity(ask) {
+	if buyQuantity < pp.GetMinQuantity(ask) || buyQuantity > pp.GetMaxQuantity(ask) {
 		buyQuantity = 0
 	}
 	return
@@ -277,6 +265,13 @@ func NewPairKlinesObserver(
 	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
+	}
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+		pp.symbol, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
+		if err != nil {
+			logrus.Errorf(errorMsg, err)
+			return
+		}
 	}
 
 	return

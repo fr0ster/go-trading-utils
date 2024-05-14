@@ -48,6 +48,7 @@ type (
 		bidDown      chan *pair_price_types.AskBid
 		sleepingTime time.Duration
 		timeOut      time.Duration
+		symbol       *futures.Symbol
 	}
 )
 
@@ -405,6 +406,13 @@ func NewPairDepthsObserver(
 	err = futures_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
+	}
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+		pp.symbol, err = symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
+		if err != nil {
+			logrus.Errorf(errorMsg, err)
+			return
+		}
 	}
 
 	return

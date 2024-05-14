@@ -44,6 +44,7 @@ type (
 		isFilledOnly bool
 		sleepingTime time.Duration
 		timeOut      time.Duration
+		symbol       *futures.Symbol
 	}
 )
 
@@ -192,25 +193,8 @@ func (pp *PairKlinesObserver) StartUpdateGuard() chan bool {
 	return pp.filledEvent
 }
 
-func (pp *PairKlinesObserver) getNotional() (res *futures.MinNotionalFilter, err error) {
-	var val *futures.Symbol
-	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
-		val, err = symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
-		if err != nil {
-			logrus.Errorf(errorMsg, err)
-			return
-		}
-		res = val.MinNotionalFilter()
-	}
-	return
-}
-
 func (pp *PairKlinesObserver) GetMinQuantity(price float64) float64 {
-	notional, err := pp.getNotional()
-	if err != nil {
-		return 0
-	}
-	return utils.ConvStrToFloat64(notional.Notional) / price
+	return utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional) / price
 }
 
 func (pp *PairKlinesObserver) GetBuyAndSellQuantity(
@@ -282,6 +266,13 @@ func NewPairKlinesObserver(
 	err = futures_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
+	}
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+		pp.symbol, err = symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
+		if err != nil {
+			logrus.Errorf(errorMsg, err)
+			return
+		}
 	}
 
 	return
