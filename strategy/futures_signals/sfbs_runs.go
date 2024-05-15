@@ -151,7 +151,13 @@ func Run(
 			stopEvent <- os.Interrupt
 		}
 		return nil
+		// Відпрацьовуємо Grid стратегію
+	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
+		if pair.GetStage() == pairs_types.PositionClosedStage {
+			return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+		}
 
+		return nil
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
 		logrus.Warnf("Unknown strategy: %v", pair.GetStrategy())

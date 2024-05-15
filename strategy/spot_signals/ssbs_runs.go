@@ -326,6 +326,115 @@ func RunSpotTrading(
 	return nil
 }
 
+func RunSpotGridTrading(
+	config *config_types.ConfigFile,
+	client *binance.Client,
+	degree int,
+	limit int,
+	pair pairs_interfaces.Pairs,
+	stopEvent chan os.Signal,
+	updateTime time.Duration,
+	debug bool) (err error) {
+	if pair.GetAccountType() != pairs_types.SpotAccountType {
+		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
+	}
+	if pair.GetStrategy() != pairs_types.GridStrategyType {
+		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+	if pair.GetStage() == pairs_types.PositionClosedStage {
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
+
+	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	if err != nil {
+		return
+	}
+
+	err = PairInit(client, config, account, pair)
+	if err != nil {
+		return err
+	}
+
+	RunConfigSaver(config, stopEvent, updateTime)
+
+	pairBookTickerObserver, err := NewPairBookTickersObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
+	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
+	if err != nil {
+		return err
+	}
+
+	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
+
+	triggerEvent := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stopEvent:
+				stopEvent <- os.Interrupt
+				return
+			case <-buyEvent:
+				triggerEvent <- true
+			case <-sellEvent:
+				triggerEvent <- true
+			}
+		}
+	}()
+
+	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+
+	if !pairProcessor.CheckOrderType(binance.OrderTypeMarket) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeMarket)
+	}
+
+	if !pairProcessor.CheckOrderType(binance.OrderTypeTakeProfit) {
+		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeTakeProfitLimit)
+	}
+
+	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
+		_, err = pairProcessor.ProcessBuyOrder(buyEvent)
+		if err != nil {
+			return err
+		}
+		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
+		<-collectionOutEvent
+		pair.SetStage(pairs_types.OutputOfPositionStage) // В trading стратегії не спекулюємо, накопили позицію і закриваемо продажем лімітним ордером
+		config.Save()
+	}
+	if pair.GetStage() == pairs_types.OutputOfPositionStage {
+		pairProcessor.StopBuySignal() // Зупиняємо купівлю, продаємо поки є шо продавати
+		// TODO: Закриття позиції лімітним trailing ордером
+		quantity, err := GetTargetBalance(account, pair)
+		if err != nil {
+			return err
+		}
+		order, err := pairProcessor.CreateOrder(
+			binance.OrderTypeTakeProfitLimit,
+			binance.SideTypeSell,
+			binance.TimeInForceTypeGTC,
+			// STOP_LOSS_LIMIT/TAKE_PROFIT_LIMIT timeInForce, quantity, price, stopPrice or trailingDelta
+			quantity,
+			0,   // quantityQty
+			0,   // price
+			0,   // stopPrice
+			100) // trailingDelta
+		if err != nil {
+			return err
+		}
+		positionClosed := pairProcessor.OrderExecutionGuard(order) // Чекаємо на закриття позиції
+		<-positionClosed
+		pair.SetStage(pairs_types.PositionClosedStage)
+		config.Save()
+		stopEvent <- os.Interrupt
+	}
+	return nil
+}
+
 func Run(
 	config *config_types.ConfigFile,
 	client *binance.Client,
