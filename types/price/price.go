@@ -3,7 +3,6 @@ package price
 import (
 	"sync"
 
-	// prices_interface "github.com/fr0ster/go-trading-utils/interfaces/prices"
 	"github.com/google/btree"
 )
 
