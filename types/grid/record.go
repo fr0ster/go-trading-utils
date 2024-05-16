@@ -55,7 +55,7 @@ func (g *Record) SetDownPrice(downPrice float64) {
 	g.DownPrice = downPrice
 }
 
-func NewLine(orderId int, price float64, upPrice float64, downPrice float64) *Record {
+func NewRecord(orderId int, price float64, upPrice float64, downPrice float64) *Record {
 	return &Record{
 		Price:     price,
 		OrderId:   orderId,

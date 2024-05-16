@@ -8,7 +8,7 @@ import (
 
 func TestRecord(t *testing.T) {
 	// Create a new grid
-	g := grid.NewLine(1, 10.5, 12.5, 8.5)
+	g := grid.NewRecord(1, 10.5, 12.5, 8.5)
 
 	// Test GetOrderId
 	if g.GetOrderId() != 1 {
@@ -55,13 +55,13 @@ func TestRecord(t *testing.T) {
 	}
 
 	// Test Equals
-	other := grid.NewLine(1, 15.5, 12.5, 8.5)
+	other := grid.NewRecord(1, 15.5, 12.5, 8.5)
 	if !g.Equals(other) {
 		t.Errorf("Expected Equals to return true for two identical grids, but got false")
 	}
 
 	// Test Less
-	other = grid.NewLine(4, 20.5, 18.5, 9.5)
+	other = grid.NewRecord(4, 20.5, 18.5, 9.5)
 	if !g.Less(other) {
 		t.Errorf("Expected Less to return true for g < other, but got false")
 	}
