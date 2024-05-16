@@ -77,6 +77,9 @@ type (
 		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
+		UpBound  float64 `json:"up_bound"`  // Верхня межа
+		LowBound float64 `json:"low_bound"` // Нижня межа
+
 		BuyDelta       float64            `json:"buy_delta"`       // Дельта для купівлі
 		BuyQuantity    float64            `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
 		BuyValue       float64            `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
@@ -210,6 +213,14 @@ func (pr *Pairs) GetLimitOnPosition() float64 {
 
 func (pr *Pairs) GetLimitOnTransaction() float64 {
 	return pr.LimitOnTransaction
+}
+
+func (pr *Pairs) GetUpBound() float64 {
+	return pr.UpBound
+}
+
+func (pr *Pairs) GetLowBound() float64 {
+	return pr.LowBound
 }
 
 func (pr *Pairs) GetBuyDelta() float64 {
