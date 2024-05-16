@@ -55,12 +55,20 @@ func (g *Record) SetDownPrice(downPrice float64) {
 	g.DownPrice = downPrice
 }
 
-func NewRecord(orderId int64, price float64, upPrice float64, downPrice float64) *Record {
+func (g *Record) GetOrderSide() types.OrderSide {
+	return g.OrderSide
+}
+
+func (g *Record) SetOrderSide(orderSide types.OrderSide) {
+	g.OrderSide = orderSide
+}
+
+func NewRecord(orderId int64, price float64, upPrice float64, downPrice float64, orderSide types.OrderSide) *Record {
 	return &Record{
 		Price:     price,
 		OrderId:   orderId,
 		UpPrice:   upPrice,
 		DownPrice: downPrice,
-		OrderSide: "",
+		OrderSide: orderSide,
 	}
 }

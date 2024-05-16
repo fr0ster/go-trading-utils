@@ -3,12 +3,13 @@ package grid_test
 import (
 	"testing"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/types/grid"
 )
 
 func TestRecord(t *testing.T) {
 	// Create a new grid
-	g := grid.NewRecord(1, 10.5, 12.5, 8.5)
+	g := grid.NewRecord(1, 10.5, 12.5, 8.5, types.SideTypeBuy)
 
 	// Test GetOrderId
 	if g.GetOrderId() != 1 {
@@ -54,14 +55,25 @@ func TestRecord(t *testing.T) {
 		t.Errorf("Expected GetDownPrice to return 9.5 after SetDownPrice, but got %f", g.GetDownPrice())
 	}
 
+	// Test GetOrderSide
+	if g.GetOrderSide() != types.SideTypeBuy {
+		t.Errorf("Expected GetOrderSide to return SideTypeBuy, but got %s", g.GetOrderSide())
+	}
+
+	// Test SetOrderSide
+	g.SetOrderSide(types.SideTypeSell)
+	if g.GetOrderSide() != types.SideTypeSell {
+		t.Errorf("Expected GetOrderSide to return SideTypeSell after SetOrderSide, but got %s", g.GetOrderSide())
+	}
+
 	// Test Equals
-	other := grid.NewRecord(1, 15.5, 12.5, 8.5)
+	other := grid.NewRecord(1, 15.5, 12.5, 8.5, types.SideTypeBuy)
 	if !g.Equals(other) {
 		t.Errorf("Expected Equals to return true for two identical grids, but got false")
 	}
 
 	// Test Less
-	other = grid.NewRecord(4, 20.5, 18.5, 9.5)
+	other = grid.NewRecord(4, 20.5, 18.5, 9.5, types.SideTypeBuy)
 	if !g.Less(other) {
 		t.Errorf("Expected Less to return true for g < other, but got false")
 	}
