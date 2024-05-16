@@ -699,6 +699,14 @@ func (pp *PairProcessor) CancelAllOrders() (orders *binance.CancelOpenOrdersResp
 	return pp.client.NewCancelOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
 }
 
+func (pp *PairProcessor) GetUserDataEvent() chan *binance.WsUserDataEvent {
+	return pp.userDataEvent
+}
+
+func (pp *PairProcessor) GetOrderStatusEvent() chan *binance.WsUserDataEvent {
+	return pp.orderStatusEvent
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,

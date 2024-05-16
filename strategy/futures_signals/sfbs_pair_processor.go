@@ -670,6 +670,14 @@ func (pp *PairProcessor) CancelAllOrders() (err error) {
 	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
 }
 
+func (pp *PairProcessor) GetUserDataEvent() chan *futures.WsUserDataEvent {
+	return pp.userDataEvent
+}
+
+func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
+	return pp.orderStatusEvent
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
