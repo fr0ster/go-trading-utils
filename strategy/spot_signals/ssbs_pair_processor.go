@@ -71,6 +71,7 @@ type (
 		degree       int
 		debug        bool
 		sleepingTime time.Duration
+		timeOut      time.Duration
 	}
 )
 
@@ -674,6 +675,10 @@ func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
 
+func (pp *PairProcessor) SetTimeOut(timeOut time.Duration) {
+	pp.timeOut = timeOut
+}
+
 func (pp *PairProcessor) CheckOrderType(orderType binance.OrderType) bool {
 	_, ok := pp.orderTypes[string(orderType)]
 	return ok
@@ -741,46 +746,99 @@ func NewPairProcessor(
 		degree:           3,
 		debug:            debug,
 		sleepingTime:     1 * time.Second,
+		timeOut:          1 * time.Hour,
 	}
 
+	// Перевіряємо ліміти на ордери та запити
 	pp.updateTime,
 		pp.minuteOrderLimit,
 		pp.dayOrderLimit,
 		pp.minuteRawRequestLimit =
 		LimitRead(degree, []string{pp.pair.GetPair()}, client)
 
+	// Ініціалізуємо інформацію про біржу
 	pp.exchangeInfo = exchange_types.New()
 	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
 	}
 
+	// Ініціалізуємо інформацію про акаунт
 	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
 	if err != nil {
 		return
 	}
 
+	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
 		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
 
+	// Ініціалізуємо типи ордерів які можна використовувати для пари
 	pp.orderTypes = make(map[string]bool, 0)
 	for _, orderType := range pp.pairInfo.OrderTypes {
 		pp.orderTypes[orderType] = true
 	}
 
+	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
 	pp.LimitUpdaterStream()
 
+	// Ініціалізуємо стріми для відмірювання часу
+	ticker := time.NewTicker(pp.timeOut)
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
+	// Отримуємо ключ для прослуховування подій користувача
 	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
 		return
 	}
-	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
-	_, _, err = binance.WsUserDataServe(listenKey, func(event *binance.WsUserDataEvent) {
+	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+	resetEvent := make(chan bool, 1)
+	// Ініціалізуємо обробник помилок
+	wsErrorHandler := func(err error) {
+		resetEvent <- true
+	}
+	// Ініціалізуємо обробник подій
+	wsHandler := func(event *binance.WsUserDataEvent) {
 		pp.userDataEvent <- event
-	}, utils.HandleErr)
+	}
+	// Ініціалізуємо канал подій користувача
+	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
+	// Запускаємо стрім подій користувача
+	var stopC chan struct{}
+	_, stopC, err = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 	if err != nil {
 		return
 	}
+	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
+	go func() {
+		for {
+			select {
+			case <-resetEvent:
+				// Отримуємо ключ для прослуховування подій користувача
+				listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+				if err != nil {
+					return
+				}
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				// Запускаємо стрім подій користувача
+				_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+			case <-ticker.C:
+				// Отримуємо ключ для прослуховування подій користувача
+				listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+				if err != nil {
+					return
+				}
+				// Перевіряємо чи не вийшли за ліміт часу відповіді
+				if time.Since(lastResponse) > pp.timeOut {
+					// Зупиняємо стрім подій користувача
+					stopC <- struct{}{}
+					// Запускаємо стрім подій користувача
+					_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+				}
+			}
+		}
+	}()
 
 	orderStatuses := []binance.OrderStatusType{
 		binance.OrderStatusTypeFilled,
