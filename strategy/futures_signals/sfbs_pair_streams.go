@@ -124,79 +124,74 @@ func NewPairStreams(
 		pp.orderTypes[orderType] = true
 	}
 
-	// Ініціалізуємо стріми для відмірювання часу
-	ticker := time.NewTicker(pp.timeOut)
-	// Ініціалізуємо маркер для останньої відповіді
-	lastResponse := time.Now()
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- true
-	}
-	// Ініціалізуємо обробник подій
-	wsHandler := func(event *futures.WsUserDataEvent) {
-		select {
-		case pp.userDataEvent <- event:
-		default:
-			// Якщо ch1 заблокований, просто продовжуємо
+	userDataEventStart := func(eventOut chan *futures.WsUserDataEvent) {
+		// Ініціалізуємо стріми для відмірювання часу
+		ticker := time.NewTicker(pp.timeOut)
+		// Ініціалізуємо маркер для останньої відповіді
+		lastResponse := time.Now()
+		// Отримуємо ключ для прослуховування подій користувача
+		listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+		if err != nil {
+			return
 		}
-
-		select {
-		case pp.userDataEvent4AUE <- event:
-		default:
-			// Якщо ch2 заблокований, просто продовжуємо
+		// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+		resetEvent := make(chan bool, 1)
+		// Ініціалізуємо обробник помилок
+		wsErrorHandler := func(err error) {
+			resetEvent <- true
 		}
-	}
-	// Запускаємо стрім подій користувача
-	var stopC chan struct{}
-	_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
-	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
-	go func() {
-		for {
-			select {
-			case <-resetEvent:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+		// Ініціалізуємо обробник подій
+		wsHandler := func(event *futures.WsUserDataEvent) {
+			eventOut <- event
+		}
+		// Запускаємо стрім подій користувача
+		var stopC chan struct{}
+		_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+		if err != nil {
+			return
+		}
+		// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
+		go func() {
+			for {
+				select {
+				case <-resetEvent:
+					// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+					err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
 					if err != nil {
-						return
+						// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+						listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+						if err != nil {
+							return
+						}
 					}
-				}
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
-				// Запускаємо стрім подій користувача
-				_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-			case <-ticker.C:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				// Перевіряємо чи не вийшли за ліміт часу відповіді
-				if time.Since(lastResponse) > pp.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
 					// Запускаємо стрім подій користувача
 					_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+				case <-ticker.C:
+					// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+					err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
+					if err != nil {
+						// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+						listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+						if err != nil {
+							return
+						}
+					}
+					// Перевіряємо чи не вийшли за ліміт часу відповіді
+					if time.Since(lastResponse) > pp.timeOut {
+						// Зупиняємо стрім подій користувача
+						stopC <- struct{}{}
+						// Запускаємо стрім подій користувача
+						_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+					}
 				}
 			}
-		}
-	}()
+		}()
+	}
+	// Запускаємо стрім подій користувача
+	userDataEventStart(pp.userDataEvent)
+	userDataEventStart(pp.userDataEvent4AUE)
 
 	// Запускаємо стрім для відслідковування зміни статусу акаунта
 	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
