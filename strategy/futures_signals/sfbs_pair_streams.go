@@ -58,10 +58,6 @@ func (pp *PairStreams) GetUserDataEvent() chan *futures.WsUserDataEvent {
 	return pp.userDataEvent
 }
 
-func (pp *PairStreams) GetAccountUpdateEvent() chan *futures.WsUserDataEvent {
-	return pp.accountUpdateEvent
-}
-
 func (pp *PairStreams) GetStop() chan os.Signal {
 	return pp.stop
 }
