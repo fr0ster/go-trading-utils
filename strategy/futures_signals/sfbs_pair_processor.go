@@ -126,7 +126,7 @@ func (pp *PairProcessor) CreateOrder(
 		log.Printf(errorMsg, err)
 		return
 	}
-	if _, ok := pp.orderTypes[orderType]; !ok {
+	if _, ok := pp.orderTypes[orderType]; !ok && len(pp.orderTypes) != 0 {
 		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pair.GetPair())
 		return
 	}
