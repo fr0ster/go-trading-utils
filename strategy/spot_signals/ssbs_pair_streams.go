@@ -25,6 +25,7 @@ type (
 		account      *spot_account.Account
 
 		userDataEvent      chan *binance.WsUserDataEvent
+		userDataEvent4AUE  chan *binance.WsUserDataEvent
 		accountUpdateEvent chan *binance.WsUserDataEvent
 
 		stop      chan os.Signal
@@ -82,14 +83,21 @@ func NewPairStreams(
 	pair pairs_interfaces.Pairs,
 	debug bool) (pp *PairStreams, err error) {
 	pp = &PairStreams{
-		client:    client,
-		pair:      pair,
-		account:   nil,
+		client:  client,
+		pair:    pair,
+		account: nil,
+
+		userDataEvent:      make(chan *binance.WsUserDataEvent),
+		userDataEvent4AUE:  make(chan *binance.WsUserDataEvent),
+		accountUpdateEvent: nil,
+
 		stop:      make(chan os.Signal, 1),
 		limitsOut: make(chan bool, 1),
-		pairInfo:  nil,
-		degree:    3,
-		timeOut:   1 * time.Hour,
+
+		pairInfo:   nil,
+		orderTypes: make(map[string]bool, 0),
+		degree:     3,
+		timeOut:    1 * time.Hour,
 	}
 
 	// Ініціалізуємо інформацію про біржу
@@ -110,7 +118,6 @@ func NewPairStreams(
 		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
 
 	// Ініціалізуємо типи ордерів які можна використовувати для пари
-	pp.orderTypes = make(map[string]bool, 0)
 	for _, orderType := range pp.pairInfo.OrderTypes {
 		pp.orderTypes[orderType] = true
 	}
@@ -133,6 +140,7 @@ func NewPairStreams(
 	// Ініціалізуємо обробник подій
 	wsHandler := func(event *binance.WsUserDataEvent) {
 		pp.userDataEvent <- event
+		pp.userDataEvent4AUE <- event
 	}
 	// Ініціалізуємо канал подій користувача
 	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
@@ -182,7 +190,7 @@ func NewPairStreams(
 	}()
 
 	// Запускаємо стрім для відслідковування оновлення акаунта
-	pp.accountUpdateEvent = spot_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)
+	pp.accountUpdateEvent = spot_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
 
 	return
 }

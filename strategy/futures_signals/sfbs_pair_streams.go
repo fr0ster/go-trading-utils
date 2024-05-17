@@ -25,6 +25,7 @@ type (
 		account      *futures_account.Account
 
 		userDataEvent      chan *futures.WsUserDataEvent
+		userDataEvent4AUE  chan *futures.WsUserDataEvent
 		accountUpdateEvent chan *futures.WsUserDataEvent
 
 		stop      chan os.Signal
@@ -82,15 +83,22 @@ func NewPairStreams(
 	pair pairs_interfaces.Pairs,
 	debug bool) (pp *PairStreams, err error) {
 	pp = &PairStreams{
-		client:    client,
-		pair:      pair,
-		account:   nil,
+		client:       client,
+		pair:         pair,
+		exchangeInfo: nil,
+		account:      nil,
+
+		userDataEvent:      make(chan *futures.WsUserDataEvent),
+		userDataEvent4AUE:  make(chan *futures.WsUserDataEvent),
+		accountUpdateEvent: nil,
+
 		stop:      make(chan os.Signal, 1),
 		limitsOut: make(chan bool, 1),
-		pairInfo:  nil,
 
-		degree:  3,
-		timeOut: 1 * time.Hour,
+		pairInfo:   nil,
+		orderTypes: make(map[futures.OrderType]bool, 0),
+		degree:     3,
+		timeOut:    1 * time.Hour,
 	}
 
 	// Ініціалізуємо інформацію про біржу
@@ -135,8 +143,6 @@ func NewPairStreams(
 	wsHandler := func(event *futures.WsUserDataEvent) {
 		pp.userDataEvent <- event
 	}
-	// Ініціалізуємо канал подій користувача
-	pp.userDataEvent = make(chan *futures.WsUserDataEvent)
 	// Запускаємо стрім подій користувача
 	var stopC chan struct{}
 	_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
@@ -183,7 +189,7 @@ func NewPairStreams(
 	}()
 
 	// Запускаємо стрім для відслідковування зміни статусу акаунта
-	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)
+	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
 
 	return
 }
