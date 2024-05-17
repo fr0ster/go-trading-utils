@@ -27,7 +27,6 @@ type (
 
 		userDataEvent      chan *binance.WsUserDataEvent
 		accountUpdateEvent chan *binance.WsUserDataEvent
-		orderUpdateEvent   chan *binance.WsUserDataEvent
 
 		stop      chan os.Signal
 		limitsOut chan bool
@@ -53,10 +52,6 @@ func (pp *PairStreams) GetPairInfo() *symbol_types.SpotSymbol {
 
 func (pp *PairStreams) GetOrderTypes() map[string]bool {
 	return pp.orderTypes
-}
-
-func (pp *PairStreams) GetOrderUpdateEvent() chan *binance.WsUserDataEvent {
-	return pp.orderUpdateEvent
 }
 
 func (pp *PairStreams) GetUserDataEvent() chan *binance.WsUserDataEvent {
@@ -183,14 +178,6 @@ func NewPairStreams(
 			}
 		}
 	}()
-
-	// Визначаємо статуси ордерів які нас цікавлять
-	orderStatuses := []binance.OrderStatusType{
-		binance.OrderStatusTypeFilled,
-		binance.OrderStatusTypePartiallyFilled,
-	}
-	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderUpdateEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
 
 	// Запускаємо стрім для відслідковування оновлення акаунта
 	pp.accountUpdateEvent = spot_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)

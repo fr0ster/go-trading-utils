@@ -27,7 +27,6 @@ type (
 
 		userDataEvent      chan *futures.WsUserDataEvent
 		accountUpdateEvent chan *futures.WsUserDataEvent
-		orderStatusEvent   chan *futures.WsUserDataEvent
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -70,10 +69,6 @@ func (pp *PairStreams) GetDayOrderLimit() *exchange_types.RateLimits {
 
 func (pp *PairStreams) GetMinuteRawRequestLimit() *exchange_types.RateLimits {
 	return pp.minuteRawRequestLimit
-}
-
-func (pp *PairStreams) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
-	return pp.orderStatusEvent
 }
 
 func (pp *PairStreams) GetUserDataEvent() chan *futures.WsUserDataEvent {
@@ -252,14 +247,6 @@ func NewPairStreams(
 			}
 		}
 	}()
-
-	// Визначаємо статуси ордерів які нас цікавлять
-	orderStatuses := []futures.OrderStatusType{
-		futures.OrderStatusTypeFilled,
-		futures.OrderStatusTypePartiallyFilled,
-	}
-	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
 
 	// Запускаємо стрім для відслідковування зміни статусу акаунта
 	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)
