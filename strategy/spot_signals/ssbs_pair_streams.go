@@ -139,11 +139,18 @@ func NewPairStreams(
 	}
 	// Ініціалізуємо обробник подій
 	wsHandler := func(event *binance.WsUserDataEvent) {
-		pp.userDataEvent <- event
-		pp.userDataEvent4AUE <- event
+		select {
+		case pp.userDataEvent <- event:
+		default:
+			// Якщо ch1 заблокований, просто продовжуємо
+		}
+
+		select {
+		case pp.userDataEvent4AUE <- event:
+		default:
+			// Якщо ch2 заблокований, просто продовжуємо
+		}
 	}
-	// Ініціалізуємо канал подій користувача
-	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
 	// Запускаємо стрім подій користувача
 	var stopC chan struct{}
 	_, stopC, err = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)

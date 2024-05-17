@@ -141,7 +141,17 @@ func NewPairStreams(
 	}
 	// Ініціалізуємо обробник подій
 	wsHandler := func(event *futures.WsUserDataEvent) {
-		pp.userDataEvent <- event
+		select {
+		case pp.userDataEvent <- event:
+		default:
+			// Якщо ch1 заблокований, просто продовжуємо
+		}
+
+		select {
+		case pp.userDataEvent4AUE <- event:
+		default:
+			// Якщо ch2 заблокований, просто продовжуємо
+		}
 	}
 	// Запускаємо стрім подій користувача
 	var stopC chan struct{}
