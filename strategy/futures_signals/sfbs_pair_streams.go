@@ -36,8 +36,8 @@ type (
 		stop      chan os.Signal
 		limitsOut chan bool
 
-		pairInfo   *symbol_types.SpotSymbol
-		orderTypes map[string]bool
+		pairInfo   *symbol_types.FuturesSymbol
+		orderTypes map[futures.OrderType]bool
 		degree     int
 		timeOut    time.Duration
 	}
@@ -51,11 +51,11 @@ func (pp *PairStreams) GetAccount() *futures_account.Account {
 	return pp.account
 }
 
-func (pp *PairStreams) GetPairInfo() *symbol_types.SpotSymbol {
+func (pp *PairStreams) GetPairInfo() *symbol_types.FuturesSymbol {
 	return pp.pairInfo
 }
 
-func (pp *PairStreams) GetOrderTypes() map[string]bool {
+func (pp *PairStreams) GetOrderTypes() map[futures.OrderType]bool {
 	return pp.orderTypes
 }
 
@@ -175,11 +175,11 @@ func NewPairStreams(
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
+		&symbol_types.FuturesSymbol{Symbol: pair.GetPair()}).(*symbol_types.FuturesSymbol)
 
 	// Ініціалізуємо типи ордерів які можна використовувати для пари
-	pp.orderTypes = make(map[string]bool, 0)
-	for _, orderType := range pp.pairInfo.OrderTypes {
+	pp.orderTypes = make(map[futures.OrderType]bool, 0)
+	for _, orderType := range pp.pairInfo.OrderType {
 		pp.orderTypes[orderType] = true
 	}
 
