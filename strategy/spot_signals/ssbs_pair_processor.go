@@ -814,20 +814,28 @@ func NewPairProcessor(
 		for {
 			select {
 			case <-resetEvent:
-				// Отримуємо ключ для прослуховування подій користувача
-				listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
 				if err != nil {
-					return
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
+					}
 				}
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
 				// Запускаємо стрім подій користувача
 				_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 			case <-ticker.C:
-				// Отримуємо ключ для прослуховування подій користувача
-				listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
 				if err != nil {
-					return
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
+					}
 				}
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > pp.timeOut {
@@ -840,10 +848,12 @@ func NewPairProcessor(
 		}
 	}()
 
+	// Визначаємо статуси ордерів які нас цікавлять
 	orderStatuses := []binance.OrderStatusType{
 		binance.OrderStatusTypeFilled,
 		binance.OrderStatusTypePartiallyFilled,
 	}
+	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
 	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
 
 	return
