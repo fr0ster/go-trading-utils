@@ -12,7 +12,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -28,11 +27,12 @@ import (
 
 type (
 	PairProcessor struct {
-		config                *config_types.ConfigFile
-		client                *futures.Client
-		pair                  pairs_interfaces.Pairs
-		exchangeInfo          *exchange_types.ExchangeInfo
-		account               *futures_account.Account
+		config       *config_types.ConfigFile
+		client       *futures.Client
+		pair         pairs_interfaces.Pairs
+		exchangeInfo *exchange_types.ExchangeInfo
+		account      *futures_account.Account
+
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
 		dayOrderLimit         *exchange_types.RateLimits
@@ -687,29 +687,43 @@ func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
+	exchangeInfo *exchange_types.ExchangeInfo,
+	account *futures_account.Account,
+	userDataEvent chan *futures.WsUserDataEvent,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
-		client:                         client,
-		pair:                           pair,
-		account:                        nil,
-		stop:                           make(chan os.Signal, 1),
-		limitsOut:                      make(chan bool, 1),
-		pairInfo:                       nil,
-		buyEvent:                       nil,
-		sellEvent:                      nil,
-		updateTime:                     0,
-		minuteOrderLimit:               &exchange_types.RateLimits{},
-		dayOrderLimit:                  &exchange_types.RateLimits{},
-		minuteRawRequestLimit:          &exchange_types.RateLimits{},
-		stopBuy:                        nil,
-		stopSell:                       nil,
-		stopOrderExecutionGuardProcess: nil,
+		client:  client,
+		pair:    pair,
+		account: nil,
+
+		updateTime:            0,
+		minuteOrderLimit:      &exchange_types.RateLimits{},
+		dayOrderLimit:         &exchange_types.RateLimits{},
+		minuteRawRequestLimit: &exchange_types.RateLimits{},
+
+		buyEvent:       nil,
+		stopBuy:        nil,
+		buyProcessRun:  false,
+		sellEvent:      nil,
+		stopSell:       nil,
+		sellProcessRun: false,
+
 		orderExecuted:                  nil,
-		orderStatusEvent:               nil,
-		degree:                         3,
-		debug:                          debug,
-		sleepingTime:                   1 * time.Second,
-		timeOut:                        1 * time.Hour,
+		orderExecutionGuardProcessRun:  false,
+		stopOrderExecutionGuardProcess: nil,
+
+		userDataEvent:    userDataEvent,
+		orderStatusEvent: nil,
+
+		stop:      make(chan os.Signal, 1),
+		limitsOut: make(chan bool, 1),
+
+		pairInfo:     nil,
+		orderTypes:   nil,
+		degree:       3,
+		debug:        debug,
+		sleepingTime: 1 * time.Second,
+		timeOut:      1 * time.Hour,
 	}
 	// Перевіряємо ліміти на ордери та запити
 	pp.updateTime,
@@ -717,19 +731,6 @@ func NewPairProcessor(
 		pp.dayOrderLimit,
 		pp.minuteRawRequestLimit =
 		LimitRead(pp.degree, []string{pp.pair.GetPair()}, client)
-
-	// Ініціалізуємо інформацію про біржу
-	pp.exchangeInfo = exchange_types.New()
-	err = futures_exchange_info.Init(pp.exchangeInfo, pp.degree, client)
-	if err != nil {
-		return
-	}
-
-	// Ініціалізуємо інформацію про акаунт
-	pp.account, err = futures_account.New(pp.client, pp.degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-	if err != nil {
-		return
-	}
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
@@ -740,76 +741,6 @@ func NewPairProcessor(
 	for _, orderType := range pp.pairInfo.OrderType {
 		pp.orderTypes[orderType] = true
 	}
-
-	// Ініціалізуємо стрім для оновлення лімітів
-	pp.LimitUpdaterStream()
-
-	// Ініціалізуємо стріми для відмірювання часу
-	ticker := time.NewTicker(pp.timeOut)
-	// Ініціалізуємо маркер для останньої відповіді
-	lastResponse := time.Now()
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- true
-	}
-	// Ініціалізуємо обробник подій
-	wsHandler := func(event *futures.WsUserDataEvent) {
-		pp.userDataEvent <- event
-	}
-	// Ініціалізуємо стрім для отримання подій користувача
-	pp.userDataEvent = make(chan *futures.WsUserDataEvent)
-	// Ініціалізуємо канал для зупинки стріму
-	var stopC chan struct{}
-	// Запускаємо стрім для отримання подій користувача
-	_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
-	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
-	go func() {
-		for {
-			select {
-			case <-resetEvent:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
-				// Запускаємо стрім подій користувача
-				_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-			case <-ticker.C:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				// Перевіряємо чи не вийшли за ліміт часу відповіді
-				if time.Since(lastResponse) > pp.timeOut {
-					// Зупиняємо стрім подій користувача
-					stopC <- struct{}{}
-					// Запускаємо стрім подій користувача
-					_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-				}
-			}
-		}
-	}()
 
 	// Визначаємо статуси ордерів які нас цікавлять
 	orderStatuses := []futures.OrderStatusType{

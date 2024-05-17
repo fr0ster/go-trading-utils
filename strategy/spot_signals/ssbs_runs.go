@@ -82,7 +82,11 @@ func RunSpotHolding(
 
 	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	pairStream, err := NewPairStreams(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
 	if err != nil {
 		return err
 	}
@@ -161,7 +165,11 @@ func RunSpotScalping(
 		}
 	}()
 
-	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	pairStream, err := NewPairStreams(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
 	if err != nil {
 		return err
 	}
@@ -274,7 +282,11 @@ func RunSpotTrading(
 		}
 	}()
 
-	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	pairStream, err := NewPairStreams(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
 	if err != nil {
 		return err
 	}
@@ -383,7 +395,11 @@ func RunSpotGridTrading(
 		}
 	}()
 
-	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	pairStream, err := NewPairStreams(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
 	if err != nil {
 		return err
 	}

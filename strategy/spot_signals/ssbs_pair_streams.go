@@ -25,13 +25,9 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *spot_account.Account
 
-		userDataEvent    chan *binance.WsUserDataEvent
-		orderStatusEvent chan *binance.WsUserDataEvent
-
-		updateTime            time.Duration
-		minuteOrderLimit      *exchange_types.RateLimits
-		dayOrderLimit         *exchange_types.RateLimits
-		minuteRawRequestLimit *exchange_types.RateLimits
+		userDataEvent      chan *binance.WsUserDataEvent
+		accountUpdateEvent chan *binance.WsUserDataEvent
+		orderUpdateEvent   chan *binance.WsUserDataEvent
 
 		stop      chan os.Signal
 		limitsOut chan bool
@@ -59,20 +55,8 @@ func (pp *PairStreams) GetOrderTypes() map[string]bool {
 	return pp.orderTypes
 }
 
-func (pp *PairStreams) GetMinuteOrderLimit() *exchange_types.RateLimits {
-	return pp.minuteOrderLimit
-}
-
-func (pp *PairStreams) GetDayOrderLimit() *exchange_types.RateLimits {
-	return pp.dayOrderLimit
-}
-
-func (pp *PairStreams) GetMinuteRawRequestLimit() *exchange_types.RateLimits {
-	return pp.minuteRawRequestLimit
-}
-
-func (pp *PairStreams) GetOrderStatusEvent() chan *binance.WsUserDataEvent {
-	return pp.orderStatusEvent
+func (pp *PairStreams) GetOrderUpdateEvent() chan *binance.WsUserDataEvent {
+	return pp.orderUpdateEvent
 }
 
 func (pp *PairStreams) GetUserDataEvent() chan *binance.WsUserDataEvent {
@@ -87,48 +71,12 @@ func (pp *PairStreams) GetLimitsOut() chan bool {
 	return pp.limitsOut
 }
 
-func (pp *PairStreams) GetUpdateTime() time.Duration {
-	return pp.updateTime
-}
-
 func (pp *PairStreams) GetDegree() int {
 	return pp.degree
 }
 
 func (pp *PairStreams) GetTimeOut() time.Duration {
 	return pp.timeOut
-}
-
-func (pp *PairStreams) LimitUpdaterStream() {
-	go func() {
-		for {
-			select {
-			case <-time.After(pp.updateTime):
-				pp.updateTime,
-					pp.minuteOrderLimit,
-					pp.dayOrderLimit,
-					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			}
-		}
-	}()
-
-	// Перевіряємо чи не вийшли за ліміти на запити та ордери
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
-				return
-			default:
-			}
-			time.Sleep(pp.updateTime)
-		}
-	}()
 }
 
 func NewPairStreams(
@@ -143,22 +91,9 @@ func NewPairStreams(
 		stop:      make(chan os.Signal, 1),
 		limitsOut: make(chan bool, 1),
 		pairInfo:  nil,
-
-		updateTime:            0,
-		minuteOrderLimit:      &exchange_types.RateLimits{},
-		dayOrderLimit:         &exchange_types.RateLimits{},
-		minuteRawRequestLimit: &exchange_types.RateLimits{},
-
-		degree:  3,
-		timeOut: 1 * time.Hour,
+		degree:    3,
+		timeOut:   1 * time.Hour,
 	}
-
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit =
-		LimitRead(degree, []string{pp.pair.GetPair()}, client)
 
 	// Ініціалізуємо інформацію про біржу
 	pp.exchangeInfo = exchange_types.New()
@@ -182,9 +117,6 @@ func NewPairStreams(
 	for _, orderType := range pp.pairInfo.OrderTypes {
 		pp.orderTypes[orderType] = true
 	}
-
-	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
-	pp.LimitUpdaterStream()
 
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
@@ -258,7 +190,10 @@ func NewPairStreams(
 		binance.OrderStatusTypePartiallyFilled,
 	}
 	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
+	pp.orderUpdateEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
+
+	// Запускаємо стрім для відслідковування оновлення акаунта
+	pp.accountUpdateEvent = spot_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)
 
 	return
 }

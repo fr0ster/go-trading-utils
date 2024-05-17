@@ -78,7 +78,11 @@ func Run(
 		}
 	}()
 
-	pairProcessor, err := NewPairProcessor(config, client, pair, debug)
+	pairStream, err := NewPairStreams(config, client, pair, debug)
+	if err != nil {
+		return err
+	}
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
 	if err != nil {
 		return err
 	}

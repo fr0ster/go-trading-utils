@@ -25,8 +25,9 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *futures_account.Account
 
-		userDataEvent    chan *futures.WsUserDataEvent
-		orderStatusEvent chan *futures.WsUserDataEvent
+		userDataEvent      chan *futures.WsUserDataEvent
+		accountUpdateEvent chan *futures.WsUserDataEvent
+		orderStatusEvent   chan *futures.WsUserDataEvent
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -259,6 +260,9 @@ func NewPairStreams(
 	}
 	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
 	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
+
+	// Запускаємо стрім для відслідковування зміни статусу акаунта
+	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent)
 
 	return
 }

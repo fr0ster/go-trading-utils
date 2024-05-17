@@ -13,7 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -74,6 +73,38 @@ type (
 		timeOut      time.Duration
 	}
 )
+
+func (pp *PairProcessor) GetBaseBalance() (
+	baseBalance float64, // Кількість базової валюти
+	err error) {
+	baseBalance, err = func(pair pairs_interfaces.Pairs) (
+		baseBalance float64,
+		err error) {
+		baseBalance, err = pp.account.GetFreeAsset(pair.GetBaseSymbol())
+		return
+	}(pp.pair)
+
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+func (pp *PairProcessor) GetTargetBalance() (
+	targetBalance float64, // Кількість торгової валюти
+	err error) {
+	targetBalance, err = func(pair pairs_interfaces.Pairs) (
+		targetBalance float64,
+		err error) {
+		targetBalance, err = pp.account.GetFreeAsset(pair.GetTargetSymbol())
+		return
+	}(pp.pair)
+
+	if err != nil {
+		return 0, err
+	}
+	return
+}
 
 //  1. LIMIT_MAKER are LIMIT orders that will be rejected if they would immediately match and trade as a taker.
 //  2. STOP_LOSS and TAKE_PROFIT will execute a MARKET order when the stopPrice is reached.
@@ -716,14 +747,18 @@ func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
+	exchangeInfo *exchange_types.ExchangeInfo,
+	account *spot_account.Account,
+	userDataEvent chan *binance.WsUserDataEvent,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
-		client:    client,
-		pair:      pair,
-		account:   nil,
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
-		pairInfo:  nil,
+		client:       client,
+		pair:         pair,
+		exchangeInfo: exchangeInfo,
+		account:      account,
+		stop:         make(chan os.Signal, 1),
+		limitsOut:    make(chan bool, 1),
+		pairInfo:     nil,
 
 		buyEvent:                 nil,
 		buyProcessRun:            false,
@@ -731,6 +766,8 @@ func NewPairProcessor(
 		sellProcessRun:           false,
 		buyTakeProfitProcessRun:  false,
 		sellTakeProfitProcessRun: false,
+
+		userDataEvent: userDataEvent,
 
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},
@@ -756,19 +793,6 @@ func NewPairProcessor(
 		pp.minuteRawRequestLimit =
 		LimitRead(degree, []string{pp.pair.GetPair()}, client)
 
-	// Ініціалізуємо інформацію про біржу
-	pp.exchangeInfo = exchange_types.New()
-	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
-	if err != nil {
-		return
-	}
-
-	// Ініціалізуємо інформацію про акаунт
-	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
-	if err != nil {
-		return
-	}
-
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
 		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
@@ -781,72 +805,6 @@ func NewPairProcessor(
 
 	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
 	pp.LimitUpdaterStream()
-
-	// Ініціалізуємо стріми для відмірювання часу
-	ticker := time.NewTicker(pp.timeOut)
-	// Ініціалізуємо маркер для останньої відповіді
-	lastResponse := time.Now()
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- true
-	}
-	// Ініціалізуємо обробник подій
-	wsHandler := func(event *binance.WsUserDataEvent) {
-		pp.userDataEvent <- event
-	}
-	// Ініціалізуємо канал подій користувача
-	pp.userDataEvent = make(chan *binance.WsUserDataEvent)
-	// Запускаємо стрім подій користувача
-	var stopC chan struct{}
-	_, stopC, err = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
-	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
-	go func() {
-		for {
-			select {
-			case <-resetEvent:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
-				// Запускаємо стрім подій користувача
-				_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-			case <-ticker.C:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
-				// Перевіряємо чи не вийшли за ліміт часу відповіді
-				if time.Since(lastResponse) > pp.timeOut {
-					// Зупиняємо стрім подій користувача
-					stopC <- struct{}{}
-					// Запускаємо стрім подій користувача
-					_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-				}
-			}
-		}
-	}()
 
 	// Визначаємо статуси ордерів які нас цікавлять
 	orderStatuses := []binance.OrderStatusType{
