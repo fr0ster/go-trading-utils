@@ -78,7 +78,7 @@ func Run(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(config, client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, debug)
 	if err != nil {
 		return err
 	}

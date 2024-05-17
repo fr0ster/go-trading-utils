@@ -11,7 +11,6 @@ import (
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 
-	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -58,6 +57,10 @@ func (pp *PairStreams) GetUserDataEvent() chan *binance.WsUserDataEvent {
 	return pp.userDataEvent
 }
 
+func (pp *PairStreams) GetAccountUpdateEvent() chan *binance.WsUserDataEvent {
+	return pp.accountUpdateEvent
+}
+
 func (pp *PairStreams) GetStop() chan os.Signal {
 	return pp.stop
 }
@@ -75,7 +78,6 @@ func (pp *PairStreams) GetTimeOut() time.Duration {
 }
 
 func NewPairStreams(
-	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair pairs_interfaces.Pairs,
 	debug bool) (pp *PairStreams, err error) {

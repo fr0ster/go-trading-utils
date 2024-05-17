@@ -82,7 +82,7 @@ func RunSpotHolding(
 
 	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-	pairStream, err := NewPairStreams(config, client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, debug)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func RunSpotScalping(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(config, client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, debug)
 	if err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func RunSpotTrading(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(config, client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, debug)
 	if err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func RunSpotGridTrading(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(config, client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, debug)
 	if err != nil {
 		return err
 	}

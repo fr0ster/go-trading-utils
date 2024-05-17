@@ -11,7 +11,6 @@ import (
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
-	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -27,11 +26,6 @@ type (
 
 		userDataEvent      chan *futures.WsUserDataEvent
 		accountUpdateEvent chan *futures.WsUserDataEvent
-
-		updateTime            time.Duration
-		minuteOrderLimit      *exchange_types.RateLimits
-		dayOrderLimit         *exchange_types.RateLimits
-		minuteRawRequestLimit *exchange_types.RateLimits
 
 		stop      chan os.Signal
 		limitsOut chan bool
@@ -59,20 +53,12 @@ func (pp *PairStreams) GetOrderTypes() map[futures.OrderType]bool {
 	return pp.orderTypes
 }
 
-func (pp *PairStreams) GetMinuteOrderLimit() *exchange_types.RateLimits {
-	return pp.minuteOrderLimit
-}
-
-func (pp *PairStreams) GetDayOrderLimit() *exchange_types.RateLimits {
-	return pp.dayOrderLimit
-}
-
-func (pp *PairStreams) GetMinuteRawRequestLimit() *exchange_types.RateLimits {
-	return pp.minuteRawRequestLimit
-}
-
 func (pp *PairStreams) GetUserDataEvent() chan *futures.WsUserDataEvent {
 	return pp.userDataEvent
+}
+
+func (pp *PairStreams) GetAccountUpdateEvent() chan *futures.WsUserDataEvent {
+	return pp.accountUpdateEvent
 }
 
 func (pp *PairStreams) GetStop() chan os.Signal {
@@ -83,10 +69,6 @@ func (pp *PairStreams) GetLimitsOut() chan bool {
 	return pp.limitsOut
 }
 
-func (pp *PairStreams) GetUpdateTime() time.Duration {
-	return pp.updateTime
-}
-
 func (pp *PairStreams) GetDegree() int {
 	return pp.degree
 }
@@ -95,40 +77,7 @@ func (pp *PairStreams) GetTimeOut() time.Duration {
 	return pp.timeOut
 }
 
-func (pp *PairStreams) LimitUpdaterStream() {
-	go func() {
-		for {
-			select {
-			case <-time.After(pp.updateTime):
-				pp.updateTime,
-					pp.minuteOrderLimit,
-					pp.dayOrderLimit,
-					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			}
-		}
-	}()
-
-	// Перевіряємо чи не вийшли за ліміти на запити та ордери
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
-				return
-			default:
-			}
-			time.Sleep(pp.updateTime)
-		}
-	}()
-}
-
 func NewPairStreams(
-	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
 	debug bool) (pp *PairStreams, err error) {
@@ -140,21 +89,9 @@ func NewPairStreams(
 		limitsOut: make(chan bool, 1),
 		pairInfo:  nil,
 
-		updateTime:            0,
-		minuteOrderLimit:      &exchange_types.RateLimits{},
-		dayOrderLimit:         &exchange_types.RateLimits{},
-		minuteRawRequestLimit: &exchange_types.RateLimits{},
-
 		degree:  3,
 		timeOut: 1 * time.Hour,
 	}
-
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit =
-		LimitRead(degree, []string{pp.pair.GetPair()}, client)
 
 	// Ініціалізуємо інформацію про біржу
 	pp.exchangeInfo = exchange_types.New()
@@ -178,9 +115,6 @@ func NewPairStreams(
 	for _, orderType := range pp.pairInfo.OrderType {
 		pp.orderTypes[orderType] = true
 	}
-
-	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
-	pp.LimitUpdaterStream()
 
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
