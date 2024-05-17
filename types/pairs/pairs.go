@@ -52,18 +52,23 @@ type (
 	StageType    string
 	Commission   map[string]float64
 	Pairs        struct {
-		Connection             *connection_types.Connection `json:"connection"`
-		AccountType            AccountType                  `json:"account_type"`             // Тип акаунта
-		StrategyType           StrategyType                 `json:"strategy_type"`            // Тип стратегії
-		StageType              StageType                    `json:"stage_type"`               // Cтадія стратегії
-		Pair                   string                       `json:"symbol"`                   // Пара
-		TargetSymbol           string                       `json:"target_symbol"`            // Цільовий токен
-		BaseSymbol             string                       `json:"base_symbol"`              // Базовий токен
-		InitialBalance         float64                      `json:"initial_balance"`          // Початковий баланс
-		CurrentBalance         float64                      `json:"current_balance"`          // Поточний баланс
-		InitialPositionBalance float64                      `json:"initial_position_balance"` // Початковий баланс позиції
-		CurrentPositionBalance float64                      `json:"current_position_balance"` // Поточний баланс позиції
-		MiddlePrice            float64                      `json:"middle_price"`             // Середня ціна купівлі по позиції
+		Connection *connection_types.Connection `json:"connection"`
+
+		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
+		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
+		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
+
+		Pair         string `json:"symbol"`        // Пара
+		TargetSymbol string `json:"target_symbol"` // Цільовий токен
+		BaseSymbol   string `json:"base_symbol"`   // Базовий токен
+
+		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
+		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
+
+		InitialPositionBalance float64 `json:"initial_position_balance"` // Початковий баланс позиції
+		CurrentPositionBalance float64 `json:"current_position_balance"` // Поточний баланс позиції
+
+		MiddlePrice float64 `json:"middle_price"` // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
