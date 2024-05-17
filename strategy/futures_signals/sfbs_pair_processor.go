@@ -692,9 +692,10 @@ func NewPairProcessor(
 	userDataEvent chan *futures.WsUserDataEvent,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
-		client:  client,
-		pair:    pair,
-		account: nil,
+		client:       client,
+		pair:         pair,
+		exchangeInfo: exchangeInfo,
+		account:      account,
 
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},

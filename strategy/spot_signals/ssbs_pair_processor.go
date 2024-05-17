@@ -752,20 +752,29 @@ func NewPairProcessor(
 	userDataEvent chan *binance.WsUserDataEvent,
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
+		config:       config,
 		client:       client,
 		pair:         pair,
 		exchangeInfo: exchangeInfo,
 		account:      account,
-		stop:         make(chan os.Signal, 1),
-		limitsOut:    make(chan bool, 1),
-		pairInfo:     nil,
 
-		buyEvent:                 nil,
-		buyProcessRun:            false,
-		sellEvent:                nil,
-		sellProcessRun:           false,
+		buyEvent:            nil,
+		buyProcessRun:       false,
+		stopBuy:             nil,
+		startBuyOrderEvent:  nil,
+		sellEvent:           nil,
+		sellProcessRun:      false,
+		startSellOrderEvent: nil,
+		stopSell:            nil,
+
 		buyTakeProfitProcessRun:  false,
 		sellTakeProfitProcessRun: false,
+
+		orderExecuted:                  nil,
+		stopOrderExecutionGuardProcess: nil,
+		orderExecutionGuardProcessRun:  false,
+
+		orderStatusEvent: nil,
 
 		userDataEvent: userDataEvent,
 
@@ -774,16 +783,15 @@ func NewPairProcessor(
 		dayOrderLimit:         &exchange_types.RateLimits{},
 		minuteRawRequestLimit: &exchange_types.RateLimits{},
 
-		stopBuy:                        make(chan bool, 1),
-		stopSell:                       make(chan bool, 1),
-		stopOrderExecutionGuardProcess: make(chan bool, 1),
+		stop:      make(chan os.Signal, 1),
+		limitsOut: make(chan bool, 1),
 
-		orderExecuted:    nil,
-		orderStatusEvent: nil,
-		degree:           3,
-		debug:            debug,
-		sleepingTime:     1 * time.Second,
-		timeOut:          1 * time.Hour,
+		pairInfo:     nil,
+		orderTypes:   map[string]bool{},
+		degree:       3,
+		debug:        debug,
+		sleepingTime: 1 * time.Second,
+		timeOut:      1 * time.Hour,
 	}
 
 	// Перевіряємо ліміти на ордери та запити
