@@ -19,12 +19,20 @@ func GetAccountInfoGuard(
 					account.Lock()
 					logrus.Debugf("Account update Reason: %s", event.AccountUpdate.Reason)
 					for _, item := range event.AccountUpdate.Balances {
-						val, _ := futures_account.Futures2AccountAsset(item)
-						account.AssetUpdate(val)
+						if val := account.GetAssets().Get(&futures_account.Asset{Asset: item.Asset}); val != nil {
+							val.(*futures_account.Asset).WalletBalance = item.Balance
+							val.(*futures_account.Asset).CrossWalletBalance = item.CrossWalletBalance
+						}
+						account.SetAssetsUpd(&item)
 					}
 					for _, item := range event.AccountUpdate.Positions {
-						val, _ := futures_account.Futures2AccountPosition(item)
-						account.PositionUpdate(val)
+						if val := account.GetPositions().Get(&futures_account.Position{Symbol: item.Symbol}); val != nil {
+							val.(*futures_account.Position).PositionSide = item.Side
+							val.(*futures_account.Position).PositionAmt = item.Amount
+							val.(*futures_account.Position).EntryPrice = item.EntryPrice
+							val.(*futures_account.Position).UnrealizedProfit = item.UnrealizedPnL
+						}
+						account.SetPositionsUpd(&item)
 					}
 					account.Unlock()
 					out <- event

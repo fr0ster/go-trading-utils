@@ -34,7 +34,9 @@ type (
 		AvailableBalance            string `json:"availableBalance"`
 		MaxWithdrawAmount           string `json:"maxWithdrawAmount"`
 		assets                      *btree.BTree
+		assetsUpd                   *futures.WsBalance
 		positions                   *btree.BTree
+		positionUpd                 *futures.WsPosition
 		mu                          sync.Mutex
 		assetsName                  map[string]bool
 		symbolsName                 map[string]bool
@@ -143,14 +145,34 @@ func (a *Account) GetPositionRisks() (res []*futures.PositionRisk, err error) {
 	return
 }
 
-// GetBalances implements account.AccountLimits.
+// GetAssets implements account.AccountLimits.
 func (a *Account) GetAssets() *btree.BTree {
 	return a.assets
+}
+
+// GetAssetsUpd implements account.AccountLimits.
+func (a *Account) GetAssetsUpd() *futures.WsBalance {
+	return a.assetsUpd
+}
+
+// SetAssetsUpd implements account.AccountLimits.
+func (a *Account) SetAssetsUpd(val *futures.WsBalance) {
+	a.assetsUpd = val
 }
 
 // GetPositions implements account.AccountLimits.
 func (a *Account) GetPositions() *btree.BTree {
 	return a.positions
+}
+
+// GetPositionsUpd implements account.AccountLimits.
+func (a *Account) GetPositionsUpd() *futures.WsPosition {
+	return a.positionUpd
+}
+
+// SetPositionsUpd implements account.AccountLimits.
+func (a *Account) SetPositionsUpd(val *futures.WsPosition) {
+	a.positionUpd = val
 }
 
 func (a *Account) AssetsAscend(iterator func(item *Asset) bool) {
