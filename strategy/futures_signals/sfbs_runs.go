@@ -129,14 +129,14 @@ func RunFuturesGridTrading(
 	getPositionRisk := func() *futures.PositionRisk {
 		risks, err := pairStreams.GetAccount().GetPositionRisk(pair.GetPair())
 		if err != nil {
-			logrus.Errorf("Futures %s: %v\n", pair.GetPair(), err)
+			logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 			stopEvent <- os.Interrupt
 			return nil
 		}
 		return risks
 	}
 	// Ініціалізація гріду
-	logrus.Debugf("Futures %s: Grid initialized\n", pair.GetPair())
+	logrus.Debugf("Futures %s: Grid initialized", pair.GetPair())
 	grid := grid_types.New()
 	// Перевірка на коректність дельт
 	if pair.GetSellDelta() != pair.GetBuyDelta() {
@@ -207,7 +207,7 @@ func RunFuturesGridTrading(
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
 	// Стартуємо обробку ордерів
-	logrus.Debugf("Futures %s: Start Order Status Event\n", pair.GetPair())
+	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
 		select {
 		case <-stopEvent:
@@ -221,15 +221,15 @@ func RunFuturesGridTrading(
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderTradeUpdate.ID}).(*grid_types.Record)
 			if !ok {
-				logrus.Errorf("Uncorrected order ID: %v\n", event.OrderTradeUpdate.ID)
+				logrus.Errorf("Uncorrected order ID: %v", event.OrderTradeUpdate.ID)
 				continue
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
 			if math.Abs(utils.ConvStrToFloat64(getPositionRisk().PositionAmt)*utils.ConvStrToFloat64(getPositionRisk().EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
-				logrus.Debugf("Spot %s: Target value %v above limit %v\n", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+				logrus.Debugf("Spot %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
 				continue
 			}
-			logrus.Debugf("Futures %s: Read Order by ID %v from grid\n", pair.GetPair(), event.OrderTradeUpdate.ID)
+			logrus.Debugf("Futures %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderTradeUpdate.ID)
 			upOrder, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 			if !ok {
 				if pair.GetUpBound() != 0 && price*(1+pair.GetSellDelta()) > pair.GetUpBound() {
@@ -238,7 +238,7 @@ func RunFuturesGridTrading(
 				upOrder = grid_types.NewRecord(0, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell)
 				grid.Set(upOrder)
 			}
-			logrus.Debugf("Futures %s: Read Up Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			logrus.Debugf("Futures %s: Read Up Order by price %v from grid", pair.GetPair(), order.GetPrice())
 			downOrder, ok = grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 			if !ok {
 				if pair.GetLowBound() != 0 && price*(1-pair.GetBuyDelta()) > pair.GetLowBound() {
@@ -247,19 +247,19 @@ func RunFuturesGridTrading(
 				downOrder = grid_types.NewRecord(0, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy)
 				grid.Set(downOrder)
 			}
-			logrus.Debugf("Futures %s: Read Low Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			logrus.Debugf("Futures %s: Read Low Order by price %v from grid", pair.GetPair(), order.GetPrice())
 			if upOrder.GetOrderId() == 0 || downOrder.GetOrderId() == 0 {
-				logrus.Warnf("Futures %s: Order on price below and above hadn't been filled yet\n", pair.GetPair())
+				logrus.Warnf("Futures %s: Order on price below and above hadn't been filled yet", pair.GetPair())
 				continue
 			}
 			// Виконаний ордер помічаємо як виконаний
-			logrus.Debugf("Futures %s: Executed Order %v marked as Filled\n", pair.GetPair(), order.GetOrderId())
+			logrus.Debugf("Futures %s: Executed Order %v marked as Filled", pair.GetPair(), order.GetOrderId())
 			order.SetOrderId(0)
 			order.SetOrderSide(types.SideTypeNone)
 			// Створюємо нові ордери
 			// Якщо на шабель вище ордер не розміщено , то створюємо ордер на продаж
 			if upOrder.GetOrderId() == 0 {
-				logrus.Debugf("Futures %s: Sell order on price %v\n", pair.GetPair(), upOrder.GetUpPrice())
+				logrus.Debugf("Futures %s: Sell order on price %v", pair.GetPair(), upOrder.GetUpPrice())
 				sellOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,     // orderType
 					futures.SideTypeSell,       // sideType
@@ -278,7 +278,7 @@ func RunFuturesGridTrading(
 			}
 			// Якщо на шабель нижче ордер не розміщено , то створюємо ордер на купівлю
 			if downOrder.GetOrderId() == 0 {
-				logrus.Debugf("Futures %s: Buy order on price %v\n", pair.GetPair(), downOrder.GetDownPrice())
+				logrus.Debugf("Futures %s: Buy order on price %v", pair.GetPair(), downOrder.GetDownPrice())
 				buyOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,     // orderType
 					futures.SideTypeBuy,        // sideType

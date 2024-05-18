@@ -398,7 +398,7 @@ func RunSpotGridTrading(
 		config.Save()
 	}
 	// Ініціалізація гріду
-	logrus.Debugf("Spot %s: Grid initialized\n", pair.GetPair())
+	logrus.Debugf("Spot %s: Grid initialized", pair.GetPair())
 	grid := grid_types.New()
 	// Перевірка на коректність дельт
 	if pair.GetSellDelta() != pair.GetBuyDelta() {
@@ -434,7 +434,7 @@ func RunSpotGridTrading(
 		return err
 	}
 	// Створюємо ордери на продаж
-	logrus.Debugf("Spot %s: Sell order on price %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()))
+	logrus.Debugf("Spot %s: Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 	sellOrder, err := pairProcessor.CreateOrder(
 		binance.OrderTypeLimit,        // orderType
 		binance.SideTypeSell,          // sideType
@@ -451,7 +451,7 @@ func RunSpotGridTrading(
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
 	// Створюємо ордер на купівлю
-	logrus.Debugf("Spot %s: Buy order on price %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()))
+	logrus.Debugf("Spot %s: Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	buyOrder, err := pairProcessor.CreateOrder(
 		binance.OrderTypeLimit,       // orderType
 		binance.SideTypeBuy,          // sideType
@@ -468,7 +468,7 @@ func RunSpotGridTrading(
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
 	// Стартуємо обробку ордерів
-	logrus.Debugf("Spot %s: Start Order Processing\n", pair.GetPair())
+	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
 	for {
 		select {
 		case <-stopEvent:
@@ -479,53 +479,53 @@ func RunSpotGridTrading(
 				upOrder  *grid_types.Record
 				lowOrder *grid_types.Record
 			)
-			logrus.Debugf("Spot %s: Order %v status %s\n", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
+			logrus.Debugf("Spot %s: Order %v status %s", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderUpdate.Id}).(*grid_types.Record)
 			if !ok {
-				logrus.Errorf("Uncorrected order ID: %v\n", event.OrderUpdate.Id)
+				logrus.Errorf("Uncorrected order ID: %v", event.OrderUpdate.Id)
 				continue
 			}
-			logrus.Debugf("Spot %s: Read Order by ID %v from grid\n", pair.GetPair(), event.OrderUpdate.Id)
+			logrus.Debugf("Spot %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderUpdate.Id)
 			upOrder, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 			if !ok {
 				if pair.GetUpBound() != 0 && price*(1+pair.GetSellDelta()) > pair.GetUpBound() {
-					logrus.Debugf("Spot %s: Price %v above upper bound %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+					logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
 					continue
 				}
-				logrus.Debugf("Spot %s: Add order at price %v above upper bound %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				logrus.Debugf("Spot %s: Add order at price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
 				upOrder = grid_types.NewRecord(0, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell)
 				grid.Set(upOrder)
 			}
-			logrus.Debugf("Spot %s: Read Up Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			logrus.Debugf("Spot %s: Read Up Order by price %v from grid", pair.GetPair(), order.GetPrice())
 			lowOrder, ok = grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 			if !ok {
 				if pair.GetLowBound() != 0 && price*(1-pair.GetBuyDelta()) > pair.GetLowBound() {
-					logrus.Debugf("Spot %s: Price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
+					logrus.Debugf("Spot %s: Price %v below lower bound %v", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
 					continue
 				}
 				// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
 				if (pair.GetBuyQuantity()*pair.GetBuyValue() - pair.GetSellQuantity()*pair.GetSellValue()) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
-					logrus.Debugf("Spot %s: Target value %v above limit %v\n", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+					logrus.Debugf("Spot %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
 					continue
 				}
 				logrus.Debugf("Spot %s: Add order at price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
 				lowOrder = grid_types.NewRecord(0, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy)
 				grid.Set(lowOrder)
 			}
-			logrus.Debugf("Spot %s: Read Low Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			logrus.Debugf("Spot %s: Read Low Order by price %v from grid", pair.GetPair(), order.GetPrice())
 			if upOrder.GetOrderId() == 0 || lowOrder.GetOrderId() == 0 {
 				logrus.Warnf("Spot %s: Order on price below and above hadn't been filled yet\n", pair.GetPair())
 				continue
 			}
 			// Виконаний ордер помічаємо як виконаний
-			logrus.Debugf("Spot %s: Executed Order %v marked as Filled\n", pair.GetPair(), order.GetOrderId())
+			logrus.Debugf("Spot %s: Executed Order %v marked as Filled", pair.GetPair(), order.GetOrderId())
 			order.SetOrderId(0)
 			order.SetOrderSide(types.SideTypeNone)
 			// Створюємо нові ордери
 			// Якщо на шабель вище ордер не розміщено , то створюємо ордер на продаж
 			if upOrder.GetOrderId() == 0 {
-				logrus.Debugf("Spot %s: Sell order on price %v\n", pair.GetPair(), upOrder.GetUpPrice())
+				logrus.Debugf("Spot %s: Sell order on price %v", pair.GetPair(), upOrder.GetUpPrice())
 				sellOrder, err := pairProcessor.CreateOrder(
 					binance.OrderTypeLimit,     // orderType
 					binance.SideTypeSell,       // sideType
@@ -544,7 +544,7 @@ func RunSpotGridTrading(
 			}
 			// Якщо на шабель нижче ордер не розміщено , то створюємо ордер на купівлю
 			if lowOrder.GetOrderId() == 0 {
-				logrus.Debugf("Spot %s: Buy order on price %v\n", pair.GetPair(), lowOrder.GetDownPrice())
+				logrus.Debugf("Spot %s: Buy order on price %v", pair.GetPair(), lowOrder.GetDownPrice())
 				buyOrder, err := pairProcessor.CreateOrder(
 					binance.OrderTypeLimit,     // orderType
 					binance.SideTypeBuy,        // sideType
