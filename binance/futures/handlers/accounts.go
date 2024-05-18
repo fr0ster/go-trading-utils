@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 )
@@ -16,8 +17,14 @@ func GetAccountInfoGuard(
 			if event.Event == futures.UserDataEventTypeAccountUpdate {
 				if account.UpdateTime < event.Time {
 					account.Lock()
-					for _, val := range event.AccountUpdate.Balances {
-						account.AssetUpdate(&futures_account.Asset{Asset: val.Asset, WalletBalance: val.Balance, CrossWalletBalance: val.CrossWalletBalance})
+					logrus.Debugf("Account update Reason: %s", event.AccountUpdate.Reason)
+					for _, item := range event.AccountUpdate.Balances {
+						val, _ := futures_account.Futures2AccountAsset(item)
+						account.AssetUpdate(val)
+					}
+					for _, item := range event.AccountUpdate.Positions {
+						val, _ := futures_account.Futures2AccountPosition(item)
+						account.PositionUpdate(val)
 					}
 					account.Unlock()
 					out <- event
