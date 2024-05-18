@@ -207,13 +207,12 @@ func RunFuturesGridTrading(
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event\n", pair.GetPair())
-	event := pairProcessor.GetOrderStatusEvent()
 	for {
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
 			return nil
-		case event := <-event:
+		case event := <-pairProcessor.GetOrderStatusEvent():
 			var (
 				upOrder   *grid_types.Record
 				downOrder *grid_types.Record

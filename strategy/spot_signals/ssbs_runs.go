@@ -469,13 +469,12 @@ func RunSpotGridTrading(
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Spot %s: Start Order Processing\n", pair.GetPair())
-	event := pairProcessor.GetOrderStatusEvent()
 	for {
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
 			return
-		case event := <-event:
+		case event := <-pairProcessor.GetOrderStatusEvent():
 			var (
 				upOrder  *grid_types.Record
 				lowOrder *grid_types.Record
