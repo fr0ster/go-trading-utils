@@ -2,6 +2,7 @@ package futures_signals
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"time"
 
@@ -227,6 +228,11 @@ func RunFuturesGridTrading(
 			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderTradeUpdate.ID}).(*grid_types.Record)
 			if !ok {
 				logrus.Errorf("Uncorrected order ID: %v\n", event.OrderTradeUpdate.ID)
+				continue
+			}
+			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
+			if math.Abs(utils.ConvStrToFloat64(getPosition().PositionAmt)*utils.ConvStrToFloat64(getPosition().EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+				logrus.Debugf("Spot %s: Target value %v above limit %v\n", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
 				continue
 			}
 			logrus.Debugf("Futures %s: Read Order by ID %v from grid\n", pair.GetPair(), event.OrderTradeUpdate.ID)

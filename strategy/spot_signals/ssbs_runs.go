@@ -505,6 +505,11 @@ func RunSpotGridTrading(
 					logrus.Debugf("Spot %s: Price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
 					continue
 				}
+				// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
+				if (pair.GetBuyQuantity()*pair.GetBuyValue() - pair.GetSellQuantity()*pair.GetSellValue()) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+					logrus.Debugf("Spot %s: Target value %v above limit %v\n", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+					continue
+				}
 				logrus.Debugf("Spot %s: Add order at price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
 				lowOrder = grid_types.NewRecord(0, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy)
 				grid.Set(lowOrder)
