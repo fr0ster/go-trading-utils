@@ -21,6 +21,7 @@ type (
 		SetCurrentPositionBalance(balance float64)
 		GetAccountType() pairs_types.AccountType
 		GetStrategy() pairs_types.StrategyType
+		SetStrategy(strategy pairs_types.StrategyType)
 		GetStage() pairs_types.StageType
 		SetStage(stage pairs_types.StageType)
 		GetPair() string

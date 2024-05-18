@@ -179,6 +179,11 @@ func (pr *Pairs) GetStrategy() StrategyType {
 	return pr.StrategyType
 }
 
+// SetStrategy implements Pairs.
+func (pr *Pairs) SetStrategy(strategy StrategyType) {
+	pr.StrategyType = strategy
+}
+
 // GetStage implements Pairs.
 func (pr *Pairs) GetStage() StageType {
 	return pr.StageType

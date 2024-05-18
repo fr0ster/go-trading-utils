@@ -41,7 +41,7 @@ func RunFuturesHolding(
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
-	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
+	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
@@ -56,6 +56,7 @@ func RunScalpingHolding(
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal) (err error) {
+	pair.SetStrategy(pairs_types.GridStrategyType)
 	return RunFuturesGridTrading(config, client, pair, stopEvent)
 }
 
@@ -71,7 +72,7 @@ func RunFuturesTrading(
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
-	if pair.GetStrategy() != pairs_types.TradingStrategyType {
+	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
@@ -86,7 +87,7 @@ func RunFuturesGridTrading(
 	client *futures.Client,
 	pair pairs_interfaces.Pairs,
 	stopEvent chan os.Signal) (err error) {
-	if pair.GetAccountType() != pairs_types.SpotAccountType {
+	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
