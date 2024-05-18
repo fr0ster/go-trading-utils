@@ -125,12 +125,12 @@ func (a *Account) GetSellerCommission() float64 {
 	panic("implement me")
 }
 
-func (a *Account) GetPositionRisk(symbol string) ([]*futures.PositionRisk, error) {
+func (a *Account) GetPositionRisk(symbol string) (*futures.PositionRisk, error) {
 	risk, err := a.client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	return risk, nil
+	return risk[0], nil
 }
 
 func (a *Account) GetPositionRisks() (res []*futures.PositionRisk, err error) {

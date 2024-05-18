@@ -125,20 +125,14 @@ func RunFuturesGridTrading(
 		pair.SetCurrentPositionBalance(pair.GetInitialPositionBalance())
 		config.Save()
 	}
-	getPosition := func() *futures.PositionRisk {
+	getPositionRisk := func() *futures.PositionRisk {
 		risks, err := pairStreams.GetAccount().GetPositionRisk(pair.GetPair())
 		if err != nil {
 			logrus.Errorf("Futures %s: %v\n", pair.GetPair(), err)
 			stopEvent <- os.Interrupt
 			return nil
 		}
-		if len(risks) != 0 {
-			return risks[0]
-		} else {
-			logrus.Errorf("Futures %s: Position not found\n", pair.GetPair())
-			stopEvent <- os.Interrupt
-			return nil
-		}
+		return risks
 	}
 	// Ініціалізація гріду
 	logrus.Debugf("Futures %s: Grid initialized\n", pair.GetPair())
@@ -150,14 +144,14 @@ func RunFuturesGridTrading(
 	}
 	// Отримання середньої ціни
 	price := pair.GetMiddlePrice()
-	if utils.ConvStrToFloat64(getPosition().EntryPrice) != 0 {
-		price = utils.ConvStrToFloat64(getPosition().EntryPrice)
+	if utils.ConvStrToFloat64(getPositionRisk().EntryPrice) != 0 {
+		price = utils.ConvStrToFloat64(getPositionRisk().EntryPrice)
 	}
 	if price == 0 {
 		stopEvent <- os.Interrupt
 		return fmt.Errorf("futures %s: We don`t have position and didn`t set Middle Price (we use it as EntryPrice) in Config", pair.GetPair())
 	}
-	quantity := utils.ConvStrToFloat64(getPosition().PositionAmt) * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
+	quantity := utils.ConvStrToFloat64(getPositionRisk().PositionAmt) * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
 	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()}); symbol != nil {
 		val, err := symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
 		if err != nil {
@@ -231,7 +225,7 @@ func RunFuturesGridTrading(
 				continue
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			if math.Abs(utils.ConvStrToFloat64(getPosition().PositionAmt)*utils.ConvStrToFloat64(getPosition().EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+			if math.Abs(utils.ConvStrToFloat64(getPositionRisk().PositionAmt)*utils.ConvStrToFloat64(getPositionRisk().EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				logrus.Debugf("Spot %s: Target value %v above limit %v\n", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
 				continue
 			}

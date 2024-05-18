@@ -59,14 +59,9 @@ func (pp *PairObserver) StartRiskSignal() chan bool {
 						pp.stop <- os.Interrupt
 						return
 					}
-					if len(riskPosition) != 1 {
-						logrus.Errorf("Can't get correct position risk: %v, spot strategy", riskPosition)
-						pp.stop <- os.Interrupt
-						return
-					}
-					if (utils.ConvStrToFloat64(riskPosition[0].MarkPrice) -
-						utils.ConvStrToFloat64(riskPosition[0].LiquidationPrice)/
-							utils.ConvStrToFloat64(riskPosition[0].MarkPrice)) < 0.1 {
+					if (utils.ConvStrToFloat64(riskPosition.MarkPrice) -
+						utils.ConvStrToFloat64(riskPosition.LiquidationPrice)/
+							utils.ConvStrToFloat64(riskPosition.MarkPrice)) < 0.1 {
 						logrus.Errorf("Risk position is too high: %v", riskPosition)
 						pp.stop <- os.Interrupt
 						return
