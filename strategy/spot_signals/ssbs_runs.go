@@ -12,8 +12,14 @@ import (
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
+	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+
+	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 const (
@@ -341,114 +347,218 @@ func RunSpotTrading(
 func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	degree int,
-	limit int,
 	pair pairs_interfaces.Pairs,
-	stopEvent chan os.Signal,
-	updateTime time.Duration,
-	debug bool) (err error) {
+	stopEvent chan os.Signal) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
+		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
 	if pair.GetStrategy() != pairs_types.GridStrategyType {
+		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
+		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
-
-	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
+	// Створюємо стрім подій
+	pairStreams, err := NewPairStreams(client, pair, false)
 	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+	if pair.GetInitialBalance() == 0 {
+		balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
+		pair.SetInitialBalance(balance)
+		config.Save()
+	}
+	if pair.GetInitialPositionBalance() == 0 {
+		pair.SetInitialPositionBalance(pair.GetInitialBalance() * pair.GetLimitOnPosition())
+		config.Save()
+	}
+	if pair.GetCurrentBalance() == 0 {
+		pair.SetCurrentBalance(pair.GetInitialBalance())
+		config.Save()
+	}
+	if pair.GetCurrentPositionBalance() == 0 {
+		pair.SetCurrentPositionBalance(pair.GetInitialPositionBalance())
+		config.Save()
+	}
+	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
+		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
+		pair.SetBuyQuantity(targetValue)
+		config.Save()
+	}
+	// Ініціалізація гріду
+	logrus.Debugf("Spot %s: Grid initialized\n", pair.GetPair())
+	grid := grid_types.New()
+	// Перевірка на коректність дельт
+	if pair.GetSellDelta() != pair.GetBuyDelta() {
+		stopEvent <- os.Interrupt
+		return fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
+	}
+	// Отримання середньої ціни
+	price := pair.GetMiddlePrice()
+	if price == 0 {
+		stopEvent <- os.Interrupt
+		return fmt.Errorf("spot %s: Middle price (Input Point) is 0", pair.GetPair())
+	}
+	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
+	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()}); symbol != nil {
+		val, err := symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
+		minNotional := utils.ConvStrToFloat64(val.NotionalFilter().MinNotional)
+		if quantity*price < minNotional {
+			quantity = minNotional / price
+		}
+	} else {
+		stopEvent <- os.Interrupt
+		return fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+	}
+	// Записуємо середню ціну в грід
+	grid.Set(grid_types.NewRecord(0, price, price*(1+pair.GetSellDelta()), price*(1-pair.GetBuyDelta()), types.SideTypeNone))
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+	// Створюємо ордери на продаж
+	logrus.Debugf("Spot %s: Sell order on price %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()))
+	sellOrder, err := pairProcessor.CreateOrder(
+		binance.OrderTypeLimit,        // orderType
+		binance.SideTypeSell,          // sideType
+		binance.TimeInForceTypeGTC,    // timeInForce
+		quantity,                      // quantity
+		0,                             // quantityQty
+		price*(1+pair.GetSellDelta()), // price
+		0,                             // stopPrice
+		0)                             // trailingDelta
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+	// Записуємо ордер в грід
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
+	// Створюємо ордер на купівлю
+	logrus.Debugf("Spot %s: Buy order on price %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()))
+	buyOrder, err := pairProcessor.CreateOrder(
+		binance.OrderTypeLimit,       // orderType
+		binance.SideTypeBuy,          // sideType
+		binance.TimeInForceTypeGTC,   // timeInForce
+		quantity,                     // quantity
+		0,                            // quantityQty
+		price*(1-pair.GetBuyDelta()), // price
+		0,                            // stopPrice
+		0)                            // trailingDelta
+	if err != nil {
+		stopEvent <- os.Interrupt
 		return
 	}
-
-	err = PairInit(client, config, account, pair)
-	if err != nil {
-		return err
-	}
-
-	RunConfigSaver(config, stopEvent, updateTime)
-
-	pairBookTickerObserver, err := NewPairBookTickersObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
-	if err != nil {
-		return err
-	}
-	pairObserver, err := NewPairObserver(client, pair, degree, limit, deltaUp, deltaDown, stopEvent)
-	if err != nil {
-		return err
-	}
-
-	buyEvent, sellEvent := pairBookTickerObserver.StartBuyOrSellSignal()
-
-	triggerEvent := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-stopEvent:
-				stopEvent <- os.Interrupt
-				return
-			case <-buyEvent:
-				triggerEvent <- true
-			case <-sellEvent:
-				triggerEvent <- true
+	// Записуємо ордер в грід
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
+	// Стартуємо обробку ордерів
+	logrus.Debugf("Spot %s: Start Order Processing\n", pair.GetPair())
+	event := pairProcessor.GetOrderStatusEvent()
+	for {
+		select {
+		case <-stopEvent:
+			stopEvent <- os.Interrupt
+			return
+		case event := <-event:
+			var (
+				upOrder  *grid_types.Record
+				lowOrder *grid_types.Record
+			)
+			logrus.Debugf("Spot %s: Order %v status %s\n", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
+			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
+			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderUpdate.Id}).(*grid_types.Record)
+			if !ok {
+				logrus.Errorf("Uncorrected order ID: %v\n", event.OrderUpdate.Id)
+				continue
+			}
+			logrus.Debugf("Spot %s: Read Order by ID %v from grid\n", pair.GetPair(), event.OrderUpdate.Id)
+			upOrder, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
+			if !ok {
+				if pair.GetUpBound() != 0 && price*(1+pair.GetSellDelta()) > pair.GetUpBound() {
+					logrus.Debugf("Spot %s: Price %v above upper bound %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+					continue
+				}
+				logrus.Debugf("Spot %s: Add order at price %v above upper bound %v\n", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				upOrder = grid_types.NewRecord(0, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell)
+				grid.Set(upOrder)
+			}
+			logrus.Debugf("Spot %s: Read Up Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			lowOrder, ok = grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
+			if !ok {
+				if pair.GetLowBound() != 0 && price*(1-pair.GetBuyDelta()) > pair.GetLowBound() {
+					logrus.Debugf("Spot %s: Price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
+					continue
+				}
+				logrus.Debugf("Spot %s: Add order at price %v below lower bound %v\n", pair.GetPair(), price*(1-pair.GetBuyDelta()), pair.GetLowBound())
+				lowOrder = grid_types.NewRecord(0, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy)
+				grid.Set(lowOrder)
+			}
+			logrus.Debugf("Spot %s: Read Low Order by price %v from grid\n", pair.GetPair(), order.GetPrice())
+			if upOrder.GetOrderId() == 0 || lowOrder.GetOrderId() == 0 {
+				logrus.Warnf("Spot %s: Order on price below and above hadn't been filled yet\n", pair.GetPair())
+				continue
+			}
+			// Виконаний ордер помічаємо як виконаний
+			logrus.Debugf("Spot %s: Executed Order %v marked as Filled\n", pair.GetPair(), order.GetOrderId())
+			order.SetOrderId(0)
+			order.SetOrderSide(types.SideTypeNone)
+			// Створюємо нові ордери
+			// Якщо на шабель вище ордер не розміщено , то створюємо ордер на продаж
+			if upOrder.GetOrderId() == 0 {
+				logrus.Debugf("Spot %s: Sell order on price %v\n", pair.GetPair(), upOrder.GetUpPrice())
+				sellOrder, err := pairProcessor.CreateOrder(
+					binance.OrderTypeLimit,     // orderType
+					binance.SideTypeSell,       // sideType
+					binance.TimeInForceTypeGTC, // timeInForce
+					quantity,                   // quantity
+					0,                          // quantityQty
+					upOrder.GetPrice(),         // price
+					0,                          // stopPrice
+					0)                          // trailingDelta
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return err
+				}
+				upOrder.SetOrderId(sellOrder.OrderID)
+				upOrder.SetOrderSide(types.SideTypeSell)
+			}
+			// Якщо на шабель нижче ордер не розміщено , то створюємо ордер на купівлю
+			if lowOrder.GetOrderId() == 0 {
+				logrus.Debugf("Spot %s: Buy order on price %v\n", pair.GetPair(), lowOrder.GetDownPrice())
+				buyOrder, err := pairProcessor.CreateOrder(
+					binance.OrderTypeLimit,     // orderType
+					binance.SideTypeBuy,        // sideType
+					binance.TimeInForceTypeGTC, // timeInForce
+					quantity,                   // quantity
+					0,                          // quantityQty
+					lowOrder.GetPrice(),        // price
+					0,                          // stopPrice
+					0)                          // trailingDelta
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return err
+				}
+				lowOrder.SetOrderId(buyOrder.OrderID)
+				lowOrder.SetOrderSide(types.SideTypeBuy)
 			}
 		}
-	}()
-
-	pairStream, err := NewPairStreams(client, pair, debug)
-	if err != nil {
-		return err
 	}
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
-	if err != nil {
-		return err
-	}
-
-	if !pairProcessor.CheckOrderType(binance.OrderTypeMarket) {
-		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeMarket)
-	}
-
-	if !pairProcessor.CheckOrderType(binance.OrderTypeTakeProfit) {
-		return fmt.Errorf("pair %v has wrong order type %v", pair.GetPair(), binance.OrderTypeTakeProfitLimit)
-	}
-
-	if pair.GetStage() == pairs_types.InputIntoPositionStage || pair.GetStage() == pairs_types.WorkInPositionStage {
-		_, err = pairProcessor.ProcessBuyOrder(buyEvent)
-		if err != nil {
-			return err
-		}
-		collectionOutEvent := pairObserver.StartWorkInPositionSignal(triggerEvent)
-		<-collectionOutEvent
-		pair.SetStage(pairs_types.OutputOfPositionStage) // В trading стратегії не спекулюємо, накопили позицію і закриваемо продажем лімітним ордером
-		config.Save()
-	}
-	if pair.GetStage() == pairs_types.OutputOfPositionStage {
-		pairProcessor.StopBuySignal() // Зупиняємо купівлю, продаємо поки є шо продавати
-		// TODO: Закриття позиції лімітним trailing ордером
-		quantity, err := GetTargetBalance(account, pair)
-		if err != nil {
-			return err
-		}
-		order, err := pairProcessor.CreateOrder(
-			binance.OrderTypeTakeProfitLimit,
-			binance.SideTypeSell,
-			binance.TimeInForceTypeGTC,
-			// STOP_LOSS_LIMIT/TAKE_PROFIT_LIMIT timeInForce, quantity, price, stopPrice or trailingDelta
-			quantity,
-			0,   // quantityQty
-			0,   // price
-			0,   // stopPrice
-			100) // trailingDelta
-		if err != nil {
-			return err
-		}
-		positionClosed := pairProcessor.OrderExecutionGuard(order) // Чекаємо на закриття позиції
-		<-positionClosed
-		pair.SetStage(pairs_types.PositionClosedStage)
-		config.Save()
-		stopEvent <- os.Interrupt
-	}
-	return nil
 }
 
 func Run(
@@ -462,49 +572,28 @@ func Run(
 	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
+		stopEvent <- os.Interrupt
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		RunSpotHolding(
-			config,
-			client,
-			degree,
-			limit,
-			pair,
-			stopEvent,
-			updateTime,
-			debug)
+		return RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		RunSpotScalping(
-			config,
-			client,
-			degree,
-			limit,
-			pair,
-			stopEvent,
-			updateTime,
-			debug)
+		return RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
+		return RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug)
 
-		RunSpotTrading(
-			config,
-			client,
-			degree,
-			limit,
-			pair,
-			stopEvent,
-			updateTime,
-			debug)
+		// Відпрацьовуємо Grid стратегію
+	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
+		return RunSpotGridTrading(config, client, pair, stopEvent)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
-		logrus.Warnf("Unknown strategy: %v", pair.GetStrategy())
 		stopEvent <- os.Interrupt
+		return fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
 	}
-	return nil
 }
