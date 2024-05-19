@@ -173,7 +173,7 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
-	initOrderInGrid := func(side futures.SideType, quantity float64) (err error) {
+	initOrderInGrid := func(side futures.SideType, quantity float64) (order *futures.CreateOrderResponse, err error) {
 		for {
 			order, err := pairProcessor.CreateOrder(
 				futures.OrderTypeLimit,        // orderType
@@ -185,34 +185,35 @@ func RunFuturesGridTrading(
 				0,                             // stopPrice
 				0)                             // callbackRate
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if order.Status != futures.OrderStatusTypeNew {
 				pair.SetBuyDelta(pair.GetBuyDelta() * 2)
 				pair.SetSellDelta(pair.GetSellDelta() * 2)
 				config.Save()
-				continue
 			} else {
-				// Записуємо ордер в грід
-				grid.Set(grid_types.NewRecord(order.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
 				break
 			}
 		}
-		return nil
+		return order, nil
 	}
 	// Створюємо ордери на продаж
-	err = initOrderInGrid(futures.SideTypeSell, quantity)
+	sellOrder, err := initOrderInGrid(futures.SideTypeSell, quantity)
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
+	// Записуємо ордер в грід
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
 	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 	// Створюємо ордер на купівлю
-	err = initOrderInGrid(futures.SideTypeSell, quantity)
+	buyOrder, err := initOrderInGrid(futures.SideTypeSell, quantity)
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
+	// Записуємо ордер в грід
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetSellDelta()), 0, price, types.SideTypeBuy))
 	logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	// Стартуємо обробку ордерів
 	grid.Debug("Futures Grid", pair.GetPair())
