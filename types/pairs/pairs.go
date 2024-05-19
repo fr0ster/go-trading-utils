@@ -257,6 +257,14 @@ func (pr *Pairs) GetSellValue() float64 {
 	return pr.SellValue
 }
 
+func (pr *Pairs) SetBuyDelta(delta float64) {
+	pr.BuyDelta = delta
+}
+
+func (pr *Pairs) SetSellDelta(delta float64) {
+	pr.SellDelta = delta
+}
+
 func (pr *Pairs) SetBuyQuantity(quantity float64) {
 	pr.BuyQuantity = quantity
 }

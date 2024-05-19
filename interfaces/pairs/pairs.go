@@ -49,6 +49,8 @@ type (
 		SetSellCommission(commission float64)
 		SetBuyData(quantity, value, commission float64)
 		SetSellData(quantity, value, commission float64)
+		SetBuyDelta(delta float64)
+		SetSellDelta(delta float64)
 		AddCommission(commission *binance.Fill)
 		GetCommission() pairs_types.Commission
 		SetCommission(commission pairs_types.Commission)

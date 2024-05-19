@@ -432,42 +432,49 @@ func RunSpotGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	initOrderInGrid := func(side binance.SideType, quantity float64) (err error) {
+		for {
+			order, err := pairProcessor.CreateOrder(
+				binance.OrderTypeLimit,        // orderType
+				side,                          // sideType
+				binance.TimeInForceTypeGTC,    // timeInForce
+				quantity,                      // quantity
+				0,                             // quantityQty
+				price*(1+pair.GetSellDelta()), // price
+				0,                             // stopPrice
+				0)                             // trailingDelta
+			if err != nil {
+				return err
+			}
+			if order.Status != binance.OrderStatusTypeNew {
+				pair.SetBuyDelta(pair.GetBuyDelta() * 2)
+				pair.SetSellDelta(pair.GetSellDelta() * 2)
+				config.Save()
+				continue
+			} else {
+				// Записуємо ордер в грід
+				grid.Set(grid_types.NewRecord(order.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
+				break
+			}
+		}
+		return nil
+	}
 	// Створюємо ордери на продаж
-	logrus.Debugf("Spot %s: Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
-	sellOrder, err := pairProcessor.CreateOrder(
-		binance.OrderTypeLimit,        // orderType
-		binance.SideTypeSell,          // sideType
-		binance.TimeInForceTypeGTC,    // timeInForce
-		quantity,                      // quantity
-		0,                             // quantityQty
-		price*(1+pair.GetSellDelta()), // price
-		0,                             // stopPrice
-		0)                             // trailingDelta
+	err = initOrderInGrid(binance.SideTypeSell, quantity)
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
-	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
+	logrus.Debugf("Spot %s: Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 	// Створюємо ордер на купівлю
-	logrus.Debugf("Spot %s: Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
-	buyOrder, err := pairProcessor.CreateOrder(
-		binance.OrderTypeLimit,       // orderType
-		binance.SideTypeBuy,          // sideType
-		binance.TimeInForceTypeGTC,   // timeInForce
-		quantity,                     // quantity
-		0,                            // quantityQty
-		price*(1-pair.GetBuyDelta()), // price
-		0,                            // stopPrice
-		0)                            // trailingDelta
+	err = initOrderInGrid(binance.SideTypeBuy, quantity)
 	if err != nil {
 		stopEvent <- os.Interrupt
-		return
+		return err
 	}
-	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
-	grid.Debug("Spots Grid", pair.GetPair())
+	logrus.Debugf("Spot %s: Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	// Стартуємо обробку ордерів
+	grid.Debug("Spots Grid", pair.GetPair())
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
 	for {
 		select {
