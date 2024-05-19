@@ -433,6 +433,11 @@ func RunSpotGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	_, err = pairProcessor.CancelAllOrders()
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	initOrderInGrid := func(side binance.SideType, quantity float64) (order *binance.CreateOrderResponse, err error) {
 		for {
 			order, err := pairProcessor.CreateOrder(

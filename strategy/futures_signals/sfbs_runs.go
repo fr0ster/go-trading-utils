@@ -174,6 +174,11 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	err = pairProcessor.CancelAllOrders()
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	initOrderInGrid := func(side futures.SideType, quantity float64) (order *futures.CreateOrderResponse, err error) {
 		for {
 			order, err := pairProcessor.CreateOrder(

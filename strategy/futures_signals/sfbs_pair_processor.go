@@ -177,6 +177,31 @@ func (pp *PairProcessor) CreateOrder(
 	return service.Do(context.Background())
 }
 
+func (pp *PairProcessor) ClosePosition() (res *futures.CreateOrderResponse, err error) {
+	var (
+		side = futures.SideTypeBuy
+	)
+	risk, err := pp.account.GetPositionRisk(pp.pair.GetPair())
+	if err != nil {
+		logrus.Errorf(errorMsg, err)
+		return
+	}
+	if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		side = futures.SideTypeSell
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		side = futures.SideTypeBuy
+	} else {
+		return
+	}
+	return pp.client.NewCreateOrderService().
+		Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
+		Type(futures.OrderTypeMarket).
+		Side(side).
+		StopPrice(risk.EntryPrice).
+		ClosePosition(true).
+		Do(context.Background())
+}
+
 func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *futures.CreateOrderResponse) {
 	if !pp.buyProcessRun {
 		if pp.buyEvent == nil {
