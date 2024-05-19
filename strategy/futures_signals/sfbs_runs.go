@@ -189,6 +189,7 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
 	// Створюємо ордер на купівлю
@@ -205,8 +206,16 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
+	if logrus.GetLevel() == logrus.DebugLevel {
+		grid.Descend(func(record btree.Item) bool {
+			order := record.(*grid_types.Record)
+			logrus.Debugf("Futures %s: Order %v on price %v OrderSide %v", pair.GetPair(), order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
+			return true
+		})
+	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
@@ -296,9 +305,9 @@ func RunFuturesGridTrading(
 				downOrder.SetOrderId(buyOrder.OrderID)
 				downOrder.SetOrderSide(types.SideTypeBuy)
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(60 * time.Second):
 			logrus.Debugf("Futures Grid %s:", pair.GetPair())
-			grid.Ascend(func(record btree.Item) bool {
+			grid.Descend(func(record btree.Item) bool {
 				order := record.(*grid_types.Record)
 				if order.GetOrderId() != 0 {
 					logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
