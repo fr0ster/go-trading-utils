@@ -149,8 +149,7 @@ func RunFuturesGridTrading(
 		price = utils.ConvStrToFloat64(getPositionRisk().EntryPrice)
 	}
 	if price == 0 {
-		stopEvent <- os.Interrupt
-		return fmt.Errorf("futures %s: We don`t have position and didn`t set Middle Price (we use it as EntryPrice) in Config", pair.GetPair())
+		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 	}
 	quantity := utils.ConvStrToFloat64(getPositionRisk().PositionAmt) * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
 	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()}); symbol != nil {

@@ -408,8 +408,7 @@ func RunSpotGridTrading(
 	// Отримання середньої ціни
 	price := pair.GetMiddlePrice()
 	if price == 0 {
-		stopEvent <- os.Interrupt
-		return fmt.Errorf("spot %s: Middle price (Input Point) is 0", pair.GetPair())
+		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
 	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()}); symbol != nil {
