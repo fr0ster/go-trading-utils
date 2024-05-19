@@ -192,10 +192,9 @@ func RunFuturesGridTrading(
 				pair.SetSellDelta(pair.GetSellDelta() * 2)
 				config.Save()
 			} else {
-				break
+				return order, nil
 			}
 		}
-		return order, nil
 	}
 	// Створюємо ордери на продаж
 	sellOrder, err := initOrderInGrid(futures.SideTypeSell, quantity)
