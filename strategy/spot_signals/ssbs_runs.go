@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2"
@@ -468,13 +467,7 @@ func RunSpotGridTrading(
 	}
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
-	if logrus.GetLevel() == logrus.DebugLevel {
-		grid.Descend(func(record btree.Item) bool {
-			order := record.(*grid_types.Record)
-			logrus.Debugf("Futures %s: Order %v on price %v OrderSide %v", pair.GetPair(), order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
-			return true
-		})
-	}
+	grid.Debug("Spots Grid", pair.GetPair())
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
 	for {
@@ -570,14 +563,7 @@ func RunSpotGridTrading(
 				lowOrder.SetOrderSide(types.SideTypeBuy)
 			}
 		case <-time.After(60 * time.Second):
-			logrus.Debugf("Spot Grid %s:", pair.GetPair())
-			grid.Descend(func(record btree.Item) bool {
-				order := record.(*grid_types.Record)
-				if order.GetOrderId() != 0 {
-					logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
-				}
-				return true
-			})
+			grid.Debug("Spots Grid", pair.GetPair())
 		}
 	}
 }

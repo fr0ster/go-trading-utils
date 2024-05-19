@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -209,13 +208,7 @@ func RunFuturesGridTrading(
 	logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1-pair.GetBuyDelta()), 0, price, types.SideTypeBuy))
-	if logrus.GetLevel() == logrus.DebugLevel {
-		grid.Descend(func(record btree.Item) bool {
-			order := record.(*grid_types.Record)
-			logrus.Debugf("Futures %s: Order %v on price %v OrderSide %v", pair.GetPair(), order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
-			return true
-		})
-	}
+	grid.Debug("Futures Grid", pair.GetPair())
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
@@ -306,14 +299,7 @@ func RunFuturesGridTrading(
 				downOrder.SetOrderSide(types.SideTypeBuy)
 			}
 		case <-time.After(60 * time.Second):
-			logrus.Debugf("Futures Grid %s:", pair.GetPair())
-			grid.Descend(func(record btree.Item) bool {
-				order := record.(*grid_types.Record)
-				if order.GetOrderId() != 0 {
-					logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
-				}
-				return true
-			})
+			grid.Debug("Futures Grid", pair.GetPair())
 		}
 	}
 }
