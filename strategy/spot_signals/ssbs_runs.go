@@ -461,14 +461,14 @@ func RunSpotGridTrading(
 			}
 		}
 	}
-	// Створюємо ордери на продаж
+	// Створюємо ордер на продаж
 	sellOrder, err := initOrderInGrid(binance.SideTypeSell, quantity, price*(1+pair.GetSellDelta()))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell))
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), 0, price, types.SideTypeSell))
 	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 	// Створюємо ордер на купівлю
 	buyOrder, err := initOrderInGrid(binance.SideTypeBuy, quantity, price*(1-pair.GetSellDelta()))
@@ -477,7 +477,7 @@ func RunSpotGridTrading(
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1+pair.GetSellDelta()), 0, price, types.SideTypeBuy))
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeBuy))
 	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
 	// Стартуємо обробку ордерів
 	grid.Debug("Spots Grid", pair.GetPair())
@@ -499,16 +499,28 @@ func RunSpotGridTrading(
 				logrus.Errorf("Uncorrected order ID: %v", event.OrderUpdate.Id)
 				continue
 			}
-			logrus.Debugf("Spot %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderUpdate.Id)
-			upOrder, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
-			if !ok {
-				if pair.GetUpBound() != 0 && price*(1+pair.GetSellDelta()) > pair.GetUpBound() {
-					logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
-					continue
+			if order.UpPrice != 0 { // Якщо ордер вище існує
+				logrus.Debugf("Spot %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderUpdate.Id)
+				upOrder, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
+				if ok {
+					if pair.GetUpBound() != 0 && price*(1+pair.GetSellDelta()) > pair.GetUpBound() {
+						logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+						continue
+					}
+					logrus.Debugf("Spot %s: Add order at price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+					upOrder = grid_types.NewRecord(0, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell)
+					grid.Set(upOrder)
 				}
-				logrus.Debugf("Spot %s: Add order at price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
-				upOrder = grid_types.NewRecord(0, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeSell)
-				grid.Set(upOrder)
+			} else {
+				// Створюємо ордер на продаж
+				sellOrder, err := initOrderInGrid(binance.SideTypeSell, quantity, price*(1+pair.GetSellDelta()))
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return err
+				}
+				// Записуємо ордер в грід
+				grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), 0, price, types.SideTypeSell))
+				logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), price*(1+pair.GetSellDelta()))
 			}
 			logrus.Debugf("Spot %s: Read Up Order by price %v from grid", pair.GetPair(), order.GetPrice())
 			lowOrder, ok = grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
