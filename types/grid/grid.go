@@ -29,6 +29,18 @@ func (g *Grid) Set(value btree.Item) {
 	g.tree.ReplaceOrInsert(value)
 }
 
+func (g *Grid) Delete(value btree.Item) {
+	g.tree.Delete(value)
+}
+
+func (g *Grid) Ascend(iter func(item btree.Item) bool) {
+	g.tree.Ascend(iter)
+}
+
+func (g *Grid) Descend(iter func(item btree.Item) bool) {
+	g.tree.Descend(iter)
+}
+
 func New() *Grid {
 	return &Grid{
 		tree: *btree.New(3),

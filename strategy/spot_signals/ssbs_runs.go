@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2"
@@ -561,6 +562,15 @@ func RunSpotGridTrading(
 				lowOrder.SetOrderId(buyOrder.OrderID)
 				lowOrder.SetOrderSide(types.SideTypeBuy)
 			}
+		case <-time.After(10 * time.Second):
+			logrus.Debugf("Spot Grid %s:", pair.GetPair())
+			grid.Ascend(func(record btree.Item) bool {
+				order := record.(*grid_types.Record)
+				if order.GetOrderId() != 0 {
+					logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
+				}
+				return true
+			})
 		}
 	}
 }
