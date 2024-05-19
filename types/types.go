@@ -10,5 +10,5 @@ const (
 	DepthSideBid DepthSide = "BID"
 	SideTypeBuy  OrderSide = "BUY"
 	SideTypeSell OrderSide = "SELL"
-	SideTypeNone OrderSide = ""
+	SideTypeNone OrderSide = "NONE"
 )

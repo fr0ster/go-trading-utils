@@ -151,7 +151,7 @@ func RunFuturesGridTrading(
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 	}
-	quantity := utils.ConvStrToFloat64(getPositionRisk().PositionAmt) * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
+	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction()
 	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()}); symbol != nil {
 		val, err := symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
 		if err != nil {
