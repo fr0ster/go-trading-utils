@@ -3,6 +3,7 @@ package spot_signals
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -544,42 +545,51 @@ func RunSpotGridTrading(
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, price*(1+pair.GetSellDelta()), price, 0, types.SideTypeBuy))
 	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), price*(1-pair.GetBuyDelta()))
+
 	// Стартуємо обробку ордерів
 	grid.Debug("Spots Grid", pair.GetPair())
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
+	mu := &sync.Mutex{}
 	for {
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			mu.Lock()
 			logrus.Debugf("Spot %s: Order %v status %s", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderUpdate.Id}).(*grid_types.Record)
 			if !ok {
 				logrus.Errorf("Uncorrected order ID: %v", event.OrderUpdate.Id)
+				mu.Unlock()
 				continue
 			}
 			order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 			order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
 			if pair.GetUpBound() != 0 && order.GetUpPrice() > pair.GetUpBound() {
 				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				mu.Unlock()
 				continue
 			}
 			err = processOrder(config, pairProcessor, pair, binance.SideTypeSell, grid, quantity, order.GetUpPrice(), order.GetPrice()*(1+pair.GetSellDelta()), stopEvent)
 			if err != nil {
+				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
 			if pair.GetLowBound() != 0 && order.GetDownPrice() < pair.GetLowBound() {
 				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				mu.Unlock()
 				continue
 			}
 			err = processOrder(config, pairProcessor, pair, binance.SideTypeBuy, grid, quantity, order.GetDownPrice(), order.GetPrice()*(1-pair.GetSellDelta()), stopEvent)
 			if err != nil {
+				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
+			mu.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Spots Grid", pair.GetPair())
 		}

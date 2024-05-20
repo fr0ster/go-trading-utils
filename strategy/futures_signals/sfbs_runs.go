@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -289,16 +290,19 @@ func RunFuturesGridTrading(
 	// Стартуємо обробку ордерів
 	grid.Debug("Futures Grid", pair.GetPair())
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
+	mu := &sync.Mutex{}
 	for {
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			mu.Lock()
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderTradeUpdate.ID}).(*grid_types.Record)
 			if !ok {
 				logrus.Errorf("Uncorrected order ID: %v", event.OrderTradeUpdate.ID)
+				mu.Unlock()
 				continue
 			}
 			order.SetOrderId(0)                    // Помічаємо ордер як виконаний
@@ -306,30 +310,37 @@ func RunFuturesGridTrading(
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
 			if val, err := getPositionRisk(pairStreams, pair); err == nil && math.Abs(utils.ConvStrToFloat64(val.PositionAmt)*utils.ConvStrToFloat64(val.EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				logrus.Debugf("Futures %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+				mu.Unlock()
 				continue
 			} else if err != nil {
+				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
 			logrus.Debugf("Futures %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderTradeUpdate.ID)
 			if pair.GetUpBound() != 0 && order.GetUpPrice() > pair.GetUpBound() {
 				logrus.Debugf("Futures %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				mu.Unlock()
 				continue
 			}
 			err = processOrder(config, pairProcessor, pair, futures.SideTypeSell, grid, quantity, order.GetUpPrice(), order.GetPrice()*(1+pair.GetSellDelta()), stopEvent)
 			if err != nil {
+				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
 			if pair.GetLowBound() != 0 && order.GetDownPrice() < pair.GetLowBound() {
 				logrus.Debugf("Futures %s: Price %v above upper bound %v", pair.GetPair(), price*(1+pair.GetSellDelta()), pair.GetUpBound())
+				mu.Unlock()
 				continue
 			}
 			err = processOrder(config, pairProcessor, pair, futures.SideTypeBuy, grid, quantity, order.GetDownPrice(), order.GetPrice()*(1-pair.GetSellDelta()), stopEvent)
 			if err != nil {
+				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
+			mu.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", pair.GetPair())
 		}
