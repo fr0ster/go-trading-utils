@@ -416,17 +416,17 @@ func processOrder(
 		}
 	} else { // Якщо запис вище не існує
 		// Створюємо ордер на продаж
-		sellOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, nonExistNextPrice)
+		nextOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, nonExistNextPrice)
 		if err != nil {
 			stopEvent <- os.Interrupt
 			return err
 		}
 		// Записуємо ордер в грід
-		grid.Set(grid_types.NewRecord(sellOrder.OrderID, nonExistNextPrice, 0, nonExistNextPrice, types.OrderSide(side)))
+		grid.Set(grid_types.NewRecord(nextOrder.OrderID, nonExistNextPrice, 0, nonExistNextPrice, types.OrderSide(side)))
 		if side == binance.SideTypeBuy {
-			logrus.Debugf("Spot %s: Add Buy order %v on price %v", pair.GetPair(), sellOrder.OrderID, nonExistNextPrice)
+			logrus.Debugf("Spot %s: Add Buy order %v on price %v", pair.GetPair(), nextOrder.OrderID, nonExistNextPrice)
 		} else {
-			logrus.Debugf("Spot %s: Add Sell order %v on price %v", pair.GetPair(), nextOrder.GetOrderId(), nonExistNextPrice)
+			logrus.Debugf("Spot %s: Add Sell order %v on price %v", pair.GetPair(), nextOrder.OrderID, nonExistNextPrice)
 		}
 	}
 	return
