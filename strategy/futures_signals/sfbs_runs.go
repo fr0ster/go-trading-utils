@@ -82,6 +82,11 @@ func RunFuturesTrading(
 	return fmt.Errorf("it hadn't been implemented yet")
 }
 
+func getPositionRisk(pairStreams *PairStreams, pair pairs_interfaces.Pairs) (risks *futures.PositionRisk, err error) {
+	risks, err = pairStreams.GetAccount().GetPositionRisk(pair.GetPair())
+	return
+}
+
 // Створення ордера для розміщення в грід
 func initOrderInGrid(
 	config *config_types.ConfigFile,
@@ -214,15 +219,6 @@ func RunFuturesGridTrading(
 		pair.SetCurrentPositionBalance(pair.GetInitialPositionBalance())
 		config.Save()
 	}
-	getPositionRisk := func() *futures.PositionRisk {
-		risks, err := pairStreams.GetAccount().GetPositionRisk(pair.GetPair())
-		if err != nil {
-			logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
-			stopEvent <- os.Interrupt
-			return nil
-		}
-		return risks
-	}
 	// Ініціалізація гріду
 	logrus.Debugf("Futures %s: Grid initialized", pair.GetPair())
 	grid := grid_types.New()
@@ -233,8 +229,13 @@ func RunFuturesGridTrading(
 	}
 	// Отримання середньої ціни
 	price := pair.GetMiddlePrice()
-	if utils.ConvStrToFloat64(getPositionRisk().EntryPrice) != 0 {
-		price = utils.ConvStrToFloat64(getPositionRisk().EntryPrice)
+	risk, err := getPositionRisk(pairStreams, pair)
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+	if entryPrice := utils.ConvStrToFloat64(risk.EntryPrice); entryPrice != 0 {
+		price = entryPrice
 	}
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
@@ -326,9 +327,12 @@ func RunFuturesGridTrading(
 			order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 			order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			if math.Abs(utils.ConvStrToFloat64(getPositionRisk().PositionAmt)*utils.ConvStrToFloat64(getPositionRisk().EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+			if val, err := getPositionRisk(pairStreams, pair); err == nil && math.Abs(utils.ConvStrToFloat64(val.PositionAmt)*utils.ConvStrToFloat64(val.EntryPrice)) > pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				logrus.Debugf("Futures %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
 				continue
+			} else if err != nil {
+				stopEvent <- os.Interrupt
+				return err
 			}
 			logrus.Debugf("Futures %s: Read Order by ID %v from grid", pair.GetPair(), event.OrderTradeUpdate.ID)
 			if pair.GetUpBound() != 0 && order.GetUpPrice() > pair.GetUpBound() {
