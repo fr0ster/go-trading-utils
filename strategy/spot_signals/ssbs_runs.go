@@ -377,58 +377,78 @@ func initOrderInGrid(
 	}
 }
 
+// Округлення ціни до TickSize знаків після коми
+func roundPrice(val float64, symbol *binance.Symbol) float64 {
+	exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
+	return utils.RoundToDecimalPlace(val, exp)
+}
+
 // Обробка ордерів після виконання ордера з гріду
 func processOrder(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
 	pair pairs_interfaces.Pairs,
+	symbol *binance.Symbol,
 	side binance.SideType,
 	grid *grid_types.Grid,
-	quantity float64,
-	existNextPrice,
-	nonExistNextPrice float64,
-	stopEvent chan os.Signal) (err error) {
+	order *grid_types.Record,
+	quantity float64) (err error) {
 	var (
-		nextOrder *grid_types.Record
+		nextPrice *grid_types.Record
+		nextOrder *binance.CreateOrderResponse
 		ok        bool
 	)
-	if existNextPrice != 0 { // Якщо запис вище існує ...
-		nextOrder, ok = grid.Get(&grid_types.Record{Price: existNextPrice}).(*grid_types.Record)
+	if (side == binance.SideTypeSell && order.GetUpPrice() != 0) || (side == binance.SideTypeBuy && order.GetDownPrice() != 0) { // Якщо наступний запис існує ...
+		if side == binance.SideTypeSell {
+			nextPrice, ok = grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
+		} else {
+			nextPrice, ok = grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
+		}
 		if ok {
-			if nextOrder.GetOrderId() == 0 { // ... і він не має ID ордера
-				// Створюємо ордер на продаж
-				sellOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, existNextPrice)
+			if nextPrice.GetOrderId() == 0 { // ... і він не має ID ордера
+				// Створюємо ордер на продаж чи купівлю
+				if side == binance.SideTypeSell {
+					nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, order.GetUpPrice())
+				} else {
+					nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, order.GetDownPrice())
+				}
 				if err != nil {
-					stopEvent <- os.Interrupt
 					return err
 				}
 				// Записуємо номер ордера в грід
-				nextOrder.SetOrderId(sellOrder.OrderID)
-				nextOrder.SetOrderSide(types.OrderSide(side))
-				grid.Set(nextOrder)
+				nextPrice.SetOrderId(nextOrder.OrderID)
+				grid.Set(nextPrice)
+				nextPrice.SetOrderSide(types.OrderSide(side))
 				if side == binance.SideTypeBuy {
-					logrus.Debugf("Spot %s: Set Buy order %v on price %v", pair.GetPair(), nextOrder.GetOrderId(), existNextPrice)
+					logrus.Debugf("Spots %s: Set Buy order %v on price %v", pair.GetPair(), nextPrice.GetOrderId(), order.GetUpPrice())
 				} else {
-					logrus.Debugf("Spot %s: Set Sell order %v on price %v", pair.GetPair(), nextOrder.GetOrderId(), existNextPrice)
+					logrus.Debugf("Spots %s: Set Sell order %v on price %v", pair.GetPair(), nextPrice.GetOrderId(), order.GetDownPrice())
 				}
 			} else {
-				stopEvent <- os.Interrupt
-				return fmt.Errorf("spot %s: Order on price above hadn't been filled yet", pair.GetPair())
+				return fmt.Errorf("spots %s: Order on price above hadn't been filled yet", pair.GetPair())
 			}
 		}
-	} else { // Якщо запис вище не існує
-		// Створюємо ордер на продаж
-		nextOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, nonExistNextPrice)
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
-		// Записуємо ордер в грід
-		grid.Set(grid_types.NewRecord(nextOrder.OrderID, nonExistNextPrice, 0, nonExistNextPrice, types.OrderSide(side)))
-		if side == binance.SideTypeBuy {
-			logrus.Debugf("Spot %s: Add Buy order %v on price %v", pair.GetPair(), nextOrder.OrderID, nonExistNextPrice)
+	} else if (side == binance.SideTypeSell && order.GetUpPrice() == 0) || (side == binance.SideTypeBuy && order.GetDownPrice() == 0) { // Якщо запис вище не існує
+		if side == binance.SideTypeSell {
+			// Створюємо ордер на продаж
+			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
+			nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, price)
+			if err != nil {
+				return err
+			}
+			// Записуємо ордер в грід
+			grid.Set(grid_types.NewRecord(nextOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(side)))
+			logrus.Debugf("Spots %s: Add Sell order %v on price %v", pair.GetPair(), nextOrder.OrderID, price)
 		} else {
-			logrus.Debugf("Spot %s: Add Sell order %v on price %v", pair.GetPair(), nextOrder.OrderID, nonExistNextPrice)
+			// Створюємо ордер на продаж
+			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), symbol)
+			nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, price)
+			if err != nil {
+				return err
+			}
+			// Записуємо ордер в грід
+			grid.Set(grid_types.NewRecord(nextOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(side)))
+			logrus.Debugf("Spots %s: Add Buy order %v on price %v", pair.GetPair(), nextOrder.OrderID, price)
 		}
 	}
 	return
@@ -574,27 +594,20 @@ func RunSpotGridTrading(
 			}
 			order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 			order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
-			if pair.GetUpBound() != 0 && order.GetUpPrice() > pair.GetUpBound() {
-				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta())), pair.GetUpBound())
-				mu.Unlock()
-				continue
-			}
-			err = processOrder(config, pairProcessor, pair, binance.SideTypeSell, grid, quantity, order.GetUpPrice(), roundPrice(order.GetPrice()*(1+pair.GetSellDelta())), stopEvent)
-			if err != nil {
-				mu.Unlock()
-				stopEvent <- os.Interrupt
-				return err
-			}
-			if pair.GetLowBound() != 0 && order.GetDownPrice() < pair.GetLowBound() {
-				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta())), pair.GetUpBound())
-				mu.Unlock()
-				continue
-			}
-			err = processOrder(config, pairProcessor, pair, binance.SideTypeBuy, grid, quantity, order.GetDownPrice(), roundPrice(order.GetPrice()*(1-pair.GetBuyDelta())), stopEvent)
-			if err != nil {
-				mu.Unlock()
-				stopEvent <- os.Interrupt
-				return err
+			if event.OrderUpdate.Side == string(binance.SideTypeBuy) {
+				err = processOrder(config, pairProcessor, pair, symbol, binance.SideTypeSell, grid, order, quantity)
+				if err != nil {
+					mu.Unlock()
+					stopEvent <- os.Interrupt
+					return err
+				}
+			} else {
+				err = processOrder(config, pairProcessor, pair, symbol, binance.SideTypeBuy, grid, order, quantity)
+				if err != nil {
+					mu.Unlock()
+					stopEvent <- os.Interrupt
+					return err
+				}
 			}
 			mu.Unlock()
 		case <-time.After(60 * time.Second):
