@@ -174,6 +174,9 @@ func processOrder(
 		if side == futures.SideTypeSell {
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
+			if price > pair.GetUpBound() {
+				return fmt.Errorf("futures %s: Price %v above up bound %v", pair.GetPair(), price, pair.GetUpBound())
+			}
 			nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, price)
 			// Записуємо ордер в грід
 			grid.Set(grid_types.NewRecord(nextOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(side)))
@@ -181,6 +184,9 @@ func processOrder(
 		} else {
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), symbol)
+			if price < pair.GetLowBound() {
+				return fmt.Errorf("futures %s: Price %v below down bound %v", pair.GetPair(), price, pair.GetLowBound())
+			}
 			nextOrder, err = initOrderInGrid(config, pairProcessor, pair, side, quantity, price)
 			// Записуємо ордер в грід
 			grid.Set(grid_types.NewRecord(nextOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(side)))
