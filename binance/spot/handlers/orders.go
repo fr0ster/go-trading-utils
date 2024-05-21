@@ -7,7 +7,7 @@ import (
 func GetChangingOfOrdersGuard(
 	source chan *binance.WsUserDataEvent,
 	statuses []binance.OrderStatusType) (out chan *binance.WsUserDataEvent) {
-	out = make(chan *binance.WsUserDataEvent, 1)
+	out = make(chan *binance.WsUserDataEvent)
 	go func() {
 		for {
 			event := <-source

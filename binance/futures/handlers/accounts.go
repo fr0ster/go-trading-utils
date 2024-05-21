@@ -10,7 +10,7 @@ import (
 func GetAccountInfoGuard(
 	account *futures_account.Account,
 	source chan *futures.WsUserDataEvent) (out chan *futures.WsUserDataEvent) {
-	out = make(chan *futures.WsUserDataEvent, 1)
+	out = make(chan *futures.WsUserDataEvent)
 	go func() {
 		for {
 			event := <-source
