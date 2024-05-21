@@ -2,6 +2,7 @@ package spot_signals
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"sync"
 	"time"
@@ -494,25 +495,28 @@ func RunSpotGridTrading(
 		stopEvent <- os.Interrupt
 		return fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
 	}
+	symbol, err := func() (res *binance.Symbol, err error) {
+		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()})
+		if val == nil {
+			return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+		}
+		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
+	}()
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	// Отримання середньої ціни
-	price := pair.GetMiddlePrice()
+	exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
+	price := utils.RoundToDecimalPlace(pair.GetMiddlePrice(), exp)
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+		price = utils.RoundToDecimalPlace(price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()}); symbol != nil {
-		val, err := symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
-		minNotional := utils.ConvStrToFloat64(val.NotionalFilter().MinNotional)
-		if quantity*price < minNotional {
-			quantity = minNotional / price
-		}
-	} else {
-		stopEvent <- os.Interrupt
-		return fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+	minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
+	if quantity*price < minNotional {
+		quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 	}
 	// Записуємо середню ціну в грід
 	grid.Set(grid_types.NewRecord(0, price, price*(1+pair.GetSellDelta()), price*(1-pair.GetBuyDelta()), types.SideTypeNone))

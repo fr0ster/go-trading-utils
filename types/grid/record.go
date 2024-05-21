@@ -16,7 +16,7 @@ type (
 )
 
 func (g *Record) Less(other btree.Item) bool {
-	return (g.Price != 0 && g.Price < other.(*Record).Price) || (g.Price == 0 && g.OrderId < other.(*Record).OrderId)
+	return (g.Price != 0 && g.Price < other.(*Record).Price)
 }
 
 func (g *Record) Equals(other btree.Item) bool {

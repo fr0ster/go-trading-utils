@@ -131,27 +131,27 @@ func processOrder(
 	nonExistNextPrice float64,
 	stopEvent chan os.Signal) (err error) {
 	var (
-		nextOrder *grid_types.Record
+		nextPrice *grid_types.Record
 		ok        bool
 	)
-	if existNextPrice != 0 { // Якщо запис вище існує ...
-		nextOrder, ok = grid.Get(&grid_types.Record{Price: existNextPrice}).(*grid_types.Record)
+	if existNextPrice != 0 { // Якщо наступний запис існує ...
+		nextPrice, ok = grid.Get(&grid_types.Record{Price: existNextPrice}).(*grid_types.Record)
 		if ok {
-			if nextOrder.GetOrderId() == 0 { // ... і він не має ID ордера
-				// Створюємо ордер на продаж
-				sellOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, existNextPrice)
+			if nextPrice.GetOrderId() == 0 { // ... і він не має ID ордера
+				// Створюємо ордер на продаж чи купівлю
+				nextOrder, err := initOrderInGrid(config, pairProcessor, pair, side, quantity, existNextPrice)
 				if err != nil {
 					stopEvent <- os.Interrupt
 					return err
 				}
 				// Записуємо номер ордера в грід
-				nextOrder.SetOrderId(sellOrder.OrderID)
-				grid.Set(nextOrder)
-				nextOrder.SetOrderSide(types.OrderSide(side))
+				nextPrice.SetOrderId(nextOrder.OrderID)
+				grid.Set(nextPrice)
+				nextPrice.SetOrderSide(types.OrderSide(side))
 				if side == futures.SideTypeBuy {
-					logrus.Debugf("Futures %s: Set Buy order %v on price %v", pair.GetPair(), nextOrder.GetOrderId(), existNextPrice)
+					logrus.Debugf("Futures %s: Set Buy order %v on price %v", pair.GetPair(), nextPrice.GetOrderId(), existNextPrice)
 				} else {
-					logrus.Debugf("Futures %s: Set Sell order %v on price %v", pair.GetPair(), nextOrder.GetOrderId(), existNextPrice)
+					logrus.Debugf("Futures %s: Set Sell order %v on price %v", pair.GetPair(), nextPrice.GetOrderId(), existNextPrice)
 				}
 			} else {
 				stopEvent <- os.Interrupt
@@ -228,33 +228,36 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return fmt.Errorf("futures %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
 	}
+	symbol, err := func() (res *futures.Symbol, err error) {
+		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()})
+		if val == nil {
+			return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+		}
+		return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
+	}()
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	// Отримання середньої ціни
-	price := pair.GetMiddlePrice()
+	exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
+	price := utils.RoundToDecimalPlace(pair.GetMiddlePrice(), exp)
 	risk, err := getPositionRisk(pairStreams, pair)
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
 	if entryPrice := utils.ConvStrToFloat64(risk.EntryPrice); entryPrice != 0 {
-		price = entryPrice
+		price = entryPrice // Ціна позиції вже округлена до symbol.LotSizeFilter().StepSize
 	}
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+		price = utils.RoundToDecimalPlace(price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-	if symbol := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()}); symbol != nil {
-		val, err := symbol.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
-		minNotional := utils.ConvStrToFloat64(val.MinNotionalFilter().Notional)
-		if quantity*price < minNotional {
-			quantity = minNotional / price
-		}
-	} else {
-		stopEvent <- os.Interrupt
-		return fmt.Errorf("futures %s: Symbol not found", pair.GetPair())
+	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+	if quantity*price < minNotional {
+		quantity = minNotional / price
 	}
 	// Записуємо середню ціну в грід
 	grid.Set(grid_types.NewRecord(0, price, price*(1+pair.GetSellDelta()), price*(1-pair.GetBuyDelta()), types.SideTypeNone))

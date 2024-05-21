@@ -28,12 +28,36 @@ func TestGridOverTree(t *testing.T) {
 		assert.Equal(t, 0.0, raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeBuy, raw.(*grid.Record).GetOrderSide())
 	}
-	raw = tree.Get(&grid.Record{OrderId: 13})
+	raw = tree.Get(&grid.Record{Price: 20.5})
+	if raw != nil {
+		assert.Equal(t, int64(0), raw.(*grid.Record).GetOrderId())
+		assert.Equal(t, 20.5, raw.(*grid.Record).GetPrice())
+		assert.Equal(t, 25.5, raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, 15.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, types.SideTypeNone, raw.(*grid.Record).GetOrderSide())
+	}
+	raw = tree.Get(&grid.Record{Price: 30.5})
 	if raw != nil {
 		assert.Equal(t, int64(13), raw.(*grid.Record).GetOrderId())
 		assert.Equal(t, 30.5, raw.(*grid.Record).GetPrice())
 		assert.Equal(t, 0.0, raw.(*grid.Record).GetUpPrice())
 		assert.Equal(t, 25.5, raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeSell, raw.(*grid.Record).GetOrderSide())
+	}
+	raw = tree.Get(&grid.Record{Price: 25.5})
+	if raw != nil {
+		assert.Equal(t, int64(7), raw.(*grid.Record).GetOrderId())
+		assert.Equal(t, 25.5, raw.(*grid.Record).GetPrice())
+		assert.Equal(t, 30.5, raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, 20.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, types.SideTypeSell, raw.(*grid.Record).GetOrderSide())
+	}
+	raw = tree.Get(&grid.Record{Price: 15.5})
+	if raw != nil {
+		assert.Equal(t, int64(4), raw.(*grid.Record).GetOrderId())
+		assert.Equal(t, 15.5, raw.(*grid.Record).GetPrice())
+		assert.Equal(t, 20.5, raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, 10.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, types.SideTypeBuy, raw.(*grid.Record).GetOrderSide())
 	}
 }
