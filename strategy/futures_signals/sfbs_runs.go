@@ -241,7 +241,7 @@ func RunFuturesGridTrading(
 	}
 	// Отримання середньої ціни
 	round := func(val float64) float64 {
-		exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
+		exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
 		return utils.RoundToDecimalPlace(val, exp)
 	}
 	price := round(pair.GetMiddlePrice())
