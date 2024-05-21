@@ -302,7 +302,7 @@ func RunFuturesGridTrading(
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
-			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderTradeUpdate.ID}).(*grid_types.Record)
+			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
 				logrus.Errorf("Uncorrected order ID: %v", event.OrderTradeUpdate.ID)
 				mu.Unlock()

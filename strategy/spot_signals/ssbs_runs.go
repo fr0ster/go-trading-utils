@@ -563,7 +563,7 @@ func RunSpotGridTrading(
 			mu.Lock()
 			logrus.Debugf("Spot %s: Order %v status %s", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
-			order, ok := grid.Get(&grid_types.Record{OrderId: event.OrderUpdate.Id}).(*grid_types.Record)
+			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
 			if !ok {
 				logrus.Errorf("Uncorrected order ID: %v", event.OrderUpdate.Id)
 				mu.Unlock()
