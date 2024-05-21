@@ -507,14 +507,14 @@ func RunSpotGridTrading(
 		return err
 	}
 	// Отримання середньої ціни
-	round := func(val float64) float64 {
+	roundPrice := func(val float64) float64 {
 		exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
 		return utils.RoundToDecimalPlace(val, exp)
 	}
-	price := round(pair.GetMiddlePrice())
+	price := roundPrice(pair.GetMiddlePrice())
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-		price = round(price)
+		price = roundPrice(price)
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
 	minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
@@ -522,7 +522,7 @@ func RunSpotGridTrading(
 		quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 	}
 	// Записуємо середню ціну в грід
-	grid.Set(grid_types.NewRecord(0, price, round(price*(1+pair.GetSellDelta())), round(price*(1-pair.GetBuyDelta())), types.SideTypeNone))
+	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta())), roundPrice(price*(1-pair.GetBuyDelta())), types.SideTypeNone))
 	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
 	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
 	if err != nil {
@@ -535,23 +535,23 @@ func RunSpotGridTrading(
 		return err
 	}
 	// Створюємо ордер на продаж
-	sellOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta())))
+	sellOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta())))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), 0, price, types.SideTypeSell))
-	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta())))
+	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta())))
 	// Створюємо ордер на купівлю
-	buyOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta())))
+	buyOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta())))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, round(price*(1-pair.GetSellDelta())), price, 0, types.SideTypeBuy))
-	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta())))
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta())), price, 0, types.SideTypeBuy))
+	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta())))
 
 	// Стартуємо обробку ордерів
 	grid.Debug("Spots Grid", pair.GetPair())
@@ -575,22 +575,22 @@ func RunSpotGridTrading(
 			order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 			order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
 			if pair.GetUpBound() != 0 && order.GetUpPrice() > pair.GetUpBound() {
-				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), round(price*(1+pair.GetSellDelta())), pair.GetUpBound())
+				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta())), pair.GetUpBound())
 				mu.Unlock()
 				continue
 			}
-			err = processOrder(config, pairProcessor, pair, binance.SideTypeSell, grid, quantity, order.GetUpPrice(), round(order.GetPrice()*(1+pair.GetSellDelta())), stopEvent)
+			err = processOrder(config, pairProcessor, pair, binance.SideTypeSell, grid, quantity, order.GetUpPrice(), roundPrice(order.GetPrice()*(1+pair.GetSellDelta())), stopEvent)
 			if err != nil {
 				mu.Unlock()
 				stopEvent <- os.Interrupt
 				return err
 			}
 			if pair.GetLowBound() != 0 && order.GetDownPrice() < pair.GetLowBound() {
-				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta())), pair.GetUpBound())
+				logrus.Debugf("Spot %s: Price %v above upper bound %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta())), pair.GetUpBound())
 				mu.Unlock()
 				continue
 			}
-			err = processOrder(config, pairProcessor, pair, binance.SideTypeBuy, grid, quantity, order.GetDownPrice(), round(order.GetPrice()*(1-pair.GetBuyDelta())), stopEvent)
+			err = processOrder(config, pairProcessor, pair, binance.SideTypeBuy, grid, quantity, order.GetDownPrice(), roundPrice(order.GetPrice()*(1-pair.GetBuyDelta())), stopEvent)
 			if err != nil {
 				mu.Unlock()
 				stopEvent <- os.Interrupt
