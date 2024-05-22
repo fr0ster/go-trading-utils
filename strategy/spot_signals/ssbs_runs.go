@@ -416,6 +416,8 @@ func processOrder(
 			if err != nil {
 				return err
 			}
+			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
+			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Spots %s: Set Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, order.GetDownPrice())
 		}
 	} else if side == binance.SideTypeBuy {
@@ -427,6 +429,8 @@ func processOrder(
 			if err != nil {
 				return err
 			}
+			upPrice.SetOrderId(upOrder.OrderID)     // Записуємо номер ордера в грід
+			upPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Spots %s: Set Sell order %v on price %v", pair.GetPair(), upOrder.OrderID, order.GetUpPrice())
 		}
 		if order.GetDownPrice() == 0 { // Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
