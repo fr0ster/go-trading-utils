@@ -446,7 +446,7 @@ func processOrder(
 			}
 			logrus.Debugf("Spots %s: Add Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, price)
 			// Записуємо ордер в грід
-			grid.Set(grid_types.NewRecord(downOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(binance.SideTypeBuy)))
+			grid.Set(grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy)))
 			order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
 		}
 	}
