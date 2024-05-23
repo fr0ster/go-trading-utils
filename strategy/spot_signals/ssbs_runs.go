@@ -476,6 +476,12 @@ func RunSpotGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	// Створюємо обробник пари
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	if pair.GetInitialBalance() == 0 {
 		balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 		if err != nil {
@@ -543,11 +549,6 @@ func RunSpotGridTrading(
 	// Записуємо середню ціну в грід
 	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta())), roundPrice(price*(1-pair.GetBuyDelta())), types.SideTypeNone))
 	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
-	if err != nil {
-		stopEvent <- os.Interrupt
-		return err
-	}
 	_, err = pairProcessor.CancelAllOrders()
 	if err != nil {
 		stopEvent <- os.Interrupt

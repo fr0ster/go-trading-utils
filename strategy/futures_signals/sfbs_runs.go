@@ -233,6 +233,12 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return
 	}
+	// Створюємо обробник пари
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
 	if pair.GetInitialBalance() == 0 {
 		balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 		if err != nil {
@@ -275,7 +281,7 @@ func RunFuturesGridTrading(
 	}
 	// Отримання середньої ціни
 	price := roundPrice(pair.GetMiddlePrice(), symbol)
-	risk, err := getPositionRisk(pairStreams, pair)
+	risk, err := pairProcessor.GetPositionRisk()
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
@@ -295,11 +301,7 @@ func RunFuturesGridTrading(
 	// Записуємо середню ціну в грід
 	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta()), symbol), roundPrice(price*(1-pair.GetBuyDelta()), symbol), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pair.GetPair(), price)
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
-	if err != nil {
-		stopEvent <- os.Interrupt
-		return err
-	}
+
 	if pair.GetMarginType() == "" {
 		logrus.Debugf("Futures %s set MarginType %v from account into config", pair.GetPair(), pairProcessor.GetMarginType())
 		pair.SetMarginType(pairProcessor.GetMarginType())
