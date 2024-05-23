@@ -2,7 +2,6 @@ package pairs
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/adshao/go-binance/v2"
 
@@ -70,7 +69,7 @@ type (
 
 		// Для USDT_FUTURE/COIN_FUTURE
 		MarginType MarginType `json:"margin_type"` // Тип маржі
-		Leverage   string     `json:"leverage"`    // Маржинальне плече
+		Leverage   int        `json:"leverage"`    // Маржинальне плече
 
 		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
 		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
@@ -231,13 +230,12 @@ func (pr *Pairs) SetMarginType(marginType MarginType) {
 
 // SetMarginType implements Pairs.
 func (pr *Pairs) GetLeverage() int {
-	leverage, _ := strconv.Atoi(pr.Leverage)
-	return leverage
+	return pr.Leverage
 }
 
 // SetLeverage implements Pairs.
 func (pr *Pairs) SetLeverage(leverage int) {
-	pr.Leverage = strconv.Itoa(leverage)
+	pr.Leverage = leverage
 }
 
 func (pr *Pairs) GetLimitInputIntoPosition() float64 {

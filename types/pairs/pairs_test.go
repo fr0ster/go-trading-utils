@@ -19,7 +19,7 @@ func getTestData() *btree.BTree {
 		TargetSymbol:           "BTC",
 		BaseSymbol:             "USDT",
 		MarginType:             pairs_types.CrossMarginType,
-		Leverage:               "20",
+		Leverage:               20,
 		InitialBalance:         1000.0,
 		InitialPositionBalance: 900.0,
 		MiddlePrice:            50000.0,
@@ -48,7 +48,7 @@ func getTestData() *btree.BTree {
 		TargetSymbol:           "BTC",
 		BaseSymbol:             "USDT",
 		MarginType:             pairs_types.CrossMarginType,
-		Leverage:               "20",
+		Leverage:               20,
 		InitialBalance:         1000.0,
 		InitialPositionBalance: 900.0,
 		MiddlePrice:            50000.0,
@@ -118,7 +118,7 @@ func assertPair(
 	assert.Equal(t, pairs_types.CrossMarginType, pair.GetMarginType())
 
 	// Test GetLeverage
-	assert.Equal(t, int64(20), pair.GetLeverage())
+	assert.Equal(t, 20, pair.GetLeverage())
 
 	// Test GetLimitInputIntoPosition
 	assert.Equal(t, 0.5, pair.GetLimitInputIntoPosition())

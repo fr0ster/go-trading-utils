@@ -36,7 +36,7 @@ const (
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
-	Leverage_1   = "20"                        // Плече 20
+	Leverage_1   = 20                          // Плече 20
 
 	AccountType_1                = pairs_types.SpotAccountType        // Тип акаунта
 	StrategyType_1               = pairs_types.HoldingStrategyType    // Тип стратегії
@@ -81,7 +81,7 @@ const (
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
-	Leverage_2   = "10"                           // Плече 10
+	Leverage_2   = 10                             // Плече 10
 
 	AccountType_2   = pairs_types.USDTFutureType      // Тип акаунта
 	StrategyType_2  = pairs_types.TradingStrategyType // Тип стратегії
@@ -260,7 +260,7 @@ func getTestData() []byte {
 					"target_symbol": "` + TargetSymbol_1 + `",
 					"base_symbol": "` + BaseSymbol_1 + `",
 					"margin_type": "` + string(MarginType_1) + `",
-					"leverage": "` + Leverage_1 + `",
+					"leverage": ` + strconv.Itoa(Leverage_1) + `,
 					"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
 					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_1, 'f', -1, 64)).String() + `,
@@ -302,8 +302,7 @@ func getTestData() []byte {
 					"target_symbol": "` + TargetSymbol_2 + `",
 					"base_symbol": "` + BaseSymbol_2 + `",
 					"margin_type": "` + string(MarginType_2) + `",
-					"leverage": "` + Leverage_2 + `",
-					"leverage": "10",
+					"leverage": ` + strconv.Itoa(Leverage_2) + `,
 					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
 					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_2, 'f', -1, 64)).String() + `,
 					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
