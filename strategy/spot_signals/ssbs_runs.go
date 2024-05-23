@@ -596,6 +596,7 @@ func RunSpotGridTrading(
 			err = processOrder(config, pairProcessor, pair, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 			if err != nil {
 				mu.Unlock()
+				pairProcessor.CancelAllOrders()
 				stopEvent <- os.Interrupt
 				return err
 			}
