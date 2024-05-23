@@ -2,6 +2,7 @@ package pairs
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/adshao/go-binance/v2"
 
@@ -15,11 +16,11 @@ import (
 const (
 	// SpotAccountType is a constant for spot account type.
 	// SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE
-	SpotAccountType    AccountType = "SPOT"
-	MarginAccountType  AccountType = "MARGIN"
-	IsolatedMarginType AccountType = "ISOLATED_MARGIN"
-	USDTFutureType     AccountType = "USDT_FUTURE"
-	CoinFutureType     AccountType = "COIN_FUTURE"
+	SpotAccountType           AccountType = "SPOT"
+	MarginAccountType         AccountType = "MARGIN"
+	IsolatedMarginAccountType AccountType = "ISOLATED_MARGIN"
+	USDTFutureType            AccountType = "USDT_FUTURE"
+	CoinFutureType            AccountType = "COIN_FUTURE"
 	// SpotStrategyType is a constant for spot strategy type.
 	// HOLDING - Накопичуємо цільовий токен
 	// SCALPING - Купуємо/продаемо цільовий токен за базовий
@@ -44,12 +45,17 @@ const (
 	WorkInPositionStage    StageType = "WORK_IN_POSITION"
 	OutputOfPositionStage  StageType = "OUTPUT_OF_POSITION"
 	PositionClosedStage    StageType = "CLOSED"
+
+	// Для USDT_FUTURE/COIN_FUTURE
+	CrossMarginType    MarginType = "CROSS"
+	IsolatedMarginType MarginType = "ISOLATED"
 )
 
 type (
 	AccountType  string
 	StrategyType string
 	StageType    string
+	MarginType   string
 	Commission   map[string]float64
 	Pairs        struct {
 		Connection *connection_types.Connection `json:"connection"`
@@ -61,6 +67,10 @@ type (
 		Pair         string `json:"symbol"`        // Пара
 		TargetSymbol string `json:"target_symbol"` // Цільовий токен
 		BaseSymbol   string `json:"base_symbol"`   // Базовий токен
+
+		// Для USDT_FUTURE/COIN_FUTURE
+		MarginType MarginType `json:"margin_type"` // Тип маржі
+		Leverage   string     `json:"leverage"`    // Маржинальне плече
 
 		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
 		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
@@ -207,6 +217,27 @@ func (pr *Pairs) GetTargetSymbol() string {
 // GetBaseSymbol implements config.Configuration.
 func (pr *Pairs) GetBaseSymbol() string {
 	return pr.BaseSymbol
+}
+
+// GetMarginType implements Pairs.
+func (pr *Pairs) GetMarginType() MarginType {
+	return pr.MarginType
+}
+
+// SetMarginType implements pairs.Pairs.
+func (pr *Pairs) SetMarginType(marginType MarginType) {
+	pr.MarginType = marginType
+}
+
+// SetMarginType implements Pairs.
+func (pr *Pairs) GetLeverage() int {
+	leverage, _ := strconv.Atoi(pr.Leverage)
+	return leverage
+}
+
+// SetLeverage implements Pairs.
+func (pr *Pairs) SetLeverage(leverage int) {
+	pr.Leverage = strconv.Itoa(leverage)
 }
 
 func (pr *Pairs) GetLimitInputIntoPosition() float64 {

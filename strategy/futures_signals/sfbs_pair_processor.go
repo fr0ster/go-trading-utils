@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -706,6 +707,38 @@ func (pp *PairProcessor) GetUserDataEvent() chan *futures.WsUserDataEvent {
 
 func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
 	return pp.orderStatusEvent
+}
+
+func (pp *PairProcessor) GetPositionRisk() (risks *futures.PositionRisk, err error) {
+	risks, err = pp.account.GetPositionRisk(pp.pair.GetPair())
+	return
+}
+
+func (pp *PairProcessor) GetLeverage() int {
+	risk, _ := pp.GetPositionRisk()
+	leverage, _ := strconv.Atoi(risk.Leverage) // Convert string to int
+	return leverage
+}
+
+func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage, err error) {
+	return pp.client.NewChangeLeverageService().Symbol(pp.pair.GetPair()).Leverage(leverage).Do(context.Background())
+}
+
+// MarginTypeIsolated MarginType = "ISOLATED"
+// MarginTypeCrossed  MarginType = "CROSSED"
+func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
+	risk, _ := pp.GetPositionRisk()
+	return pairs_types.MarginType(risk.MarginType)
+}
+
+// MarginTypeIsolated MarginType = "ISOLATED"
+// MarginTypeCrossed  MarginType = "CROSSED"
+func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err error) {
+	return pp.client.
+		NewChangeMarginTypeService().
+		Symbol(pp.pair.GetPair()).
+		MarginType(futures.MarginType(marginType)).
+		Do(context.Background())
 }
 
 func NewPairProcessor(

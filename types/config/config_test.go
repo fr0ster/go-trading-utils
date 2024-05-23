@@ -34,6 +34,10 @@ const (
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
+	// Для USDT_FUTURE/COIN_FUTURE
+	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
+	Leverage_1   = "20"                        // Плече 20
+
 	AccountType_1                = pairs_types.SpotAccountType        // Тип акаунта
 	StrategyType_1               = pairs_types.HoldingStrategyType    // Тип стратегії
 	StageType_1                  = pairs_types.InputIntoPositionStage // Стадія стратегії
@@ -74,6 +78,10 @@ const (
 
 	FuturesCommissionMaker = 0.002 // Комісія за мейкером
 	FuturesCommissionTaker = 0.005 // Комісія за тейкером
+
+	// Для USDT_FUTURE/COIN_FUTURE
+	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
+	Leverage_2   = "10"                           // Плече 10
 
 	AccountType_2   = pairs_types.USDTFutureType      // Тип акаунта
 	StrategyType_2  = pairs_types.TradingStrategyType // Тип стратегії
@@ -162,6 +170,8 @@ var (
 		Pair:                   Pair_1,
 		TargetSymbol:           TargetSymbol_1,
 		BaseSymbol:             BaseSymbol_1,
+		MarginType:             MarginType_1,
+		Leverage:               Leverage_1,
 		MiddlePrice:            MiddlePrice_1,
 		LimitInputIntoPosition: LimitInputIntoPosition_1,
 		LimitOutputOfPosition:  LimitOutputOfPosition_1,
@@ -191,6 +201,8 @@ var (
 		Pair:                   Pair_2,
 		TargetSymbol:           TargetSymbol_2,
 		BaseSymbol:             BaseSymbol_2,
+		MarginType:             MarginType_2,
+		Leverage:               Leverage_2,
 		MiddlePrice:            MiddlePrice_2,
 		LimitInputIntoPosition: LimitInputIntoPosition_2,
 		LimitOutputOfPosition:  LimitOutputOfPosition_2,
@@ -247,6 +259,8 @@ func getTestData() []byte {
 					"symbol": "` + Pair_1 + `",
 					"target_symbol": "` + TargetSymbol_1 + `",
 					"base_symbol": "` + BaseSymbol_1 + `",
+					"margin_type": "` + string(MarginType_1) + `",
+					"leverage": "` + Leverage_1 + `",
 					"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
 					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_1, 'f', -1, 64)).String() + `,
@@ -287,6 +301,9 @@ func getTestData() []byte {
 					"symbol": "` + Pair_2 + `",
 					"target_symbol": "` + TargetSymbol_2 + `",
 					"base_symbol": "` + BaseSymbol_2 + `",
+					"margin_type": "` + string(MarginType_2) + `",
+					"leverage": "` + Leverage_2 + `",
+					"leverage": "10",
 					"middle_price": ` + json.Number(strconv.FormatFloat(MiddlePrice_2, 'f', -1, 64)).String() + `,
 					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_2, 'f', -1, 64)).String() + `,
 					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
@@ -331,29 +348,39 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetCurrentBalance(), config.GetPair(Pair_1).GetCurrentBalance())
+
 	assert.Equal(t, (*checkingDate)[0].GetInitialPositionBalance(), config.GetPair(Pair_1).GetInitialPositionBalance())
 	assert.Equal(t, (*checkingDate)[0].GetCurrentPositionBalance(), config.GetPair(Pair_1).GetCurrentPositionBalance())
+
 	assert.Equal(t, (*checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
 	assert.Equal(t, (*checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
 	assert.Equal(t, (*checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
+
 	assert.Equal(t, (*checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
 	assert.Equal(t, (*checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetMarginType(), config.GetPair(Pair_1).GetMarginType())
+	assert.Equal(t, (*checkingDate)[0].GetLeverage(), config.GetPair(Pair_1).GetLeverage())
+
 	assert.Equal(t, (*checkingDate)[0].GetMiddlePrice(), config.GetPair(Pair_1).GetMiddlePrice())
 	assert.Equal(t, (*checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnPosition(), config.GetPair(Pair_1).GetLimitOnPosition())
 	assert.Equal(t, (*checkingDate)[0].GetLimitOnTransaction(), config.GetPair(Pair_1).GetLimitOnTransaction())
+
 	assert.Equal(t, (*checkingDate)[0].GetUpBound(), config.GetPair(Pair_1).GetUpBound())
 	assert.Equal(t, (*checkingDate)[0].GetLowBound(), config.GetPair(Pair_1).GetLowBound())
+
 	assert.Equal(t, (*checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[0].GetBuyQuantity(), config.GetPair(Pair_1).GetBuyQuantity())
 	assert.Equal(t, (*checkingDate)[0].GetBuyValue(), config.GetPair(Pair_1).GetBuyValue())
 	assert.Equal(t, (*checkingDate)[0].GetBuyCommission(), config.GetPair(Pair_1).GetBuyCommission())
+
 	assert.Equal(t, (*checkingDate)[0].GetSellDelta(), config.GetPair(Pair_1).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[0].GetSellQuantity(), config.GetPair(Pair_1).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
 	assert.Equal(t, (*checkingDate)[0].GetSellCommission(), config.GetPair(Pair_1).GetSellCommission())
+
 	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
 
 	assert.Equal(t, (*checkingDate)[1].GetConnection().GetAPIKey(), config.GetPair(Pair_2).GetConnection().GetAPIKey())
@@ -364,31 +391,39 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 
 	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[1].GetCurrentBalance(), config.GetPair(Pair_2).GetCurrentBalance())
+
 	assert.Equal(t, (*checkingDate)[1].GetInitialPositionBalance(), config.GetPair(Pair_2).GetInitialPositionBalance())
 	assert.Equal(t, (*checkingDate)[1].GetCurrentPositionBalance(), config.GetPair(Pair_2).GetCurrentPositionBalance())
+
 	assert.Equal(t, (*checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
 	assert.Equal(t, (*checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
 	assert.Equal(t, (*checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
+
 	assert.Equal(t, (*checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
 	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
+	assert.Equal(t, (*checkingDate)[0].GetMarginType(), config.GetPair(Pair_1).GetMarginType())
+	assert.Equal(t, (*checkingDate)[0].GetLeverage(), config.GetPair(Pair_1).GetLeverage())
+
 	assert.Equal(t, (*checkingDate)[1].GetMiddlePrice(), config.GetPair(Pair_2).GetMiddlePrice())
 	assert.Equal(t, (*checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnPosition(), config.GetPair(Pair_2).GetLimitOnPosition())
-	assert.Equal(t, (*checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
-	assert.Equal(t, (*checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
 	assert.Equal(t, (*checkingDate)[1].GetLimitOnTransaction(), config.GetPair(Pair_2).GetLimitOnTransaction())
+
 	assert.Equal(t, (*checkingDate)[1].GetUpBound(), config.GetPair(Pair_2).GetUpBound())
 	assert.Equal(t, (*checkingDate)[1].GetLowBound(), config.GetPair(Pair_2).GetLowBound())
+
 	assert.Equal(t, (*checkingDate)[1].GetBuyDelta(), config.GetPair(Pair_2).GetBuyDelta())
 	assert.Equal(t, (*checkingDate)[1].GetBuyQuantity(), config.GetPair(Pair_2).GetBuyQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetBuyValue(), config.GetPair(Pair_2).GetBuyValue())
 	assert.Equal(t, (*checkingDate)[1].GetBuyCommission(), config.GetPair(Pair_2).GetBuyCommission())
+
 	assert.Equal(t, (*checkingDate)[1].GetSellDelta(), config.GetPair(Pair_2).GetSellDelta())
 	assert.Equal(t, (*checkingDate)[1].GetSellQuantity(), config.GetPair(Pair_2).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetSellValue(), config.GetPair(Pair_2).GetSellValue())
 	assert.Equal(t, (*checkingDate)[1].GetSellCommission(), config.GetPair(Pair_2).GetSellCommission())
+
 	assert.Equal(t, (*checkingDate)[1].GetCommission(), Commission)
 
 }

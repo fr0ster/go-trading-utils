@@ -287,7 +287,7 @@ func RunFuturesGridTrading(
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = roundPrice(price, symbol)
 	}
-	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
+	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 	if quantity*price < minNotional {
 		quantity = minNotional / price
@@ -299,6 +299,24 @@ func RunFuturesGridTrading(
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
+	}
+	if pair.GetMarginType() == "" {
+		logrus.Debugf("Futures %s set MarginType %v from account into config", pair.GetPair(), pairProcessor.GetMarginType())
+		pair.SetMarginType(pairProcessor.GetMarginType())
+	} else {
+		logrus.Debugf("Futures %s set MarginType %v from config into account", pair.GetPair(), pair.GetMarginType())
+		if pair.GetMarginType() != pairProcessor.GetMarginType() {
+			pairProcessor.SetMarginType(pair.GetMarginType())
+		}
+	}
+	if pair.GetLeverage() == 0 {
+		logrus.Debugf("Futures %s Sel Leverage %v from account into config", pair.GetPair(), pairProcessor.GetLeverage())
+		pair.SetLeverage(pairProcessor.GetLeverage())
+	} else {
+		if pair.GetLeverage() != pairProcessor.GetLeverage() {
+			logrus.Debugf("Futures %s Sel Leverage %v from config into account", pair.GetPair(), pair.GetLeverage())
+			pairProcessor.SetLeverage(pair.GetLeverage())
+		}
 	}
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
