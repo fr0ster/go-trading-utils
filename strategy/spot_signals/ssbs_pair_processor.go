@@ -814,13 +814,9 @@ func NewPairProcessor(
 	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
 	pp.LimitUpdaterStream()
 
-	// Визначаємо статуси ордерів які нас цікавлять
-	orderStatuses := []binance.OrderStatusType{
-		binance.OrderStatusTypeFilled,
-		binance.OrderStatusTypePartiallyFilled,
-	}
-	// Запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, orderStatuses)
+	// Визначаємо статуси ордерів які нас цікавлять ...
+	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
+	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, binance.OrderStatusTypeFilled)
 
 	return
 }

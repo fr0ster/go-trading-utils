@@ -31,7 +31,8 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	outChannel :=
 		spot_handlers.GetChangingOfOrdersGuard(
 			inChannel,
-			append([]binance.OrderStatusType{binance.OrderStatusTypeFilled}, binance.OrderStatusTypeFilled))
+			binance.OrderStatusTypeFilled,
+			binance.OrderStatusTypePartiallyFilled)
 	inChannel <- even
 	res := false
 	for {

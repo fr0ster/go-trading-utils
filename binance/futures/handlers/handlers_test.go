@@ -36,7 +36,8 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 	outChannel :=
 		futures_handlers.GetChangingOfOrdersGuard(
 			inChannel,
-			append([]futures.OrderStatusType{futures.OrderStatusTypeFilled}, futures.OrderStatusTypePartiallyFilled))
+			futures.OrderStatusTypeFilled,
+			futures.OrderStatusTypePartiallyFilled)
 	inChannel <- even
 	res := false
 	for {

@@ -6,7 +6,7 @@ import (
 
 func GetChangingOfOrdersGuard(
 	source chan *futures.WsUserDataEvent,
-	statuses []futures.OrderStatusType) (out chan *futures.WsUserDataEvent) {
+	statuses ...futures.OrderStatusType) (out chan *futures.WsUserDataEvent) {
 	out = make(chan *futures.WsUserDataEvent)
 	go func() {
 		for {
