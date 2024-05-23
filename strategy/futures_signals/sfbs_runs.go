@@ -265,8 +265,8 @@ func RunFuturesGridTrading(
 		pair.SetMarginType(pairProcessor.GetMarginType())
 		config.Save()
 	} else {
-		logrus.Debugf("Futures %s set MarginType %v from config into account", pair.GetPair(), pair.GetMarginType())
 		if pair.GetMarginType() != pairProcessor.GetMarginType() {
+			logrus.Debugf("Futures %s set MarginType %v from config into account", pair.GetPair(), pair.GetMarginType())
 			pairProcessor.SetMarginType(pair.GetMarginType())
 		}
 	}
