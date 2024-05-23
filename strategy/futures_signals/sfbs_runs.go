@@ -260,6 +260,24 @@ func RunFuturesGridTrading(
 		pair.SetCurrentPositionBalance(pair.GetInitialPositionBalance())
 		config.Save()
 	}
+	if pair.GetMarginType() == "" {
+		logrus.Debugf("Futures %s set MarginType %v from account into config", pair.GetPair(), pairProcessor.GetMarginType())
+		pair.SetMarginType(pairProcessor.GetMarginType())
+	} else {
+		logrus.Debugf("Futures %s set MarginType %v from config into account", pair.GetPair(), pair.GetMarginType())
+		if pair.GetMarginType() != pairProcessor.GetMarginType() {
+			pairProcessor.SetMarginType(pair.GetMarginType())
+		}
+	}
+	if pair.GetLeverage() == 0 {
+		logrus.Debugf("Futures %s Sel Leverage %v from account into config", pair.GetPair(), pairProcessor.GetLeverage())
+		pair.SetLeverage(pairProcessor.GetLeverage())
+	} else {
+		if pair.GetLeverage() != pairProcessor.GetLeverage() {
+			logrus.Debugf("Futures %s Sel Leverage %v from config into account", pair.GetPair(), pair.GetLeverage())
+			pairProcessor.SetLeverage(pair.GetLeverage())
+		}
+	}
 	// Ініціалізація гріду
 	logrus.Debugf("Futures %s: Grid initialized", pair.GetPair())
 	grid := grid_types.New()
@@ -302,24 +320,6 @@ func RunFuturesGridTrading(
 	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta()), symbol), roundPrice(price*(1-pair.GetBuyDelta()), symbol), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pair.GetPair(), price)
 
-	if pair.GetMarginType() == "" {
-		logrus.Debugf("Futures %s set MarginType %v from account into config", pair.GetPair(), pairProcessor.GetMarginType())
-		pair.SetMarginType(pairProcessor.GetMarginType())
-	} else {
-		logrus.Debugf("Futures %s set MarginType %v from config into account", pair.GetPair(), pair.GetMarginType())
-		if pair.GetMarginType() != pairProcessor.GetMarginType() {
-			pairProcessor.SetMarginType(pair.GetMarginType())
-		}
-	}
-	if pair.GetLeverage() == 0 {
-		logrus.Debugf("Futures %s Sel Leverage %v from account into config", pair.GetPair(), pairProcessor.GetLeverage())
-		pair.SetLeverage(pairProcessor.GetLeverage())
-	} else {
-		if pair.GetLeverage() != pairProcessor.GetLeverage() {
-			logrus.Debugf("Futures %s Sel Leverage %v from config into account", pair.GetPair(), pair.GetLeverage())
-			pairProcessor.SetLeverage(pair.GetLeverage())
-		}
-	}
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
 		stopEvent <- os.Interrupt
