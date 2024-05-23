@@ -142,8 +142,8 @@ func processOrder(
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
 			// Знаходимо дані про позицію
 			val, err := getPositionRisk(pairStreams, pair)
-			if err == nil {
-				return fmt.Errorf("futures %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+			if err != nil {
+				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
 			positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
@@ -188,8 +188,8 @@ func processOrder(
 			price := roundPrice(order.GetPrice()*(1-pair.GetSellDelta()), symbol)
 			// Знаходимо дані про позицію
 			val, err := getPositionRisk(pairStreams, pair)
-			if err == nil {
-				return fmt.Errorf("futures %s: Target value %v above limit %v", pair.GetPair(), pair.GetBuyQuantity()*pair.GetBuyValue()-pair.GetSellQuantity()*pair.GetSellValue(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+			if err != nil {
+				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
 			positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
@@ -345,6 +345,7 @@ func RunFuturesGridTrading(
 			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, event.OrderTradeUpdate.Side, grid, order, quantity)
 			if err != nil {
 				mu.Unlock()
+				pairProcessor.CancelAllOrders()
 				stopEvent <- os.Interrupt
 				return err
 			}
