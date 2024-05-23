@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -728,7 +729,7 @@ func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage,
 // MarginTypeCrossed  MarginType = "CROSSED"
 func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
 	risk, _ := pp.GetPositionRisk()
-	return pairs_types.MarginType(risk.MarginType)
+	return pairs_types.MarginType(strings.ToUpper(risk.MarginType))
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"

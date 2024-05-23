@@ -2,6 +2,7 @@ package pairs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/adshao/go-binance/v2"
 
@@ -225,7 +226,7 @@ func (pr *Pairs) GetMarginType() MarginType {
 
 // SetMarginType implements pairs.Pairs.
 func (pr *Pairs) SetMarginType(marginType MarginType) {
-	pr.MarginType = marginType
+	pr.MarginType = MarginType(strings.ToUpper(string(marginType)))
 }
 
 // SetMarginType implements Pairs.
