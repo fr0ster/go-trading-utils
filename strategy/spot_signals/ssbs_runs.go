@@ -397,17 +397,16 @@ func processOrder(
 		if order.GetUpPrice() == 0 { // Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
-			if pair.GetUpBound() != 0 && price > pair.GetUpBound() {
-				return fmt.Errorf("spots %s: Price %v below low bound %v", pair.GetPair(), price, pair.GetLowBound())
+			if pair.GetUpBound() == 0 || price <= pair.GetUpBound() {
+				upOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeSell, quantity, price)
+				if err != nil {
+					return err
+				}
+				logrus.Debugf("Spots %s: Add Sell order %v on price %v", pair.GetPair(), upOrder.OrderID, price)
+				// Записуємо ордер в грід
+				grid.Set(grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(side)))
+				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
 			}
-			upOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeSell, quantity, price)
-			if err != nil {
-				return err
-			}
-			logrus.Debugf("Spots %s: Add Sell order %v on price %v", pair.GetPair(), upOrder.OrderID, price)
-			// Записуємо ордер в грід
-			grid.Set(grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(side)))
-			order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель нижче
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
@@ -437,17 +436,16 @@ func processOrder(
 		if order.GetDownPrice() == 0 { // Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
 			// Створюємо ордер на купівлю
 			price := roundPrice(order.GetPrice()*(1-pair.GetSellDelta()), symbol)
-			if pair.GetLowBound() != 0 && price < pair.GetLowBound() {
-				return fmt.Errorf("spots %s: Price %v below low bound %v", pair.GetPair(), price, pair.GetLowBound())
+			if pair.GetLowBound() == 0 || price >= pair.GetLowBound() {
+				downOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeBuy, quantity, price)
+				if err != nil {
+					return err
+				}
+				logrus.Debugf("Spots %s: Add Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, price)
+				// Записуємо ордер в грід
+				grid.Set(grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy)))
+				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
 			}
-			downOrder, err := initOrderInGrid(config, pairProcessor, pair, binance.SideTypeBuy, quantity, price)
-			if err != nil {
-				return err
-			}
-			logrus.Debugf("Spots %s: Add Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, price)
-			// Записуємо ордер в грід
-			grid.Set(grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy)))
-			order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
 		}
 	}
 	order.SetOrderId(0)                    // Помічаємо ордер як виконаний
