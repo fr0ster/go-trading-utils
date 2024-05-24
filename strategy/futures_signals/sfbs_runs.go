@@ -151,7 +151,8 @@ func processOrder(
 				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
+			// positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
+			positionVal := math.Abs(utils.ConvStrToFloat64(val.UnRealizedProfit))
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && positionVal <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				upOrder, err := initOrderInGrid(config, pairProcessor, pair, futures.SideTypeSell, quantity, price)
 				if err != nil {
@@ -211,7 +212,8 @@ func processOrder(
 				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
 			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
+			// positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
+			positionVal := math.Abs(utils.ConvStrToFloat64(val.UnRealizedProfit))
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) && positionVal <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				downOrder, err := initOrderInGrid(config, pairProcessor, pair, futures.SideTypeBuy, quantity, price)
 				if err != nil {
