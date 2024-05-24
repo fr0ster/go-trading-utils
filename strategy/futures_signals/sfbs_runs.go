@@ -295,25 +295,20 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+	pair.SetCurrentBalance(balance)
+	pair.SetCurrentPositionBalance(pair.GetCurrentBalance() * pair.GetLimitOnPosition())
+	config.Save()
 	if pair.GetInitialBalance() == 0 {
-		balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
 		pair.SetInitialBalance(balance)
 		config.Save()
 	}
 	if pair.GetInitialPositionBalance() == 0 {
-		pair.SetInitialPositionBalance(pair.GetInitialBalance() * pair.GetLimitOnPosition())
-		config.Save()
-	}
-	if pair.GetCurrentBalance() == 0 {
-		pair.SetCurrentBalance(pair.GetInitialBalance())
-		config.Save()
-	}
-	if pair.GetCurrentPositionBalance() == 0 {
-		pair.SetCurrentPositionBalance(pair.GetInitialPositionBalance())
+		pair.SetInitialPositionBalance(pair.GetCurrentPositionBalance())
 		config.Save()
 	}
 	if pair.GetMarginType() == "" {
