@@ -584,7 +584,13 @@ func RunSpotGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
-			logrus.Debugf("Spot %s: Order %v status %s", pair.GetPair(), event.OrderUpdate.Id, event.OrderUpdate.Status)
+			logrus.Debugf("Spots %s: Order %v on price %v side %v status %s",
+				pair.GetPair(),
+				event.OrderUpdate.Id,
+				event.OrderUpdate.Price,
+				event.OrderUpdate.Side,
+				event.OrderUpdate.Status)
+			grid.Debug("Spots Grid", pair.GetPair())
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
 			if !ok {

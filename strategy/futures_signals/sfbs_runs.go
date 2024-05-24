@@ -356,7 +356,13 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
-			logrus.Debugf("Futures %s: Order %v status %s", pair.GetPair(), event.OrderTradeUpdate.ID, event.OrderTradeUpdate.Status)
+			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
+				pair.GetPair(),
+				event.OrderTradeUpdate.ID,
+				event.OrderTradeUpdate.OriginalPrice,
+				event.OrderTradeUpdate.Side,
+				event.OrderTradeUpdate.Status)
+			grid.Debug("Futures Grid", pair.GetPair())
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
