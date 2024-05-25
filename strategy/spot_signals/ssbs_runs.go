@@ -407,7 +407,8 @@ func processOrder(
 				if err != nil {
 					return err
 				}
-				logrus.Debugf("Spots %s: Add Sell order %v on price %v", pair.GetPair(), upOrder.OrderID, price)
+				logrus.Debugf("Spots %s: Set Sell order %v on price %v status %v",
+					pair.GetPair(), upOrder.OrderID, price, upOrder.Status)
 				// Записуємо ордер в грід
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(binance.SideTypeSell))
 				grid.Set(upPrice)
@@ -428,7 +429,8 @@ func processOrder(
 			}
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
-			logrus.Debugf("Spots %s: Set Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, order.GetDownPrice())
+			logrus.Debugf("Spots %s: Set Buy order %v on price %v status %v",
+				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
 			if downOrder.Status != binance.OrderStatusTypeNew {
 				takerPrice = downPrice
 				takerOrder = downOrder
@@ -460,7 +462,7 @@ func processOrder(
 				if err != nil {
 					return err
 				}
-				logrus.Debugf("Spots %s: Add Buy order %v on price %v", pair.GetPair(), downOrder.OrderID, price)
+				logrus.Debugf("Spots %s: Add Buy order %v on price %v status %v", pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
 				// Записуємо ордер в грід
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy))
 				grid.Set(downPrice)
@@ -485,7 +487,8 @@ func processOrder(
 			}
 			upPrice.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
 			upPrice.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
-			logrus.Debugf("Spots %s: Set Sell order %v on price %v", pair.GetPair(), upOrder.OrderID, order.GetUpPrice())
+			logrus.Debugf("Spots %s: Set Sell order %v on price %v status %v",
+				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status)
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний

@@ -156,6 +156,7 @@ func (pp *PairProcessor) CreateOrder(
 	)
 	service :=
 		pp.client.NewCreateOrderService().
+			NewOrderRespType(binance.NewOrderRespTypeRESULT).
 			Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
 			Type(orderType).
 			Side(sideType)

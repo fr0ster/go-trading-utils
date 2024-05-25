@@ -138,6 +138,7 @@ func (pp *PairProcessor) CreateOrder(
 	)
 	service :=
 		pp.client.NewCreateOrderService().
+			NewOrderResponseType(futures.NewOrderRespTypeRESULT).
 			Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
 			Type(orderType).
 			Side(sideType)
