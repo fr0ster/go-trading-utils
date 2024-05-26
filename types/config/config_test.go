@@ -141,25 +141,17 @@ var (
 		CommissionTaker: FuturesCommissionTaker,
 	}
 	config = &config_types.Configs{
-		SpotConnection: &connection_types.Connection{
+		Connection: &connection_types.Connection{
 			APIKey:          SpotAPIKey,
 			APISecret:       SpotAPISecret,
 			UseTestNet:      SpotUseTestNet,
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		FuturesConnection: &connection_types.Connection{
-			APIKey:          FuturesAPIKey,
-			APISecret:       FuturesAPISecret,
-			UseTestNet:      FuturesUseTestNet,
-			CommissionMaker: FuturesCommissionMaker,
-			CommissionTaker: FuturesCommissionTaker,
-		},
 		LogLevel: InfoLevel,
 		Pairs:    btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		Connection:             &connection_types.Connection{},
 		InitialBalance:         InitialBalance,
 		CurrentBalance:         CurrentBalance,
 		InitialPositionBalance: InitialPositionBalance_1,
@@ -190,7 +182,6 @@ var (
 		Commission:             Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
-		Connection:             &connection_types.Connection{},
 		InitialBalance:         InitialBalance,
 		CurrentBalance:         CurrentBalance,
 		InitialPositionBalance: InitialPositionBalance_2,
@@ -225,30 +216,16 @@ var (
 func getTestData() []byte {
 	return []byte(
 		`{
-			"spot_connection": {
+			"connection": {
 				"api_key": "` + SpotAPIKey + `",
 				"api_secret": "` + SpotAPISecret + `",
 				"use_test_net": ` + strconv.FormatBool(SpotUseTestNet) + `,
 				"commission_maker": ` + json.Number(strconv.FormatFloat(SpotCommissionMaker, 'f', -1, 64)).String() + `,
 				"commission_taker": ` + json.Number(strconv.FormatFloat(SpotCommissionTaker, 'f', -1, 64)).String() + `
 			},
-			"futures_connection": {
-				"api_key": "` + FuturesAPIKey + `",
-				"api_secret": "` + FuturesAPISecret + `",
-				"use_test_net": ` + strconv.FormatBool(FuturesUseTestNet) + `,
-				"commission_maker": ` + json.Number(strconv.FormatFloat(FuturesCommissionMaker, 'f', -1, 64)).String() + `,
-				"commission_taker": ` + json.Number(strconv.FormatFloat(FuturesCommissionTaker, 'f', -1, 64)).String() + `
-			},
 			"log_level": "` + InfoLevel.String() + `",
 			"pairs": [
 				{
-					"connection": {
-						"api_key": "` + SpotAPIKey + `",
-						"api_secret": "` + SpotAPISecret + `",
-						"use_test_net": ` + strconv.FormatBool(SpotUseTestNet) + `,
-						"commission_maker": ` + json.Number(strconv.FormatFloat(SpotCommissionMaker, 'f', -1, 64)).String() + `,
-						"commission_taker": ` + json.Number(strconv.FormatFloat(SpotCommissionTaker, 'f', -1, 64)).String() + `
-					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
 					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_1, 'f', -1, 64)).String() + `,
@@ -284,13 +261,6 @@ func getTestData() []byte {
 					}
 				},
 				{
-					"connection": {
-						"api_key": "` + FuturesAPIKey + `",
-						"api_secret": "` + FuturesAPISecret + `",
-						"use_test_net": ` + strconv.FormatBool(FuturesUseTestNet) + `,
-						"commission_maker": ` + json.Number(strconv.FormatFloat(FuturesCommissionMaker, 'f', -1, 64)).String() + `,
-						"commission_taker": ` + json.Number(strconv.FormatFloat(FuturesCommissionTaker, 'f', -1, 64)).String() + `
-					},
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
 					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_2, 'f', -1, 64)).String() + `,
@@ -329,21 +299,12 @@ func getTestData() []byte {
 
 func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate *[]pairs_interfaces.Pairs) {
 	assert.NoError(t, err)
-	assert.Equal(t, SpotAPIKey, config.GetSpotConnection().GetAPIKey())
-	assert.Equal(t, SpotAPISecret, config.GetSpotConnection().GetSecretKey())
-	assert.Equal(t, SpotUseTestNet, config.GetSpotConnection().GetUseTestNet())
-	assert.Equal(t, FuturesAPIKey, config.GetFuturesConnection().GetAPIKey())
-	assert.Equal(t, FuturesAPISecret, config.GetFuturesConnection().GetSecretKey())
-	assert.Equal(t, FuturesUseTestNet, config.GetFuturesConnection().GetUseTestNet())
-	assert.Equal(t, SpotCommissionMaker, config.GetSpotConnection().GetCommissionMaker())
-	assert.Equal(t, SpotCommissionTaker, config.GetSpotConnection().GetCommissionTaker())
+	assert.Equal(t, SpotAPIKey, config.GetConnection().GetAPIKey())
+	assert.Equal(t, SpotAPISecret, config.GetConnection().GetSecretKey())
+	assert.Equal(t, SpotUseTestNet, config.GetConnection().GetUseTestNet())
+	assert.Equal(t, SpotCommissionMaker, config.GetConnection().GetCommissionMaker())
+	assert.Equal(t, SpotCommissionTaker, config.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
-
-	assert.Equal(t, (*checkingDate)[0].GetConnection().GetAPIKey(), config.GetPair(Pair_1).GetConnection().GetAPIKey())
-	assert.Equal(t, (*checkingDate)[0].GetConnection().GetSecretKey(), config.GetPair(Pair_1).GetConnection().GetSecretKey())
-	assert.Equal(t, (*checkingDate)[0].GetConnection().GetUseTestNet(), config.GetPair(Pair_1).GetConnection().GetUseTestNet())
-	assert.Equal(t, (*checkingDate)[0].GetConnection().GetCommissionMaker(), config.GetPair(Pair_1).GetConnection().GetCommissionMaker())
-	assert.Equal(t, (*checkingDate)[0].GetConnection().GetCommissionTaker(), config.GetPair(Pair_1).GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetCurrentBalance(), config.GetPair(Pair_1).GetCurrentBalance())
@@ -380,14 +341,6 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
 	assert.Equal(t, (*checkingDate)[0].GetSellCommission(), config.GetPair(Pair_1).GetSellCommission())
 
-	assert.Equal(t, (*checkingDate)[0].GetCommission(), Commission)
-
-	assert.Equal(t, (*checkingDate)[1].GetConnection().GetAPIKey(), config.GetPair(Pair_2).GetConnection().GetAPIKey())
-	assert.Equal(t, (*checkingDate)[1].GetConnection().GetSecretKey(), config.GetPair(Pair_2).GetConnection().GetSecretKey())
-	assert.Equal(t, (*checkingDate)[1].GetConnection().GetUseTestNet(), config.GetPair(Pair_2).GetConnection().GetUseTestNet())
-	assert.Equal(t, (*checkingDate)[1].GetConnection().GetCommissionMaker(), config.GetPair(Pair_2).GetConnection().GetCommissionMaker())
-	assert.Equal(t, (*checkingDate)[1].GetConnection().GetCommissionTaker(), config.GetPair(Pair_2).GetConnection().GetCommissionTaker())
-
 	assert.Equal(t, (*checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[1].GetCurrentBalance(), config.GetPair(Pair_2).GetCurrentBalance())
 
@@ -422,8 +375,6 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, (*checkingDate)[1].GetSellQuantity(), config.GetPair(Pair_2).GetSellQuantity())
 	assert.Equal(t, (*checkingDate)[1].GetSellValue(), config.GetPair(Pair_2).GetSellValue())
 	assert.Equal(t, (*checkingDate)[1].GetSellCommission(), config.GetPair(Pair_2).GetSellCommission())
-
-	assert.Equal(t, (*checkingDate)[1].GetCommission(), Commission)
 
 }
 
@@ -491,24 +442,6 @@ func TestPairSetter(t *testing.T) {
 		Commission:  Commission,
 	}
 	newCommission := pairs_types.Commission{"USDT": 0.1}
-	pair.SetConnection(&connection_types.Connection{
-		APIKey:          SpotAPIKey,
-		APISecret:       SpotAPISecret,
-		UseTestNet:      SpotUseTestNet,
-		CommissionMaker: SpotCommissionMaker,
-		CommissionTaker: SpotCommissionTaker,
-	})
-	assert.Equal(t, SpotAPIKey, pair.GetConnection().GetAPIKey())
-	assert.Equal(t, SpotAPISecret, pair.GetConnection().GetSecretKey())
-	assert.Equal(t, SpotUseTestNet, pair.GetConnection().GetUseTestNet())
-	assert.Equal(t, SpotCommissionMaker, pair.GetConnection().GetCommissionMaker())
-	assert.Equal(t, SpotCommissionTaker, pair.GetConnection().GetCommissionTaker())
-
-	pair.GetConnection().SetApiKey(FuturesAPIKey)
-	pair.GetConnection().SetSecretKey(FuturesAPISecret)
-	pair.GetConnection().SetUseTestNet(FuturesUseTestNet)
-	pair.GetConnection().SetCommissionMaker(FuturesCommissionMaker)
-	pair.GetConnection().SetCommissionTaker(FuturesCommissionTaker)
 
 	pair.SetInitialBalance(3000)
 	pair.SetCurrentBalance(4000)
@@ -523,12 +456,6 @@ func TestPairSetter(t *testing.T) {
 	pair.SetSellValue(SellValue_2)
 	pair.SetSellCommission(SellCommission_2)
 	pair.SetCommission(newCommission)
-
-	assert.Equal(t, FuturesAPIKey, pair.GetConnection().GetAPIKey())
-	assert.Equal(t, FuturesAPISecret, pair.GetConnection().GetSecretKey())
-	assert.Equal(t, FuturesUseTestNet, pair.GetConnection().GetUseTestNet())
-	assert.Equal(t, FuturesCommissionMaker, pair.GetConnection().GetCommissionMaker())
-	assert.Equal(t, FuturesCommissionTaker, pair.GetConnection().GetCommissionTaker())
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
 	assert.Equal(t, 4000.0, pair.GetCurrentBalance())
@@ -557,11 +484,6 @@ func TestPairSetter(t *testing.T) {
 
 func TestPairGetter(t *testing.T) {
 	pair := pair_1
-	assert.Equal(t, "", pair.GetConnection().GetAPIKey())
-	assert.Equal(t, "", pair.GetConnection().GetSecretKey())
-	assert.Equal(t, false, pair.GetConnection().GetUseTestNet())
-	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionMaker())
-	assert.Equal(t, 0.0, pair.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InitialBalance, pair.GetInitialBalance())
 	assert.Equal(t, CurrentBalance, pair.GetCurrentBalance())
 	assert.Equal(t, InitialPositionBalance_1, pair.GetInitialPositionBalance())

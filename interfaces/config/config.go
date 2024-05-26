@@ -9,8 +9,7 @@ import (
 
 type (
 	Configuration interface {
-		GetSpotConnection() connection_interfaces.Connection
-		GetFuturesConnection() connection_interfaces.Connection
+		GetConnection() connection_interfaces.Connection
 		GetPair(pair string) pairs_interfaces.Pairs
 		SetPair(pairs_interfaces.Pairs)
 		GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error)

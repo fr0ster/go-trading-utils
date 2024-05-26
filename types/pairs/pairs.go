@@ -58,8 +58,6 @@ type (
 	MarginType   string
 	Commission   map[string]float64
 	Pairs        struct {
-		Connection *connection_types.Connection `json:"connection"`
-
 		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
 		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
 		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
@@ -129,14 +127,6 @@ func (pr *Pairs) Equals(item btree.Item) bool {
 		pr.StrategyType == other.StrategyType &&
 		pr.StageType == other.StageType &&
 		pr.Pair == other.Pair
-}
-
-func (pr *Pairs) GetConnection() *connection_types.Connection {
-	return pr.Connection
-}
-
-func (pr *Pairs) SetConnection(connection *connection_types.Connection) {
-	pr.Connection = connection
 }
 
 // GetInitialBalance implements Pairs.
@@ -389,7 +379,6 @@ func New(
 	baseSymbol string,
 ) *Pairs {
 	return &Pairs{
-		Connection:             connection,
 		InitialBalance:         0.0,
 		InitialPositionBalance: 0.0,
 		AccountType:            accountType,

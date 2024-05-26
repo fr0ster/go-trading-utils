@@ -17,21 +17,15 @@ import (
 
 type (
 	Configs struct {
-		SpotConnection    *connection_types.Connection `json:"spot_connection"`
-		FuturesConnection *connection_types.Connection `json:"futures_connection"`
-		LogLevel          logrus.Level                 `json:"log_level"`
-		Pairs             *btree.BTree
+		Connection *connection_types.Connection `json:"connection"`
+		LogLevel   logrus.Level                 `json:"log_level"`
+		Pairs      *btree.BTree
 	}
 )
 
-// GetFuturesConnection implements config.Configuration.
-func (cf *Configs) GetFuturesConnection() connection_interfaces.Connection {
-	return cf.FuturesConnection
-}
-
 // GetSpotConnection implements config.Configuration.
-func (cf *Configs) GetSpotConnection() connection_interfaces.Connection {
-	return cf.SpotConnection
+func (cf *Configs) GetConnection() connection_interfaces.Connection {
+	return cf.Connection
 }
 
 func (cf *Configs) GetLogLevel() logrus.Level {
@@ -91,41 +85,31 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		SpotConnection    *connection_types.Connection `json:"spot_connection"`
-		FuturesConnection *connection_types.Connection `json:"futures_connection"`
-		LogLevel          string                       `json:"log_level"`
-		Pairs             []*pairs_types.Pairs         `json:"pairs"`
+		Connection *connection_types.Connection `json:"connection"`
+		LogLevel   string                       `json:"log_level"`
+		Pairs      []*pairs_types.Pairs         `json:"pairs"`
 	}{
-		SpotConnection:    c.SpotConnection,
-		FuturesConnection: c.FuturesConnection,
-		LogLevel:          c.LogLevel.String(),
-		Pairs:             pairs,
+		Connection: c.Connection,
+		LogLevel:   c.LogLevel.String(),
+		Pairs:      pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		SpotConnection    *connection_types.Connection `json:"spot_connection"`
-		FuturesConnection *connection_types.Connection `json:"futures_connection"`
-		LogLevel          string                       `json:"log_level"`
-		Pairs             []*pairs_types.Pairs         `json:"pairs"`
+		Connection *connection_types.Connection `json:"connection"`
+		LogLevel   string                       `json:"log_level"`
+		Pairs      []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
 	}
-	c.SpotConnection = &connection_types.Connection{
-		APIKey:          temp.SpotConnection.APIKey,
-		APISecret:       temp.SpotConnection.APISecret,
-		UseTestNet:      temp.SpotConnection.UseTestNet,
-		CommissionMaker: temp.SpotConnection.CommissionMaker,
-		CommissionTaker: temp.SpotConnection.CommissionTaker,
-	}
-	c.FuturesConnection = &connection_types.Connection{
-		APIKey:          temp.FuturesConnection.APIKey,
-		APISecret:       temp.FuturesConnection.APISecret,
-		UseTestNet:      temp.FuturesConnection.UseTestNet,
-		CommissionMaker: temp.FuturesConnection.CommissionMaker,
-		CommissionTaker: temp.FuturesConnection.CommissionTaker,
+	c.Connection = &connection_types.Connection{
+		APIKey:          temp.Connection.APIKey,
+		APISecret:       temp.Connection.APISecret,
+		UseTestNet:      temp.Connection.UseTestNet,
+		CommissionMaker: temp.Connection.CommissionMaker,
+		CommissionTaker: temp.Connection.CommissionTaker,
 	}
 	// Parse the string log level to a logrus.Level
 	var err error
@@ -135,38 +119,17 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
-		if pair.Connection == nil {
-			pair.Connection = &connection_types.Connection{}
-		}
-		if pair.AccountType == pairs_types.SpotAccountType &&
-			pair.Connection.GetAPIKey() == "" &&
-			pair.Connection.GetSecretKey() == "" &&
-			!pair.Connection.GetUseTestNet() &&
-			pair.Connection.GetCommissionMaker() == 0 &&
-			pair.Connection.GetCommissionTaker() == 0 {
-			pair.Connection = c.SpotConnection
-		} else if pair.AccountType == pairs_types.USDTFutureType &&
-			pair.Connection.GetAPIKey() == "" &&
-			pair.Connection.GetSecretKey() == "" &&
-			!pair.Connection.GetUseTestNet() &&
-			pair.Connection.GetCommissionMaker() == 0 &&
-			pair.Connection.GetCommissionTaker() == 0 {
-			pair.Connection = c.FuturesConnection
-		}
-
 		c.Pairs.ReplaceOrInsert(pair)
 	}
 	return nil
 }
 
 func NewConfig(
-	spotConnection *connection_types.Connection,
-	futuresConnection *connection_types.Connection,
+	connection *connection_types.Connection,
 	logLevel logrus.Level) *Configs {
 	return &Configs{
-		SpotConnection:    spotConnection,
-		FuturesConnection: futuresConnection,
-		LogLevel:          logrus.InfoLevel,
-		Pairs:             btree.New(2),
+		Connection: connection,
+		LogLevel:   logrus.InfoLevel,
+		Pairs:      btree.New(2),
 	}
 }

@@ -1,17 +1,11 @@
 package pairs
 
 import (
-	"github.com/adshao/go-binance/v2"
-
-	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 type (
 	Pairs interface {
-		GetConnection() *connection_types.Connection
-		SetConnection(connection *connection_types.Connection)
-
 		GetInitialBalance() float64
 		SetInitialBalance(balance float64)
 		GetCurrentBalance() float64
@@ -74,10 +68,6 @@ type (
 
 		SetBuyDelta(delta float64)
 		SetSellDelta(delta float64)
-
-		AddCommission(commission *binance.Fill)
-		GetCommission() pairs_types.Commission
-		SetCommission(commission pairs_types.Commission)
 
 		CalcMiddlePrice() error
 		GetMiddlePrice() float64

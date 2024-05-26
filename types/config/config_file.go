@@ -93,7 +93,6 @@ func NewConfigFile(
 		filePath: file_path,
 		configs: NewConfig(
 			&connection_types.Connection{},
-			&connection_types.Connection{},
 			logrus.InfoLevel),
 	}
 	return

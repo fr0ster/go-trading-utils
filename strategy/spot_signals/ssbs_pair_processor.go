@@ -281,7 +281,6 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
 								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
 								pp.pair.CalcMiddlePrice()
-								pp.pair.AddCommission(fill)
 							}
 							pp.config.Save()
 						}
@@ -368,7 +367,6 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
 								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
 								pp.pair.CalcMiddlePrice()
-								pp.pair.AddCommission(fill)
 							}
 							pp.config.Save()
 						}
@@ -453,7 +451,6 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
 								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
 								pp.pair.CalcMiddlePrice()
-								pp.pair.AddCommission(fill)
 							}
 							pp.config.Save()
 						}
@@ -524,7 +521,6 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
 								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
 								pp.pair.CalcMiddlePrice()
-								pp.pair.AddCommission(fill)
 							}
 							pp.config.Save()
 						}
