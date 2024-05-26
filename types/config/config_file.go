@@ -8,7 +8,6 @@ import (
 	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	"github.com/sirupsen/logrus"
 )
 
 type (
@@ -91,9 +90,7 @@ func NewConfigFile(
 	degree int) (res *ConfigFile) {
 	res = &ConfigFile{
 		filePath: file_path,
-		configs: NewConfig(
-			&connection_types.Connection{},
-			logrus.InfoLevel),
+		configs:  NewConfig(&connection_types.Connection{}),
 	}
 	return
 }

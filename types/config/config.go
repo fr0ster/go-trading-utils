@@ -17,9 +17,10 @@ import (
 
 type (
 	Configs struct {
-		Connection *connection_types.Connection `json:"connection"`
-		LogLevel   logrus.Level                 `json:"log_level"`
-		Pairs      *btree.BTree
+		Connection   *connection_types.Connection `json:"connection"`
+		LogLevel     logrus.Level                 `json:"log_level"`
+		ReloadConfig bool                         `json:"reload_config"`
+		Pairs        *btree.BTree
 	}
 )
 
@@ -34,6 +35,10 @@ func (cf *Configs) GetLogLevel() logrus.Level {
 
 func (cf *Configs) SetLogLevel(level logrus.Level) {
 	cf.LogLevel = level
+}
+
+func (cf *Configs) GetReloadConfig() bool {
+	return cf.ReloadConfig
 }
 
 // Implement the GetPair method
@@ -85,21 +90,24 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		Connection *connection_types.Connection `json:"connection"`
-		LogLevel   string                       `json:"log_level"`
-		Pairs      []*pairs_types.Pairs         `json:"pairs"`
+		Connection   *connection_types.Connection `json:"connection"`
+		LogLevel     string                       `json:"log_level"`
+		ReloadConfig bool                         `json:"reload_config"`
+		Pairs        []*pairs_types.Pairs         `json:"pairs"`
 	}{
-		Connection: c.Connection,
-		LogLevel:   c.LogLevel.String(),
-		Pairs:      pairs,
+		Connection:   c.Connection,
+		LogLevel:     c.LogLevel.String(),
+		ReloadConfig: c.ReloadConfig,
+		Pairs:        pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		Connection *connection_types.Connection `json:"connection"`
-		LogLevel   string                       `json:"log_level"`
-		Pairs      []*pairs_types.Pairs         `json:"pairs"`
+		Connection   *connection_types.Connection `json:"connection"`
+		LogLevel     string                       `json:"log_level"`
+		ReloadConfig bool                         `json:"reload_config"`
+		Pairs        []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
@@ -124,12 +132,11 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func NewConfig(
-	connection *connection_types.Connection,
-	logLevel logrus.Level) *Configs {
+func NewConfig(connection *connection_types.Connection) *Configs {
 	return &Configs{
-		Connection: connection,
-		LogLevel:   logrus.InfoLevel,
-		Pairs:      btree.New(2),
+		Connection:   connection,
+		LogLevel:     logrus.InfoLevel,
+		ReloadConfig: false,
+		Pairs:        btree.New(2),
 	}
 }

@@ -16,6 +16,7 @@ type (
 		SetPairs([]pairs_interfaces.Pairs) error
 		GetLogLevel() logrus.Level
 		SetLogLevel(level logrus.Level)
+		GetReloadConfig() bool
 	}
 	ConfigurationFile interface {
 		Save() error

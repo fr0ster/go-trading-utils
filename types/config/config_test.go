@@ -34,6 +34,8 @@ const (
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
+	ReloadConfig = false // Перезавантаження конфігурації
+
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
 	Leverage_1   = 20                          // Плече 20
@@ -148,8 +150,9 @@ var (
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		LogLevel: InfoLevel,
-		Pairs:    btree.New(2),
+		LogLevel:     InfoLevel,
+		ReloadConfig: ReloadConfig,
+		Pairs:        btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
@@ -224,6 +227,7 @@ func getTestData() []byte {
 				"commission_taker": ` + json.Number(strconv.FormatFloat(SpotCommissionTaker, 'f', -1, 64)).String() + `
 			},
 			"log_level": "` + InfoLevel.String() + `",
+			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -305,6 +309,7 @@ func assertTest(t *testing.T, err error, config config_interfaces.Configuration,
 	assert.Equal(t, SpotCommissionMaker, config.GetConnection().GetCommissionMaker())
 	assert.Equal(t, SpotCommissionTaker, config.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
+	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 
 	assert.Equal(t, (*checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
 	assert.Equal(t, (*checkingDate)[0].GetCurrentBalance(), config.GetPair(Pair_1).GetCurrentBalance())

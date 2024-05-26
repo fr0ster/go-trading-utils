@@ -435,6 +435,9 @@ func RunFuturesGridTrading(
 			mu.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", pair.GetPair())
+			if config.GetConfigurations().GetReloadConfig() {
+				config.Save()
+			}
 		}
 	}
 }
