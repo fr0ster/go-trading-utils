@@ -369,7 +369,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	if entryPrice := utils.ConvStrToFloat64(risk.EntryPrice); entryPrice != 0 {
-		price = entryPrice // Ціна позиції вже округлена до symbol.LotSizeFilter().StepSize
+		price = roundPrice(entryPrice, symbol)
 	}
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
