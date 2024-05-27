@@ -42,8 +42,11 @@ func (cf *Configs) GetReloadConfig() bool {
 
 // Implement the GetPair method
 func (cf *Configs) GetPair(pair string) *pairs_types.Pairs {
-	res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair})
-	return res.(*pairs_types.Pairs)
+	if res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair}); res != nil {
+		return res.(*pairs_types.Pairs)
+	} else {
+		return nil
+	}
 }
 
 // Implement the SetPair method
