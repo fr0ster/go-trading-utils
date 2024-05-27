@@ -231,8 +231,6 @@ func getTestData() []byte {
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
-					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_1, 'f', -1, 64)).String() + `,
-					"current_position_balance": ` + json.Number(strconv.FormatFloat(CurrentPositionBalance_1, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_1) + `",
 					"strategy_type": "` + string(StrategyType_1) + `",
 					"stage_type": "` + string(StageType_1) + `",
@@ -266,8 +264,6 @@ func getTestData() []byte {
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
 					"current_balance": ` + json.Number(strconv.FormatFloat(CurrentBalance, 'f', -1, 64)).String() + `,
-					"initial_position_balance": ` + json.Number(strconv.FormatFloat(InitialPositionBalance_2, 'f', -1, 64)).String() + `,
-					"current_position_balance": ` + json.Number(strconv.FormatFloat(CurrentPositionBalance_2, 'f', -1, 64)).String() + `,
 					"account_type": "` + string(AccountType_2) + `",
 					"strategy_type": "` + string(StrategyType_2) + `",
 					"stage_type": "` + string(StageType_2) + `",
