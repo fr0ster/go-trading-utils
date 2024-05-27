@@ -125,6 +125,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("invalid log level: %s", temp.LogLevel)
 	}
+	c.ReloadConfig = temp.ReloadConfig
 	c.Pairs = btree.New(2)
 	for _, pair := range temp.Pairs {
 		c.Pairs.ReplaceOrInsert(pair)

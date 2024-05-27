@@ -34,7 +34,7 @@ const (
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
-	ReloadConfig = false // Перезавантаження конфігурації
+	ReloadConfig = true // Перезавантаження конфігурації
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
