@@ -64,9 +64,6 @@ type (
 		SetBuyData(quantity, value, commission float64)
 		SetSellData(quantity, value, commission float64)
 
-		SetBuyDelta(delta float64)
-		SetSellDelta(delta float64)
-
 		CalcMiddlePrice() error
 		GetMiddlePrice() float64
 		SetMiddlePrice(price float64)
