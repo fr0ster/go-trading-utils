@@ -53,7 +53,7 @@ func (cf *Configs) SetPair(pair pairs_interfaces.Pairs) {
 }
 
 // Implement the GetPairs method
-func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error) {
+func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) ([]*pairs_types.Pairs, error) {
 	isExist := func(a pairs_types.AccountType) bool {
 		for _, at := range account_type {
 			if at == a {
@@ -62,7 +62,7 @@ func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_i
 		}
 		return false
 	}
-	pairs := make([]pairs_interfaces.Pairs, 0)
+	pairs := make([]*pairs_types.Pairs, 0)
 	cf.Pairs.Ascend(func(a btree.Item) bool {
 		if len(account_type) == 0 || isExist(a.(*pairs_types.Pairs).AccountType) {
 			pairs = append(pairs, a.(*pairs_types.Pairs))
@@ -72,13 +72,13 @@ func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_i
 	if len(pairs) == 0 {
 		return nil, errors.New("no pairs found in the configuration file")
 	}
-	return &pairs, nil
+	return pairs, nil
 }
 
 // Implement the SetPairs method
-func (cf *Configs) SetPairs(pairs []pairs_interfaces.Pairs) error {
+func (cf *Configs) SetPairs(pairs []*pairs_types.Pairs) error {
 	for _, pair := range pairs {
-		cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
+		cf.Pairs.ReplaceOrInsert(pair)
 	}
 	return nil
 }

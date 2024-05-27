@@ -12,8 +12,8 @@ type (
 		GetConnection() connection_interfaces.Connection
 		GetPair(pair string) pairs_interfaces.Pairs
 		SetPair(pairs_interfaces.Pairs)
-		GetPairs(account_type ...pairs_types.AccountType) (*[]pairs_interfaces.Pairs, error)
-		SetPairs([]pairs_interfaces.Pairs) error
+		GetPairs(account_type ...pairs_types.AccountType) ([]*pairs_types.Pairs, error)
+		SetPairs([]*pairs_types.Pairs) error
 		GetLogLevel() logrus.Level
 		SetLogLevel(level logrus.Level)
 		GetReloadConfig() bool
