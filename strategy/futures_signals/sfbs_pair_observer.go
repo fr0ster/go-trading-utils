@@ -270,7 +270,6 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 					continue
 				}
 				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 				if err != nil {

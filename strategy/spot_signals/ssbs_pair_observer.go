@@ -129,7 +129,6 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 					continue
 				}
 				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 				if err != nil {
@@ -183,7 +182,6 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 					continue
 				}
 				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 				if err != nil {
@@ -235,7 +233,6 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 					continue
 				}
 				pp.pair.SetCurrentBalance(baseBalance)
-				pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
 				// Кількість торгової валюти
 				targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 				if err != nil {

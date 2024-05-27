@@ -155,21 +155,11 @@ func (pr *Pairs) GetInitialPositionBalance() float64 {
 	return pr.InitialBalance * pr.LimitOnPosition
 }
 
-// // SetInitialPositionBalance implements Pairs.
-// func (pr *Pairs) SetInitialPositionBalance(balance float64) {
-// 	pr.InitialPositionBalance = balance
-// }
-
 // GetCurrentPositionBalance implements Pairs.
 func (pr *Pairs) GetCurrentPositionBalance() float64 {
 	// return pr.CurrentPositionBalance
 	return pr.CurrentBalance * pr.LimitOnPosition
 }
-
-// // SetCurrentPositionBalance implements Pairs.
-// func (pr *Pairs) SetCurrentPositionBalance(balance float64) {
-// 	pr.CurrentPositionBalance = balance
-// }
 
 // Get AccountType implements Pairs.
 func (pr *Pairs) GetAccountType() AccountType {

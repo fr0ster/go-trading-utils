@@ -144,7 +144,6 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 						continue
 					}
 					pp.pair.SetCurrentBalance(baseBalance)
-					pp.pair.SetCurrentPositionBalance(baseBalance * pp.pair.GetLimitOnPosition())
 					// Кількість торгової валюти
 					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 					if err != nil {

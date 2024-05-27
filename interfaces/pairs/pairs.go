@@ -13,8 +13,6 @@ type (
 
 		GetInitialPositionBalance() float64
 		SetInitialPositionBalance(balance float64)
-		GetCurrentPositionBalance() float64
-		SetCurrentPositionBalance(balance float64)
 
 		GetAccountType() pairs_types.AccountType
 

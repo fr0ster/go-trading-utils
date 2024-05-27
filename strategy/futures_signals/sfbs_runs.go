@@ -305,14 +305,9 @@ func RunFuturesGridTrading(
 		return err
 	}
 	pair.SetCurrentBalance(balance)
-	pair.SetCurrentPositionBalance(pair.GetCurrentBalance() * pair.GetLimitOnPosition())
 	config.Save()
 	if pair.GetInitialBalance() == 0 {
 		pair.SetInitialBalance(balance)
-		config.Save()
-	}
-	if pair.GetInitialPositionBalance() == 0 {
-		pair.SetInitialPositionBalance(pair.GetCurrentPositionBalance())
 		config.Save()
 	}
 	if pair.GetMarginType() == "" {
