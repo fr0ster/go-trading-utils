@@ -421,6 +421,18 @@ func RunFuturesGridTrading(
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return err
+				}
+				pair.SetCurrentBalance(balance)
+				config.Save()
+				quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
+				minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+				if quantity*price < minNotional {
+					quantity = minNotional / price
+				}
 			}
 			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 				pair.GetPair(),
