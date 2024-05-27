@@ -156,14 +156,15 @@ func processOrder(
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
 			// Знаходимо дані про позицію
-			val, err := getPositionRisk(pairStreams, pair)
+			risk, err := getPositionRisk(pairStreams, pair)
 			if err != nil {
 				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
-			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			// positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
-			positionVal := math.Abs(utils.ConvStrToFloat64(val.UnRealizedProfit))
-			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && positionVal <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+			isolatedMargin := utils.ConvStrToFloat64(risk.IsolatedMargin)
+			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
+			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
+				lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() &&
+				isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				upOrder, err := initOrderInGrid(config, pairProcessor, pair, futures.SideTypeSell, quantity, price)
 				if err != nil {
 					return err
@@ -219,14 +220,15 @@ func processOrder(
 			// Створюємо ордер на купівлю
 			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), symbol)
 			// Знаходимо дані про позицію
-			val, err := getPositionRisk(pairStreams, pair)
+			risk, err := getPositionRisk(pairStreams, pair)
 			if err != nil {
 				return fmt.Errorf("futures %s: Can't get position risk", pair.GetPair())
 			}
-			// Якшо куплено цільової валюти більше ніж потрібно, то не робимо новий ордер
-			// positionVal := math.Abs(utils.ConvStrToFloat64(val.PositionAmt) * utils.ConvStrToFloat64(val.EntryPrice))
-			positionVal := math.Abs(utils.ConvStrToFloat64(val.UnRealizedProfit))
-			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) && positionVal <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
+			isolatedMargin := utils.ConvStrToFloat64(risk.IsolatedMargin)
+			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
+			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
+				lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() &&
+				isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
 				downOrder, err := initOrderInGrid(config, pairProcessor, pair, futures.SideTypeBuy, quantity, price)
 				if err != nil {
 					return err
