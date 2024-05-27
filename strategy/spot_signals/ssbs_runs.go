@@ -24,10 +24,11 @@ import (
 )
 
 const (
-	deltaUp   = 0.0005
-	deltaDown = 0.0005
-	degree    = 3
-	limit     = 1000
+	deltaUp    = 0.0005
+	deltaDown  = 0.0005
+	degree     = 3
+	limit      = 1000
+	reloadTime = 500 * time.Millisecond
 )
 
 func RunSpotHolding(
@@ -47,6 +48,16 @@ func RunSpotHolding(
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage || pair.GetStage() == pairs_types.OutputOfPositionStage {
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
+
+	if config.GetConfigurations().GetReloadConfig() {
+		go func() {
+			for {
+				<-time.After(reloadTime)
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
+		}()
 	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
@@ -132,6 +143,16 @@ func RunSpotScalping(
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
+
+	if config.GetConfigurations().GetReloadConfig() {
+		go func() {
+			for {
+				<-time.After(reloadTime)
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
+		}()
 	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
@@ -249,6 +270,16 @@ func RunSpotTrading(
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
+
+	if config.GetConfigurations().GetReloadConfig() {
+		go func() {
+			for {
+				<-time.After(reloadTime)
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
+		}()
 	}
 
 	account, err := spot_account.New(client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
@@ -630,6 +661,10 @@ func RunSpotGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
+			if config.GetConfigurations().GetReloadConfig() {
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
 			logrus.Debugf("Spots %s: Order %v on price %v side %v status %s",
 				pair.GetPair(),
 				event.OrderUpdate.Id,

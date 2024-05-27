@@ -12,7 +12,6 @@ import (
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 
@@ -128,8 +127,8 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 }
 
 func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з накопичення
-	if pp.pair.GetStage() != pair_types.InputIntoPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.InputIntoPositionStage)
+	if pp.pair.GetStage() != pairs_types.InputIntoPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.InputIntoPositionStage)
 		pp.stop <- os.Interrupt
 		return nil
 	}
@@ -175,7 +174,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 				// - переходимо в режим спекуляції
 				if targetBalance*boundAsk >= baseBalance*LimitInputIntoPosition ||
 					targetBalance*boundAsk >= baseBalance*LimitOnPosition {
-					pp.pair.SetStage(pair_types.WorkInPositionStage)
+					pp.pair.SetStage(pairs_types.WorkInPositionStage)
 					pp.collectionOutEvent <- true
 					return
 				}
@@ -187,8 +186,8 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 }
 
 func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
-	if pp.pair.GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.WorkInPositionStage)
+	if pp.pair.GetStage() != pairs_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.WorkInPositionStage)
 		pp.stop <- os.Interrupt
 		return nil
 	}
@@ -232,7 +231,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 				// Якшо вартість продажу цільової валюти більша за вартість базової валюти помножена на ліміт на вхід в позицію та на ліміт на позицію - переходимо в режим спекуляції
 				if targetBalance*boundBid >= baseBalance*LimitInputIntoPosition ||
 					targetBalance*boundBid >= baseBalance*LimitOnPosition {
-					pp.pair.SetStage(pair_types.OutputOfPositionStage)
+					pp.pair.SetStage(pairs_types.OutputOfPositionStage)
 					pp.positionOutEvent <- true
 					return
 				}
@@ -244,8 +243,8 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 }
 
 func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
-	if pp.pair.GetStage() != pair_types.WorkInPositionStage {
-		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pair_types.WorkInPositionStage)
+	if pp.pair.GetStage() != pairs_types.WorkInPositionStage {
+		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.WorkInPositionStage)
 		pp.stop <- os.Interrupt
 		return nil
 	}
@@ -277,7 +276,7 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 				}
 				//
 				if targetBalance == 0 {
-					pp.pair.SetStage(pair_types.PositionClosedStage)
+					pp.pair.SetStage(pairs_types.PositionClosedStage)
 					pp.positionCloseEvent <- true
 					return
 				}

@@ -21,11 +21,12 @@ import (
 )
 
 const (
-	deltaUp   = 0.0005
-	deltaDown = 0.0005
-	degree    = 3
-	limit     = 1000
-	interval  = "1m"
+	deltaUp    = 0.0005
+	deltaDown  = 0.0005
+	degree     = 3
+	limit      = 1000
+	interval   = "1m"
+	reloadTime = 500 * time.Millisecond
 )
 
 func RunFuturesHolding(
@@ -77,6 +78,17 @@ func RunFuturesTrading(
 	if pair.GetStage() == pairs_types.PositionClosedStage {
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
+
+	if config.GetConfigurations().GetReloadConfig() {
+		go func() {
+			for {
+				<-time.After(reloadTime)
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
+		}()
+	}
+
 	stopEvent <- os.Interrupt
 	return fmt.Errorf("it hadn't been implemented yet")
 }
@@ -404,6 +416,10 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
+			if config.GetConfigurations().GetReloadConfig() {
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			}
 			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 				pair.GetPair(),
 				event.OrderTradeUpdate.ID,
@@ -428,9 +444,6 @@ func RunFuturesGridTrading(
 			mu.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", pair.GetPair())
-			if config.GetConfigurations().GetReloadConfig() {
-				config.Save()
-			}
 		}
 	}
 }
