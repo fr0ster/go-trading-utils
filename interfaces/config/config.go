@@ -2,7 +2,6 @@ package config
 
 import (
 	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	"github.com/sirupsen/logrus"
 )
@@ -10,12 +9,16 @@ import (
 type (
 	Configuration interface {
 		GetConnection() connection_interfaces.Connection
-		GetPair(pair string) pairs_interfaces.Pairs
-		SetPair(pairs_interfaces.Pairs)
+
+		GetPair(pair string) *pairs_types.Pairs
+		SetPair(*pairs_types.Pairs)
+
 		GetPairs(account_type ...pairs_types.AccountType) ([]*pairs_types.Pairs, error)
 		SetPairs([]*pairs_types.Pairs) error
+
 		GetLogLevel() logrus.Level
 		SetLogLevel(level logrus.Level)
+
 		GetReloadConfig() bool
 	}
 	ConfigurationFile interface {

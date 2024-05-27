@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 	"github.com/sirupsen/logrus"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
@@ -42,14 +41,14 @@ func (cf *Configs) GetReloadConfig() bool {
 }
 
 // Implement the GetPair method
-func (cf *Configs) GetPair(pair string) pairs_interfaces.Pairs {
+func (cf *Configs) GetPair(pair string) *pairs_types.Pairs {
 	res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair})
 	return res.(*pairs_types.Pairs)
 }
 
 // Implement the SetPair method
-func (cf *Configs) SetPair(pair pairs_interfaces.Pairs) {
-	cf.Pairs.ReplaceOrInsert(pair.(*pairs_types.Pairs))
+func (cf *Configs) SetPair(pair *pairs_types.Pairs) {
+	cf.Pairs.ReplaceOrInsert(pair)
 }
 
 // Implement the GetPairs method
