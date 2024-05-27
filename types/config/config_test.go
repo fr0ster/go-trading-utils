@@ -300,7 +300,9 @@ func getTestData() []byte {
 		}`)
 }
 
-func assertTest(t *testing.T, err error, config config_interfaces.Configuration, checkingDate []*pairs_types.Pairs) {
+func assertTest(t *testing.T, config config_interfaces.Configuration) {
+	checkingDate, err := config.GetPairs()
+
 	assert.NoError(t, err)
 	assert.Equal(t, SpotAPIKey, config.GetConnection().GetAPIKey())
 	assert.Equal(t, SpotAPISecret, config.GetConnection().GetSecretKey())
@@ -402,8 +404,7 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the loaded config matches the test data
-	checkingDate, err := configFile.GetConfigurations().GetPairs()
-	assertTest(t, err, configFile.GetConfigurations(), checkingDate)
+	assertTest(t, configFile.GetConfigurations())
 }
 
 func TestConfigFile_Save(t *testing.T) {
@@ -432,8 +433,39 @@ func TestConfigFile_Save(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert that the saved config matches the original config
-	checkingDate, err := config_file.GetConfigurations().GetPairs()
-	assertTest(t, err, config_file.GetConfigurations(), checkingDate)
+	assertTest(t, config_file.GetConfigurations())
+}
+
+func TestConfigFile_Change(t *testing.T) {
+	// Create a temporary config file for testing
+	pair := *pair_1
+	tmpFile, err := os.CreateTemp("", "config.json")
+	assert.NoError(t, err)
+	defer os.Remove(tmpFile.Name())
+
+	// Create a new ConfigFile instance
+	config_file := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file.SetConfigurations(config)
+	config_file.GetConfigurations().SetPair(&pair)
+	config_file.GetConfigurations().SetPair(pair_2)
+
+	config_file_test := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file_test.SetConfigurations(config)
+	config_file_test.GetConfigurations().SetPair(&pair)
+	config_file_test.GetConfigurations().SetPair(pair_2)
+
+	pair.SetCurrentBalance(CurrentBalance * 2)
+	assert.Equal(t, CurrentBalance*2, config_file.GetConfigurations().GetPair(pair.GetPair()).GetCurrentBalance())
+
+	// Save the config to the file
+	err = config_file.Save()
+	assert.NoError(t, err)
+
+	// Read the saved config file
+	config_file_test.Load()
+
+	// Assert that the saved config matches the original config
+	assert.Equal(t, CurrentBalance*2, config_file_test.GetConfigurations().GetPair(pair.GetPair()).GetCurrentBalance())
 }
 
 // Add more tests for other methods if needed
@@ -525,21 +557,19 @@ func TestConfigGetter(t *testing.T) {
 	config := config
 	config.Pairs.ReplaceOrInsert(pair_1)
 	config.Pairs.ReplaceOrInsert(pair_2)
-	assertTest(t, nil, config, []*pairs_types.Pairs{pair_1, pair_2})
+	assertTest(t, config)
 }
 
 func TestConfigSetter(t *testing.T) {
 	pairs := []*pairs_types.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 
-	checkingDate, err := config.GetPairs()
-	assertTest(t, err, config, checkingDate)
+	assertTest(t, config)
 }
 
 func TestConfigGetPairs(t *testing.T) {
 	pairs := []*pairs_types.Pairs{pair_1, pair_2}
 	config.SetPairs(pairs)
 
-	checkingDate, err := config.GetPairs()
-	assertTest(t, err, config, checkingDate)
+	assertTest(t, config)
 }
