@@ -23,15 +23,13 @@ import (
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 )
 
 type (
 	PairProcessor struct {
 		config       *config_types.ConfigFile
 		client       *futures.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *futures_account.Account
 
@@ -746,7 +744,7 @@ func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err e
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	exchangeInfo *exchange_types.ExchangeInfo,
 	account *futures_account.Account,
 	userDataEvent chan *futures.WsUserDataEvent,

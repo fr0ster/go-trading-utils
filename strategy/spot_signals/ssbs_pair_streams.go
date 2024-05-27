@@ -12,15 +12,14 @@ import (
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 )
 
 type (
 	PairStreams struct {
 		client       *binance.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *spot_account.Account
 
@@ -84,7 +83,7 @@ func (pp *PairStreams) GetTimeOut() time.Duration {
 
 func NewPairStreams(
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	debug bool) (pp *PairStreams, err error) {
 	pp = &PairStreams{
 		client:  client,

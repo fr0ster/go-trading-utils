@@ -15,6 +15,7 @@ import (
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
@@ -25,7 +26,7 @@ import (
 type (
 	PairKlinesObserver struct {
 		client       *binance.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		degree       int
 		limit        int
 		interval     string
@@ -230,7 +231,7 @@ func (pp *PairKlinesObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairKlinesObserver(
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	interval string,

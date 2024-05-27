@@ -15,11 +15,10 @@ import (
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -27,7 +26,7 @@ import (
 type (
 	PairBookTickersObserver struct {
 		client          *futures.Client
-		pair            pairs_interfaces.Pairs
+		pair            *pairs_types.Pairs
 		degree          int
 		limit           int
 		account         *futures_account.Account
@@ -112,6 +111,51 @@ func (pp *PairBookTickersObserver) GetAskBid() (bid float64, ask float64, err er
 	bid = btk.(*book_ticker_types.BookTicker).BidPrice
 	return
 }
+
+func (pp *PairBookTickersObserver) GetBaseBalance() (
+	baseBalance float64, // Кількість базової валюти
+	err error) {
+	baseBalance, err = func() (
+		baseBalance float64,
+		err error) {
+		baseBalance, err = pp.account.GetFreeAsset(pp.pair.GetBaseSymbol())
+		return
+	}()
+
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+func (pp *PairBookTickersObserver) GetTargetBalance() (
+	targetBalance float64, // Кількість торгової валюти
+	err error) {
+	targetBalance, err = func() (
+		targetBalance float64,
+		err error) {
+		targetBalance, err = pp.account.GetFreeAsset(pp.pair.GetTargetSymbol())
+		return
+	}()
+
+	if err != nil {
+		return 0, err
+	}
+	return
+}
+
+func (pp *PairBookTickersObserver) GetAskBound() (boundAsk float64, err error) {
+	boundAsk = pp.pair.GetMiddlePrice() * (1 - pp.pair.GetBuyDelta())
+	logrus.Debugf("Ask bound: %f", boundAsk)
+	return
+}
+
+func (pp *PairBookTickersObserver) GetBidBound() (boundBid float64, err error) {
+	boundBid = pp.pair.GetMiddlePrice() * (1 + pp.pair.GetSellDelta())
+	logrus.Debugf("Bid bound: %f", boundBid)
+	return
+}
+
 func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 	buyEvent chan *pair_price_types.PairPrice,
 	sellEvent chan *pair_price_types.PairPrice) {
@@ -137,14 +181,14 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					return
 				case <-pp.event: // Чекаємо на спрацювання тригера на зміну bookTicker
 					// Кількість базової валюти
-					baseBalance, err := GetBaseBalance(pp.account, pp.pair)
+					baseBalance, err := pp.GetBaseBalance()
 					if err != nil {
 						logrus.Warnf("Can't get data for analysis: %v", err)
 						continue
 					}
 					pp.pair.SetCurrentBalance(baseBalance)
 					// Кількість торгової валюти
-					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
+					targetBalance, err := pp.GetTargetBalance()
 					if err != nil {
 						logrus.Errorf("Can't get %s balance: %v", pp.pair.GetTargetSymbol(), err)
 						pp.stop <- os.Interrupt
@@ -162,14 +206,14 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					// Ціна продажу
 					bid := bookTicker.(*book_ticker_types.BookTicker).AskPrice
 					// Верхня межа ціни купівлі
-					boundAsk, err := GetAskBound(pp.pair)
+					boundAsk, err := pp.GetAskBound()
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
 						pp.stop <- os.Interrupt
 						return
 					}
 					// Нижня межа ціни продажу
-					boundBid, err := GetBidBound(pp.pair)
+					boundBid, err := pp.GetBidBound()
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
 						pp.stop <- os.Interrupt
@@ -359,7 +403,7 @@ func (pp *PairBookTickersObserver) GetMaxQuantity(price float64) float64 {
 }
 
 func (pp *PairBookTickersObserver) GetBuyAndSellQuantity(
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	buyCommission float64,
@@ -391,7 +435,7 @@ func (pp *PairBookTickersObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairBookTickerObserver(
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	deltaUp float64,

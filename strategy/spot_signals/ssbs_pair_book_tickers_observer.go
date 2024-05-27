@@ -15,11 +15,10 @@ import (
 
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -27,7 +26,7 @@ import (
 type (
 	PairBookTickersObserver struct {
 		client          *binance.Client
-		pair            pairs_interfaces.Pairs
+		pair            *pairs_types.Pairs
 		degree          int
 		limit           int
 		account         *spot_account.Account
@@ -339,7 +338,7 @@ func (pp *PairBookTickersObserver) GetMaxQuantity(price float64) float64 {
 }
 
 func (pp *PairBookTickersObserver) GetBuyAndSellQuantity(
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	buyCommission float64,
@@ -371,7 +370,7 @@ func (pp *PairBookTickersObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairBookTickersObserver(
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	deltaUp float64,

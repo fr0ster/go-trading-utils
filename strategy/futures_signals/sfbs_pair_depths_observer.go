@@ -15,11 +15,10 @@ import (
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -27,7 +26,7 @@ import (
 type (
 	PairPartialDepthsObserver struct {
 		client       *futures.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		degree       int
 		limit        int
 		levels       int
@@ -336,7 +335,7 @@ func (pp *PairPartialDepthsObserver) GetMinQuantity(price float64) float64 {
 }
 
 func (pp *PairPartialDepthsObserver) GetBuyAndSellQuantity(
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	buyCommission float64,
@@ -368,7 +367,7 @@ func (pp *PairPartialDepthsObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairDepthsObserver(
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	levels int,

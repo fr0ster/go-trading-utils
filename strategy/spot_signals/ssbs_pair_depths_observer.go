@@ -16,9 +16,8 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -26,7 +25,7 @@ import (
 type (
 	PairDepthsObserver struct {
 		client       *binance.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		degree       int
 		limit        int
 		account      *spot_account.Account
@@ -320,7 +319,7 @@ func (pp *PairDepthsObserver) GetMaxQuantity(price float64) float64 {
 }
 
 func (pp *PairDepthsObserver) GetBuyAndSellQuantity(
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	baseBalance float64,
 	targetBalance float64,
 	buyCommission float64,
@@ -352,7 +351,7 @@ func (pp *PairDepthsObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairDepthsObserver(
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	deltaUp float64,

@@ -11,8 +11,6 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
-
 	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
@@ -35,7 +33,7 @@ func RunFuturesHolding(
 	client *futures.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {
@@ -55,7 +53,7 @@ func RunFuturesHolding(
 func RunScalpingHolding(
 	config *config_types.ConfigFile,
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal) (err error) {
 	pair.SetStrategy(pairs_types.GridStrategyType)
 	return RunFuturesGridTrading(config, client, pair, stopEvent)
@@ -66,7 +64,7 @@ func RunFuturesTrading(
 	client *futures.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {
@@ -83,7 +81,7 @@ func RunFuturesTrading(
 	return fmt.Errorf("it hadn't been implemented yet")
 }
 
-func getPositionRisk(pairStreams *PairStreams, pair pairs_interfaces.Pairs) (risks *futures.PositionRisk, err error) {
+func getPositionRisk(pairStreams *PairStreams, pair *pairs_types.Pairs) (risks *futures.PositionRisk, err error) {
 	risks, err = pairStreams.GetAccount().GetPositionRisk(pair.GetPair())
 	return
 }
@@ -92,7 +90,7 @@ func getPositionRisk(pairStreams *PairStreams, pair pairs_interfaces.Pairs) (ris
 func initOrderInGrid(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	side futures.SideType,
 	quantity,
 	price float64) (order *futures.CreateOrderResponse, err error) {
@@ -129,7 +127,7 @@ func roundPrice(val float64, symbol *futures.Symbol) float64 {
 func processOrder(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	pairStreams *PairStreams,
 	symbol *futures.Symbol,
 	side futures.SideType,
@@ -273,7 +271,7 @@ func processOrder(
 func RunFuturesGridTrading(
 	config *config_types.ConfigFile,
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal) (err error) {
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		stopEvent <- os.Interrupt
@@ -442,7 +440,7 @@ func Run(
 	client *futures.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію

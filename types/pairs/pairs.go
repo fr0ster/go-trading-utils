@@ -151,13 +151,11 @@ func (pr *Pairs) SetCurrentBalance(balance float64) {
 
 // GetInitialPositionBalance implements Pairs.
 func (pr *Pairs) GetInitialPositionBalance() float64 {
-	// return pr.InitialPositionBalance
 	return pr.InitialBalance * pr.LimitOnPosition
 }
 
 // GetCurrentPositionBalance implements Pairs.
 func (pr *Pairs) GetCurrentPositionBalance() float64 {
-	// return pr.CurrentPositionBalance
 	return pr.CurrentBalance * pr.LimitOnPosition
 }
 

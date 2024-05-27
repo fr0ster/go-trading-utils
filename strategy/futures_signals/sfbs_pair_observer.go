@@ -13,9 +13,8 @@ import (
 	book_ticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pair_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -23,7 +22,7 @@ import (
 type (
 	PairObserver struct {
 		client                   *futures.Client
-		pair                     pairs_interfaces.Pairs
+		pair                     *pairs_types.Pairs
 		account                  *futures_account.Account
 		bookTickers              *book_ticker_types.BookTickers
 		degree                   int
@@ -299,7 +298,7 @@ func (pp *PairObserver) SetTakePositionSleepingTime(sleepingTime time.Duration) 
 
 func NewPairObserver(
 	client *futures.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	degree int,
 	limit int,
 	deltaUp float64,

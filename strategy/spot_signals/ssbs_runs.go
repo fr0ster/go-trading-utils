@@ -12,7 +12,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -36,7 +35,7 @@ func RunSpotHolding(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {
@@ -121,7 +120,7 @@ func RunSpotScalping(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {
@@ -238,7 +237,7 @@ func RunSpotTrading(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {
@@ -350,7 +349,7 @@ func RunSpotTrading(
 func initOrderInGrid(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	side binance.SideType,
 	quantity,
 	price float64) (order *binance.CreateOrderResponse, err error) {
@@ -387,7 +386,7 @@ func roundPrice(val float64, symbol *binance.Symbol) float64 {
 func processOrder(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	symbol *binance.Symbol,
 	side binance.SideType,
 	grid *grid_types.Grid,
@@ -513,7 +512,7 @@ func processOrder(
 func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		stopEvent <- os.Interrupt
@@ -666,7 +665,7 @@ func Run(
 	client *binance.Client,
 	degree int,
 	limit int,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal,
 	updateTime time.Duration,
 	debug bool) (err error) {

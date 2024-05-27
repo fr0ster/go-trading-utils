@@ -21,8 +21,6 @@ import (
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
-
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -30,7 +28,7 @@ type (
 	PairProcessor struct {
 		config       *config_types.ConfigFile
 		client       *binance.Client
-		pair         pairs_interfaces.Pairs
+		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *spot_account.Account
 
@@ -77,12 +75,12 @@ type (
 func (pp *PairProcessor) GetBaseBalance() (
 	baseBalance float64, // Кількість базової валюти
 	err error) {
-	baseBalance, err = func(pair pairs_interfaces.Pairs) (
+	baseBalance, err = func() (
 		baseBalance float64,
 		err error) {
-		baseBalance, err = pp.account.GetFreeAsset(pair.GetBaseSymbol())
+		baseBalance, err = pp.account.GetFreeAsset(pp.pair.GetBaseSymbol())
 		return
-	}(pp.pair)
+	}()
 
 	if err != nil {
 		return 0, err
@@ -93,12 +91,12 @@ func (pp *PairProcessor) GetBaseBalance() (
 func (pp *PairProcessor) GetTargetBalance() (
 	targetBalance float64, // Кількість торгової валюти
 	err error) {
-	targetBalance, err = func(pair pairs_interfaces.Pairs) (
+	targetBalance, err = func() (
 		targetBalance float64,
 		err error) {
-		targetBalance, err = pp.account.GetFreeAsset(pair.GetTargetSymbol())
+		targetBalance, err = pp.account.GetFreeAsset(pp.pair.GetTargetSymbol())
 		return
-	}(pp.pair)
+	}()
 
 	if err != nil {
 		return 0, err
@@ -743,7 +741,7 @@ func (pp *PairProcessor) GetOrderStatusEvent() chan *binance.WsUserDataEvent {
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair pairs_interfaces.Pairs,
+	pair *pairs_types.Pairs,
 	exchangeInfo *exchange_types.ExchangeInfo,
 	account *spot_account.Account,
 	userDataEvent chan *binance.WsUserDataEvent,
