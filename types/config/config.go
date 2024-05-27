@@ -41,8 +41,16 @@ func (cf *Configs) GetReloadConfig() bool {
 }
 
 // Implement the GetPair method
-func (cf *Configs) GetPair(pair string) *pairs_types.Pairs {
-	if res := cf.Pairs.Get(&pairs_types.Pairs{Pair: pair}); res != nil {
+func (cf *Configs) GetPair(
+	account pairs_types.AccountType,
+	strategy pairs_types.StrategyType,
+	stage pairs_types.StageType,
+	pair string) *pairs_types.Pairs {
+	if res := cf.Pairs.Get(&pairs_types.Pairs{
+		AccountType:  account,
+		StrategyType: strategy,
+		StageType:    stage,
+		Pair:         pair}); res != nil {
 		return res.(*pairs_types.Pairs)
 	} else {
 		return nil

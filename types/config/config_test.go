@@ -312,75 +312,75 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 
-	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(Pair_1).GetInitialBalance())
-	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(Pair_1).GetCurrentBalance())
+	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
+	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())
 
-	assert.Equal(t, (checkingDate)[0].GetInitialPositionBalance(), config.GetPair(Pair_1).GetInitialPositionBalance())
-	assert.Equal(t, (checkingDate)[0].GetCurrentPositionBalance(), config.GetPair(Pair_1).GetCurrentPositionBalance())
+	assert.Equal(t, (checkingDate)[0].GetInitialPositionBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialPositionBalance())
+	assert.Equal(t, (checkingDate)[0].GetCurrentPositionBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentPositionBalance())
 
-	assert.Equal(t, (checkingDate)[0].GetAccountType(), config.GetPair(Pair_1).GetAccountType())
-	assert.Equal(t, (checkingDate)[0].GetStrategy(), config.GetPair(Pair_1).GetStrategy())
-	assert.Equal(t, (checkingDate)[0].GetStage(), config.GetPair(Pair_1).GetStage())
+	assert.Equal(t, (checkingDate)[0].GetAccountType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetAccountType())
+	assert.Equal(t, (checkingDate)[0].GetStrategy(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetStrategy())
+	assert.Equal(t, (checkingDate)[0].GetStage(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetStage())
 
-	assert.Equal(t, (checkingDate)[0].GetPair(), config.GetPair(Pair_1).GetPair())
-	assert.Equal(t, (checkingDate)[0].GetTargetSymbol(), config.GetPair(Pair_1).GetTargetSymbol())
-	assert.Equal(t, (checkingDate)[0].GetBaseSymbol(), config.GetPair(Pair_1).GetBaseSymbol())
-	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(Pair_1).GetMarginType())
-	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(Pair_1).GetLeverage())
+	assert.Equal(t, (checkingDate)[0].GetPair(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetPair())
+	assert.Equal(t, (checkingDate)[0].GetTargetSymbol(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetTargetSymbol())
+	assert.Equal(t, (checkingDate)[0].GetBaseSymbol(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBaseSymbol())
+	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMarginType())
+	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLeverage())
 
-	assert.Equal(t, (checkingDate)[0].GetMiddlePrice(), config.GetPair(Pair_1).GetMiddlePrice())
-	assert.Equal(t, (checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(Pair_1).GetLimitInputIntoPosition())
-	assert.Equal(t, (checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(Pair_1).GetLimitOutputOfPosition())
-	assert.Equal(t, (checkingDate)[0].GetLimitOnPosition(), config.GetPair(Pair_1).GetLimitOnPosition())
-	assert.Equal(t, (checkingDate)[0].GetLimitOnTransaction(), config.GetPair(Pair_1).GetLimitOnTransaction())
+	assert.Equal(t, (checkingDate)[0].GetMiddlePrice(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMiddlePrice())
+	assert.Equal(t, (checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitInputIntoPosition())
+	assert.Equal(t, (checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOutputOfPosition())
+	assert.Equal(t, (checkingDate)[0].GetLimitOnPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnPosition())
+	assert.Equal(t, (checkingDate)[0].GetLimitOnTransaction(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnTransaction())
 
-	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(Pair_1).GetUpBound())
-	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(Pair_1).GetLowBound())
+	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpBound())
+	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
 
-	assert.Equal(t, (checkingDate)[0].GetBuyDelta(), config.GetPair(Pair_1).GetBuyDelta())
-	assert.Equal(t, (checkingDate)[0].GetBuyQuantity(), config.GetPair(Pair_1).GetBuyQuantity())
-	assert.Equal(t, (checkingDate)[0].GetBuyValue(), config.GetPair(Pair_1).GetBuyValue())
-	assert.Equal(t, (checkingDate)[0].GetBuyCommission(), config.GetPair(Pair_1).GetBuyCommission())
+	assert.Equal(t, (checkingDate)[0].GetBuyDelta(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyDelta())
+	assert.Equal(t, (checkingDate)[0].GetBuyQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyQuantity())
+	assert.Equal(t, (checkingDate)[0].GetBuyValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyValue())
+	assert.Equal(t, (checkingDate)[0].GetBuyCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyCommission())
 
-	assert.Equal(t, (checkingDate)[0].GetSellDelta(), config.GetPair(Pair_1).GetSellDelta())
-	assert.Equal(t, (checkingDate)[0].GetSellQuantity(), config.GetPair(Pair_1).GetSellQuantity())
-	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(Pair_1).GetSellValue())
-	assert.Equal(t, (checkingDate)[0].GetSellCommission(), config.GetPair(Pair_1).GetSellCommission())
+	assert.Equal(t, (checkingDate)[0].GetSellDelta(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellDelta())
+	assert.Equal(t, (checkingDate)[0].GetSellQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellQuantity())
+	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
+	assert.Equal(t, (checkingDate)[0].GetSellCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellCommission())
 
-	assert.Equal(t, (checkingDate)[1].GetInitialBalance(), config.GetPair(Pair_2).GetInitialBalance())
-	assert.Equal(t, (checkingDate)[1].GetCurrentBalance(), config.GetPair(Pair_2).GetCurrentBalance())
+	assert.Equal(t, (checkingDate)[1].GetInitialBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetInitialBalance())
+	assert.Equal(t, (checkingDate)[1].GetCurrentBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCurrentBalance())
 
-	assert.Equal(t, (checkingDate)[1].GetInitialPositionBalance(), config.GetPair(Pair_2).GetInitialPositionBalance())
-	assert.Equal(t, (checkingDate)[1].GetCurrentPositionBalance(), config.GetPair(Pair_2).GetCurrentPositionBalance())
+	assert.Equal(t, (checkingDate)[1].GetInitialPositionBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetInitialPositionBalance())
+	assert.Equal(t, (checkingDate)[1].GetCurrentPositionBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCurrentPositionBalance())
 
-	assert.Equal(t, (checkingDate)[1].GetAccountType(), config.GetPair(Pair_2).GetAccountType())
-	assert.Equal(t, (checkingDate)[1].GetStrategy(), config.GetPair(Pair_2).GetStrategy())
-	assert.Equal(t, (checkingDate)[1].GetStage(), config.GetPair(Pair_2).GetStage())
+	assert.Equal(t, (checkingDate)[1].GetAccountType(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetAccountType())
+	assert.Equal(t, (checkingDate)[1].GetStrategy(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetStrategy())
+	assert.Equal(t, (checkingDate)[1].GetStage(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetStage())
 
-	assert.Equal(t, (checkingDate)[1].GetPair(), config.GetPair(Pair_2).GetPair())
-	assert.Equal(t, (checkingDate)[1].GetTargetSymbol(), config.GetPair(Pair_2).GetTargetSymbol())
-	assert.Equal(t, (checkingDate)[1].GetBaseSymbol(), config.GetPair(Pair_2).GetBaseSymbol())
-	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(Pair_1).GetMarginType())
-	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(Pair_1).GetLeverage())
+	assert.Equal(t, (checkingDate)[1].GetPair(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetPair())
+	assert.Equal(t, (checkingDate)[1].GetTargetSymbol(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetTargetSymbol())
+	assert.Equal(t, (checkingDate)[1].GetBaseSymbol(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBaseSymbol())
+	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMarginType())
+	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLeverage())
 
-	assert.Equal(t, (checkingDate)[1].GetMiddlePrice(), config.GetPair(Pair_2).GetMiddlePrice())
-	assert.Equal(t, (checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(Pair_2).GetLimitInputIntoPosition())
-	assert.Equal(t, (checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(Pair_2).GetLimitOutputOfPosition())
-	assert.Equal(t, (checkingDate)[1].GetLimitOnPosition(), config.GetPair(Pair_2).GetLimitOnPosition())
-	assert.Equal(t, (checkingDate)[1].GetLimitOnTransaction(), config.GetPair(Pair_2).GetLimitOnTransaction())
+	assert.Equal(t, (checkingDate)[1].GetMiddlePrice(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMiddlePrice())
+	assert.Equal(t, (checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitInputIntoPosition())
+	assert.Equal(t, (checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOutputOfPosition())
+	assert.Equal(t, (checkingDate)[1].GetLimitOnPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnPosition())
+	assert.Equal(t, (checkingDate)[1].GetLimitOnTransaction(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnTransaction())
 
-	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(Pair_2).GetUpBound())
-	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(Pair_2).GetLowBound())
+	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpBound())
+	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())
 
-	assert.Equal(t, (checkingDate)[1].GetBuyDelta(), config.GetPair(Pair_2).GetBuyDelta())
-	assert.Equal(t, (checkingDate)[1].GetBuyQuantity(), config.GetPair(Pair_2).GetBuyQuantity())
-	assert.Equal(t, (checkingDate)[1].GetBuyValue(), config.GetPair(Pair_2).GetBuyValue())
-	assert.Equal(t, (checkingDate)[1].GetBuyCommission(), config.GetPair(Pair_2).GetBuyCommission())
+	assert.Equal(t, (checkingDate)[1].GetBuyDelta(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyDelta())
+	assert.Equal(t, (checkingDate)[1].GetBuyQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyQuantity())
+	assert.Equal(t, (checkingDate)[1].GetBuyValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyValue())
+	assert.Equal(t, (checkingDate)[1].GetBuyCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyCommission())
 
-	assert.Equal(t, (checkingDate)[1].GetSellDelta(), config.GetPair(Pair_2).GetSellDelta())
-	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(Pair_2).GetSellQuantity())
-	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(Pair_2).GetSellValue())
-	assert.Equal(t, (checkingDate)[1].GetSellCommission(), config.GetPair(Pair_2).GetSellCommission())
+	assert.Equal(t, (checkingDate)[1].GetSellDelta(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellDelta())
+	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellQuantity())
+	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
+	assert.Equal(t, (checkingDate)[1].GetSellCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellCommission())
 
 }
 
@@ -455,7 +455,7 @@ func TestConfigFile_Change(t *testing.T) {
 	config_file_test.GetConfigurations().SetPair(pair_2)
 
 	pair.SetCurrentBalance(CurrentBalance * 2)
-	assert.Equal(t, CurrentBalance*2, config_file.GetConfigurations().GetPair(pair.GetPair()).GetCurrentBalance())
+	assert.Equal(t, CurrentBalance*2, config_file.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair()).GetCurrentBalance())
 
 	// Save the config to the file
 	err = config_file.Save()
@@ -465,7 +465,7 @@ func TestConfigFile_Change(t *testing.T) {
 	config_file_test.Load()
 
 	// Assert that the saved config matches the original config
-	assert.Equal(t, CurrentBalance*2, config_file_test.GetConfigurations().GetPair(pair.GetPair()).GetCurrentBalance())
+	assert.Equal(t, CurrentBalance*2, config_file_test.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair()).GetCurrentBalance())
 }
 
 // Add more tests for other methods if needed

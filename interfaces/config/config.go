@@ -10,7 +10,11 @@ type (
 	Configuration interface {
 		GetConnection() connection_interfaces.Connection
 
-		GetPair(pair string) *pairs_types.Pairs
+		GetPair(
+			account pairs_types.AccountType,
+			strategy pairs_types.StrategyType,
+			stage pairs_types.StageType,
+			pair string) *pairs_types.Pairs
 		SetPair(*pairs_types.Pairs)
 
 		GetPairs(account_type ...pairs_types.AccountType) ([]*pairs_types.Pairs, error)
