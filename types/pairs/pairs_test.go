@@ -21,7 +21,7 @@ func getTestData() *btree.BTree {
 		MarginType:             pairs_types.CrossMarginType,
 		Leverage:               20,
 		InitialBalance:         1000.0,
-		InitialPositionBalance: 900.0,
+		CurrentBalance:         1000.0,
 		MiddlePrice:            50000.0,
 		LimitInputIntoPosition: 0.5,
 		LimitOutputOfPosition:  0.8,
@@ -50,7 +50,7 @@ func getTestData() *btree.BTree {
 		MarginType:             pairs_types.CrossMarginType,
 		Leverage:               20,
 		InitialBalance:         1000.0,
-		InitialPositionBalance: 900.0,
+		CurrentBalance:         1000.0,
 		MiddlePrice:            50000.0,
 		LimitInputIntoPosition: 0.5,
 		LimitOutputOfPosition:  0.8,
@@ -81,15 +81,14 @@ func assertPair(
 	// Test GetInitialBalance
 	assert.Equal(t, 1000.0, pair.GetInitialBalance())
 
+	// Test GetInitialPositionBalance
+	assert.Equal(t, 900.0, pair.GetInitialPositionBalance())
+
 	// Test SetInitialBalance
 	pair.SetInitialBalance(2000.0)
 	assert.Equal(t, 2000.0, pair.GetInitialBalance())
 
 	// Test GetInitialPositionBalance
-	assert.Equal(t, 900.0, pair.GetInitialPositionBalance())
-
-	// Test SetInitialPositionBalance
-	pair.SetInitialPositionBalance(1800.0)
 	assert.Equal(t, 1800.0, pair.GetInitialPositionBalance())
 
 	// Test GetAccountType

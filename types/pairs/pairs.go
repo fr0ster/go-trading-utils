@@ -73,8 +73,8 @@ type (
 		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
 		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
 
-		InitialPositionBalance float64 `json:"initial_position_balance"` // Початковий баланс позиції
-		CurrentPositionBalance float64 `json:"current_position_balance"` // Поточний баланс позиції
+		// InitialPositionBalance float64 `json:"initial_position_balance"` // Початковий баланс позиції
+		// CurrentPositionBalance float64 `json:"current_position_balance"` // Поточний баланс позиції
 
 		MiddlePrice float64 `json:"middle_price"` // Середня ціна купівлі по позиції
 
@@ -151,23 +151,25 @@ func (pr *Pairs) SetCurrentBalance(balance float64) {
 
 // GetInitialPositionBalance implements Pairs.
 func (pr *Pairs) GetInitialPositionBalance() float64 {
-	return pr.InitialPositionBalance
+	// return pr.InitialPositionBalance
+	return pr.InitialBalance * pr.LimitOnPosition
 }
 
-// SetInitialPositionBalance implements Pairs.
-func (pr *Pairs) SetInitialPositionBalance(balance float64) {
-	pr.InitialPositionBalance = balance
-}
+// // SetInitialPositionBalance implements Pairs.
+// func (pr *Pairs) SetInitialPositionBalance(balance float64) {
+// 	pr.InitialPositionBalance = balance
+// }
 
 // GetCurrentPositionBalance implements Pairs.
 func (pr *Pairs) GetCurrentPositionBalance() float64 {
-	return pr.CurrentPositionBalance
+	// return pr.CurrentPositionBalance
+	return pr.CurrentBalance * pr.LimitOnPosition
 }
 
-// SetCurrentPositionBalance implements Pairs.
-func (pr *Pairs) SetCurrentPositionBalance(balance float64) {
-	pr.CurrentPositionBalance = balance
-}
+// // SetCurrentPositionBalance implements Pairs.
+// func (pr *Pairs) SetCurrentPositionBalance(balance float64) {
+// 	pr.CurrentPositionBalance = balance
+// }
 
 // Get AccountType implements Pairs.
 func (pr *Pairs) GetAccountType() AccountType {
@@ -380,7 +382,7 @@ func New(
 ) *Pairs {
 	return &Pairs{
 		InitialBalance:         0.0,
-		InitialPositionBalance: 0.0,
+		CurrentBalance:         0.0,
 		AccountType:            accountType,
 		StrategyType:           strategyType,
 		StageType:              stageType,

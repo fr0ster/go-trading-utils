@@ -154,10 +154,10 @@ var (
 		Pairs:        btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		InitialBalance:         InitialBalance,
-		CurrentBalance:         CurrentBalance,
-		InitialPositionBalance: InitialPositionBalance_1,
-		CurrentPositionBalance: CurrentPositionBalance_1,
+		InitialBalance: InitialBalance,
+		CurrentBalance: CurrentBalance,
+		// InitialPositionBalance: InitialPositionBalance_1,
+		// CurrentPositionBalance: CurrentPositionBalance_1,
 		AccountType:            AccountType_1,
 		StrategyType:           StrategyType_1,
 		StageType:              StageType_1,
@@ -184,10 +184,10 @@ var (
 		Commission:             Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
-		InitialBalance:         InitialBalance,
-		CurrentBalance:         CurrentBalance,
-		InitialPositionBalance: InitialPositionBalance_2,
-		CurrentPositionBalance: CurrentPositionBalance_2,
+		InitialBalance: InitialBalance,
+		CurrentBalance: CurrentBalance,
+		// InitialPositionBalance: InitialPositionBalance_2,
+		// CurrentPositionBalance: CurrentPositionBalance_2,
 		AccountType:            AccountType_2,
 		StrategyType:           StrategyType_2,
 		StageType:              StageType_2,
@@ -472,39 +472,38 @@ func TestConfigFile_Change(t *testing.T) {
 
 func TestPairSetter(t *testing.T) {
 	pair := &pairs_types.Pairs{
-		Pair:        Pair_1,
-		BuyQuantity: BuyQuantity_1,
-		BuyValue:    BuyValue_1,
-		Commission:  Commission,
+		Pair:            Pair_1,
+		BuyQuantity:     BuyQuantity_1,
+		BuyValue:        BuyValue_1,
+		Commission:      Commission,
+		LimitOnPosition: LimitOnPosition_1,
 	}
 	newCommission := pairs_types.Commission{"USDT": 0.1}
 
 	pair.SetInitialBalance(3000)
 	pair.SetCurrentBalance(4000)
-	pair.SetInitialPositionBalance(3000 * LimitOnPosition_2)
-	pair.SetCurrentPositionBalance(4000 * LimitOnPosition_2)
 	pair.SetMiddlePrice(45000)
-	pair.SetStage(StageType_2)
-	pair.SetBuyQuantity(BuyQuantity_2)
-	pair.SetBuyValue(BuyValue_2)
-	pair.SetBuyCommission(BuyCommission_2)
-	pair.SetSellQuantity(SellQuantity_2)
-	pair.SetSellValue(SellValue_2)
-	pair.SetSellCommission(SellCommission_2)
+	pair.SetStage(StageType_1)
+	pair.SetBuyQuantity(BuyQuantity_1)
+	pair.SetBuyValue(BuyValue_1)
+	pair.SetBuyCommission(BuyCommission_1)
+	pair.SetSellQuantity(SellQuantity_1)
+	pair.SetSellValue(SellValue_1)
+	pair.SetSellCommission(SellCommission_1)
 	pair.SetCommission(newCommission)
 
 	assert.Equal(t, 3000.0, pair.GetInitialBalance())
 	assert.Equal(t, 4000.0, pair.GetCurrentBalance())
-	assert.Equal(t, 3000*LimitOnPosition_2, pair.GetInitialPositionBalance())
-	assert.Equal(t, 4000*LimitOnPosition_2, pair.GetCurrentPositionBalance())
+	assert.Equal(t, 3000*LimitOnPosition_1, pair.GetInitialPositionBalance())
+	assert.Equal(t, 4000*LimitOnPosition_1, pair.GetCurrentPositionBalance())
 	assert.Equal(t, 45000.0, pair.GetMiddlePrice())
-	assert.Equal(t, StageType_2, pair.GetStage())
-	assert.Equal(t, BuyQuantity_2, pair.GetBuyQuantity())
-	assert.Equal(t, BuyValue_2, pair.GetBuyValue())
-	assert.Equal(t, BuyCommission_2, pair.GetBuyCommission())
-	assert.Equal(t, SellQuantity_2, pair.GetSellQuantity())
-	assert.Equal(t, SellValue_2, pair.GetSellValue())
-	assert.Equal(t, SellCommission_2, pair.GetSellCommission())
+	assert.Equal(t, StageType_1, pair.GetStage())
+	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
+	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
+	assert.Equal(t, BuyCommission_1, pair.GetBuyCommission())
+	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
+	assert.Equal(t, SellValue_1, pair.GetSellValue())
+	assert.Equal(t, SellCommission_1, pair.GetSellCommission())
 	assert.Equal(t, newCommission, pair.GetCommission())
 
 	pair.SetBuyData(BuyQuantity_1, BuyValue_1, BuyCommission_1)
