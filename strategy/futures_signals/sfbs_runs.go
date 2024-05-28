@@ -99,26 +99,21 @@ func getPositionRisk(pairStreams *PairStreams, pair *pairs_types.Pairs) (risks *
 }
 
 // Створення ордера для розміщення в грід
-func initOrderInGrid(
+func createOrderInGrid(
 	pairProcessor *PairProcessor,
 	side futures.SideType,
 	quantity,
 	price float64) (order *futures.CreateOrderResponse, err error) {
-	for {
-		order, err := pairProcessor.CreateOrder(
-			futures.OrderTypeLimit,     // orderType
-			side,                       // sideType
-			futures.TimeInForceTypeGTC, // timeInForce
-			quantity,                   // quantity
-			false,                      // closePosition
-			price,                      // price
-			0,                          // stopPrice
-			0)                          // callbackRate
-		if err != nil {
-			return nil, err
-		}
-		return order, nil
-	}
+	order, err = pairProcessor.CreateOrder(
+		futures.OrderTypeLimit,     // orderType
+		side,                       // sideType
+		futures.TimeInForceTypeGTC, // timeInForce
+		quantity,                   // quantity
+		false,                      // closePosition
+		price,                      // price
+		0,                          // stopPrice
+		0)                          // callbackRate
+	return
 }
 
 // Округлення ціни до TickSize знаків після коми
@@ -155,9 +150,9 @@ func processOrder(
 			isolatedMargin := utils.ConvStrToFloat64(risk.IsolatedMargin)
 			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
-				lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() &&
-				isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
-				upOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
+				((lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin == 0) ||
+					(isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin != 0)) {
+				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
 				if err != nil {
 					return err
 				}
@@ -177,7 +172,7 @@ func processOrder(
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 		if ok && downPrice.GetOrderId() == 0 {
 			// Створюємо ордер на купівлю
-			downOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, order.GetDownPrice())
+			downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, order.GetDownPrice())
 			if err != nil {
 				return err
 			}
@@ -219,9 +214,9 @@ func processOrder(
 			isolatedMargin := utils.ConvStrToFloat64(risk.IsolatedMargin)
 			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
-				lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() &&
-				isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() {
-				downOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
+				((lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin == 0) ||
+					(isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin != 0)) {
+				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
 				if err != nil {
 					return err
 				}
@@ -241,7 +236,7 @@ func processOrder(
 		upPrice, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 		if ok && upPrice.GetOrderId() == 0 {
 			// Створюємо ордер на продаж
-			upOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, order.GetUpPrice())
+			upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, order.GetUpPrice())
 			if err != nil {
 				return err
 			}
@@ -382,7 +377,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо ордери на продаж
-	sellOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
+	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
@@ -391,7 +386,7 @@ func RunFuturesGridTrading(
 	grid.Set(grid_types.NewRecord(sellOrder.OrderID, roundPrice(price*(1+pair.GetSellDelta()), symbol), 0, price, types.SideTypeSell))
 	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	// Створюємо ордер на купівлю
-	buyOrder, err := initOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
+	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		return err
