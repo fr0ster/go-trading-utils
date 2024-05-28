@@ -25,7 +25,7 @@ type (
 
 		GetReloadConfig() bool
 
-		GetCancelOverLimitedOrders() bool
+		GetCancelOverLimitOrders() bool
 	}
 	ConfigurationFile interface {
 		Save() error
