@@ -399,12 +399,6 @@ func RunFuturesGridTrading(
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = roundPrice(price, symbol)
 	}
-	// Устанавлюемо Margin
-	err = pairProcessor.SetPositionMargin(pair.GetCurrentBalance()*pair.GetLimitOnPosition(), 1)
-	if err != nil {
-		stopEvent <- os.Interrupt
-		return err
-	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 	if quantity*price < minNotional {
@@ -448,6 +442,14 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
+			if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+				logrus.Debugf("Futures %s: Set Margin %v", pair.GetPair(), pair.GetCurrentBalance()*pair.GetLimitOnPosition())
+				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return err
+				}
+			}
 			observePriceLiquidation(config, pairProcessor, pair, pairStreams, event) // Спостереження за ліквідацією
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
