@@ -741,6 +741,12 @@ func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err e
 		Do(context.Background())
 }
 
+func (pp *PairProcessor) SetPositionMargin(amountMargin float64, typeMargin int) (err error) {
+	return pp.client.NewUpdatePositionMarginService().
+		Symbol(pp.pair.GetPair()).
+		Amount(utils.ConvFloat64ToStrDefault(amountMargin)).Do(context.Background())
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
