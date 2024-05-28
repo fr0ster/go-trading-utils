@@ -26,6 +26,7 @@ type (
 		GetReloadConfig() bool
 
 		GetObservePriceLiquidation() bool
+		GetPercentsToLiquidation() float64
 	}
 	ConfigurationFile interface {
 		Save() error

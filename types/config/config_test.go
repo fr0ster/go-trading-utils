@@ -226,6 +226,7 @@ func getTestData() []byte {
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
+			"percents_to_liquidation": ` + json.Number(strconv.FormatFloat(0.0, 'f', -1, 64)).String() + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
