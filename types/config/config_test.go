@@ -33,7 +33,8 @@ const (
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
-	ReloadConfig = true // Перезавантаження конфігурації
+	ReloadConfig            = true // Перезавантаження конфігурації
+	CancelOverLimitedOrders = true // Скасування обмежених ордерів які за лімітом
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
@@ -149,15 +150,14 @@ var (
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		LogLevel:     InfoLevel,
-		ReloadConfig: ReloadConfig,
-		Pairs:        btree.New(2),
+		LogLevel:                InfoLevel,
+		ReloadConfig:            ReloadConfig,
+		CancelOverLimitedOrders: CancelOverLimitedOrders,
+		Pairs:                   btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		InitialBalance: InitialBalance,
-		CurrentBalance: CurrentBalance,
-		// InitialPositionBalance: InitialPositionBalance_1,
-		// CurrentPositionBalance: CurrentPositionBalance_1,
+		InitialBalance:         InitialBalance,
+		CurrentBalance:         CurrentBalance,
 		AccountType:            AccountType_1,
 		StrategyType:           StrategyType_1,
 		StageType:              StageType_1,
@@ -184,10 +184,8 @@ var (
 		Commission:             Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
-		InitialBalance: InitialBalance,
-		CurrentBalance: CurrentBalance,
-		// InitialPositionBalance: InitialPositionBalance_2,
-		// CurrentPositionBalance: CurrentPositionBalance_2,
+		InitialBalance:         InitialBalance,
+		CurrentBalance:         CurrentBalance,
 		AccountType:            AccountType_2,
 		StrategyType:           StrategyType_2,
 		StageType:              StageType_2,
@@ -227,6 +225,7 @@ func getTestData() []byte {
 			},
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
+			"cancel_over_limited_orders": ` + strconv.FormatBool(CancelOverLimitedOrders) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -307,6 +306,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, SpotCommissionTaker, config.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
+	assert.Equal(t, CancelOverLimitedOrders, config.GetCancelOverLimitedOrders())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

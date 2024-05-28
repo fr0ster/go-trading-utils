@@ -24,6 +24,8 @@ type (
 		SetLogLevel(level logrus.Level)
 
 		GetReloadConfig() bool
+
+		GetCancelOverLimitedOrders() bool
 	}
 	ConfigurationFile interface {
 		Save() error
