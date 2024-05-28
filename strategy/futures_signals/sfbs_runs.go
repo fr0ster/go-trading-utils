@@ -299,6 +299,7 @@ func observePriceLiquidation(
 						0,                          // stopPrice
 						0)                          // callbackRate
 				}
+				return err
 			}
 		}
 	}
