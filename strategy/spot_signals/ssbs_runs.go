@@ -405,6 +405,7 @@ func processOrder(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
 	pair *pairs_types.Pairs,
+	pairStreams *PairStreams,
 	symbol *binance.Symbol,
 	side binance.SideType,
 	grid *grid_types.Grid,
@@ -419,7 +420,8 @@ func processOrder(
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
-			if pair.GetUpBound() == 0 || price <= pair.GetUpBound() {
+			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
+			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && (lockedValue < pair.GetCurrentPositionBalance()) {
 				upOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, price)
 				if err != nil {
 					return err
@@ -460,6 +462,7 @@ func processOrder(
 				config,
 				pairProcessor,
 				pair,
+				pairStreams,
 				symbol,
 				takerOrder.Side,
 				grid,
@@ -514,6 +517,7 @@ func processOrder(
 				config,
 				pairProcessor,
 				pair,
+				pairStreams,
 				symbol,
 				takerOrder.Side,
 				grid,
@@ -674,7 +678,7 @@ func RunSpotGridTrading(
 				mu.Unlock()
 				continue
 			}
-			err = processOrder(config, pairProcessor, pair, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
+			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 			if err != nil {
 				mu.Unlock()
 				pairProcessor.CancelAllOrders()

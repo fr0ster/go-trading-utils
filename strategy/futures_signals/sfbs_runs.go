@@ -150,8 +150,8 @@ func processOrder(
 			isolatedMargin := utils.ConvStrToFloat64(risk.IsolatedMargin)
 			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
-				((lockedValue <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin == 0) ||
-					(isolatedMargin <= pair.GetCurrentBalance()*pair.GetLimitOnPosition() && isolatedMargin != 0)) {
+				((lockedValue <= pair.GetCurrentPositionBalance() && isolatedMargin == 0) ||
+					(isolatedMargin <= pair.GetCurrentPositionBalance() && isolatedMargin != 0)) {
 				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
 				if err != nil {
 					return err
