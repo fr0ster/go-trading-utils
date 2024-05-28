@@ -284,9 +284,9 @@ func observePriceLiquidation(
 	if config.GetConfigurations().GetObservePriceLiquidation() {
 		price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 		risk, _ := getPositionRisk(pairStreams, pair)
-		delta_percent := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) * 100 / utils.ConvStrToFloat64(risk.LiquidationPrice))
+		delta_percent := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 		if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
-			positionAmtDec := utils.ConvStrToFloat64(risk.PositionAmt) * delta_percent / 100
+			positionAmtDec := utils.ConvStrToFloat64(risk.PositionAmt) * delta_percent
 			if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 				logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
 					pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
