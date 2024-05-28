@@ -25,7 +25,7 @@ type (
 
 		GetReloadConfig() bool
 
-		GetCancelOverLimitOrders() bool
+		GetObservePriceLiquidation() bool
 	}
 	ConfigurationFile interface {
 		Save() error
