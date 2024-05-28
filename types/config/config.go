@@ -16,11 +16,11 @@ import (
 
 type (
 	Configs struct {
-		Connection              *connection_types.Connection `json:"connection"`
-		LogLevel                logrus.Level                 `json:"log_level"`
-		ReloadConfig            bool                         `json:"reload_config"`
-		CancelOverLimitedOrders bool                         `json:"cancel_over_limited_orders"`
-		Pairs                   *btree.BTree
+		Connection            *connection_types.Connection `json:"connection"`
+		LogLevel              logrus.Level                 `json:"log_level"`
+		ReloadConfig          bool                         `json:"reload_config"`
+		CancelOverLimitOrders bool                         `json:"cancel_over_limit_orders"`
+		Pairs                 *btree.BTree
 	}
 )
 
@@ -41,8 +41,8 @@ func (cf *Configs) GetReloadConfig() bool {
 	return cf.ReloadConfig
 }
 
-func (cf *Configs) GetCancelOverLimitedOrders() bool {
-	return cf.CancelOverLimitedOrders
+func (cf *Configs) GetCancelOverLimitOrders() bool {
+	return cf.CancelOverLimitOrders
 }
 
 // Implement the GetPair method
@@ -108,24 +108,24 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		Connection              *connection_types.Connection `json:"connection"`
 		LogLevel                string                       `json:"log_level"`
 		ReloadConfig            bool                         `json:"reload_config"`
-		CancelOverLimitedOrders bool                         `json:"cancel_over_limited_orders"`
+		CancelOverLimitedOrders bool                         `json:"cancel_over_limit_orders"`
 		Pairs                   []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:              c.Connection,
 		LogLevel:                c.LogLevel.String(),
 		ReloadConfig:            c.ReloadConfig,
-		CancelOverLimitedOrders: c.CancelOverLimitedOrders,
+		CancelOverLimitedOrders: c.CancelOverLimitOrders,
 		Pairs:                   pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		Connection              *connection_types.Connection `json:"connection"`
-		LogLevel                string                       `json:"log_level"`
-		ReloadConfig            bool                         `json:"reload_config"`
-		CancelOverLimitedOrders bool                         `json:"cancel_over_limited_orders"`
-		Pairs                   []*pairs_types.Pairs         `json:"pairs"`
+		Connection            *connection_types.Connection `json:"connection"`
+		LogLevel              string                       `json:"log_level"`
+		ReloadConfig          bool                         `json:"reload_config"`
+		CancelOverLimitOrders bool                         `json:"cancel_over_limit_orders"`
+		Pairs                 []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
@@ -144,7 +144,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("invalid log level: %s", temp.LogLevel)
 	}
 	c.ReloadConfig = temp.ReloadConfig
-	c.CancelOverLimitedOrders = temp.CancelOverLimitedOrders
+	c.CancelOverLimitOrders = temp.CancelOverLimitOrders
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}

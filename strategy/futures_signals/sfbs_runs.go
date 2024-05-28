@@ -166,6 +166,10 @@ func processOrder(
 					takerPrice = upPrice
 					takerOrder = upOrder
 				}
+			} else if config.GetConfigurations().GetCancelOverLimitOrders() &&
+				((lockedValue > pair.GetCurrentPositionBalance() && isolatedMargin == 0) ||
+					(isolatedMargin > pair.GetCurrentPositionBalance() && isolatedMargin != 0)) {
+				logrus.Debugf("Futures %s: Margin or Locked value are over limit", pair.GetPair())
 			}
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель нижче
@@ -230,6 +234,10 @@ func processOrder(
 					takerPrice = downPrice
 					takerOrder = downOrder
 				}
+			} else if config.GetConfigurations().GetCancelOverLimitOrders() &&
+				((lockedValue > pair.GetCurrentPositionBalance() && isolatedMargin == 0) ||
+					(isolatedMargin > pair.GetCurrentPositionBalance() && isolatedMargin != 0)) {
+				logrus.Debugf("Futures %s: Margin or Locked value are over limit", pair.GetPair())
 			}
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель вище

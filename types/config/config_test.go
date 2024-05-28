@@ -150,10 +150,10 @@ var (
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		LogLevel:                InfoLevel,
-		ReloadConfig:            ReloadConfig,
-		CancelOverLimitedOrders: CancelOverLimitedOrders,
-		Pairs:                   btree.New(2),
+		LogLevel:              InfoLevel,
+		ReloadConfig:          ReloadConfig,
+		CancelOverLimitOrders: CancelOverLimitedOrders,
+		Pairs:                 btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
@@ -225,7 +225,7 @@ func getTestData() []byte {
 			},
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
-			"cancel_over_limited_orders": ` + strconv.FormatBool(CancelOverLimitedOrders) + `,
+			"cancel_over_limit_orders": ` + strconv.FormatBool(CancelOverLimitedOrders) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -306,7 +306,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, SpotCommissionTaker, config.GetConnection().GetCommissionTaker())
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
-	assert.Equal(t, CancelOverLimitedOrders, config.GetCancelOverLimitedOrders())
+	assert.Equal(t, CancelOverLimitedOrders, config.GetCancelOverLimitOrders())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())
