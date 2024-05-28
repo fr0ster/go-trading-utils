@@ -411,6 +411,39 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			mu.Lock()
+			if config.GetConfigurations().GetObservePriceLiquidation() {
+				price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+				risk, _ := getPositionRisk(pairStreams, pair)
+				delta_percent := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) * 100 / utils.ConvStrToFloat64(risk.LiquidationPrice))
+				if delta_percent < 10 { // TODO: Перенести в конфігурацію
+					positionAmtDec := utils.ConvStrToFloat64(risk.PositionAmt) * delta_percent / 100
+					if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+						logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
+							pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
+						pairProcessor.CreateOrder(
+							futures.OrderTypeMarket,    // orderType
+							futures.SideTypeSell,       // sideType
+							futures.TimeInForceTypeGTC, // timeInForce
+							positionAmtDec,             // quantity
+							false,                      // closePosition
+							0,                          // price
+							0,                          // stopPrice
+							0)                          // callbackRate
+					} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+						logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
+							pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
+						pairProcessor.CreateOrder(
+							futures.OrderTypeMarket,    // orderType
+							futures.SideTypeBuy,        // sideType
+							futures.TimeInForceTypeGTC, // timeInForce
+							positionAmtDec,             // quantity
+							false,                      // closePosition
+							0,                          // price
+							0,                          // stopPrice
+							0)                          // callbackRate
+					}
+				}
+			}
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
