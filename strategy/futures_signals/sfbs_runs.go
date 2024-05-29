@@ -495,7 +495,6 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
-	logrus.Debugf("Futures %s: symbol %v", pair.GetPair(), symbol)
 	// Отримання середньої ціни
 	price := roundPrice(pair.GetMiddlePrice(), symbol)
 	risk, err := pairProcessor.GetPositionRisk()
@@ -512,6 +511,7 @@ func RunFuturesGridTrading(
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+	logrus.Debugf("Futures %s: minNotional %v", pair.GetPair(), minNotional)
 	if quantity*price < minNotional {
 		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
 		quantity = minNotional / price
