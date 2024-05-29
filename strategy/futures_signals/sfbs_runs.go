@@ -109,6 +109,8 @@ func createOrderInGrid(
 		price,                      // price
 		0,                          // stopPrice
 		0)                          // callbackRate
+	logrus.Debugf("Futures %s Order %v: Price %v, Quantity %v, Side %v, Status %v",
+		pairProcessor.GetPair().GetPair(), order.OrderID, price, quantity, side, order.Status)
 	return
 }
 
@@ -456,12 +458,12 @@ func RunFuturesGridTrading(
 		}
 	}
 	if pair.GetLeverage() == 0 {
-		logrus.Debugf("Futures %s Sel Leverage %v from account into config", pair.GetPair(), pairProcessor.GetLeverage())
+		logrus.Debugf("Futures %s set Leverage %v from account into config", pair.GetPair(), pairProcessor.GetLeverage())
 		pair.SetLeverage(pairProcessor.GetLeverage())
 		config.Save()
 	} else {
 		if pair.GetLeverage() != pairProcessor.GetLeverage() {
-			logrus.Debugf("Futures %s Sel Leverage %v from config into account", pair.GetPair(), pair.GetLeverage())
+			logrus.Debugf("Futures %s set Leverage %v from config into account", pair.GetPair(), pair.GetLeverage())
 			pairProcessor.SetLeverage(pair.GetLeverage())
 		}
 	}
@@ -501,6 +503,7 @@ func RunFuturesGridTrading(
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 	if quantity*price < minNotional {
+		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
 		quantity = minNotional / price
 	}
 	// Записуємо середню ціну в грід

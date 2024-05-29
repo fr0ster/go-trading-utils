@@ -738,6 +738,10 @@ func (pp *PairProcessor) GetOrderStatusEvent() chan *binance.WsUserDataEvent {
 	return pp.orderStatusEvent
 }
 
+func (pp *PairProcessor) GetPair() *pairs_types.Pairs {
+	return pp.pair
+}
+
 func (pp *PairProcessor) Debug(fl string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		orders, _ := pp.GetOpenOrders()
