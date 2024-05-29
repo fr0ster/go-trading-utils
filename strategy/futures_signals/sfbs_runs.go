@@ -283,42 +283,6 @@ func processOrder(
 	return
 }
 
-func updateConfig(
-	config *config_types.ConfigFile,
-	pairStreams *PairStreams,
-	pair *pairs_types.Pairs,
-	price float64) (quantity float64, err error) {
-	// Обновляємо конфігурацію
-	if config.GetConfigurations().GetReloadConfig() {
-		config.Load()
-		pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
-		balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-		if err != nil {
-			return 0, err
-		}
-		pair.SetCurrentBalance(balance)
-		config.Save()
-		symbol, err := func() (res *futures.Symbol, err error) {
-			val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()})
-			if val == nil {
-				return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
-			}
-			return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
-		}()
-		if err != nil {
-			return 0, err
-		}
-		logrus.Debugf("Futures %s: symbol %v", pair.GetPair(), symbol)
-		quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
-		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
-		if quantity*price < minNotional {
-			logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
-			quantity = minNotional / price
-		}
-	}
-	return
-}
-
 func balancingMargin(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
@@ -512,7 +476,6 @@ func RunFuturesGridTrading(
 		price = roundPrice(price, symbol)
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
-	logrus.Debugf("Futures %s: Quantity %v", pair.GetPair(), quantity)
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 	if quantity*price < minNotional {
 		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
@@ -528,7 +491,6 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо ордери на продаж
-	logrus.Debugf("Futures %s: Quantity %v", pair.GetPair(), quantity)
 	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
 		stopEvent <- os.Interrupt
@@ -536,7 +498,7 @@ func RunFuturesGridTrading(
 	}
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(sellOrder.OrderID, roundPrice(price*(1+pair.GetSellDelta()), symbol), 0, price, types.SideTypeSell))
-	// logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), symbol))
+	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	if err != nil {
@@ -547,8 +509,8 @@ func RunFuturesGridTrading(
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), symbol), price, 0, types.SideTypeBuy))
 	// logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	// Стартуємо обробку ордерів
-	// grid.Debug("Futures Grid", "", pair.GetPair())
-	// logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
+	grid.Debug("Futures Grid", "", pair.GetPair())
+	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
 		select {
 		case <-stopEvent:
@@ -556,11 +518,20 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
-			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-			// Обновляємо конфігурацію
-			_, err := updateConfig(config, pairStreams, pair, price)
-			if err != nil {
-				return err
+			if config.GetConfigurations().GetReloadConfig() {
+				config.Load()
+				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				if err != nil {
+					return err
+				}
+				pair.SetCurrentBalance(balance)
+				config.Save()
+				quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
+				minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+				if quantity*price < minNotional {
+					quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+				}
 			}
 			// Зміна маржі при потребі
 			err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
