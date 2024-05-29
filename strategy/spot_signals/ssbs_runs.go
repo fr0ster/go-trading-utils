@@ -391,8 +391,6 @@ func createOrderInGrid(
 		price,                      // price
 		0,                          // stopPrice
 		0)                          // trailingDelta
-	logrus.Debugf("Futures %s Order %v: Price %v, Quantity %v, Side %v, Status %v",
-		pairProcessor.GetPair().GetPair(), order.OrderID, price, quantity, side, order.Status)
 	return
 }
 
