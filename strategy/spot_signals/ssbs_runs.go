@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -415,6 +416,7 @@ func processOrder(
 		takerPrice *grid_types.Record
 		takerOrder *binance.CreateOrderResponse
 	)
+	grid.Debug("Spots Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
 	if side == binance.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -528,6 +530,7 @@ func processOrder(
 			}
 		}
 	}
+	grid.Debug("Spots Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
 	return
 }
 
@@ -638,7 +641,7 @@ func RunSpotGridTrading(
 	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 
 	// Стартуємо обробку ордерів
-	grid.Debug("Spots Grid", pair.GetPair())
+	grid.Debug("Spots Grid", "", pair.GetPair())
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
 	mu := &sync.Mutex{}
 	for {
@@ -670,7 +673,6 @@ func RunSpotGridTrading(
 				event.OrderUpdate.Price,
 				event.OrderUpdate.Side,
 				event.OrderUpdate.Status)
-			grid.Debug("Spots Grid", pair.GetPair())
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
 			if !ok {
@@ -687,7 +689,7 @@ func RunSpotGridTrading(
 			}
 			mu.Unlock()
 		case <-time.After(60 * time.Second):
-			grid.Debug("Spots Grid", pair.GetPair())
+			grid.Debug("Spots Grid", "", pair.GetPair())
 		}
 	}
 }

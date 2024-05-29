@@ -42,9 +42,9 @@ func (g *Grid) Descend(iter func(item btree.Item) bool) {
 	g.tree.Descend(iter)
 }
 
-func (g *Grid) Debug(pair, fl string) {
+func (g *Grid) Debug(pair, id, fl string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
-		logrus.Debugf("%s %s:", fl, pair)
+		logrus.Debugf("%s %s %s:", fl, id, pair)
 		g.Descend(func(record btree.Item) bool {
 			order := record.(*Record)
 			logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())

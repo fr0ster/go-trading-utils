@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -131,7 +132,7 @@ func processOrder(
 		takerPrice *grid_types.Record
 		takerOrder *futures.CreateOrderResponse
 	)
-	grid.Debug("Futures Grid Before processOrder", pair.GetPair())
+	grid.Debug("Futures Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
 	if side == futures.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -251,7 +252,7 @@ func processOrder(
 			}
 		}
 	}
-	grid.Debug("Futures Grid After processOrder", pair.GetPair())
+	grid.Debug("Futures Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
 	return
 }
 
@@ -512,7 +513,7 @@ func RunFuturesGridTrading(
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), symbol), price, 0, types.SideTypeBuy))
 	logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	// Стартуємо обробку ордерів
-	grid.Debug("Futures Grid", pair.GetPair())
+	grid.Debug("Futures Grid", "", pair.GetPair())
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
 		select {
@@ -542,7 +543,6 @@ func RunFuturesGridTrading(
 				event.OrderTradeUpdate.OriginalPrice,
 				event.OrderTradeUpdate.Side,
 				event.OrderTradeUpdate.Status)
-			grid.Debug("Futures Grid", pair.GetPair())
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
@@ -554,7 +554,7 @@ func RunFuturesGridTrading(
 				return err
 			}
 		case <-time.After(60 * time.Second):
-			grid.Debug("Futures Grid", pair.GetPair())
+			grid.Debug("Futures Grid", "", pair.GetPair())
 		}
 	}
 }
