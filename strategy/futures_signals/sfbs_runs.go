@@ -275,42 +275,6 @@ func processOrder(
 	return
 }
 
-func BalancingMargin(
-	config *config_types.ConfigFile,
-	pairProcessor *PairProcessor,
-	pairStreams *PairStreams,
-	pair *pairs_types.Pairs,
-	risk *futures.PositionRisk,
-	event *futures.WsUserDataEvent) (err error) {
-	distance := pairStreams.GetLiquidationDistance(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
-	if utils.ConvStrToFloat64(risk.LiquidationPrice) != 0 && distance <= config.GetConfigurations().GetPercentsToLiquidation() {
-		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
-			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
-			if err != nil {
-				return err
-			}
-			logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
-				pair.GetPair(),
-				utils.ConvStrToFloat64(risk.IsolatedMargin),
-				pair.GetCurrentPositionBalance(),
-				pairProcessor.GetPositionMargin())
-		}
-	} else if utils.ConvStrToFloat64(risk.LiquidationPrice) == 0 {
-		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
-			err = pairProcessor.SetPositionMargin(utils.ConvStrToFloat64(risk.IsolatedMargin)-pair.GetCurrentPositionBalance(), 2)
-			if err != nil {
-				return err
-			}
-			logrus.Debugf("Futures %s: Margin was %v, remove Margin %v, new Margin %v",
-				pair.GetPair(),
-				utils.ConvStrToFloat64(risk.IsolatedMargin),
-				utils.ConvStrToFloat64(risk.IsolatedMargin)-pair.GetCurrentPositionBalance(),
-				pairProcessor.GetPositionMargin())
-		}
-	}
-	return
-}
-
 func observePriceLiquidation(
 	config *config_types.ConfigFile,
 	pairProcessor *PairProcessor,
@@ -541,11 +505,6 @@ func RunFuturesGridTrading(
 					pair.GetCurrentPositionBalance(),
 					pairProcessor.GetPositionMargin())
 			}
-			// // Зміна маржі при потребі
-			// err = BalancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
-			// if err != nil {
-			// 	return err
-			// }
 			// Спостереження за ліквідацією при потребі
 			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
 			if err != nil {
