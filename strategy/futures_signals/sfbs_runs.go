@@ -122,12 +122,14 @@ func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *PairProcessor, pair *p
 	grid.Ascend(func(item btree.Item) bool {
 		var orderOut *futures.Order
 		record := item.(*grid_types.Record)
-		orderOut, err = pairProcessor.GetOrder(record.GetOrderId())
-		if err != nil {
-			return false
-		}
-		if orderOut == nil || orderOut.Status != futures.OrderStatusTypeNew {
-			err = fmt.Errorf("futures %s: Order %v not found or status %v", pair.GetPair(), record.GetOrderId(), orderOut.Status)
+		if record.GetOrderId() != 0 {
+			orderOut, err = pairProcessor.GetOrder(record.GetOrderId())
+			if err != nil {
+				return false
+			}
+			if orderOut == nil || orderOut.Status != futures.OrderStatusTypeNew {
+				err = fmt.Errorf("futures %s: Order %v not found or status %v", pair.GetPair(), record.GetOrderId(), orderOut.Status)
+			}
 		}
 		return true
 	})
