@@ -109,11 +109,12 @@ func createOrderInGrid(
 		price,                      // price
 		0,                          // stopPrice
 		0)                          // callbackRate
-	if err == nil {
-		logrus.Debugf("Futures: Set Buy order side %v on price %v quantity %v", side, price, quantity)
-	} else {
+	if err == nil && order != nil {
 		logrus.Errorf("Futures %s: Side %v, TimeInForce %v, Quantity %v, Price %v",
 			order.Symbol, order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
+	} else {
+		logrus.Errorf("Futures: Side %v, TimeInForce %v, Quantity %v, Price %v, error %v",
+			side, futures.TimeInForceTypeGTC, quantity, price, err)
 	}
 	return
 }
