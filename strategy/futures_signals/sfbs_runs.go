@@ -522,7 +522,11 @@ func RunFuturesGridTrading(
 			mu.Lock()
 			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Обновляємо конфігурацію
-			updateConfig(config, pairStreams, pair, price)
+			quantity, err := updateConfig(config, pairStreams, pair, price)
+			if err != nil {
+				stopEvent <- os.Interrupt
+				return err
+			}
 			// Зміна маржі при потребі
 			err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
 			if err != nil {
