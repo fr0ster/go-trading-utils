@@ -443,12 +443,6 @@ func RunFuturesGridTrading(
 		return err
 	}
 
-	_, err = pairProcessor.ClosePosition()
-	if err != nil {
-		stopEvent <- os.Interrupt
-		return err
-	}
-
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
 		stopEvent <- os.Interrupt
