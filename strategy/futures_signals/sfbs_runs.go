@@ -163,8 +163,8 @@ func processOrder(
 				if err != nil {
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
-					pair.GetPair(), upOrder.OrderID, price, upOrder.Status)
+				// logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
+				// 	pair.GetPair(), upOrder.OrderID, price, upOrder.Status)
 				// Записуємо ордер в грід
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upPrice)
@@ -188,8 +188,8 @@ func processOrder(
 			}
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
-				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
+			// logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
+			// 	pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
 			if downOrder.Status != futures.OrderStatusTypeNew {
 				takerPrice = downPrice
 				takerOrder = downOrder
@@ -222,8 +222,8 @@ func processOrder(
 				if err != nil {
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
-					pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
+				// logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
+				// 	pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
 				// Записуємо ордер в грід
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downPrice)
@@ -251,8 +251,8 @@ func processOrder(
 			}
 			upPrice.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
 			upPrice.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
-				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status)
+			// logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
+			// 	pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status)
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
@@ -541,28 +541,28 @@ func RunFuturesGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-			// Обновляємо конфігурацію
-			quantity, err := updateConfig(config, pairStreams, pair, price)
-			if err != nil {
-				return err
-			}
-			// Зміна маржі при потребі
-			err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
-			if err != nil {
-				return err
-			}
-			// Спостереження за ліквідацією при потребі
-			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
-			if err != nil {
-				return err
-			}
-			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
-				pair.GetPair(),
-				event.OrderTradeUpdate.ID,
-				event.OrderTradeUpdate.OriginalPrice,
-				event.OrderTradeUpdate.Side,
-				event.OrderTradeUpdate.Status)
+			// price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+			// // Обновляємо конфігурацію
+			// quantity, err := updateConfig(config, pairStreams, pair, price)
+			// if err != nil {
+			// 	return err
+			// }
+			// // Зміна маржі при потребі
+			// err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
+			// if err != nil {
+			// 	return err
+			// }
+			// // Спостереження за ліквідацією при потребі
+			// err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
+			// if err != nil {
+			// 	return err
+			// }
+			// logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
+			// 	pair.GetPair(),
+			// 	event.OrderTradeUpdate.ID,
+			// 	event.OrderTradeUpdate.OriginalPrice,
+			// 	event.OrderTradeUpdate.Side,
+			// 	event.OrderTradeUpdate.Status)
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
