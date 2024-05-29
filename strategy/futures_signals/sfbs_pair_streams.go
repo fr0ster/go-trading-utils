@@ -2,6 +2,7 @@ package futures_signals
 
 import (
 	"context"
+	"math"
 	"os"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
+	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -79,6 +81,16 @@ func (pp *PairStreams) GetDegree() int {
 
 func (pp *PairStreams) GetTimeOut() time.Duration {
 	return pp.timeOut
+}
+
+func (pp *PairStreams) GetPositionRisk() (risks *futures.PositionRisk, err error) {
+	risks, err = pp.GetAccount().GetPositionRisk(pp.pair.GetPair())
+	return
+}
+
+func (pp *PairStreams) GetLiquidationDistance(price float64) (distance float64) {
+	risk, _ := pp.GetPositionRisk()
+	return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 }
 
 func NewPairStreams(

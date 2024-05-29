@@ -741,6 +741,15 @@ func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err e
 		Do(context.Background())
 }
 
+func (pp *PairProcessor) GetPositionMargin() (margin float64) {
+	risk, err := pp.GetPositionRisk()
+	if err != nil {
+		return 0
+	}
+	margin = utils.ConvStrToFloat64(risk.IsolatedMargin) // Convert string to float64
+	return
+}
+
 func (pp *PairProcessor) SetPositionMargin(amountMargin float64, typeMargin int) (err error) {
 	return pp.client.NewUpdatePositionMarginService().
 		Symbol(pp.pair.GetPair()).Type(typeMargin).
