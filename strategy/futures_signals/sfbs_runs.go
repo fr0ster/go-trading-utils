@@ -520,48 +520,44 @@ func RunFuturesGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			mu.Lock()
-			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-			// Обновляємо конфігурацію
-			quantity, err := updateConfig(config, pairStreams, pair, price)
-			if err != nil {
-				stopEvent <- os.Interrupt
-				return err
-			}
-			// Зміна маржі при потребі
-			err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
-			if err != nil {
-				stopEvent <- os.Interrupt
-				return err
-			}
-			// Спостереження за ліквідацією при потребі
-			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
-			if err != nil {
-				stopEvent <- os.Interrupt
-				return err
-			}
-			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
-				pair.GetPair(),
-				event.OrderTradeUpdate.ID,
-				event.OrderTradeUpdate.OriginalPrice,
-				event.OrderTradeUpdate.Side,
-				event.OrderTradeUpdate.Status)
-			grid.Debug("Futures Grid", pair.GetPair())
-			// Знаходимо у гріді на якому був виконаний ордер
-			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
-			if !ok {
-				logrus.Errorf("Uncorrected order ID: %v", event.OrderTradeUpdate.ID)
-				mu.Unlock()
-				continue
-			}
-			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, event.OrderTradeUpdate.Side, grid, order, quantity)
-			if err != nil {
-				mu.Unlock()
-				pairProcessor.CancelAllOrders()
-				stopEvent <- os.Interrupt
-				return err
-			}
-			mu.Unlock()
+			return func() (err error) {
+				mu.Lock()
+				defer mu.Unlock()
+				price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+				// Обновляємо конфігурацію
+				quantity, err := updateConfig(config, pairStreams, pair, price)
+				if err != nil {
+					return err
+				}
+				// Зміна маржі при потребі
+				err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
+				if err != nil {
+					return err
+				}
+				// Спостереження за ліквідацією при потребі
+				err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
+				if err != nil {
+					return err
+				}
+				logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
+					pair.GetPair(),
+					event.OrderTradeUpdate.ID,
+					event.OrderTradeUpdate.OriginalPrice,
+					event.OrderTradeUpdate.Side,
+					event.OrderTradeUpdate.Status)
+				grid.Debug("Futures Grid", pair.GetPair())
+				// Знаходимо у гріді на якому був виконаний ордер
+				order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
+				if !ok {
+					return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
+				}
+				err = processOrder(config, pairProcessor, pair, pairStreams, symbol, event.OrderTradeUpdate.Side, grid, order, quantity)
+				if err != nil {
+					pairProcessor.CancelAllOrders()
+					return err
+				}
+				return
+			}()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", pair.GetPair())
 		}
@@ -583,23 +579,40 @@ func Run(
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		return RunFuturesHolding(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		err = RunFuturesHolding(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		return RunScalpingHolding(config, client, pair, stopEvent)
+		err = RunScalpingHolding(config, client, pair, stopEvent)
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		return RunFuturesTrading(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		err = RunFuturesTrading(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
 
 		// Відпрацьовуємо Grid стратегію
 	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		return RunFuturesGridTrading(config, client, pair, stopEvent)
+		err = RunFuturesGridTrading(config, client, pair, stopEvent)
+		if err != nil {
+			stopEvent <- os.Interrupt
+			return err
+		}
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
 		stopEvent <- os.Interrupt
 		return fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
 	}
+	return
 }
