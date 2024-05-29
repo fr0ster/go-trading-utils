@@ -487,7 +487,7 @@ func RunFuturesGridTrading(
 	symbol, err := func() (res *futures.Symbol, err error) {
 		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()})
 		if val == nil {
-			return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+			return nil, fmt.Errorf("futures %s: Symbol not found", pair.GetPair())
 		}
 		return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
 	}()
@@ -495,6 +495,7 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+	logrus.Debugf("Futures %s: symbol %v", pair.GetPair(), symbol)
 	// Отримання середньої ціни
 	price := roundPrice(pair.GetMiddlePrice(), symbol)
 	risk, err := pairProcessor.GetPositionRisk()
