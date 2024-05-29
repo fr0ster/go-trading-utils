@@ -538,28 +538,28 @@ func RunFuturesGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			// price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-			// // Обновляємо конфігурацію
-			// quantity, err := updateConfig(config, pairStreams, pair, price)
-			// if err != nil {
-			// 	return err
-			// }
-			// // Зміна маржі при потребі
-			// err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
-			// if err != nil {
-			// 	return err
-			// }
-			// // Спостереження за ліквідацією при потребі
-			// err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
-			// if err != nil {
-			// 	return err
-			// }
-			// logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
-			// 	pair.GetPair(),
-			// 	event.OrderTradeUpdate.ID,
-			// 	event.OrderTradeUpdate.OriginalPrice,
-			// 	event.OrderTradeUpdate.Side,
-			// 	event.OrderTradeUpdate.Status)
+			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+			// Обновляємо конфігурацію
+			quantity, err := updateConfig(config, pairStreams, pair, price)
+			if err != nil {
+				return err
+			}
+			// Зміна маржі при потребі
+			err = balancingMargin(config, pairProcessor, pairStreams, pair, risk, event)
+			if err != nil {
+				return err
+			}
+			// Спостереження за ліквідацією при потребі
+			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, event)
+			if err != nil {
+				return err
+			}
+			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
+				pair.GetPair(),
+				event.OrderTradeUpdate.ID,
+				event.OrderTradeUpdate.OriginalPrice,
+				event.OrderTradeUpdate.Side,
+				event.OrderTradeUpdate.Status)
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
