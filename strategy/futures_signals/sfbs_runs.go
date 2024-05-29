@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -117,6 +118,22 @@ func roundPrice(val float64, symbol *futures.Symbol) float64 {
 	return utils.RoundToDecimalPlace(val, exp)
 }
 
+func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *PairProcessor, pair *pairs_types.Pairs) (err error) {
+	grid.Ascend(func(item btree.Item) bool {
+		var orderOut *futures.Order
+		record := item.(*grid_types.Record)
+		orderOut, err = pairProcessor.GetOrder(record.GetOrderId())
+		if err != nil {
+			return false
+		}
+		if orderOut == nil || orderOut.Status != futures.OrderStatusTypeNew {
+			err = fmt.Errorf("futures %s: Order %v not found or status %v", pair.GetPair(), record.GetOrderId(), orderOut.Status)
+		}
+		return true
+	})
+	return err
+}
+
 // Обробка ордерів після виконання ордера з гріду
 func processOrder(
 	config *config_types.ConfigFile,
@@ -133,6 +150,10 @@ func processOrder(
 		takerOrder *futures.CreateOrderResponse
 	)
 	grid.Debug("Futures Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	err = IsOrdersOpened(grid, pairProcessor, pair)
+	if err != nil {
+		return
+	}
 	if side == futures.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -253,6 +274,10 @@ func processOrder(
 		}
 	}
 	grid.Debug("Futures Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	err = IsOrdersOpened(grid, pairProcessor, pair)
+	if err != nil {
+		return
+	}
 	return
 }
 
