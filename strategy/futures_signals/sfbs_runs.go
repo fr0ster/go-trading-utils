@@ -301,6 +301,7 @@ func updateConfig(
 		quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 		if quantity*price < minNotional {
+			logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
 			quantity = minNotional / price
 		}
 	}
