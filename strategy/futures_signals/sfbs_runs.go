@@ -113,7 +113,7 @@ func createOrderInGrid(
 		logrus.Errorf("Futures %s: Side %v, TimeInForce %v, Quantity %v, Price %v",
 			order.Symbol, order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
 	} else {
-		logrus.Errorf("Futures: Side %v, TimeInForce %v, Quantity %v, Price %v, error %v",
+		logrus.Errorf("Futures: Side %s, TimeInForce %s, Quantity %v, Price %v, error %s",
 			side, futures.TimeInForceTypeGTC, quantity, price, err)
 	}
 	return
