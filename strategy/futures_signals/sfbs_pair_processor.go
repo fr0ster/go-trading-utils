@@ -761,7 +761,7 @@ func (pp *PairProcessor) Debug(fl string) {
 		orders, _ := pp.GetOpenOrders()
 		logrus.Debugf("%s: Open orders for %s", fl, pp.pair.GetPair())
 		for _, order := range orders {
-			logrus.Debugf(" Order %v on price %v OrderSide %v", order.OrderID, order.Price, order.Side)
+			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}
 	}
 }
