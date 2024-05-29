@@ -167,8 +167,6 @@ func processOrder(
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
 				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
 				if err != nil {
-					logrus.Errorf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
-						pair.GetPair(), upOrder.OrderID, price, upOrder.Status, quantity)
 					return err
 				}
 				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
@@ -192,8 +190,6 @@ func processOrder(
 			// Створюємо ордер на купівлю
 			downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, order.GetDownPrice())
 			if err != nil {
-				logrus.Errorf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-					pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
 				return err
 			}
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
@@ -311,6 +307,7 @@ func updateConfig(
 		if err != nil {
 			return 0, err
 		}
+		logrus.Debugf("Futures %s: symbol %v", pair.GetPair(), symbol)
 		quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 		if quantity*price < minNotional {
