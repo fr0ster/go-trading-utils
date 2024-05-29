@@ -100,6 +100,7 @@ func createOrderInGrid(
 	side futures.SideType,
 	quantity,
 	price float64) (order *futures.CreateOrderResponse, err error) {
+	logrus.Debugf("Futures: Quantity %v", quantity)
 	order, err = pairProcessor.CreateOrder(
 		futures.OrderTypeLimit,     // orderType
 		side,                       // sideType
@@ -511,8 +512,7 @@ func RunFuturesGridTrading(
 		price = roundPrice(price, symbol)
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
-	logrus.Debugf("Futures %s: Current balance %v, Limit on Position %v, Limit on Transaction %v, Leverage %v, Price %v, Quantity %v",
-		pair.GetPair(), pair.GetCurrentBalance(), pair.GetLimitOnPosition(), pair.GetLimitOnTransaction(), pair.GetLeverage(), price, quantity)
+	logrus.Debugf("Futures %s: Quantity %v", pair.GetPair(), quantity)
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 	if quantity*price < minNotional {
 		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
@@ -528,6 +528,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо ордери на продаж
+	logrus.Debugf("Futures %s: Quantity %v", pair.GetPair(), quantity)
 	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
 		stopEvent <- os.Interrupt
@@ -557,7 +558,7 @@ func RunFuturesGridTrading(
 			grid.Lock()
 			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Обновляємо конфігурацію
-			quantity, err := updateConfig(config, pairStreams, pair, price)
+			_, err := updateConfig(config, pairStreams, pair, price)
 			if err != nil {
 				return err
 			}
