@@ -295,7 +295,8 @@ func balancingMargin(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	event *futures.WsUserDataEvent) (err error) {
-	if utils.ConvStrToFloat64(risk.LiquidationPrice) != 0 && pairStreams.GetLiquidationDistance(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)) <= config.GetConfigurations().GetPercentsToLiquidation() {
+	distance := pairStreams.GetLiquidationDistance(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
+	if utils.ConvStrToFloat64(risk.LiquidationPrice) != 0 && distance <= config.GetConfigurations().GetPercentsToLiquidation() {
 		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 			if err != nil {
@@ -307,7 +308,7 @@ func balancingMargin(
 				pair.GetCurrentPositionBalance(),
 				pairProcessor.GetPositionMargin())
 		}
-	} else {
+	} else if utils.ConvStrToFloat64(risk.LiquidationPrice) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
 			err = pairProcessor.SetPositionMargin(utils.ConvStrToFloat64(risk.IsolatedMargin)-pair.GetCurrentPositionBalance(), 2)
 			if err != nil {
