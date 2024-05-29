@@ -110,11 +110,11 @@ func createOrderInGrid(
 		0,                          // stopPrice
 		0)                          // callbackRate
 	if err != nil {
-		logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-			pairProcessor.GetPair().GetPair(), order.OrderID, price, order.Status, quantity)
+		logrus.Debugf("Futures: Set Buy order %v on price %v status %v quantity %v",
+			order.OrderID, price, order.Status, quantity)
 	} else {
 		logrus.Errorf("Futures %s: Side %v, TimeInForce %v, Quantity %v, Price %v",
-			pairProcessor.GetPair().GetPair(), order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
+			order.Symbol, order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
 	}
 	return
 }
