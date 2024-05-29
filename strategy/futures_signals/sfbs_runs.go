@@ -100,7 +100,6 @@ func createOrderInGrid(
 	side futures.SideType,
 	quantity,
 	price float64) (order *futures.CreateOrderResponse, err error) {
-	logrus.Debugf("Futures: Quantity %v", quantity)
 	order, err = pairProcessor.CreateOrder(
 		futures.OrderTypeLimit,     // orderType
 		side,                       // sideType
@@ -110,13 +109,6 @@ func createOrderInGrid(
 		price,                      // price
 		0,                          // stopPrice
 		0)                          // callbackRate
-	if err == nil && order != nil {
-		logrus.Errorf("Futures %s: Side %v, TimeInForce %v, Quantity %v, Price %v",
-			order.Symbol, order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
-	} else {
-		logrus.Errorf("Futures: Side %s, TimeInForce %s, Quantity %v, Price %v, error %s",
-			side, futures.TimeInForceTypeGTC, quantity, price, err)
-	}
 	return
 }
 
