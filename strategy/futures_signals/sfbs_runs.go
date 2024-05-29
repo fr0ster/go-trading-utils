@@ -109,6 +109,13 @@ func createOrderInGrid(
 		price,                      // price
 		0,                          // stopPrice
 		0)                          // callbackRate
+	if err != nil {
+		logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
+			pairProcessor.GetPair().GetPair(), order.OrderID, price, order.Status, quantity)
+	} else {
+		logrus.Errorf("Futures %s: Side %v, TimeInForce %v, Quantity %v, Price %v",
+			pairProcessor.GetPair().GetPair(), order.Side, order.TimeInForce, order.OrigQuantity, order.Price)
+	}
 	return
 }
 
@@ -223,8 +230,6 @@ func processOrder(
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
 				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
 				if err != nil {
-					logrus.Errorf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-						pair.GetPair(), downOrder.OrderID, price, downOrder.Status, quantity)
 					return err
 				}
 				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
