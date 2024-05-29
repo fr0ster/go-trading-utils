@@ -525,7 +525,6 @@ func RunFuturesGridTrading(
 				}
 			}
 			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
-				utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 				if err != nil {
