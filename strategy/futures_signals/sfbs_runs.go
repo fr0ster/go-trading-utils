@@ -565,8 +565,8 @@ func RunFuturesGridTrading(
 				return err
 			}
 			grid.Unlock()
-			grid.Debug("Futures Grid After processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
-			pairProcessor.Debug("Futures Pair After processOrder", strconv.FormatInt(orderId, 10))
+			grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
+			// pairProcessor.Debug("Futures Pair processOrder", strconv.FormatInt(orderId, 10))
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", "", pair.GetPair())
 		}
