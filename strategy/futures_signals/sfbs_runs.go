@@ -538,6 +538,7 @@ func RunFuturesGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			grid.Lock()
 			price := utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Обновляємо конфігурацію
 			quantity, err := updateConfig(config, pairStreams, pair, price)
@@ -571,6 +572,7 @@ func RunFuturesGridTrading(
 				pairProcessor.CancelAllOrders()
 				return err
 			}
+			grid.Unlock()
 			grid.Debug("Futures Grid After processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
 			pairProcessor.Debug("Futures Pair After processOrder", strconv.FormatInt(orderId, 10))
 		case <-time.After(60 * time.Second):

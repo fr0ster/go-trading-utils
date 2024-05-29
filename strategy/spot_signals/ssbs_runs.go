@@ -638,6 +638,7 @@ func RunSpotGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			grid.Lock()
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
@@ -669,6 +670,7 @@ func RunSpotGridTrading(
 				pairProcessor.CancelAllOrders()
 				return err
 			}
+			grid.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Spots Grid", "", pair.GetPair())
 		}
