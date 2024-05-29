@@ -524,6 +524,11 @@ func RunFuturesGridTrading(
 					quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 				}
 			}
+			risk, err := pairProcessor.GetPositionRisk()
+			if err != nil {
+				stopEvent <- os.Interrupt
+				return err
+			}
 			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
