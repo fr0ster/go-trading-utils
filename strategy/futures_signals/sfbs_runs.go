@@ -152,6 +152,7 @@ func processOrder(
 		takerOrder *futures.CreateOrderResponse
 	)
 	grid.Debug("Futures Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	pairProcessor.Debug("Futures Pair Before processOrder")
 	err = IsOrdersOpened(grid, pairProcessor, pair)
 	if err != nil {
 		return
@@ -276,6 +277,7 @@ func processOrder(
 		}
 	}
 	grid.Debug("Futures Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	pairProcessor.Debug("Futures Pair After processOrder")
 	err = IsOrdersOpened(grid, pairProcessor, pair)
 	if err != nil {
 		return

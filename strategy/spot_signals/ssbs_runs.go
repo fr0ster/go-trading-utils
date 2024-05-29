@@ -417,6 +417,7 @@ func processOrder(
 		takerOrder *binance.CreateOrderResponse
 	)
 	grid.Debug("Spots Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	pairProcessor.Debug("Spots Pair Before processOrder")
 	if side == binance.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -531,6 +532,7 @@ func processOrder(
 		}
 	}
 	grid.Debug("Spots Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	pairProcessor.Debug("Spots Pair After processOrder")
 	return
 }
 

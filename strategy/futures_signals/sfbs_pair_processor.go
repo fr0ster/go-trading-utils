@@ -756,6 +756,16 @@ func (pp *PairProcessor) SetPositionMargin(amountMargin float64, typeMargin int)
 		Amount(utils.ConvFloat64ToStrDefault(amountMargin)).Do(context.Background())
 }
 
+func (pp *PairProcessor) Debug(fl string) {
+	if logrus.GetLevel() == logrus.DebugLevel {
+		orders, _ := pp.GetOpenOrders()
+		logrus.Debugf("%s: Open orders for %s", fl, pp.pair.GetPair())
+		for _, order := range orders {
+			logrus.Debugf(" Order %v on price %v OrderSide %v", order.OrderID, order.Price, order.Side)
+		}
+	}
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
