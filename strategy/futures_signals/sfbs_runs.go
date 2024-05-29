@@ -308,7 +308,7 @@ func balancingMargin(
 				pair.GetCurrentPositionBalance(),
 				pairProcessor.GetPositionMargin())
 		}
-	} else if utils.ConvStrToFloat64(risk.LiquidationPrice) != 0 {
+	} else if utils.ConvStrToFloat64(risk.LiquidationPrice) == 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) != 0 && utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
 			err = pairProcessor.SetPositionMargin(utils.ConvStrToFloat64(risk.IsolatedMargin)-pair.GetCurrentPositionBalance(), 2)
 			if err != nil {
