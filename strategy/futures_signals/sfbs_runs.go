@@ -149,7 +149,7 @@ func processOrder(
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upPrice)
 				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status == futures.OrderStatusTypeFilled {
+				if upOrder.Status != futures.OrderStatusTypeNew {
 					takerPrice = upPrice
 					takerOrder = upOrder
 				}
@@ -170,7 +170,7 @@ func processOrder(
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
 				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
-			if downOrder.Status == futures.OrderStatusTypeFilled {
+			if downOrder.Status != futures.OrderStatusTypeNew {
 				takerPrice = downPrice
 				takerOrder = downOrder
 			}
@@ -208,7 +208,7 @@ func processOrder(
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downPrice)
 				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status == futures.OrderStatusTypeFilled {
+				if downOrder.Status != futures.OrderStatusTypeNew {
 					takerPrice = downPrice
 					takerOrder = downOrder
 				}
@@ -225,7 +225,7 @@ func processOrder(
 			if err != nil {
 				return err
 			}
-			if upOrder.Status == futures.OrderStatusTypeFilled {
+			if upOrder.Status != futures.OrderStatusTypeNew {
 				takerPrice = upPrice
 				takerOrder = upOrder
 			}

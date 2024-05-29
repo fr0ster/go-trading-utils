@@ -818,7 +818,7 @@ func NewPairProcessor(
 
 	// Визначаємо статуси ордерів які нас цікавлять та ...
 	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, futures.OrderStatusTypeFilled)
+	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, futures.OrderStatusTypeFilled, futures.OrderStatusTypePartiallyFilled)
 
 	return
 }
