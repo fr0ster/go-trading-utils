@@ -511,7 +511,7 @@ func RunFuturesGridTrading(
 	}
 	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
-	logrus.Debugf("Futures %s: minNotional %v", pair.GetPair(), minNotional)
+	logrus.Debugf("Futures %s: quantity %v minNotional %v", pair.GetPair(), quantity, minNotional)
 	if quantity*price < minNotional {
 		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
 		quantity = minNotional / price
