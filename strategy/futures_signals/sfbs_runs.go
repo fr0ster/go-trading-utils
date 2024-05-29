@@ -460,7 +460,6 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
-	logrus.Debugf("Futures %s: symbol %v", pair.GetPair(), symbol)
 	// Отримання середньої ціни
 	price := roundPrice(pair.GetMiddlePrice(), symbol)
 	risk, err := pairProcessor.GetPositionRisk()
