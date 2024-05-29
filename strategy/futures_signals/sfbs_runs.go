@@ -151,12 +151,7 @@ func processOrder(
 		takerPrice *grid_types.Record
 		takerOrder *futures.CreateOrderResponse
 	)
-	// grid.Debug("Futures Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
-	// pairProcessor.Debug("Futures Pair Before processOrder")
-	// err = IsOrdersOpened(grid, pairProcessor, pair)
-	// if err != nil {
-	// 	return
-	// }
+	orderId := order.GetOrderId()
 	if side == futures.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -276,12 +271,8 @@ func processOrder(
 			}
 		}
 	}
-	grid.Debug("Futures Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
-	pairProcessor.Debug("Futures Pair After processOrder")
-	err = IsOrdersOpened(grid, pairProcessor, pair)
-	if err != nil {
-		return
-	}
+	grid.Debug("Futures Grid After processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
+	pairProcessor.Debug("Futures Pair After processOrder", strconv.FormatInt(orderId, 10))
 	return
 }
 
