@@ -160,10 +160,12 @@ func processOrder(
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
 				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
 				if err != nil {
+					logrus.Errorf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
+						pair.GetPair(), upOrder.OrderID, price, upOrder.Status, quantity)
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
-					pair.GetPair(), upOrder.OrderID, price, upOrder.Status)
+				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
+					pair.GetPair(), upOrder.OrderID, price, upOrder.Status, quantity)
 				// Записуємо ордер в грід
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upPrice)
@@ -183,12 +185,14 @@ func processOrder(
 			// Створюємо ордер на купівлю
 			downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, order.GetDownPrice())
 			if err != nil {
+				logrus.Errorf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
+					pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
 				return err
 			}
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
-				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
+			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
+				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
 			if downOrder.Status != futures.OrderStatusTypeNew {
 				takerPrice = downPrice
 				takerOrder = downOrder
@@ -219,10 +223,12 @@ func processOrder(
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
 				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
 				if err != nil {
+					logrus.Errorf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
+						pair.GetPair(), downOrder.OrderID, price, downOrder.Status, quantity)
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v",
-					pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
+				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
+					pair.GetPair(), downOrder.OrderID, price, downOrder.Status, quantity)
 				// Записуємо ордер в грід
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downPrice)
@@ -242,6 +248,8 @@ func processOrder(
 			// Створюємо ордер на продаж
 			upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, order.GetUpPrice())
 			if err != nil {
+				logrus.Errorf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
+					pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
 				return err
 			}
 			if upOrder.Status != futures.OrderStatusTypeNew {
@@ -250,8 +258,8 @@ func processOrder(
 			}
 			upPrice.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
 			upPrice.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v",
-				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status)
+			logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
+				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
@@ -434,6 +442,13 @@ func RunFuturesGridTrading(
 		stopEvent <- os.Interrupt
 		return err
 	}
+
+	_, err = pairProcessor.ClosePosition()
+	if err != nil {
+		stopEvent <- os.Interrupt
+		return err
+	}
+
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
 		stopEvent <- os.Interrupt
