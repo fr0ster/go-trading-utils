@@ -131,6 +131,7 @@ func processOrder(
 		takerPrice *grid_types.Record
 		takerOrder *futures.CreateOrderResponse
 	)
+	grid.Debug("Futures Grid Before processOrder", pair.GetPair())
 	if side == futures.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
@@ -250,6 +251,7 @@ func processOrder(
 			}
 		}
 	}
+	grid.Debug("Futures Grid After processOrder", pair.GetPair())
 	return
 }
 
@@ -551,7 +553,6 @@ func RunFuturesGridTrading(
 				pairProcessor.CancelAllOrders()
 				return err
 			}
-			grid.Debug("Futures Grid", pair.GetPair())
 		case <-time.After(60 * time.Second):
 			grid.Debug("Futures Grid", pair.GetPair())
 		}
