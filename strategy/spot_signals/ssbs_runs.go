@@ -5,7 +5,6 @@ import (
 	"math"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -542,32 +541,26 @@ func RunSpotGridTrading(
 	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
 	if pair.GetStrategy() != pairs_types.GridStrategyType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
 	// Створюємо стрім подій
 	pairStreams, err := NewPairStreams(client, pair, false)
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	// Створюємо обробник пари
 	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	pair.SetCurrentBalance(balance)
@@ -579,7 +572,6 @@ func RunSpotGridTrading(
 	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
 		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
 		if err != nil {
-			stopEvent <- os.Interrupt
 			return err
 		}
 		pair.SetBuyQuantity(targetValue)
@@ -590,7 +582,6 @@ func RunSpotGridTrading(
 	grid := grid_types.New()
 	// Перевірка на коректність дельт
 	if pair.GetSellDelta() != pair.GetBuyDelta() {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
 	}
 	symbol, err := func() (res *binance.Symbol, err error) {
@@ -601,7 +592,6 @@ func RunSpotGridTrading(
 		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
 	}()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	// Отримання середньої ціни
@@ -620,13 +610,11 @@ func RunSpotGridTrading(
 	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
 	_, err = pairProcessor.CancelAllOrders()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	// Створюємо ордер на продаж
 	sellOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	// Записуємо ордер в грід
@@ -635,7 +623,6 @@ func RunSpotGridTrading(
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	// Записуємо ордер в грід
@@ -645,20 +632,17 @@ func RunSpotGridTrading(
 	// Стартуємо обробку ордерів
 	grid.Debug("Spots Grid", "", pair.GetPair())
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
-	mu := &sync.Mutex{}
 	for {
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			mu.Lock()
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
 				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 				if err != nil {
-					stopEvent <- os.Interrupt
 					return err
 				}
 				pair.SetCurrentBalance(balance)
@@ -678,18 +662,13 @@ func RunSpotGridTrading(
 			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
 			if !ok {
-				logrus.Errorf("Uncorrected order ID: %v", event.OrderUpdate.Id)
-				mu.Unlock()
-				continue
+				return fmt.Errorf("uncorrected order ID: %v", event.OrderUpdate.Id)
 			}
 			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 			if err != nil {
-				mu.Unlock()
 				pairProcessor.CancelAllOrders()
-				stopEvent <- os.Interrupt
 				return err
 			}
-			mu.Unlock()
 		case <-time.After(60 * time.Second):
 			grid.Debug("Spots Grid", "", pair.GetPair())
 		}

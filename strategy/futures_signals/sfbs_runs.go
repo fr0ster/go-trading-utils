@@ -589,45 +589,26 @@ func Run(
 	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		err = RunFuturesHolding(config, client, degree, limit, pair, stopEvent, time.Second, debug)
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
+		return RunFuturesHolding(config, client, degree, limit, pair, stopEvent, time.Second, debug)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		err = RunScalpingHolding(config, client, pair, stopEvent)
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
+		return RunScalpingHolding(config, client, pair, stopEvent)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		err = RunFuturesTrading(config, client, degree, limit, pair, stopEvent, time.Second, debug)
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
+		return RunFuturesTrading(config, client, degree, limit, pair, stopEvent, time.Second, debug)
 
 		// Відпрацьовуємо Grid стратегію
 	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		err = RunFuturesGridTrading(config, client, pair, stopEvent)
-		if err != nil {
-			stopEvent <- os.Interrupt
-			return err
-		}
+		return RunFuturesGridTrading(config, client, pair, stopEvent)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
 	}
-	return
 }
