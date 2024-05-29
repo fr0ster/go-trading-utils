@@ -556,6 +556,7 @@ func RunFuturesGridTrading(
 					pairProcessor.CancelAllOrders()
 					return err
 				}
+				grid.Debug("Futures Grid", pair.GetPair())
 				return
 			}()
 		case <-time.After(60 * time.Second):
