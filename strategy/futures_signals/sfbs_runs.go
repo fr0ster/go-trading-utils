@@ -494,7 +494,7 @@ func RunFuturesGridTrading(
 	// Запускаємо спостереження за залоченими коштами
 	go func() {
 		for {
-			<-time.After(1000 * time.Millisecond)
+			<-time.After(300 * time.Millisecond)
 			locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol()) // Remove this line
 			risk, err = pairProcessor.GetPositionRisk()
 			if err != nil {
@@ -505,21 +505,12 @@ func RunFuturesGridTrading(
 			if err != nil {
 				return
 			}
-		}
-	}()
-	for {
-		select {
-		case <-stopEvent:
-			stopEvent <- os.Interrupt
-			return nil
-		case event := <-pairProcessor.GetOrderStatusEvent():
-			grid.Lock()
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
 				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 				if err != nil {
-					return err
+					return
 				}
 				pair.SetCurrentBalance(balance)
 				config.Save()
@@ -533,7 +524,7 @@ func RunFuturesGridTrading(
 				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 				if err != nil {
-					return err
+					return
 				}
 				logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
 					pair.GetPair(),
@@ -541,6 +532,42 @@ func RunFuturesGridTrading(
 					pair.GetCurrentPositionBalance(),
 					pairProcessor.GetPositionMargin())
 			}
+		}
+	}()
+	for {
+		select {
+		case <-stopEvent:
+			stopEvent <- os.Interrupt
+			return nil
+		case event := <-pairProcessor.GetOrderStatusEvent():
+			grid.Lock()
+			// if config.GetConfigurations().GetReloadConfig() {
+			// 	config.Load()
+			// 	pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+			// 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// 	pair.SetCurrentBalance(balance)
+			// 	config.Save()
+			// 	quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
+			// 	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+			// 	if quantity*price < minNotional {
+			// 		quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+			// 	}
+			// }
+			// if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
+			// 	utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+			// 	err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
+			// 	if err != nil {
+			// 		return err
+			// 	}
+			// 	logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
+			// 		pair.GetPair(),
+			// 		utils.ConvStrToFloat64(risk.IsolatedMargin),
+			// 		pair.GetCurrentPositionBalance(),
+			// 		pairProcessor.GetPositionMargin())
+			// }
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// // Спостереження за ліквідацією при потребі
 			// err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, currentPrice)
