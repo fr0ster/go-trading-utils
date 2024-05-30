@@ -156,8 +156,11 @@ func processOrder(
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
-			distance := pairStreams.GetLiquidationDistance(price)
-			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
+			risk, _ := pairStreams.GetPositionRisk()
+			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
+				distance > config.GetConfigurations().GetPercentsToLiquidation() &&
+				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
 				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
 				if err != nil {
 					return err
@@ -215,8 +218,11 @@ func processOrder(
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
 			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), symbol)
-			distance := pairStreams.GetLiquidationDistance(price)
-			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) && distance > config.GetConfigurations().GetPercentsToLiquidation() {
+			risk, _ := pairStreams.GetPositionRisk()
+			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
+				distance > config.GetConfigurations().GetPercentsToLiquidation() &&
+				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
 				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
 				if err != nil {
 					return err
