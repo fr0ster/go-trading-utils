@@ -494,7 +494,7 @@ func RunFuturesGridTrading(
 	// Запускаємо спостереження за залоченими коштами
 	go func() {
 		for {
-			<-time.After(300 * time.Millisecond)
+			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond)
 			locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol()) // Remove this line
 			risk, err = pairProcessor.GetPositionRisk()
 			if err != nil {

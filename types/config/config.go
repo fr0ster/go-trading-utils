@@ -21,6 +21,7 @@ type (
 		ReloadConfig            bool                         `json:"reload_config"`
 		ObservePriceLiquidation bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation   float64                      `json:"percents_to_liquidation"`
+		ObserverTimeOut         int                          `json:"observer_timeout"`
 		Pairs                   *btree.BTree
 	}
 )
@@ -48,6 +49,10 @@ func (cf *Configs) GetObservePriceLiquidation() bool {
 
 func (cf *Configs) GetPercentsToLiquidation() float64 {
 	return cf.PercentsToLiquidation
+}
+
+func (cf *Configs) GetObserverTimeOut() int {
+	return cf.ObserverTimeOut
 }
 
 // Implement the GetPair method
@@ -115,6 +120,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig            bool                         `json:"reload_config"`
 		ObservePriceLiquidation bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation   float64                      `json:"percents_to_liquidation"`
+		ObserverTimeOut         int                          `json:"observer_timeout"`
 		Pairs                   []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:              c.Connection,
@@ -122,6 +128,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig:            c.ReloadConfig,
 		ObservePriceLiquidation: c.ObservePriceLiquidation,
 		PercentsToLiquidation:   c.PercentsToLiquidation,
+		ObserverTimeOut:         c.ObserverTimeOut,
 		Pairs:                   pairs,
 	}, "", "  ")
 }
@@ -133,6 +140,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		ReloadConfig            bool                         `json:"reload_config"`
 		ObservePriceLiquidation bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation   float64                      `json:"percents_to_liquidation"`
+		ObserverTimeOut         int                          `json:"observer_timeout"`
 		Pairs                   []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -154,6 +162,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
 	c.PercentsToLiquidation = temp.PercentsToLiquidation
+	c.ObserverTimeOut = temp.ObserverTimeOut
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -170,6 +179,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ReloadConfig:            false,
 		ObservePriceLiquidation: false,
 		PercentsToLiquidation:   0.05,
+		ObserverTimeOut:         1000,
 		Pairs:                   btree.New(2),
 	}
 }

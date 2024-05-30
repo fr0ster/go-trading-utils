@@ -27,6 +27,8 @@ type (
 
 		GetObservePriceLiquidation() bool
 		GetPercentsToLiquidation() float64
+
+		GetObserverTimeOut() int
 	}
 	ConfigurationFile interface {
 		Save() error
