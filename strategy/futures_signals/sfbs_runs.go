@@ -321,7 +321,6 @@ func observePriceLiquidation(
 	pair *pairs_types.Pairs,
 	pairStreams *PairStreams,
 	grid *grid_types.Grid,
-	price float64,
 	delta_percent float64) (err error) {
 	if config.GetConfigurations().GetObservePriceLiquidation() {
 		risk, err := pairStreams.GetPositionRisk()
@@ -560,11 +559,13 @@ func RunFuturesGridTrading(
 				return
 			}
 			// Спостереження за ліквідацією при потребі
-			delta_percent = pairStreams.GetLiquidationDistance(price)
-			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, currentPrice, delta_percent)
-			if err != nil {
-				stopEvent <- os.Interrupt
-				return
+			if currentPrice != 0 && delta_percent != 0 {
+				delta_percent = pairStreams.GetLiquidationDistance(currentPrice)
+				err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
+				if err != nil {
+					stopEvent <- os.Interrupt
+					return
+				}
 			}
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
