@@ -13,6 +13,8 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	// "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
@@ -626,13 +628,16 @@ func RunFuturesGridTrading(
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
 				// risk, err = pairProcessor.GetPositionRisk()
-				if err != nil {
-					stopEvent <- os.Interrupt
-					printError()
-					return
-				}
+				// if err != nil {
+				// 	stopEvent <- os.Interrupt
+				// 	printError()
+				// 	return
+				// }
+				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+				asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetPair()}).(*futures_account.Asset)
+				locked = utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance)
 				logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 					pair.GetPair(),
 					event.OrderTradeUpdate.ID,
