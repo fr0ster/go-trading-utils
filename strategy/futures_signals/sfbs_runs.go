@@ -550,11 +550,13 @@ func RunFuturesGridTrading(
 			locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
 			risk, err = pairProcessor.GetPositionRisk()
 			if err != nil {
+				stopEvent <- os.Interrupt
 				return
 			}
 			// Спостереження за ліквідацією при потребі
 			err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, currentPrice)
 			if err != nil {
+				stopEvent <- os.Interrupt
 				return
 			}
 			if config.GetConfigurations().GetReloadConfig() {
@@ -586,6 +588,13 @@ func RunFuturesGridTrading(
 				event.OrderTradeUpdate.OriginalPrice,
 				event.OrderTradeUpdate.Side,
 				event.OrderTradeUpdate.Status)
+			if risk == nil {
+				risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					return
+				}
+				logrus.Debugf("Futures %s: PositionRisk was nil, get PositionRisk", pair.GetPair())
+			}
 			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
