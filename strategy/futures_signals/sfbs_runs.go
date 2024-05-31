@@ -559,8 +559,8 @@ func RunFuturesGridTrading(
 				return
 			}
 			// Спостереження за ліквідацією при потребі
-			if currentPrice != 0 && delta_percent != 0 {
-				delta_percent = pairStreams.GetLiquidationDistance(currentPrice)
+			if currentPrice != 0 && risk != nil {
+				delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 				err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
 				if err != nil {
 					stopEvent <- os.Interrupt
