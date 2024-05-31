@@ -627,14 +627,14 @@ func RunFuturesGridTrading(
 			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-				// free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-				// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-				// risk, err = pairProcessor.GetPositionRisk()
-				// if err != nil {
-				// 	stopEvent <- os.Interrupt
-				// 	printError()
-				// 	return
-				// }
+				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					stopEvent <- os.Interrupt
+					printError()
+					return
+				}
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
 					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance)
