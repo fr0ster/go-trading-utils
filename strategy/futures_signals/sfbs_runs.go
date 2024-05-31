@@ -596,7 +596,7 @@ func RunFuturesGridTrading(
 				event.OrderTradeUpdate.OriginalPrice,
 				event.OrderTradeUpdate.Side,
 				event.OrderTradeUpdate.Status)
-			if risk == nil {
+			if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					return
