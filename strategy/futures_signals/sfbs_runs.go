@@ -439,7 +439,7 @@ func RunFuturesGridTrading(
 	pair *pairs_types.Pairs,
 	stopEvent chan os.Signal) (err error) {
 	var (
-		free          float64
+		// free          float64
 		locked        float64
 		currentPrice  float64
 		delta_percent float64
@@ -591,15 +591,15 @@ func RunFuturesGridTrading(
 			// 	return
 			// }
 			// Спостереження за ліквідацією при потребі
-			if currentPrice != 0 && risk != nil {
-				delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
-				err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
-				if err != nil {
-					stopEvent <- os.Interrupt
-					printError()
-					return
-				}
-			}
+			// if currentPrice != 0 && risk != nil {
+			// 	delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+			// 	err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
+			// 	if err != nil {
+			// 		stopEvent <- os.Interrupt
+			// 		printError()
+			// 		return
+			// 	}
+			// }
 			if config.GetConfigurations().GetReloadConfig() {
 				config.Load()
 				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
@@ -627,17 +627,17 @@ func RunFuturesGridTrading(
 			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-				risk, err = pairProcessor.GetPositionRisk()
-				if err != nil {
-					stopEvent <- os.Interrupt
-					printError()
-					return
-				}
+				// free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				// risk, err = pairProcessor.GetPositionRisk()
+				// if err != nil {
+				// 	stopEvent <- os.Interrupt
+				// 	printError()
+				// 	return
+				// }
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance)
+					// free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance)
 					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 				}
 				logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
@@ -646,34 +646,34 @@ func RunFuturesGridTrading(
 					event.OrderTradeUpdate.OriginalPrice,
 					event.OrderTradeUpdate.Side,
 					event.OrderTradeUpdate.Status)
-				if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
-					risk, err = pairProcessor.GetPositionRisk()
-					if err != nil {
-						printError()
-						return
-					}
-					delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+				// if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
+				risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					printError()
+					return
 				}
-				if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-					if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
-						if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
-							delta := pair.GetCurrentPositionBalance() - utils.ConvStrToFloat64(risk.IsolatedMargin)
-							if delta != 0 && free > delta {
-								err = pairProcessor.SetPositionMargin(delta, 1)
-								if err != nil {
-									logrus.Errorf("Futures %s: New Margin %v, Old Margin %v, IsAutoAddMargin %v, Free %v error %v in event maintainer",
-										pair.GetPair(), delta, risk.IsolatedMargin, risk.IsAutoAddMargin, free, err)
-									printError()
-									return
-								}
-								logrus.Debugf("Futures %s: Margin was %v, add Margin %v",
-									pair.GetPair(), utils.ConvStrToFloat64(risk.IsolatedMargin), delta)
-							} else {
-								logrus.Debugf("Futures %s: Free asset %v < delta %v", pair.GetPair(), free, delta)
-							}
-						}
-					}
-				}
+				delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+				// }
+				// if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+				// 	if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
+				// 		if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+				// 			delta := pair.GetCurrentPositionBalance() - utils.ConvStrToFloat64(risk.IsolatedMargin)
+				// 			if delta != 0 && free > delta {
+				// 				err = pairProcessor.SetPositionMargin(delta, 1)
+				// 				if err != nil {
+				// 					logrus.Errorf("Futures %s: New Margin %v, Old Margin %v, IsAutoAddMargin %v, Free %v error %v in event maintainer",
+				// 						pair.GetPair(), delta, risk.IsolatedMargin, risk.IsAutoAddMargin, free, err)
+				// 					printError()
+				// 					return
+				// 				}
+				// 				logrus.Debugf("Futures %s: Margin was %v, add Margin %v",
+				// 					pair.GetPair(), utils.ConvStrToFloat64(risk.IsolatedMargin), delta)
+				// 			} else {
+				// 				logrus.Debugf("Futures %s: Free asset %v < delta %v", pair.GetPair(), free, delta)
+				// 			}
+				// 		}
+				// 	}
+				// }
 				// Знаходимо у гріді на якому був виконаний ордер
 				order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 				if !ok {
