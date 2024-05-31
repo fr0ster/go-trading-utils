@@ -590,6 +590,7 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
+			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 				pair.GetPair(),
 				event.OrderTradeUpdate.ID,
@@ -601,7 +602,7 @@ func RunFuturesGridTrading(
 				if err != nil {
 					return
 				}
-				logrus.Debugf("Futures %s: PositionRisk was nil, get PositionRisk", pair.GetPair())
+				delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 			}
 			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 				if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
@@ -621,7 +622,6 @@ func RunFuturesGridTrading(
 					}
 				}
 			}
-			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
 			if !ok {
