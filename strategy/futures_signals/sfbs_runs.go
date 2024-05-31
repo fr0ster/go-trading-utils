@@ -151,7 +151,9 @@ func processOrder(
 	quantity float64,
 	exp int,
 	locked float64,
-	risk *futures.PositionRisk) (err error) {
+	risk *futures.PositionRisk,
+	currentPrice float64,
+	delta_percent float64) (err error) {
 	var (
 		takerPrice *grid_types.Record
 		takerOrder *futures.CreateOrderResponse
@@ -160,33 +162,31 @@ func processOrder(
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
-			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), exp)
-			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
-			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
-				distance >= config.GetConfigurations().GetPercentsToLiquidation() &&
+			if (pair.GetUpBound() == 0 || currentPrice <= pair.GetUpBound()) &&
+				delta_percent >= config.GetConfigurations().GetPercentsToLiquidation() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
+				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice)
 				if err != nil {
 					return err
 				}
 				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
-					pair.GetPair(), upOrder.OrderID, price, upOrder.Status, quantity)
+					pair.GetPair(), upOrder.OrderID, currentPrice, upOrder.Status, quantity)
 				// Записуємо ордер в грід
-				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
+				upPrice := grid_types.NewRecord(upOrder.OrderID, currentPrice, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upPrice)
-				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
+				order.SetUpPrice(currentPrice) // Ставимо посилання на верхній запис в гріді
 				if upOrder.Status != futures.OrderStatusTypeNew {
 					takerPrice = upPrice
 					takerOrder = upOrder
 				}
 			} else {
-				if pair.GetUpBound() == 0 || price > pair.GetUpBound() {
+				if pair.GetUpBound() == 0 || currentPrice > pair.GetUpBound() {
 					logrus.Debugf("Futures %s: UpBound %v isn't 0 and price %v > UpBound %v",
-						pair.GetPair(), pair.GetUpBound(), price, pair.GetUpBound())
-				} else if distance < config.GetConfigurations().GetPercentsToLiquidation() {
+						pair.GetPair(), pair.GetUpBound(), currentPrice, pair.GetUpBound())
+				} else if delta_percent < config.GetConfigurations().GetPercentsToLiquidation() {
 					logrus.Debugf("Futures %s: Liquidation price %v, distance %v less than %v",
-						pair.GetPair(), risk.LiquidationPrice, distance, config.GetConfigurations().GetPercentsToLiquidation())
+						pair.GetPair(), risk.LiquidationPrice, delta_percent, config.GetConfigurations().GetPercentsToLiquidation())
 				} else if utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
 					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
@@ -227,7 +227,9 @@ func processOrder(
 				quantity,
 				exp,
 				locked,
-				risk)
+				risk,
+				currentPrice,
+				delta_percent)
 			if err != nil {
 				return err
 			}
@@ -236,34 +238,32 @@ func processOrder(
 		// Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
-			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), exp)
-			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
-			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
-				distance >= config.GetConfigurations().GetPercentsToLiquidation() &&
+			if (pair.GetLowBound() == 0 || currentPrice >= pair.GetLowBound()) &&
+				delta_percent >= config.GetConfigurations().GetPercentsToLiquidation() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
+				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice)
 				if err != nil {
 					return err
 				}
 				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-					pair.GetPair(), downOrder.OrderID, price, downOrder.Status, quantity)
+					pair.GetPair(), downOrder.OrderID, currentPrice, downOrder.Status, quantity)
 				// Записуємо ордер в грід
-				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
+				downPrice := grid_types.NewRecord(downOrder.OrderID, currentPrice, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downPrice)
-				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
+				order.SetDownPrice(currentPrice) // Ставимо посилання на нижній запис в гріді
 				if downOrder.Status != futures.OrderStatusTypeNew {
 					takerPrice = downPrice
 					takerOrder = downOrder
 				}
 			} else {
 
-				if pair.GetLowBound() == 0 || price < pair.GetLowBound() {
+				if pair.GetLowBound() == 0 || currentPrice < pair.GetLowBound() {
 					logrus.Debugf("Futures %s: LowBound %v isn't 0 and price %v < LowBound %v",
-						pair.GetPair(), pair.GetLowBound(), price, pair.GetLowBound())
-				} else if distance < config.GetConfigurations().GetPercentsToLiquidation() {
+						pair.GetPair(), pair.GetLowBound(), currentPrice, pair.GetLowBound())
+				} else if delta_percent < config.GetConfigurations().GetPercentsToLiquidation() {
 					logrus.Debugf("Futures %s: Liquidation price %v, distance %v less than %v",
-						pair.GetPair(), risk.LiquidationPrice, distance, config.GetConfigurations().GetPercentsToLiquidation())
+						pair.GetPair(), risk.LiquidationPrice, delta_percent, config.GetConfigurations().GetPercentsToLiquidation())
 				} else if utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
 					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
@@ -306,7 +306,9 @@ func processOrder(
 				quantity,
 				exp,
 				locked,
-				risk)
+				risk,
+				currentPrice,
+				delta_percent)
 			if err != nil {
 				return err
 			}
@@ -628,7 +630,21 @@ func RunFuturesGridTrading(
 				return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
 			}
 			orderId := order.GetOrderId()
-			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, event.OrderTradeUpdate.Side, grid, order, quantity, exp, locked, risk)
+			err = processOrder(
+				config,
+				pairProcessor,
+				pair,
+				pairStreams,
+				symbol,
+				event.OrderTradeUpdate.Side,
+				grid,
+				order,
+				quantity,
+				exp,
+				locked,
+				risk,
+				currentPrice,
+				delta_percent)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
 				return err
