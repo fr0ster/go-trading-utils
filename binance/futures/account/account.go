@@ -91,7 +91,7 @@ func (a *Account) GetLockedAsset(asset string) (float64, error) {
 		return 0, errors.New("item not found")
 	} else {
 		symbolBalance, err := Futures2AccountAsset(item)
-		return utils.ConvStrToFloat64(symbolBalance.AvailableBalance), err
+		return utils.ConvStrToFloat64(symbolBalance.WalletBalance) - utils.ConvStrToFloat64(symbolBalance.AvailableBalance), err
 	}
 }
 

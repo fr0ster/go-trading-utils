@@ -237,8 +237,6 @@ func processOrder(
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
 			price := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), exp)
-			// locked, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-			// risk, _ := pairStreams.GetPositionRisk()
 			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
 				distance >= config.GetConfigurations().GetPercentsToLiquidation() &&
@@ -540,7 +538,7 @@ func RunFuturesGridTrading(
 		for {
 			select {
 			case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond):
-				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol()) // Remove this line
+				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					return
