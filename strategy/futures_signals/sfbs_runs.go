@@ -327,75 +327,78 @@ func observePriceLiquidation(
 		if err != nil {
 			return err
 		}
-		delta_percent := pairStreams.GetLiquidationDistance(price)
-		if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
-			logrus.Debugf("Futures %s: Liquidation price %v, delta %v!!!!!", pair.GetPair(), risk.LiquidationPrice, delta_percent)
-			// Перевіряємо чи є зайві відкриті ордери
-			if (grid.GetCountBuyOrders() > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > 0) ||
-				(grid.GetCountSellOrders() > 0 && utils.ConvStrToFloat64(risk.PositionAmt) < 0) {
-				grid.Lock()
-				grid.Ascend(func(item btree.Item) bool {
-					record := item.(*grid_types.Record)
-					if record.GetOrderId() != 0 {
-						if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-							if record.GetOrderSide() == types.SideTypeBuy {
-								_, _ = pairProcessor.CancelOrder(record.GetOrderId())
-							}
-						} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-							if record.GetOrderSide() == types.SideTypeSell {
-								_, _ = pairProcessor.CancelOrder(record.GetOrderId())
+		if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+			delta_percent := pairStreams.GetLiquidationDistance(price)
+			if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
+				logrus.Debugf("Futures %s: Liquidation price %v, delta %v!!!!!", pair.GetPair(), risk.LiquidationPrice, delta_percent)
+				// Перевіряємо чи є зайві відкриті ордери
+				if (grid.GetCountBuyOrders() > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > 0) ||
+					(grid.GetCountSellOrders() > 0 && utils.ConvStrToFloat64(risk.PositionAmt) < 0) {
+					grid.Lock()
+					grid.Ascend(func(item btree.Item) bool {
+						record := item.(*grid_types.Record)
+						if record.GetOrderId() != 0 {
+							if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+								if record.GetOrderSide() == types.SideTypeBuy {
+									_, _ = pairProcessor.CancelOrder(record.GetOrderId())
+								}
+							} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+								if record.GetOrderSide() == types.SideTypeSell {
+									_, _ = pairProcessor.CancelOrder(record.GetOrderId())
+								}
 							}
 						}
+						grid.Debug(pair.GetPair(), "", "Futures Liquidation")
+						return true
+					})
+					if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+						grid.CancelBuyOrder()
+					} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+						grid.CancelSellOrder()
 					}
-					return true
-				})
-				if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-					grid.CancelBuyOrder()
-				} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-					grid.CancelSellOrder()
+					grid.Unlock()
 				}
-				grid.Unlock()
-			}
-			free, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-			if err != nil {
-				return err
-			}
-			if free >= pair.GetCurrentPositionBalance() {
-				logrus.Debugf("Futures %s: Free asset %v >= current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
-				// Устанавлюемо Margin
-				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
+				free, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 				if err != nil {
 					return err
 				}
-			} else {
-				logrus.Debugf("Futures %s: Free asset %v < current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
-				positionAmtDec := utils.ConvStrToFloat64(risk.PositionAmt) * delta_percent
-				if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-					logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
-						pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
-					_, err = pairProcessor.CreateOrder(
-						futures.OrderTypeMarket,    // orderType
-						futures.SideTypeSell,       // sideType
-						futures.TimeInForceTypeGTC, // timeInForce
-						positionAmtDec,             // quantity
-						false,                      // closePosition
-						0,                          // price
-						0,                          // stopPrice
-						0)                          // callbackRate
-				} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-					logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
-						pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
-					_, err = pairProcessor.CreateOrder(
-						futures.OrderTypeMarket,    // orderType
-						futures.SideTypeBuy,        // sideType
-						futures.TimeInForceTypeGTC, // timeInForce
-						positionAmtDec,             // quantity
-						false,                      // closePosition
-						0,                          // price
-						0,                          // stopPrice
-						0)                          // callbackRate
+				if free >= pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: Free asset %v >= current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
+					// Устанавлюемо Margin
+					err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
+					if err != nil {
+						return err
+					}
+				} else {
+					logrus.Debugf("Futures %s: Free asset %v < current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
+					positionAmtDec := utils.ConvStrToFloat64(risk.PositionAmt) * delta_percent
+					if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+						logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
+							pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
+						_, err = pairProcessor.CreateOrder(
+							futures.OrderTypeMarket,    // orderType
+							futures.SideTypeSell,       // sideType
+							futures.TimeInForceTypeGTC, // timeInForce
+							positionAmtDec,             // quantity
+							false,                      // closePosition
+							0,                          // price
+							0,                          // stopPrice
+							0)                          // callbackRate
+					} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+						logrus.Debugf("Futures %s: Liquidation price %v, delta %v, position %v, new position %v",
+							pair.GetPair(), risk.LiquidationPrice, delta_percent, risk.PositionAmt, positionAmtDec)
+						_, err = pairProcessor.CreateOrder(
+							futures.OrderTypeMarket,    // orderType
+							futures.SideTypeBuy,        // sideType
+							futures.TimeInForceTypeGTC, // timeInForce
+							positionAmtDec,             // quantity
+							false,                      // closePosition
+							0,                          // price
+							0,                          // stopPrice
+							0)                          // callbackRate
+					}
+					return err
 				}
-				return err
 			}
 		}
 	}
