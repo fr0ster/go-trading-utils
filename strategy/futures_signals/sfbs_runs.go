@@ -645,14 +645,13 @@ func RunFuturesGridTrading(
 						if delta != 0 && free > delta {
 							err = pairProcessor.SetPositionMargin(delta, 1)
 							if err != nil {
-								logrus.Errorf("Futures %s: Set Margin error %v in event maintainer", pair.GetPair(), err)
+								logrus.Errorf("Futures %s: New Margin %v, Old Margin %v, Free %v error %v in event maintainer",
+									pair.GetPair(), delta, risk.IsolatedMargin, free, err)
 								printError()
 								return
 							}
 							logrus.Debugf("Futures %s: Margin was %v, add Margin %v",
-								pair.GetPair(),
-								utils.ConvStrToFloat64(risk.IsolatedMargin),
-								pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin))
+								pair.GetPair(), utils.ConvStrToFloat64(risk.IsolatedMargin), delta)
 						} else {
 							logrus.Debugf("Futures %s: Free asset %v < delta %v", pair.GetPair(), free, delta)
 						}
