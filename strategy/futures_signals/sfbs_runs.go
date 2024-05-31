@@ -367,9 +367,13 @@ func observePriceLiquidation(
 					if free >= pair.GetCurrentPositionBalance() { // Як є вільні кошти, то збільшуємо маржу
 						logrus.Debugf("Futures %s: Free asset %v >= current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
 						// Устанавлюемо Margin
-						err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
-						if err != nil {
-							return err
+						delta := pair.GetCurrentPositionBalance() - utils.ConvStrToFloat64(risk.IsolatedMargin)
+						if delta != 0 {
+							err = pairProcessor.SetPositionMargin(delta, 1)
+							if err != nil {
+								logrus.Errorf("Futures %s: Set position margin error %v in observePriceLiquidation", pair.GetPair(), err)
+								return err
+							}
 						}
 					} else { // Як немає вільних коштів, то зменшуємо позицію
 						logrus.Debugf("Futures %s: Free asset %v < current balance %v", pair.GetPair(), free, pair.GetCurrentPositionBalance())
@@ -597,14 +601,18 @@ func RunFuturesGridTrading(
 			}
 			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
-				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
-				if err != nil {
-					return
+				delta := pair.GetCurrentPositionBalance() - utils.ConvStrToFloat64(risk.IsolatedMargin)
+				if delta != 0 {
+					err = pairProcessor.SetPositionMargin(delta, 1)
+					if err != nil {
+						logrus.Errorf("Futures %s: Set Margin error %v in event maintainer", pair.GetPair(), err)
+						return
+					}
+					logrus.Debugf("Futures %s: Margin was %v, add Margin %v",
+						pair.GetPair(),
+						utils.ConvStrToFloat64(risk.IsolatedMargin),
+						pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin))
 				}
-				logrus.Debugf("Futures %s: Margin was %v, add Margin %v",
-					pair.GetPair(),
-					utils.ConvStrToFloat64(risk.IsolatedMargin),
-					pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin))
 			}
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Знаходимо у гріді на якому був виконаний ордер
