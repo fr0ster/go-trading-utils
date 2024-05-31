@@ -163,7 +163,7 @@ func processOrder(
 			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), exp)
 			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) &&
-				distance > config.GetConfigurations().GetPercentsToLiquidation() &&
+				distance >= config.GetConfigurations().GetPercentsToLiquidation() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
 				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, price)
@@ -181,8 +181,19 @@ func processOrder(
 					takerOrder = upOrder
 				}
 			} else {
-				logrus.Debugf("Futures %s: UpBound %v, price %v, distance %v more than %v",
-					pair.GetPair(), pair.GetUpBound(), price, distance, config.GetConfigurations().GetPercentsToLiquidation())
+				if pair.GetUpBound() == 0 || price > pair.GetUpBound() {
+					logrus.Debugf("Futures %s: UpBound %v isn't 0 and price %v > UpBound %v",
+						pair.GetPair(), pair.GetUpBound(), price, pair.GetUpBound())
+				} else if distance < config.GetConfigurations().GetPercentsToLiquidation() {
+					logrus.Debugf("Futures %s: Liquidation price %v, distance %v less than %v",
+						pair.GetPair(), risk.LiquidationPrice, distance, config.GetConfigurations().GetPercentsToLiquidation())
+				} else if utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
+						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+				} else if locked > pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: Locked %v > current position balance %v",
+						pair.GetPair(), locked, pair.GetCurrentPositionBalance())
+				}
 			}
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель нижче
@@ -230,7 +241,7 @@ func processOrder(
 			// risk, _ := pairStreams.GetPositionRisk()
 			distance := math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 			if (pair.GetLowBound() == 0 || price >= pair.GetLowBound()) &&
-				distance > config.GetConfigurations().GetPercentsToLiquidation() &&
+				distance >= config.GetConfigurations().GetPercentsToLiquidation() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
 				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, price)
@@ -248,8 +259,20 @@ func processOrder(
 					takerOrder = downOrder
 				}
 			} else {
-				logrus.Debugf("Futures %s: LowBound %v, price %v, distance %v less than %v",
-					pair.GetPair(), pair.GetLowBound(), price, distance, config.GetConfigurations().GetPercentsToLiquidation())
+
+				if pair.GetLowBound() == 0 || price < pair.GetLowBound() {
+					logrus.Debugf("Futures %s: LowBound %v isn't 0 and price %v < LowBound %v",
+						pair.GetPair(), pair.GetLowBound(), price, pair.GetLowBound())
+				} else if distance < config.GetConfigurations().GetPercentsToLiquidation() {
+					logrus.Debugf("Futures %s: Liquidation price %v, distance %v less than %v",
+						pair.GetPair(), risk.LiquidationPrice, distance, config.GetConfigurations().GetPercentsToLiquidation())
+				} else if utils.ConvStrToFloat64(risk.IsolatedMargin) > pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
+						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+				} else if locked > pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: Locked %v > current position balance %v",
+						pair.GetPair(), locked, pair.GetCurrentPositionBalance())
+				}
 			}
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель вище
