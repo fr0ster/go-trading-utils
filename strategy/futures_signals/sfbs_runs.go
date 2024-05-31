@@ -507,12 +507,16 @@ func RunFuturesGridTrading(
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = roundPrice(price, exp)
 	}
-	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
-	minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
-	if quantity*price < minNotional {
-		logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
-		quantity = minNotional / price
+	setQuantity := func(symbol *futures.Symbol) (quantity float64) {
+		quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
+		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+		if quantity*price < minNotional {
+			logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
+			quantity = minNotional / price
+		}
+		return
 	}
+	quantity := setQuantity(symbol)
 	// Записуємо середню ціну в грід
 	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta()), exp), roundPrice(price*(1-pair.GetBuyDelta()), exp), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pair.GetPair(), price)
@@ -562,11 +566,7 @@ func RunFuturesGridTrading(
 				}
 				pair.SetCurrentBalance(balance)
 				config.Save()
-				quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-				minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
-				if quantity*price < minNotional {
-					quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-				}
+				quantity = setQuantity(symbol)
 			}
 		}
 	}()
