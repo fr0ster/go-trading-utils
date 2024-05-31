@@ -33,7 +33,7 @@ const (
 
 func printError() {
 	if logrus.GetLevel() == logrus.DebugLevel {
-		_, file, line, ok := runtime.Caller(0)
+		_, file, line, ok := runtime.Caller(1)
 		if ok {
 			logrus.Errorf("Error occurred in file: %s at line: %d", file, line)
 		} else {
