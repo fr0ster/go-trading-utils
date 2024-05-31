@@ -687,6 +687,10 @@ func RunFuturesGridTrading(
 				}
 				grid.Unlock()
 				grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
+			} else if event.Event == futures.UserDataEventTypeAccountUpdate {
+				logrus.Debugf("Futures %s: Account Update", pair.GetPair())
+			} else if event.Event == futures.UserDataEventTypeMarginCall {
+				logrus.Debugf("Futures %s: Margin Call", pair.GetPair())
 			}
 		}
 	}
