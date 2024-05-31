@@ -565,18 +565,18 @@ func RunFuturesGridTrading(
 					quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
 				}
 			}
-			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
-				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
-				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
-				if err != nil {
-					return
-				}
-				logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
-					pair.GetPair(),
-					utils.ConvStrToFloat64(risk.IsolatedMargin),
-					pair.GetCurrentPositionBalance(),
-					pairProcessor.GetPositionMargin())
-			}
+			// if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
+			// 	utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+			// 	err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
+			// 	if err != nil {
+			// 		return
+			// 	}
+			// 	logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
+			// 		pair.GetPair(),
+			// 		utils.ConvStrToFloat64(risk.IsolatedMargin),
+			// 		pair.GetCurrentPositionBalance(),
+			// 		pairProcessor.GetPositionMargin())
+			// }
 		}
 	}()
 	// Стартуємо обробку ордерів
@@ -589,6 +589,18 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
+			if utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
+				utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
+				if err != nil {
+					return
+				}
+				logrus.Debugf("Futures %s: Margin was %v, add Margin %v, new Margin %v",
+					pair.GetPair(),
+					utils.ConvStrToFloat64(risk.IsolatedMargin),
+					pair.GetCurrentPositionBalance(),
+					pairProcessor.GetPositionMargin())
+			}
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 				pair.GetPair(),
