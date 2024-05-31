@@ -625,7 +625,7 @@ func RunFuturesGridTrading(
 				}
 			}
 			// Знаходимо у гріді на якому був виконаний ордер
-			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)}).(*grid_types.Record)
+			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 			if !ok {
 				return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
 			}
