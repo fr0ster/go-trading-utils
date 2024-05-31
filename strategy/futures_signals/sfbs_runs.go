@@ -580,14 +580,14 @@ func RunFuturesGridTrading(
 	go func() {
 		for {
 			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond)
-			free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-			locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-			risk, err = pairProcessor.GetPositionRisk()
-			if err != nil {
-				stopEvent <- os.Interrupt
-				printError()
-				return
-			}
+			// free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+			// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+			// risk, err = pairProcessor.GetPositionRisk()
+			// if err != nil {
+			// 	stopEvent <- os.Interrupt
+			// 	printError()
+			// 	return
+			// }
 			// Спостереження за ліквідацією при потребі
 			if currentPrice != 0 && risk != nil {
 				delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
@@ -625,6 +625,14 @@ func RunFuturesGridTrading(
 			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				// risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					stopEvent <- os.Interrupt
+					printError()
+					return
+				}
 				logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
 					pair.GetPair(),
 					event.OrderTradeUpdate.ID,
