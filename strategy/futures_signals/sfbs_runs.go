@@ -579,41 +579,41 @@ func RunFuturesGridTrading(
 	// Записуємо ордер в грід
 	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), exp), price, 0, types.SideTypeBuy))
 	// Запускаємо спостереження за залоченими коштами та оновлення конфігурації
-	go func() {
-		for {
-			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond)
-			// free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-			// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-			// risk, err = pairProcessor.GetPositionRisk()
-			// if err != nil {
-			// 	stopEvent <- os.Interrupt
-			// 	printError()
-			// 	return
-			// }
-			// Спостереження за ліквідацією при потребі
-			// if currentPrice != 0 && risk != nil {
-			// 	delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
-			// 	err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
-			// 	if err != nil {
-			// 		stopEvent <- os.Interrupt
-			// 		printError()
-			// 		return
-			// 	}
-			// }
-			if config.GetConfigurations().GetReloadConfig() {
-				config.Load()
-				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
-				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-				if err != nil {
-					printError()
-					return
-				}
-				pair.SetCurrentBalance(balance)
-				config.Save()
-				quantity = setQuantity(symbol)
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond)
+	// free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	// locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+	// risk, err = pairProcessor.GetPositionRisk()
+	// if err != nil {
+	// 	stopEvent <- os.Interrupt
+	// 	printError()
+	// 	return
+	// }
+	// Спостереження за ліквідацією при потребі
+	// if currentPrice != 0 && risk != nil {
+	// 	delta_percent = math.Abs((currentPrice - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+	// 	err = observePriceLiquidation(config, pairProcessor, pair, pairStreams, grid, delta_percent)
+	// 	if err != nil {
+	// 		stopEvent <- os.Interrupt
+	// 		printError()
+	// 		return
+	// 	}
+	// }
+	// 		if config.GetConfigurations().GetReloadConfig() {
+	// 			config.Load()
+	// 			pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+	// 			balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	// 			if err != nil {
+	// 				printError()
+	// 				return
+	// 			}
+	// 			pair.SetCurrentBalance(balance)
+	// 			config.Save()
+	// 			quantity = setQuantity(symbol)
+	// 		}
+	// 	}
+	// }()
 	grid.Debug("Futures Grid", "", pair.GetPair())
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
