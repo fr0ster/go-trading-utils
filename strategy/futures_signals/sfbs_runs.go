@@ -423,6 +423,7 @@ func RunFuturesGridTrading(
 		locked        float64
 		currentPrice  float64
 		delta_percent float64
+		free          float64
 	)
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		stopEvent <- os.Interrupt
@@ -554,6 +555,7 @@ func RunFuturesGridTrading(
 	go func() {
 		for {
 			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOut()) * time.Millisecond)
+			free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 			locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
 			risk, err = pairProcessor.GetPositionRisk()
 			if err != nil {
@@ -610,7 +612,7 @@ func RunFuturesGridTrading(
 				if delta_percent <= config.GetConfigurations().GetPercentsToLiquidation() {
 					if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 						delta := pair.GetCurrentPositionBalance() - utils.ConvStrToFloat64(risk.IsolatedMargin)
-						if delta != 0 {
+						if delta != 0 && free > delta {
 							err = pairProcessor.SetPositionMargin(delta, 1)
 							if err != nil {
 								logrus.Errorf("Futures %s: Set Margin error %v in event maintainer", pair.GetPair(), err)
@@ -620,6 +622,8 @@ func RunFuturesGridTrading(
 								pair.GetPair(),
 								utils.ConvStrToFloat64(risk.IsolatedMargin),
 								pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin))
+						} else {
+							logrus.Debugf("Futures %s: Free asset %v < delta %v", pair.GetPair(), free, delta)
 						}
 					}
 				}
