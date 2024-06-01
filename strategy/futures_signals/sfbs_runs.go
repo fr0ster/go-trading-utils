@@ -255,7 +255,7 @@ func processOrder(
 		// Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
-			downPrice := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), exp)
+			downPrice := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), exp)
 			if (pair.GetLowBound() == 0 || downPrice >= pair.GetLowBound()) &&
 				delta_percent(downPrice) >= config.GetConfigurations().GetPercentsToLiquidation() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
