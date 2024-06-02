@@ -434,7 +434,8 @@ func processOrder(
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, 0, order.GetPrice(), types.OrderSide(binance.SideTypeSell))
 				grid.Set(upPrice)
 				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status != binance.OrderStatusTypeNew {
+				if upOrder.Status == binance.OrderStatusTypeFilled ||
+					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == binance.OrderStatusTypePartiallyFilled) {
 					takerPrice = upPrice
 					takerOrder = upOrder
 				}
@@ -452,7 +453,8 @@ func processOrder(
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Spots %s: Set Buy order %v on price %v status %v",
 				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
-			if downOrder.Status != binance.OrderStatusTypeNew {
+			if downOrder.Status == binance.OrderStatusTypeFilled ||
+				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == binance.OrderStatusTypePartiallyFilled) {
 				takerPrice = downPrice
 				takerOrder = downOrder
 			}
@@ -489,7 +491,8 @@ func processOrder(
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy))
 				grid.Set(downPrice)
 				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status != binance.OrderStatusTypeNew {
+				if downOrder.Status == binance.OrderStatusTypeFilled ||
+					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == binance.OrderStatusTypePartiallyFilled) {
 					takerPrice = downPrice
 					takerOrder = downOrder
 				}
@@ -503,7 +506,8 @@ func processOrder(
 			if err != nil {
 				return err
 			}
-			if upOrder.Status != binance.OrderStatusTypeNew {
+			if upOrder.Status == binance.OrderStatusTypeFilled ||
+				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == binance.OrderStatusTypePartiallyFilled) {
 				takerPrice = upPrice
 				takerOrder = upOrder
 			}
