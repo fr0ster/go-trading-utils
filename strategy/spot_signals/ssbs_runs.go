@@ -638,41 +638,42 @@ func RunSpotGridTrading(
 			stopEvent <- os.Interrupt
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			grid.Lock()
-			if config.GetConfigurations().GetReloadConfig() {
-				config.Load()
-				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
-				balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
+				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled)) {
+				grid.Lock()
+				if config.GetConfigurations().GetReloadConfig() {
+					config.Load()
+					pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+					balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+					if err != nil {
+						return err
+					}
+					pair.SetCurrentBalance(balance)
+					config.Save()
+					quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
+					minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
+					if quantity*price < minNotional {
+						quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+					}
+				}
+				logrus.Debugf("Spots %s: Order %v on price %v side %v status %s",
+					pair.GetPair(),
+					event.OrderUpdate.Id,
+					event.OrderUpdate.Price,
+					event.OrderUpdate.Side,
+					event.OrderUpdate.Status)
+				// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
+				order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
+				if !ok {
+					return fmt.Errorf("uncorrected order ID: %v", event.OrderUpdate.Id)
+				}
+				err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 				if err != nil {
+					pairProcessor.CancelAllOrders()
 					return err
 				}
-				pair.SetCurrentBalance(balance)
-				config.Save()
-				quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-				minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
-				if quantity*price < minNotional {
-					quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-				}
+				grid.Unlock()
 			}
-			logrus.Debugf("Spots %s: Order %v on price %v side %v status %s",
-				pair.GetPair(),
-				event.OrderUpdate.Id,
-				event.OrderUpdate.Price,
-				event.OrderUpdate.Side,
-				event.OrderUpdate.Status)
-			// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
-			order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
-			if !ok {
-				return fmt.Errorf("uncorrected order ID: %v", event.OrderUpdate.Id)
-			}
-			err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
-			if err != nil {
-				pairProcessor.CancelAllOrders()
-				return err
-			}
-			grid.Unlock()
-		case <-time.After(60 * time.Second):
-			grid.Debug("Spots Grid", "", pair.GetPair())
 		}
 	}
 }

@@ -33,6 +33,8 @@ const (
 	PercentsToLiquidation = 0.005 // Відсоток до ліквідації
 	ObserverTimeOut       = 1000  // Таймаут спостереження
 
+	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
+
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
@@ -153,12 +155,13 @@ var (
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		LogLevel:                InfoLevel,
-		ReloadConfig:            ReloadConfig,
-		ObservePriceLiquidation: ObservePriceLiquidation,
-		PercentsToLiquidation:   0.0,
-		ObserverTimeOut:         ObserverTimeOut,
-		Pairs:                   btree.New(2),
+		LogLevel:                      InfoLevel,
+		ReloadConfig:                  ReloadConfig,
+		ObservePriceLiquidation:       ObservePriceLiquidation,
+		PercentsToLiquidation:         0.0,
+		ObserverTimeOut:               ObserverTimeOut,
+		MaintainPartiallyFilledOrders: MaintainPartiallyFilledOrders,
+		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
 		InitialBalance:         InitialBalance,
@@ -233,6 +236,7 @@ func getTestData() []byte {
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
 			"percents_to_liquidation": ` + json.Number(strconv.FormatFloat(0.0, 'f', -1, 64)).String() + `,
 			"observer_timeout": ` + strconv.Itoa(ObserverTimeOut) + `,
+			"maintain_partially_filled_orders": ` + strconv.FormatBool(MaintainPartiallyFilledOrders) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -315,6 +319,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
+	assert.Equal(t, MaintainPartiallyFilledOrders, config.GetMaintainPartiallyFilledOrders())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

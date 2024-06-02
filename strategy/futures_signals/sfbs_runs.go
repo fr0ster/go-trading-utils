@@ -486,7 +486,8 @@ func RunFuturesGridTrading(
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
+			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
+				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})

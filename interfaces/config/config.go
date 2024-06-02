@@ -29,6 +29,8 @@ type (
 		GetPercentsToLiquidation() float64
 
 		GetObserverTimeOut() int
+
+		GetMaintainPartiallyFilledOrders() bool
 	}
 	ConfigurationFile interface {
 		Save() error
