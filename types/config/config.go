@@ -183,12 +183,13 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 
 func NewConfig(connection *connection_types.Connection) *Configs {
 	return &Configs{
-		Connection:              connection,
-		LogLevel:                logrus.InfoLevel,
-		ReloadConfig:            false,
-		ObservePriceLiquidation: false,
-		PercentsToLiquidation:   0.05,
-		ObserverTimeOut:         1000,
-		Pairs:                   btree.New(2),
+		Connection:                    connection,
+		LogLevel:                      logrus.InfoLevel,
+		ReloadConfig:                  false,
+		ObservePriceLiquidation:       false,
+		PercentsToLiquidation:         0.05,
+		ObserverTimeOut:               1000,
+		MaintainPartiallyFilledOrders: false,
+		Pairs:                         btree.New(2),
 	}
 }
