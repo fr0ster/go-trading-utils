@@ -30,16 +30,17 @@ const (
 	InitialBalance = 1000.0 // Початковий баланс
 	CurrentBalance = 2000.0 // Поточний баланс
 
-	PercentsToLiquidation = 0.005 // Відсоток до ліквідації
-	ObserverTimeOut       = 1000  // Таймаут спостереження
+	ObservePriceLiquidation   = true // Скасування обмежених ордерів які за лімітом
+	PercentsToLiquidation     = 0.05 // Відсоток до ліквідації
+	PercentToDecreasePosition = 0.03 // Відсоток для зменшення позиції
+	ObserverTimeOut           = 1000 // Таймаут спостереження
 
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
 	SpotCommissionTaker = 0.001 // Комісія за тейкером
 
-	ReloadConfig            = true // Перезавантаження конфігурації
-	ObservePriceLiquidation = true // Скасування обмежених ордерів які за лімітом
+	ReloadConfig = true // Перезавантаження конфігурації
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
@@ -158,7 +159,8 @@ var (
 		LogLevel:                      InfoLevel,
 		ReloadConfig:                  ReloadConfig,
 		ObservePriceLiquidation:       ObservePriceLiquidation,
-		PercentsToLiquidation:         0.0,
+		PercentsToLiquidation:         PercentsToLiquidation,
+		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOut:               ObserverTimeOut,
 		MaintainPartiallyFilledOrders: MaintainPartiallyFilledOrders,
 		Pairs:                         btree.New(2),
@@ -234,7 +236,8 @@ func getTestData() []byte {
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
-			"percents_to_liquidation": ` + json.Number(strconv.FormatFloat(0.0, 'f', -1, 64)).String() + `,
+			"percents_to_liquidation": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
+			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout": ` + strconv.Itoa(ObserverTimeOut) + `,
 			"maintain_partially_filled_orders": ` + strconv.FormatBool(MaintainPartiallyFilledOrders) + `,
 			"pairs": [
@@ -320,6 +323,8 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
 	assert.Equal(t, MaintainPartiallyFilledOrders, config.GetMaintainPartiallyFilledOrders())
+	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToLiquidation())
+	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

@@ -27,6 +27,7 @@ type (
 
 		GetObservePriceLiquidation() bool
 		GetPercentsToLiquidation() float64
+		GetPercentToDecreasePosition() float64
 
 		GetObserverTimeOut() int
 

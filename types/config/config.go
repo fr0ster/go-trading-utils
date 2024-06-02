@@ -21,6 +21,7 @@ type (
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
 		Pairs                         *btree.BTree
@@ -50,6 +51,10 @@ func (cf *Configs) GetObservePriceLiquidation() bool {
 
 func (cf *Configs) GetPercentsToLiquidation() float64 {
 	return cf.PercentsToLiquidation
+}
+
+func (cf *Configs) GetPercentToDecreasePosition() float64 {
+	return cf.PercentToDecreasePosition
 }
 
 func (cf *Configs) GetObserverTimeOut() int {
@@ -125,6 +130,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
 		Pairs                         []*pairs_types.Pairs         `json:"pairs"`
@@ -134,6 +140,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig:                  c.ReloadConfig,
 		ObservePriceLiquidation:       c.ObservePriceLiquidation,
 		PercentsToLiquidation:         c.PercentsToLiquidation,
+		PercentToDecreasePosition:     c.PercentToDecreasePosition,
 		ObserverTimeOut:               c.ObserverTimeOut,
 		MaintainPartiallyFilledOrders: c.MaintainPartiallyFilledOrders,
 		Pairs:                         pairs,
@@ -147,6 +154,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
 		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
 		Pairs                         []*pairs_types.Pairs         `json:"pairs"`
@@ -170,6 +178,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
 	c.PercentsToLiquidation = temp.PercentsToLiquidation
+	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOut = temp.ObserverTimeOut
 	c.MaintainPartiallyFilledOrders = temp.MaintainPartiallyFilledOrders
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
@@ -188,6 +197,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
 		PercentsToLiquidation:         0.05,
+		PercentToDecreasePosition:     0.03,
 		ObserverTimeOut:               1000,
 		MaintainPartiallyFilledOrders: false,
 		Pairs:                         btree.New(2),
