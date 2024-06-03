@@ -199,8 +199,7 @@ func processOrder(
 				upRecord := grid_types.NewRecord(upOrder.OrderID, upPrice, quantity, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upRecord)
 				order.SetUpPrice(upPrice) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status == futures.OrderStatusTypeFilled ||
-					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == futures.OrderStatusTypePartiallyFilled) {
+				if upOrder.Status == futures.OrderStatusTypeFilled {
 					takerRecord = upRecord
 					takerOrder = upOrder
 				}
@@ -234,8 +233,7 @@ func processOrder(
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
 				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
-			if downOrder.Status == futures.OrderStatusTypeFilled ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == futures.OrderStatusTypePartiallyFilled) {
+			if downOrder.Status == futures.OrderStatusTypeFilled {
 				takerRecord = downPrice
 				takerOrder = downOrder
 			}
@@ -281,8 +279,7 @@ func processOrder(
 				downRecord := grid_types.NewRecord(downOrder.OrderID, downPrice, quantity, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downRecord)
 				order.SetDownPrice(downPrice) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status == futures.OrderStatusTypeFilled ||
-					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == futures.OrderStatusTypePartiallyFilled) {
+				if downOrder.Status == futures.OrderStatusTypeFilled {
 					takerRecord = downRecord
 					takerOrder = downOrder
 				}
@@ -311,8 +308,7 @@ func processOrder(
 				printError()
 				return err
 			}
-			if upOrder.Status == futures.OrderStatusTypeFilled ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == futures.OrderStatusTypePartiallyFilled) {
+			if upOrder.Status == futures.OrderStatusTypeFilled {
 				takerRecord = upRecord
 				takerOrder = upOrder
 			}
