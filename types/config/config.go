@@ -20,7 +20,8 @@ type (
 		LogLevel                      logrus.Level                 `json:"log_level"`
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
+		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
@@ -49,12 +50,16 @@ func (cf *Configs) GetObservePriceLiquidation() bool {
 	return cf.ObservePriceLiquidation
 }
 
-func (cf *Configs) GetPercentsToLiquidation() float64 {
-	return cf.PercentsToLiquidation
+func (cf *Configs) GetPercentsToStopSettingNewOrder() float64 {
+	return cf.PercentsToStopSettingNewOrder
 }
 
 func (cf *Configs) GetPercentToDecreasePosition() float64 {
 	return cf.PercentToDecreasePosition
+}
+
+func (cf *Configs) GetBalancingOfMargin() bool {
+	return cf.BalancingOfMargin
 }
 
 func (cf *Configs) GetObserverTimeOut() int {
@@ -129,7 +134,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		LogLevel                      string                       `json:"log_level"`
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation         float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
@@ -139,7 +145,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		LogLevel:                      c.LogLevel.String(),
 		ReloadConfig:                  c.ReloadConfig,
 		ObservePriceLiquidation:       c.ObservePriceLiquidation,
-		PercentsToLiquidation:         c.PercentsToLiquidation,
+		BalancingOfMargin:             c.BalancingOfMargin,
+		PercentsToLiquidation:         c.PercentsToStopSettingNewOrder,
 		PercentToDecreasePosition:     c.PercentToDecreasePosition,
 		ObserverTimeOut:               c.ObserverTimeOut,
 		MaintainPartiallyFilledOrders: c.MaintainPartiallyFilledOrders,
@@ -153,7 +160,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		LogLevel                      string                       `json:"log_level"`
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		PercentsToLiquidation         float64                      `json:"percents_to_liquidation"`
+		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation         float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
 		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
@@ -177,7 +185,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
-	c.PercentsToLiquidation = temp.PercentsToLiquidation
+	c.BalancingOfMargin = temp.BalancingOfMargin
+	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOut = temp.ObserverTimeOut
 	c.MaintainPartiallyFilledOrders = temp.MaintainPartiallyFilledOrders
@@ -196,7 +205,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		LogLevel:                      logrus.InfoLevel,
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
-		PercentsToLiquidation:         0.05,
+		PercentsToStopSettingNewOrder: 0.05,
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOut:               1000,
 		MaintainPartiallyFilledOrders: false,

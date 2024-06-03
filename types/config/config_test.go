@@ -31,6 +31,7 @@ const (
 	CurrentBalance = 2000.0 // Поточний баланс
 
 	ObservePriceLiquidation   = true // Скасування обмежених ордерів які за лімітом
+	BalancingOfMargin         = true // Балансування маржі
 	PercentsToLiquidation     = 0.05 // Відсоток до ліквідації
 	PercentToDecreasePosition = 0.03 // Відсоток для зменшення позиції
 	ObserverTimeOut           = 1000 // Таймаут спостереження
@@ -159,7 +160,8 @@ var (
 		LogLevel:                      InfoLevel,
 		ReloadConfig:                  ReloadConfig,
 		ObservePriceLiquidation:       ObservePriceLiquidation,
-		PercentsToLiquidation:         PercentsToLiquidation,
+		BalancingOfMargin:             BalancingOfMargin,
+		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOut:               ObserverTimeOut,
 		MaintainPartiallyFilledOrders: MaintainPartiallyFilledOrders,
@@ -236,7 +238,8 @@ func getTestData() []byte {
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
-			"percents_to_liquidation": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
+			"balancing_of_margin": ` + strconv.FormatBool(BalancingOfMargin) + `,
+			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout": ` + strconv.Itoa(ObserverTimeOut) + `,
 			"maintain_partially_filled_orders": ` + strconv.FormatBool(MaintainPartiallyFilledOrders) + `,
@@ -323,7 +326,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
 	assert.Equal(t, MaintainPartiallyFilledOrders, config.GetMaintainPartiallyFilledOrders())
-	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToLiquidation())
+	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())

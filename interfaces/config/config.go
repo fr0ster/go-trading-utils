@@ -26,8 +26,10 @@ type (
 		GetReloadConfig() bool
 
 		GetObservePriceLiquidation() bool
-		GetPercentsToLiquidation() float64
+		GetPercentsToStopSettingNewOrder() float64
 		GetPercentToDecreasePosition() float64
+
+		GetBalancingOfMargin() bool
 
 		GetObserverTimeOut() int
 
