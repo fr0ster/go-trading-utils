@@ -126,11 +126,17 @@ func createOrderInGrid(
 	return
 }
 
+// Округлення ціни до StepSize знаків після коми
+func getStepSizeExp(symbol *futures.Symbol) int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
+}
+
 // Округлення ціни до TickSize знаків після коми
-func getExp(symbol *futures.Symbol) int {
+func getTickSizeExp(symbol *futures.Symbol) int {
 	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
 }
-func roundPrice(val float64, exp int) float64 {
+
+func round(val float64, exp int) float64 {
 	return utils.RoundToDecimalPlace(val, exp)
 }
 
@@ -177,7 +183,7 @@ func processOrder(
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
-			upPrice := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), exp)
+			upPrice := round(order.GetPrice()*(1+pair.GetSellDelta()), exp)
 			if (pair.GetUpBound() == 0 || upPrice <= pair.GetUpBound()) &&
 				delta_percent(upPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
@@ -257,7 +263,7 @@ func processOrder(
 		// Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
-			downPrice := roundPrice(order.GetPrice()*(1-pair.GetBuyDelta()), exp)
+			downPrice := round(order.GetPrice()*(1-pair.GetBuyDelta()), exp)
 			if (pair.GetLowBound() == 0 || downPrice >= pair.GetLowBound()) &&
 				delta_percent(downPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
@@ -427,9 +433,10 @@ func RunFuturesGridTrading(
 		printError()
 		return err
 	}
-	exp := getExp(symbol)
+	tickSizeExp := getTickSizeExp(symbol)
+	stepSizeExp := getStepSizeExp(symbol)
 	// Отримання середньої ціни
-	price := roundPrice(pair.GetMiddlePrice(), exp)
+	price := round(pair.GetMiddlePrice(), tickSizeExp)
 	risk, err := pairProcessor.GetPositionRisk()
 	if err != nil {
 		stopEvent <- os.Interrupt
@@ -437,24 +444,24 @@ func RunFuturesGridTrading(
 		return err
 	}
 	if entryPrice := utils.ConvStrToFloat64(risk.EntryPrice); entryPrice != 0 {
-		price = roundPrice(entryPrice, exp)
+		price = round(entryPrice, tickSizeExp)
 	}
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-		price = roundPrice(price, exp)
+		price = round(price, tickSizeExp)
 	}
 	setQuantity := func(symbol *futures.Symbol) (quantity float64) {
-		quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() * float64(pair.GetLeverage()) / price
+		quantity = round(pair.GetCurrentBalance()*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()*float64(pair.GetLeverage())/price, stepSizeExp)
 		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 		if quantity*price < minNotional {
 			logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
-			quantity = minNotional / price
+			quantity = round(minNotional/price, stepSizeExp)
 		}
 		return
 	}
 	quantity = setQuantity(symbol)
 	// Записуємо середню ціну в грід
-	grid.Set(grid_types.NewRecord(0, price, 0, roundPrice(price*(1+pair.GetSellDelta()), exp), roundPrice(price*(1-pair.GetBuyDelta()), exp), types.SideTypeNone))
+	grid.Set(grid_types.NewRecord(0, price, 0, round(price*(1+pair.GetSellDelta()), tickSizeExp), round(price*(1-pair.GetBuyDelta()), tickSizeExp), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pair.GetPair(), price)
 
 	err = pairProcessor.CancelAllOrders()
@@ -464,24 +471,24 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо ордери на продаж
-	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), exp))
+	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, roundPrice(price*(1+pair.GetSellDelta()), exp), quantity, 0, price, types.SideTypeSell))
-	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), exp))
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity, 0, price, types.SideTypeSell))
+	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
 	// Створюємо ордер на купівлю
-	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), exp))
+	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
 	if err != nil {
 		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), exp), quantity, price, 0, types.SideTypeBuy))
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, round(price*(1-pair.GetSellDelta()), tickSizeExp), quantity, price, 0, types.SideTypeBuy))
 	grid.Debug("Futures Grid", "", pair.GetPair())
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
@@ -609,7 +616,7 @@ func RunFuturesGridTrading(
 					grid,
 					order,
 					quantity,
-					exp,
+					tickSizeExp,
 					locked,
 					risk)
 				if err != nil {
