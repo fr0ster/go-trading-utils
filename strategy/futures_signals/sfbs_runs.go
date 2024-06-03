@@ -527,8 +527,8 @@ func RunFuturesGridTrading(
 				}
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
-					grid.Unlock()
 					stopEvent <- os.Interrupt
+					grid.Unlock()
 					printError()
 					return
 				}
@@ -539,8 +539,8 @@ func RunFuturesGridTrading(
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 					err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 					if err != nil {
-						grid.Unlock()
 						stopEvent <- os.Interrupt
+						grid.Unlock()
 						printError()
 						return err
 					}
@@ -557,15 +557,15 @@ func RunFuturesGridTrading(
 						if free > pair.GetCurrentPositionBalance() {
 							err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 							if err != nil {
-								grid.Unlock()
 								stopEvent <- os.Interrupt
+								grid.Unlock()
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
-								grid.Unlock()
 								stopEvent <- os.Interrupt
+								grid.Unlock()
 								printError()
 								return err
 							}
@@ -596,15 +596,15 @@ func RunFuturesGridTrading(
 									0)                          // callbackRate
 							}
 							if err != nil {
-								grid.Unlock()
 								stopEvent <- os.Interrupt
+								grid.Unlock()
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
-								grid.Unlock()
 								stopEvent <- os.Interrupt
+								grid.Unlock()
 								printError()
 								return err
 							}
@@ -628,6 +628,7 @@ func RunFuturesGridTrading(
 						risk)
 					if err != nil {
 						stopEvent <- os.Interrupt
+						grid.Unlock()
 						pairProcessor.CancelAllOrders()
 						printError()
 						return err
