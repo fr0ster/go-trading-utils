@@ -511,8 +511,9 @@ func RunFuturesGridTrading(
 				}
 			}
 			orderId := order.GetOrderId()
-			order.SetQuantity(round(order.GetQuantity()-utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty), stepSizeExp))
-			if order.GetQuantity() == 0 {
+			order.SetQuantity(order.GetQuantity() - utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty))
+			if order.GetQuantity() < 0 {
+				order.SetQuantity(0)
 				// if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
 				// 	(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
