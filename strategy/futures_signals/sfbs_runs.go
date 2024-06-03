@@ -614,7 +614,8 @@ func RunFuturesGridTrading(
 					}
 				}
 				orderId := order.GetOrderId()
-				if order.GetQuantity()-utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty) <= 0 {
+				if (order.GetQuantity()-utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty) <= 0) ||
+					event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 					err = processOrder(
 						config,
 						pairProcessor,
