@@ -500,6 +500,7 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
+			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 			if !ok {
@@ -514,7 +515,6 @@ func RunFuturesGridTrading(
 			if order.GetQuantity() == 0 {
 				// if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
 				// 	(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
-				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
 					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
