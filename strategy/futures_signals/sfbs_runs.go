@@ -295,8 +295,8 @@ func processOrder(
 			}
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель вище
-		upPrice, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
-		if ok && upPrice.GetOrderId() == 0 {
+		upRecord, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
+		if ok && upRecord.GetOrderId() == 0 {
 			// Створюємо ордер на продаж
 			upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, order.GetUpPrice())
 			if err != nil {
@@ -305,10 +305,11 @@ func processOrder(
 			}
 			if upOrder.Status == futures.OrderStatusTypeFilled ||
 				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == futures.OrderStatusTypePartiallyFilled) {
+				takerRecord = upRecord
 				takerOrder = upOrder
 			}
-			upPrice.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
-			upPrice.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
+			upRecord.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
+			upRecord.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
 			logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
 				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
 		}
