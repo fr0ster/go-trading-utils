@@ -94,7 +94,7 @@ func (g *Grid) Debug(pair, id, fl string) {
 		logrus.Debugf("%s %s %s:", fl, id, pair)
 		g.Descend(func(record btree.Item) bool {
 			order := record.(*Record)
-			logrus.Debugf(" Order %v on price %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetOrderSide())
+			logrus.Debugf(" Order %v on price %v with quantity %v OrderSide %v", order.GetOrderId(), order.GetPrice(), order.GetQuantity(), order.GetOrderSide())
 			return true
 		})
 	}

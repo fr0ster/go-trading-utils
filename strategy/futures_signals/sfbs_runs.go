@@ -500,6 +500,13 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
+			logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
+				pair.GetPair(),
+				event.OrderTradeUpdate.ID,
+				event.OrderTradeUpdate.OriginalPrice,
+				event.OrderTradeUpdate.LastFilledQty,
+				event.OrderTradeUpdate.Side,
+				event.OrderTradeUpdate.Status)
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
@@ -512,6 +519,14 @@ func RunFuturesGridTrading(
 			}
 			orderId := order.GetOrderId()
 			order.SetQuantity(order.GetQuantity() - utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty))
+			logrus.Debugf("Futures %s: Order %v on price %v with event quantity %v grid quantity %v side %v status %s",
+				pair.GetPair(),
+				orderId,
+				currentPrice,
+				event.OrderTradeUpdate.LastFilledQty,
+				order.GetQuantity(),
+				event.OrderTradeUpdate.Side,
+				event.OrderTradeUpdate.Status)
 			if order.GetQuantity() < 0 {
 				order.SetQuantity(0)
 				// if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
@@ -521,12 +536,6 @@ func RunFuturesGridTrading(
 					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 				}
-				logrus.Debugf("Futures %s: Order %v on price %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					grid.Unlock()
