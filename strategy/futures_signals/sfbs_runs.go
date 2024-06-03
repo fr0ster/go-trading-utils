@@ -505,6 +505,7 @@ func RunFuturesGridTrading(
 					event.OrderTradeUpdate.Status)
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
+					stopEvent <- os.Interrupt
 					printError()
 					return
 				}
@@ -528,6 +529,7 @@ func RunFuturesGridTrading(
 					locked,
 					risk)
 				if err != nil {
+					stopEvent <- os.Interrupt
 					pairProcessor.CancelAllOrders()
 					printError()
 					return err

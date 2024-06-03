@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -30,6 +31,17 @@ const (
 	limit      = 1000
 	reloadTime = 500 * time.Millisecond
 )
+
+func printError() {
+	if logrus.GetLevel() == logrus.DebugLevel {
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			logrus.Errorf("Error occurred in file: %s at line: %d", file, line)
+		} else {
+			logrus.Errorf("Error occurred but could not get the caller information")
+		}
+	}
+}
 
 func RunSpotHolding(
 	config *config_types.ConfigFile,
@@ -426,6 +438,7 @@ func processOrder(
 			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && (lockedValue < pair.GetCurrentPositionBalance()) {
 				upOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, price)
 				if err != nil {
+					printError()
 					return err
 				}
 				logrus.Debugf("Spots %s: Set Sell order %v on price %v status %v",
@@ -447,6 +460,7 @@ func processOrder(
 			// Створюємо ордер на купівлю
 			downOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, order.GetDownPrice())
 			if err != nil {
+				printError()
 				return err
 			}
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
@@ -473,6 +487,7 @@ func processOrder(
 				takerPrice,
 				quantity)
 			if err != nil {
+				printError()
 				return err
 			}
 		}
@@ -484,6 +499,7 @@ func processOrder(
 			if pair.GetLowBound() == 0 || price >= pair.GetLowBound() {
 				downOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, price)
 				if err != nil {
+					printError()
 					return err
 				}
 				logrus.Debugf("Spots %s: Add Buy order %v on price %v status %v", pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
@@ -504,6 +520,7 @@ func processOrder(
 			// Створюємо ордер на продаж
 			upOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, order.GetUpPrice())
 			if err != nil {
+				printError()
 				return err
 			}
 			if upOrder.Status == binance.OrderStatusTypeFilled ||
@@ -530,6 +547,7 @@ func processOrder(
 				takerPrice,
 				quantity)
 			if err != nil {
+				printError()
 				return err
 			}
 		}
@@ -556,15 +574,19 @@ func RunSpotGridTrading(
 	// Створюємо стрім подій
 	pairStreams, err := NewPairStreams(client, pair, false)
 	if err != nil {
+		printError()
 		return err
 	}
 	// Створюємо обробник пари
 	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
 	if err != nil {
+		stopEvent <- os.Interrupt
 		return err
 	}
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
+		stopEvent <- os.Interrupt
+		printError()
 		return err
 	}
 	pair.SetCurrentBalance(balance)
@@ -576,6 +598,8 @@ func RunSpotGridTrading(
 	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
 		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
 		if err != nil {
+			stopEvent <- os.Interrupt
+			printError()
 			return err
 		}
 		pair.SetBuyQuantity(targetValue)
@@ -586,6 +610,7 @@ func RunSpotGridTrading(
 	grid := grid_types.New()
 	// Перевірка на коректність дельт
 	if pair.GetSellDelta() != pair.GetBuyDelta() {
+		printError()
 		return fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
 	}
 	symbol, err := func() (res *binance.Symbol, err error) {
@@ -596,6 +621,8 @@ func RunSpotGridTrading(
 		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
 	}()
 	if err != nil {
+		stopEvent <- os.Interrupt
+		printError()
 		return err
 	}
 	// Отримання середньої ціни
@@ -614,11 +641,15 @@ func RunSpotGridTrading(
 	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
 	_, err = pairProcessor.CancelAllOrders()
 	if err != nil {
+		stopEvent <- os.Interrupt
+		printError()
 		return err
 	}
 	// Створюємо ордер на продаж
 	sellOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
+		stopEvent <- os.Interrupt
+		printError()
 		return err
 	}
 	// Записуємо ордер в грід
@@ -627,6 +658,8 @@ func RunSpotGridTrading(
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	if err != nil {
+		stopEvent <- os.Interrupt
+		printError()
 		return err
 	}
 	// Записуємо ордер в грід
@@ -640,6 +673,7 @@ func RunSpotGridTrading(
 		select {
 		case <-stopEvent:
 			stopEvent <- os.Interrupt
+			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
@@ -650,6 +684,8 @@ func RunSpotGridTrading(
 					pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
 					balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 					if err != nil {
+						stopEvent <- os.Interrupt
+						printError()
 						return err
 					}
 					pair.SetCurrentBalance(balance)
@@ -674,6 +710,8 @@ func RunSpotGridTrading(
 				err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 				if err != nil {
 					pairProcessor.CancelAllOrders()
+					stopEvent <- os.Interrupt
+					printError()
 					return err
 				}
 				grid.Unlock()
