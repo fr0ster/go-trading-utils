@@ -222,7 +222,7 @@ func processOrder(
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель нижче
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
-		if ok && downPrice.GetOrderId() == 0 {
+		if ok && downPrice.GetOrderId() == 0 && downPrice.GetQuantity() <= 0 {
 			// Створюємо ордер на купівлю
 			downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, order.GetDownPrice())
 			if err != nil {
@@ -240,6 +240,7 @@ func processOrder(
 			}
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
+		order.SetQuantity(0)                   // Помічаємо ордер як виконаний
 		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
 		if takerOrder != nil {
 			err = processOrder(
@@ -302,7 +303,7 @@ func processOrder(
 		}
 		// Знаходимо у гріді відповідний запис, та записи на шабель вище
 		upRecord, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
-		if ok && upRecord.GetOrderId() == 0 {
+		if ok && upRecord.GetOrderId() == 0 && upRecord.GetQuantity() <= 0 {
 			// Створюємо ордер на продаж
 			upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, order.GetUpPrice())
 			if err != nil {
@@ -320,6 +321,7 @@ func processOrder(
 				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
+		order.SetQuantity(0)                   // Помічаємо ордер як виконаний
 		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
 		if takerOrder != nil {
 			err = processOrder(
@@ -518,16 +520,18 @@ func RunFuturesGridTrading(
 						continue // Вважаємо ордер обробили раніше???
 					}
 				}
-				orderId := order.GetOrderId()
-				order.SetQuantity(order.GetQuantity() - utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty))
-				logrus.Debugf("Futures %s: Order %v on price %v with event quantity %v grid quantity %v side %v status %s",
-					pair.GetPair(),
-					orderId,
-					currentPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					order.GetQuantity(),
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
+				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
+					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+				}
+				risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					grid.Unlock()
+					stopEvent <- os.Interrupt
+					printError()
+					return
+				}
 				// Балансування маржі як треба
 				if config.GetConfigurations().GetBalancingOfMargin() &&
 					utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
@@ -607,20 +611,8 @@ func RunFuturesGridTrading(
 						}
 					}
 				}
-				if order.GetQuantity() <= 0 {
-					order.SetQuantity(0)
-					account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-					if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-						locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-						free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					}
-					risk, err = pairProcessor.GetPositionRisk()
-					if err != nil {
-						grid.Unlock()
-						stopEvent <- os.Interrupt
-						printError()
-						return
-					}
+				orderId := order.GetOrderId()
+				if order.GetQuantity()-utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty) <= 0 {
 					err = processOrder(
 						config,
 						pairProcessor,
