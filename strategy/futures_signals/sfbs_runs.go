@@ -190,7 +190,7 @@ func processOrder(
 				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
 					pair.GetPair(), upOrder.OrderID, upPrice, upOrder.Status, quantity)
 				// Записуємо ордер в грід
-				upRecord := grid_types.NewRecord(upOrder.OrderID, upPrice, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
+				upRecord := grid_types.NewRecord(upOrder.OrderID, upPrice, quantity, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upRecord)
 				order.SetUpPrice(upPrice) // Ставимо посилання на верхній запис в гріді
 				if upOrder.Status == futures.OrderStatusTypeFilled ||
@@ -270,7 +270,7 @@ func processOrder(
 				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
 					pair.GetPair(), downOrder.OrderID, downPrice, downOrder.Status, quantity)
 				// Записуємо ордер в грід
-				downRecord := grid_types.NewRecord(downOrder.OrderID, downPrice, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
+				downRecord := grid_types.NewRecord(downOrder.OrderID, downPrice, quantity, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downRecord)
 				order.SetDownPrice(downPrice) // Ставимо посилання на нижній запис в гріді
 				if downOrder.Status == futures.OrderStatusTypeFilled ||
@@ -454,7 +454,7 @@ func RunFuturesGridTrading(
 	}
 	quantity = setQuantity(symbol)
 	// Записуємо середню ціну в грід
-	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta()), exp), roundPrice(price*(1-pair.GetBuyDelta()), exp), types.SideTypeNone))
+	grid.Set(grid_types.NewRecord(0, price, 0, roundPrice(price*(1+pair.GetSellDelta()), exp), roundPrice(price*(1-pair.GetBuyDelta()), exp), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pair.GetPair(), price)
 
 	err = pairProcessor.CancelAllOrders()
@@ -471,7 +471,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, roundPrice(price*(1+pair.GetSellDelta()), exp), 0, price, types.SideTypeSell))
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, roundPrice(price*(1+pair.GetSellDelta()), exp), quantity, 0, price, types.SideTypeSell))
 	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), exp))
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), exp))
@@ -481,7 +481,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), exp), price, 0, types.SideTypeBuy))
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), exp), quantity, price, 0, types.SideTypeBuy))
 	grid.Debug("Futures Grid", "", pair.GetPair())
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
@@ -492,8 +492,20 @@ func RunFuturesGridTrading(
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
+			// Знаходимо у гріді на якому був виконаний ордер
+			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
+			if !ok {
+				if !(event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled) {
+					return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
+				} else {
+					continue // Вважаємо ордер обробили раніше???
+				}
+			}
+			orderId := order.GetOrderId()
+			order.SetQuantity(order.GetQuantity() - utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty))
+			if order.GetQuantity() == 0 {
+				// if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
+				// 	(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
 				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
@@ -587,12 +599,6 @@ func RunFuturesGridTrading(
 						}
 					}
 				}
-				// Знаходимо у гріді на якому був виконаний ордер
-				order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
-				if !ok {
-					return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
-				}
-				orderId := order.GetOrderId()
 				err = processOrder(
 					config,
 					pairProcessor,

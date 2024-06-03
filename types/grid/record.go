@@ -8,6 +8,7 @@ import (
 type (
 	Record struct {
 		Price     float64
+		Quantity  float64
 		OrderId   int64
 		UpPrice   float64
 		DownPrice float64
@@ -29,6 +30,14 @@ func (g *Record) GetPrice() float64 {
 
 func (g *Record) SetPrice(price float64) {
 	g.Price = price
+}
+
+func (g *Record) GetQuantity() float64 {
+	return g.Quantity
+}
+
+func (g *Record) SetQuantity(quantity float64) {
+	g.Quantity = quantity
 }
 
 func (g *Record) GetOrderId() int64 {
@@ -63,9 +72,10 @@ func (g *Record) SetOrderSide(orderSide types.OrderSide) {
 	g.OrderSide = orderSide
 }
 
-func NewRecord(orderId int64, price float64, upPrice float64, downPrice float64, orderSide types.OrderSide) *Record {
+func NewRecord(orderId int64, price float64, quantity float64, upPrice float64, downPrice float64, orderSide types.OrderSide) *Record {
 	return &Record{
 		Price:     price,
+		Quantity:  quantity,
 		OrderId:   orderId,
 		UpPrice:   upPrice,
 		DownPrice: downPrice,

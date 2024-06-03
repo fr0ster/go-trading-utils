@@ -9,7 +9,7 @@ import (
 
 func TestRecord(t *testing.T) {
 	// Create a new grid
-	g := grid.NewRecord(1, 10.5, 12.5, 8.5, types.SideTypeBuy)
+	g := grid.NewRecord(1, 10.5, 5, 12.5, 8.5, types.SideTypeBuy)
 
 	// Test GetOrderId
 	if g.GetOrderId() != 1 {
@@ -67,13 +67,13 @@ func TestRecord(t *testing.T) {
 	}
 
 	// Test Equals
-	other := grid.NewRecord(1, 15.5, 12.5, 8.5, types.SideTypeBuy)
+	other := grid.NewRecord(1, 15.5, 5, 12.5, 8.5, types.SideTypeBuy)
 	if !g.Equals(other) {
 		t.Errorf("Expected Equals to return true for two identical grids, but got false")
 	}
 
 	// Test Less
-	other = grid.NewRecord(4, 20.5, 18.5, 9.5, types.SideTypeBuy)
+	other = grid.NewRecord(4, 20.5, 5, 18.5, 9.5, types.SideTypeBuy)
 	if !g.Less(other) {
 		t.Errorf("Expected Less to return true for g < other, but got false")
 	}
