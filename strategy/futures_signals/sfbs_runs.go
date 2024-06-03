@@ -499,6 +499,7 @@ func RunFuturesGridTrading(
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			grid.Lock()
 			// Знаходимо у гріді на якому був виконаний ордер
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 			if !ok {
@@ -513,7 +514,6 @@ func RunFuturesGridTrading(
 			if order.GetQuantity() == 0 {
 				// if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
 				// 	(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled) {
-				grid.Lock()
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
@@ -528,6 +528,7 @@ func RunFuturesGridTrading(
 					event.OrderTradeUpdate.Status)
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
+					grid.Unlock()
 					stopEvent <- os.Interrupt
 					printError()
 					return
@@ -539,6 +540,7 @@ func RunFuturesGridTrading(
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 					err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 					if err != nil {
+						grid.Unlock()
 						stopEvent <- os.Interrupt
 						printError()
 						return err
@@ -556,12 +558,14 @@ func RunFuturesGridTrading(
 						if free > pair.GetCurrentPositionBalance() {
 							err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 							if err != nil {
+								grid.Unlock()
 								stopEvent <- os.Interrupt
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
+								grid.Unlock()
 								stopEvent <- os.Interrupt
 								printError()
 								return err
@@ -593,12 +597,14 @@ func RunFuturesGridTrading(
 									0)                          // callbackRate
 							}
 							if err != nil {
+								grid.Unlock()
 								stopEvent <- os.Interrupt
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
+								grid.Unlock()
 								stopEvent <- os.Interrupt
 								printError()
 								return err
@@ -625,13 +631,13 @@ func RunFuturesGridTrading(
 					printError()
 					return err
 				}
-				grid.Unlock()
 				grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
 			} else if event.Event == futures.UserDataEventTypeAccountUpdate {
 				logrus.Debugf("Futures %s: Account Update", pair.GetPair())
 			} else if event.Event == futures.UserDataEventTypeMarginCall {
 				logrus.Debugf("Futures %s: Margin Call", pair.GetPair())
 			}
+			grid.Unlock()
 		}
 	}
 }
