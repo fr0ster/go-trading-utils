@@ -14,6 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
@@ -844,37 +845,37 @@ func NewPairProcessor(
 		pp.orderTypes[orderType] = true
 	}
 
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case event := <-pp.userDataEvent:
-				// Визначаємо статуси ордерів які нас цікавлять та ...
-				// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-				if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
-					if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled || event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
-						pp.orderStatusEvent <- event
-					}
-				} else if event.Event == futures.UserDataEventTypeAccountUpdate {
-					pp.accountUpdateEvent <- &event.AccountUpdate
-				} else if event.Event == futures.UserDataEventTypeAccountConfigUpdate {
-					pp.accountConfigUpdateEvent <- &event.AccountConfigUpdate
-				} else if event.Event == futures.UserDataEventTypeMarginCall {
-					pp.marginCallEvent <- &event.MarginCallPositions
-				}
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-pp.stop:
+	// 			pp.stop <- os.Interrupt
+	// 			return
+	// 		case event := <-pp.userDataEvent:
+	// 			// Визначаємо статуси ордерів які нас цікавлять та ...
+	// 			// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
+	// 			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
+	// 				if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled || event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
+	// 					pp.orderStatusEvent <- event
+	// 				}
+	// 			} else if event.Event == futures.UserDataEventTypeAccountUpdate {
+	// 				pp.accountUpdateEvent <- &event.AccountUpdate
+	// 			} else if event.Event == futures.UserDataEventTypeAccountConfigUpdate {
+	// 				pp.accountConfigUpdateEvent <- &event.AccountConfigUpdate
+	// 			} else if event.Event == futures.UserDataEventTypeMarginCall {
+	// 				pp.marginCallEvent <- &event.MarginCallPositions
+	// 			}
+	// 		}
+	// 	}
+	// }()
 
-	// // Визначаємо статуси ордерів які нас цікавлять та ...
-	// // ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	// if config.GetConfigurations().GetMaintainPartiallyFilledOrders() {
-	// 	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(orderEvent, futures.OrderStatusTypeFilled, futures.OrderStatusTypePartiallyFilled)
-	// } else {
-	// 	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(orderEvent, futures.OrderStatusTypeFilled)
-	// }
+	// Визначаємо статуси ордерів які нас цікавлять та ...
+	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
+	if config.GetConfigurations().GetMaintainPartiallyFilledOrders() {
+		pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, futures.OrderStatusTypeFilled, futures.OrderStatusTypePartiallyFilled)
+	} else {
+		pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, futures.OrderStatusTypeFilled)
+	}
 
 	return
 }
