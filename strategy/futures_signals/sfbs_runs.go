@@ -636,12 +636,6 @@ func RunFuturesGridTrading(
 				}
 				grid.Unlock()
 			}
-		case event := <-pairProcessor.GetAccountUpdateEvent():
-			logrus.Debugf("Futures %s: Account Update %v", pair.GetPair(), event)
-		case event := <-pairProcessor.GetMarginCallEvent():
-			logrus.Debugf("Futures %s: Margin Call %v", pair.GetPair(), event)
-		case event := <-pairProcessor.GetAccountConfigUpdateEvent():
-			logrus.Debugf("Futures %s: Account Config Update %v", pair.GetPair(), event)
 		}
 	}
 }

@@ -210,6 +210,6 @@ func NewPairStreams(
 
 	// Запускаємо стрім для відслідковування зміни статусу акаунта
 	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
-
+	// Запускаємо стрім для відслідковування зміни статусу ордерів
 	return
 }
