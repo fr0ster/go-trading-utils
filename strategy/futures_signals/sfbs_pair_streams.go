@@ -3,7 +3,6 @@ package futures_signals
 import (
 	"context"
 	"math"
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -32,8 +31,7 @@ type (
 		orderTradeUpdateEvent    chan futures.WsOrderTradeUpdate
 		accountConfigUpdateEvent chan futures.WsAccountConfigUpdate
 
-		stop      chan os.Signal
-		limitsOut chan bool
+		stop chan struct{}
 
 		pairInfo   *symbol_types.FuturesSymbol
 		orderTypes map[futures.OrderType]bool
@@ -74,12 +72,8 @@ func (pp *PairStreams) GetAccountConfigUpdateEvent() chan futures.WsAccountConfi
 	return pp.accountConfigUpdateEvent
 }
 
-func (pp *PairStreams) GetStop() chan os.Signal {
+func (pp *PairStreams) GetStop() chan struct{} {
 	return pp.stop
-}
-
-func (pp *PairStreams) GetLimitsOut() chan bool {
-	return pp.limitsOut
 }
 
 func (pp *PairStreams) GetDegree() int {
@@ -103,6 +97,7 @@ func (pp *PairStreams) GetLiquidationDistance(price float64) (distance float64) 
 func NewPairStreams(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
+	stop chan struct{},
 	debug bool) (pp *PairStreams, err error) {
 	pp = &PairStreams{
 		client:       client,
@@ -114,8 +109,7 @@ func NewPairStreams(
 		userDataEvent4AUE:  make(chan *futures.WsUserDataEvent),
 		accountUpdateEvent: nil,
 
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
+		stop: stop,
 
 		pairInfo:   nil,
 		orderTypes: make(map[futures.OrderType]bool, 0),
@@ -218,10 +212,6 @@ func NewPairStreams(
 		for {
 			select {
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
 				return
 			case event := <-pp.userDataEvent4AUE:
 				pp.accountUpdateEvent <- event.AccountUpdate
@@ -234,10 +224,6 @@ func NewPairStreams(
 		for {
 			select {
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
 				return
 			case event := <-pp.userDataEvent4OTU:
 				pp.orderTradeUpdateEvent <- event.OrderTradeUpdate
@@ -250,10 +236,6 @@ func NewPairStreams(
 		for {
 			select {
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
-				return
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
 				return
 			case event := <-pp.userDataEvent4ACU:
 				pp.accountConfigUpdateEvent <- event.AccountConfigUpdate
@@ -261,8 +243,5 @@ func NewPairStreams(
 			time.Sleep(pp.timeOut)
 		}
 	}()
-
-	// // Запускаємо стрім для відслідковування зміни статусу акаунта
-	// pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
 	return
 }

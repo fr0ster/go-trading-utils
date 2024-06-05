@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
 	"time"
 
@@ -60,8 +59,7 @@ type (
 		dayOrderLimit         *exchange_types.RateLimits
 		minuteRawRequestLimit *exchange_types.RateLimits
 
-		stop      chan os.Signal
-		limitsOut chan bool
+		stop chan struct{}
 
 		pairInfo     *symbol_types.SpotSymbol
 		orderTypes   map[string]bool
@@ -229,7 +227,6 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 				case <-pp.stopBuy:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case params := <-pp.buyEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -242,7 +239,7 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 					baseBalance, err := GetBaseBalance(pp.account, pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					if baseBalance < params.Quantity*params.Price {
@@ -265,7 +262,7 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -315,7 +312,7 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 				case <-pp.stopSell:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case params := <-pp.sellEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -328,7 +325,7 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					if targetBalance < params.Price*params.Quantity {
@@ -351,7 +348,7 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -411,7 +408,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 				case <-pp.stopBuyTakeProfitProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case params := <-pp.buyEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -433,7 +430,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTrigg
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -481,7 +478,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 				case <-pp.stopSellTakeProfitProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case params := <-pp.sellEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -503,7 +500,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTrig
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -564,7 +561,7 @@ func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *binance.CreateO
 				pp.stopSell <- true
 				return
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
+				close(pp.stop)
 				return
 			case order := <-triggerEvent:
 				if order != nil {
@@ -599,7 +596,7 @@ func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *binance.Create
 				pp.stopSell <- true
 				return
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
+				close(pp.stop)
 				return
 			case order := <-triggerEvent:
 				if order != nil {
@@ -633,24 +630,9 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 					pp.dayOrderLimit,
 					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
+				close(pp.stop)
 				return
 			}
-		}
-	}()
-
-	// Перевіряємо чи не вийшли за ліміти на запити та ордери
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				pp.stop <- os.Interrupt
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
-				return
-			default:
-			}
-			time.Sleep(pp.updateTime)
 		}
 	}()
 }
@@ -666,7 +648,7 @@ func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse)
 				case <-pp.stopOrderExecutionGuardProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case orderEvent := <-pp.orderStatusEvent:
 					logrus.Debug("Order status changed")
@@ -759,6 +741,7 @@ func NewPairProcessor(
 	exchangeInfo *exchange_types.ExchangeInfo,
 	account *spot_account.Account,
 	userDataEvent chan *binance.WsUserDataEvent,
+	stop chan struct{},
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		config:       config,
@@ -792,8 +775,7 @@ func NewPairProcessor(
 		dayOrderLimit:         &exchange_types.RateLimits{},
 		minuteRawRequestLimit: &exchange_types.RateLimits{},
 
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
+		stop: stop,
 
 		pairInfo:     nil,
 		orderTypes:   map[string]bool{},

@@ -3,7 +3,6 @@ package spot_signals
 import (
 	"fmt"
 	"math"
-	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -49,7 +48,7 @@ func RunSpotHolding(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
@@ -100,7 +99,6 @@ func RunSpotHolding(
 		for {
 			select {
 			case <-stopEvent:
-				stopEvent <- os.Interrupt
 				return
 			case <-buyEvent:
 				triggerEvent <- true
@@ -116,7 +114,7 @@ func RunSpotHolding(
 	if err != nil {
 		return err
 	}
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -134,7 +132,6 @@ func RunSpotHolding(
 	pairProcessor.StopBuySignal()
 	pair.SetStage(pairs_types.PositionClosedStage)
 	config.Save()
-	stopEvent <- os.Interrupt
 	return nil
 }
 
@@ -144,7 +141,7 @@ func RunSpotScalping(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
@@ -195,7 +192,6 @@ func RunSpotScalping(
 		for {
 			select {
 			case <-stopEvent:
-				stopEvent <- os.Interrupt
 				return
 			case <-buyEvent:
 				triggerEvent <- true
@@ -209,7 +205,7 @@ func RunSpotScalping(
 	if err != nil {
 		return err
 	}
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -260,7 +256,6 @@ func RunSpotScalping(
 		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
-		stopEvent <- os.Interrupt
 	}
 	return nil
 }
@@ -271,7 +266,7 @@ func RunSpotTrading(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
@@ -322,7 +317,6 @@ func RunSpotTrading(
 		for {
 			select {
 			case <-stopEvent:
-				stopEvent <- os.Interrupt
 				return
 			case <-buyEvent:
 				triggerEvent <- true
@@ -336,7 +330,7 @@ func RunSpotTrading(
 	if err != nil {
 		return err
 	}
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), debug)
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStream.GetExchangeInfo(), pairStream.GetAccount(), pairStream.GetUserDataEvent(), stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -383,7 +377,6 @@ func RunSpotTrading(
 		<-positionClosed
 		pair.SetStage(pairs_types.PositionClosedStage)
 		config.Save()
-		stopEvent <- os.Interrupt
 	}
 	return nil
 }
@@ -561,7 +554,7 @@ func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal) (err error) {
+	stopEvent chan struct{}) (err error) {
 	if pair.GetAccountType() != pairs_types.SpotAccountType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -578,14 +571,12 @@ func RunSpotGridTrading(
 		return err
 	}
 	// Створюємо обробник пари
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), stopEvent, false)
 	if err != nil {
-		stopEvent <- os.Interrupt
 		return err
 	}
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -598,7 +589,6 @@ func RunSpotGridTrading(
 	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
 		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
 		if err != nil {
-			stopEvent <- os.Interrupt
 			printError()
 			return err
 		}
@@ -621,7 +611,6 @@ func RunSpotGridTrading(
 		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
 	}()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -641,14 +630,12 @@ func RunSpotGridTrading(
 	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
 	_, err = pairProcessor.CancelAllOrders()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
 	// Створюємо ордер на продаж
 	sellOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -658,7 +645,6 @@ func RunSpotGridTrading(
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -672,7 +658,6 @@ func RunSpotGridTrading(
 	for {
 		select {
 		case <-stopEvent:
-			stopEvent <- os.Interrupt
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
@@ -684,7 +669,7 @@ func RunSpotGridTrading(
 					pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
 					balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 					if err != nil {
-						stopEvent <- os.Interrupt
+						close(stopEvent)
 						printError()
 						return err
 					}
@@ -710,7 +695,7 @@ func RunSpotGridTrading(
 				err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
 				if err != nil {
 					pairProcessor.CancelAllOrders()
-					stopEvent <- os.Interrupt
+					close(stopEvent)
 					printError()
 					return err
 				}
@@ -726,12 +711,11 @@ func Run(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
@@ -752,7 +736,6 @@ func Run(
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
 	}
 }

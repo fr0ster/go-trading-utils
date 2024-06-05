@@ -1,7 +1,6 @@
 package futures_signals
 
 import (
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -39,7 +38,7 @@ type (
 		priceChanges chan *pair_price_types.PairDelta
 		priceUp      chan bool
 		priceDown    chan bool
-		stop         chan os.Signal
+		stop         chan struct{}
 		deltaUp      float64
 		deltaDown    float64
 		isFilledOnly bool
@@ -147,7 +146,6 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case filled := <-pp.filledEvent: // Чекаємо на заповнення свічки
 					if filled {
@@ -157,12 +155,12 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 							last_close, err = eventProcess(pp, current_price, last_close, filled)
 							if err != nil {
 								logrus.Error(err)
-								pp.stop <- os.Interrupt
+								close(pp.stop)
 								return
 							}
 						} else {
 							logrus.Errorf("can't get Close from klines")
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 					} else if !filled && !pp.isFilledOnly { // Обробляемо незаповнену свічку
@@ -172,7 +170,7 @@ func (pp *PairKlinesObserver) StartPriceChangesSignal() (
 						last_close, err = eventProcess(pp, current_price, last_close, !filled)
 						if err != nil {
 							logrus.Error(err)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 					}
@@ -237,7 +235,7 @@ func NewPairKlinesObserver(
 	interval string,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal,
+	stop chan struct{},
 	isFilledOnly bool) (pp *PairKlinesObserver, err error) {
 	pp = &PairKlinesObserver{
 		client:       client,

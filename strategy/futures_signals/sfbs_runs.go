@@ -3,7 +3,6 @@ package futures_signals
 import (
 	"fmt"
 	"math"
-	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -50,7 +49,7 @@ func RunFuturesHolding(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	quit chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
@@ -62,7 +61,6 @@ func RunFuturesHolding(
 	if pair.GetStage() == pairs_types.PositionClosedStage {
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
-	stopEvent <- os.Interrupt
 	return fmt.Errorf("it should be implemented for futures")
 }
 
@@ -70,9 +68,9 @@ func RunScalpingHolding(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal) (err error) {
+	quit chan struct{}) (err error) {
 	pair.SetStrategy(pairs_types.GridStrategyType)
-	return RunFuturesGridTrading(config, client, pair, stopEvent)
+	return RunFuturesGridTrading(config, client, pair, quit)
 }
 
 func RunFuturesTrading(
@@ -81,7 +79,7 @@ func RunFuturesTrading(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	quit chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
@@ -104,7 +102,6 @@ func RunFuturesTrading(
 		}()
 	}
 
-	stopEvent <- os.Interrupt
 	return fmt.Errorf("it hadn't been implemented yet")
 }
 
@@ -347,7 +344,7 @@ func RunFuturesGridTrading(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal) (err error) {
+	quit chan struct{}) (err error) {
 	var (
 		quantity     float64
 		locked       float64
@@ -355,35 +352,29 @@ func RunFuturesGridTrading(
 		currentPrice float64
 	)
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
 	if pair.GetStrategy() != pairs_types.GridStrategyType {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
 	}
 	if pair.GetStage() == pairs_types.PositionClosedStage {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
 	}
 	// Створюємо стрім подій
-	pairStreams, err := NewPairStreams(client, pair, false)
+	pairStreams, err := NewPairStreams(client, pair, quit, false)
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return
 	}
 	// Створюємо обробник пари
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), false)
+	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), quit, false)
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
 
 	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -418,7 +409,6 @@ func RunFuturesGridTrading(
 	grid := grid_types.New()
 	// Перевірка на коректність дельт
 	if pair.GetSellDelta() != pair.GetBuyDelta() {
-		stopEvent <- os.Interrupt
 		return fmt.Errorf("futures %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
 	}
 	symbol, err := func() (res *futures.Symbol, err error) {
@@ -429,7 +419,6 @@ func RunFuturesGridTrading(
 		return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
 	}()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -439,7 +428,6 @@ func RunFuturesGridTrading(
 	price := round(pair.GetMiddlePrice(), tickSizeExp)
 	risk, err := pairProcessor.GetPositionRisk()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -466,14 +454,12 @@ func RunFuturesGridTrading(
 
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
 	// Створюємо ордери на продаж
 	sellOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -483,7 +469,6 @@ func RunFuturesGridTrading(
 	// Створюємо ордер на купівлю
 	buyOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
 	if err != nil {
-		stopEvent <- os.Interrupt
 		printError()
 		return err
 	}
@@ -494,9 +479,7 @@ func RunFuturesGridTrading(
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
 		select {
-		case <-stopEvent:
-			stopEvent <- os.Interrupt
-			printError()
+		case <-quit:
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
@@ -525,7 +508,6 @@ func RunFuturesGridTrading(
 				}
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
-					stopEvent <- os.Interrupt
 					grid.Unlock()
 					printError()
 					return
@@ -537,7 +519,6 @@ func RunFuturesGridTrading(
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 					err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 					if err != nil {
-						stopEvent <- os.Interrupt
 						grid.Unlock()
 						printError()
 						return err
@@ -555,14 +536,12 @@ func RunFuturesGridTrading(
 						if free > pair.GetCurrentPositionBalance() {
 							err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
 							if err != nil {
-								stopEvent <- os.Interrupt
 								grid.Unlock()
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
-								stopEvent <- os.Interrupt
 								grid.Unlock()
 								printError()
 								return err
@@ -594,14 +573,12 @@ func RunFuturesGridTrading(
 									0)                          // callbackRate
 							}
 							if err != nil {
-								stopEvent <- os.Interrupt
 								grid.Unlock()
 								printError()
 								return err
 							}
 							risk, err = pairProcessor.GetPositionRisk()
 							if err != nil {
-								stopEvent <- os.Interrupt
 								grid.Unlock()
 								printError()
 								return err
@@ -610,7 +587,6 @@ func RunFuturesGridTrading(
 					}
 				}
 				orderId := order.GetOrderId()
-				// if (order.GetQuantity()-utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty) <= 0) ||
 				if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 					err = processOrder(
 						config,
@@ -626,7 +602,6 @@ func RunFuturesGridTrading(
 						locked,
 						risk)
 					if err != nil {
-						stopEvent <- os.Interrupt
 						grid.Unlock()
 						pairProcessor.CancelAllOrders()
 						printError()
@@ -646,7 +621,7 @@ func Run(
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
-	stopEvent chan os.Signal,
+	quit chan struct{},
 	debug bool) (err error) {
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
@@ -654,19 +629,19 @@ func Run(
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		return RunFuturesHolding(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		return RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		return RunScalpingHolding(config, client, pair, stopEvent)
+		return RunScalpingHolding(config, client, pair, quit)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		return RunFuturesTrading(config, client, degree, limit, pair, stopEvent, time.Second, debug)
+		return RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug)
 
 		// Відпрацьовуємо Grid стратегію
 	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		return RunFuturesGridTrading(config, client, pair, stopEvent)
+		return RunFuturesGridTrading(config, client, pair, quit)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

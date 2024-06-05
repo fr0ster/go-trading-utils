@@ -2,7 +2,6 @@ package futures_signals
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -36,7 +35,7 @@ type (
 		data         *depth_types.Depth
 		depthsEvent  chan *futures.WsDepthEvent
 		event        chan bool
-		stop         chan os.Signal
+		stop         chan struct{}
 		deltaUp      float64
 		deltaDown    float64
 		buyEvent     chan *pair_price_types.PairPrice
@@ -131,7 +130,6 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 				}
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case <-pp.event: // Чекаємо на спрацювання тригера на зміну bookTicker
 					// Кількість базової валюти
@@ -145,7 +143,7 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get %s balance: %v", pp.pair.GetTargetSymbol(), err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					commission := GetCommission(pp.account)
@@ -159,14 +157,14 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 					boundAsk, err := GetAskBound(pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Нижня межа ціни продажу
 					boundBid, err := GetBidBound(pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					logrus.Debugf("Futures, Ask is %f, boundAsk is %f, bid is %f, boundBid is %f", ask, boundAsk, bid, boundBid)
@@ -176,14 +174,14 @@ func (pp *PairPartialDepthsObserver) StartBuyOrSellSignal() (
 						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 
 					if buyQuantity == 0 && sellQuantity == 0 {
 						logrus.Errorf("We don't have any %s for buy and don't have any %s for sell",
 							pp.pair.GetBaseSymbol(), pp.pair.GetTargetSymbol())
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
@@ -247,7 +245,6 @@ func (pp *PairPartialDepthsObserver) StartPriceChangesSignal() (
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case <-pp.event: // Чекаємо на спрацювання тригера на зміну ціни
 					// Ціна купівлі
@@ -256,7 +253,7 @@ func (pp *PairPartialDepthsObserver) StartPriceChangesSignal() (
 						bid, err := pp.GetAskBid()
 					if err != nil {
 						logrus.Errorf("Can't get ask and bid from depth: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					if last_bid == 0 || last_ask == 0 {
@@ -374,7 +371,7 @@ func NewPairDepthsObserver(
 	rate time.Duration,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) (pp *PairPartialDepthsObserver, err error) {
+	stop chan struct{}) (pp *PairPartialDepthsObserver, err error) {
 	pp = &PairPartialDepthsObserver{
 		client:       client,
 		pair:         pair,

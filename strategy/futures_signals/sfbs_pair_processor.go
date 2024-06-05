@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -61,8 +60,7 @@ type (
 		userDataEvent    chan *futures.WsUserDataEvent
 		orderStatusEvent chan *futures.WsUserDataEvent
 
-		stop      chan os.Signal
-		limitsOut chan bool
+		stop chan struct{}
 
 		pairInfo     *symbol_types.FuturesSymbol
 		orderTypes   map[futures.OrderType]bool
@@ -219,7 +217,6 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 					pp.stopBuy <- true
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case params := <-pp.buyEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -244,7 +241,7 @@ func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.Pai
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), futures.SideTypeBuy, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -291,7 +288,6 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 					pp.stopSell <- true
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case params := <-pp.sellEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -304,7 +300,7 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
 					if err != nil {
 						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					if targetBalance < params.Price*params.Quantity {
@@ -327,7 +323,7 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), futures.SideTypeSell, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -385,7 +381,6 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (startProc
 				case <-pp.stopBuyTakeProfitProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case params := <-pp.buyEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -407,7 +402,7 @@ func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (startProc
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), futures.SideTypeBuy, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -453,7 +448,6 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (startPro
 				case <-pp.stopSellTakeProfitProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case params := <-pp.sellEvent:
 					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
@@ -475,7 +469,7 @@ func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (startPro
 							logrus.Errorf("Order params: %v", params)
 							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
 								pp.pair.GetPair(), futures.SideTypeSell, params.Quantity, params.Price)
-							pp.stop <- os.Interrupt
+							close(pp.stop)
 							return
 						}
 						pp.minuteOrderLimit.Limit++
@@ -534,7 +528,6 @@ func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *futures.CreateO
 				pp.stopSell <- true
 				return
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
 				return
 			case order := <-triggerEvent:
 				if order != nil {
@@ -569,7 +562,6 @@ func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *futures.Create
 				pp.stopSell <- true
 				return
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
 				return
 			case order := <-triggerEvent:
 				if order != nil {
@@ -604,7 +596,6 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 					pp.dayOrderLimit,
 					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
 				return
 			}
 		}
@@ -615,9 +606,6 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 		for {
 			select {
 			case <-pp.stop:
-				pp.stop <- os.Interrupt
-			case <-pp.limitsOut:
-				pp.stop <- os.Interrupt
 				return
 			default:
 			}
@@ -637,7 +625,6 @@ func (pp *PairProcessor) OrderExecutionGuard(order *futures.CreateOrderResponse)
 				case <-pp.stopOrderExecutionGuardProcess:
 					return
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case orderEvent := <-pp.orderStatusEvent:
 					logrus.Debug("Order status changed")
@@ -777,6 +764,7 @@ func NewPairProcessor(
 	exchangeInfo *exchange_types.ExchangeInfo,
 	account *futures_account.Account,
 	userDataEvent chan *futures.WsUserDataEvent,
+	stop chan struct{},
 	debug bool) (pp *PairProcessor, err error) {
 	pp = &PairProcessor{
 		client:       client,
@@ -803,8 +791,7 @@ func NewPairProcessor(
 		userDataEvent:    userDataEvent,
 		orderStatusEvent: nil,
 
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
+		stop: stop,
 
 		pairInfo:     nil,
 		orderTypes:   nil,

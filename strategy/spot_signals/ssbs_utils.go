@@ -2,7 +2,6 @@ package spot_signals
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -161,12 +160,11 @@ func PairInit(
 }
 
 // Запускаємо потік для сбереження конфігурації кожні updateTime
-func RunConfigSaver(config *config_types.ConfigFile, stopEvent chan os.Signal, updateTime time.Duration) {
+func RunConfigSaver(config *config_types.ConfigFile, stopEvent chan struct{}, updateTime time.Duration) {
 	go func() {
 		for {
 			select {
 			case <-stopEvent:
-				stopEvent <- os.Interrupt
 				return
 			case <-time.After(updateTime):
 				config.Save() // Зберігаємо конфігурацію кожні updateTime

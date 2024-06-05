@@ -2,7 +2,6 @@ package futures_signals
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -34,7 +33,7 @@ type (
 		data            *book_ticker_types.BookTickers
 		bookTickerEvent chan *futures.WsBookTickerEvent
 		event           chan bool
-		stop            chan os.Signal
+		stop            chan struct{}
 		deltaUp         float64
 		deltaDown       float64
 		buyEvent        chan *pair_price_types.PairPrice
@@ -177,7 +176,6 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 				}
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case <-pp.event: // Чекаємо на спрацювання тригера на зміну bookTicker
 					// Кількість базової валюти
@@ -191,14 +189,14 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					targetBalance, err := pp.GetTargetBalance()
 					if err != nil {
 						logrus.Errorf("Can't get %s balance: %v", pp.pair.GetTargetSymbol(), err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					commission := GetCommission(pp.account)
 					bookTicker := pp.data.Get(pp.pair.GetPair())
 					if bookTicker == nil {
 						logrus.Errorf("Can't get bookTicker for %s", pp.pair.GetPair())
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Ціна купівлі
@@ -209,14 +207,14 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 					boundAsk, err := pp.GetAskBound()
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Нижня межа ціни продажу
 					boundBid, err := pp.GetBidBound()
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					logrus.Debugf("Futures, Ask is %f, boundAsk is %f, bid is %f, boundBid is %f", ask, boundAsk, bid, boundBid)
@@ -226,14 +224,14 @@ func (pp *PairBookTickersObserver) StartBuyOrSellSignal() (
 						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
 					if err != nil {
 						logrus.Errorf("Can't get data for analysis: %v", err)
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 
 					if buyQuantity == 0 && sellQuantity == 0 {
 						logrus.Errorf("We don't have any %s for buy and don't have any %s for sell",
 							pp.pair.GetBaseSymbol(), pp.pair.GetTargetSymbol())
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
@@ -293,7 +291,7 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 	}
 	if bookTicker == nil {
 		logrus.Errorf("Can't get bookTicker for %s when read for last price, futures strategy", pp.pair.GetPair())
-		pp.stop <- os.Interrupt
+		close(pp.stop)
 		return
 	}
 	if pp.askUp == nil && pp.askDown == nil && pp.bidUp == nil && pp.bidDown == nil {
@@ -306,13 +304,13 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case <-pp.event: // Чекаємо на спрацювання тригера на зміну ціни
 					bookTicker := pp.data.Get(pp.pair.GetPair())
 					if bookTicker == nil {
 						logrus.Errorf("Can't get bookTicker for %s", pp.pair.GetPair())
-						pp.stop <- os.Interrupt
+						close(pp.stop)
 						return
 					}
 					// Ціна купівлі
@@ -440,7 +438,7 @@ func NewPairBookTickerObserver(
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) (pp *PairBookTickersObserver, err error) {
+	stop chan struct{}) (pp *PairBookTickersObserver, err error) {
 	pp = &PairBookTickersObserver{
 		client:          client,
 		pair:            pair,

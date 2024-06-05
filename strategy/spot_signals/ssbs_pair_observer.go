@@ -1,7 +1,6 @@
 package spot_signals
 
 import (
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -39,7 +38,7 @@ type (
 		positionCloseEvent       chan bool
 		priceUp                  chan bool
 		priceDown                chan bool
-		stop                     chan os.Signal
+		stop                     chan struct{}
 		deltaUp                  float64
 		deltaDown                float64
 		sleepingTime             time.Duration
@@ -67,7 +66,6 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
 					return
 				case <-time.After(1 * time.Minute):
 					price = price_types.New(degree)
@@ -104,7 +102,7 @@ func (pp *PairObserver) StartPriceChangesSignal() (chan *pair_price_types.PairDe
 func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з накопичення
 	if pp.pair.GetStage() != pairs_types.InputIntoPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.InputIntoPositionStage)
-		pp.stop <- os.Interrupt
+		close(pp.stop)
 		return nil
 	}
 
@@ -115,7 +113,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
 				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
@@ -157,7 +155,7 @@ func (pp *PairObserver) StartWorkInPositionSignal(triggerEvent chan bool) chan b
 func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
 	if pp.pair.GetStage() != pairs_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.WorkInPositionStage)
-		pp.stop <- os.Interrupt
+		close(pp.stop)
 		return nil
 	}
 
@@ -168,7 +166,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
 				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
@@ -208,7 +206,7 @@ func (pp *PairObserver) StopWorkInPositionSignal(triggerEvent chan bool) chan bo
 func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { // Виходимо з спекуляції
 	if pp.pair.GetStage() != pairs_types.WorkInPositionStage {
 		logrus.Errorf("Strategy stage %s is not %s", pp.pair.GetStage(), pairs_types.WorkInPositionStage)
-		pp.stop <- os.Interrupt
+		close(pp.stop)
 		return nil
 	}
 
@@ -219,7 +217,7 @@ func (pp *PairObserver) ClosePositionSignal(triggerEvent chan bool) chan bool { 
 			for {
 				select {
 				case <-pp.stop:
-					pp.stop <- os.Interrupt
+					close(pp.stop)
 					return
 				case <-triggerEvent: // Чекаємо на спрацювання тригера
 				case <-time.After(pp.takePositionSleepingTime): // Або просто чекаємо якийсь час
@@ -265,7 +263,7 @@ func NewPairObserver(
 	limit int,
 	deltaUp float64,
 	deltaDown float64,
-	stop chan os.Signal) (pp *PairObserver, err error) {
+	stop chan struct{}) (pp *PairObserver, err error) {
 	pp = &PairObserver{
 		client:                   client,
 		pair:                     pair,

@@ -2,7 +2,6 @@ package spot_signals
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -26,9 +25,6 @@ type (
 		userDataEvent      chan *binance.WsUserDataEvent
 		userDataEvent4AUE  chan *binance.WsUserDataEvent
 		accountUpdateEvent chan *binance.WsUserDataEvent
-
-		stop      chan os.Signal
-		limitsOut chan bool
 
 		pairInfo   *symbol_types.SpotSymbol
 		orderTypes map[string]bool
@@ -65,14 +61,6 @@ func (pp *PairStreams) GetAccountUpdateEvent() chan *binance.WsUserDataEvent {
 	return pp.accountUpdateEvent
 }
 
-func (pp *PairStreams) GetStop() chan os.Signal {
-	return pp.stop
-}
-
-func (pp *PairStreams) GetLimitsOut() chan bool {
-	return pp.limitsOut
-}
-
 func (pp *PairStreams) GetDegree() int {
 	return pp.degree
 }
@@ -93,9 +81,6 @@ func NewPairStreams(
 		userDataEvent:      make(chan *binance.WsUserDataEvent),
 		userDataEvent4AUE:  make(chan *binance.WsUserDataEvent),
 		accountUpdateEvent: nil,
-
-		stop:      make(chan os.Signal, 1),
-		limitsOut: make(chan bool, 1),
 
 		pairInfo:   nil,
 		orderTypes: make(map[string]bool, 0),
