@@ -164,7 +164,6 @@ var (
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOut:               ObserverTimeOut,
-		MaintainPartiallyFilledOrders: MaintainPartiallyFilledOrders,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -325,7 +324,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
-	assert.Equal(t, MaintainPartiallyFilledOrders, config.GetMaintainPartiallyFilledOrders())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 

@@ -32,8 +32,6 @@ type (
 		GetBalancingOfMargin() bool
 
 		GetObserverTimeOut() int
-
-		GetMaintainPartiallyFilledOrders() bool
 	}
 	ConfigurationFile interface {
 		Save() error

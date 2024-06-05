@@ -807,11 +807,7 @@ func NewPairProcessor(
 
 	// Визначаємо статуси ордерів які нас цікавлять ...
 	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	if config.GetConfigurations().GetMaintainPartiallyFilledOrders() {
-		pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, binance.OrderStatusTypeFilled, binance.OrderStatusTypePartiallyFilled)
-	} else {
-		pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, binance.OrderStatusTypeFilled)
-	}
+	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, binance.OrderStatusTypeFilled, binance.OrderStatusTypePartiallyFilled)
 
 	return
 }

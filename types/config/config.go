@@ -24,7 +24,6 @@ type (
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
-		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
 		Pairs                         *btree.BTree
 	}
 )
@@ -64,10 +63,6 @@ func (cf *Configs) GetBalancingOfMargin() bool {
 
 func (cf *Configs) GetObserverTimeOut() int {
 	return cf.ObserverTimeOut
-}
-
-func (cf *Configs) GetMaintainPartiallyFilledOrders() bool {
-	return cf.MaintainPartiallyFilledOrders
 }
 
 // Implement the GetPair method
@@ -130,42 +125,39 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		Connection                    *connection_types.Connection `json:"connection"`
-		LogLevel                      string                       `json:"log_level"`
-		ReloadConfig                  bool                         `json:"reload_config"`
-		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation         float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut               int                          `json:"observer_timeout"`
-		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
-		Pairs                         []*pairs_types.Pairs         `json:"pairs"`
+		Connection                *connection_types.Connection `json:"connection"`
+		LogLevel                  string                       `json:"log_level"`
+		ReloadConfig              bool                         `json:"reload_config"`
+		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
+		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOut           int                          `json:"observer_timeout"`
+		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
-		Connection:                    c.Connection,
-		LogLevel:                      c.LogLevel.String(),
-		ReloadConfig:                  c.ReloadConfig,
-		ObservePriceLiquidation:       c.ObservePriceLiquidation,
-		BalancingOfMargin:             c.BalancingOfMargin,
-		PercentsToLiquidation:         c.PercentsToStopSettingNewOrder,
-		PercentToDecreasePosition:     c.PercentToDecreasePosition,
-		ObserverTimeOut:               c.ObserverTimeOut,
-		MaintainPartiallyFilledOrders: c.MaintainPartiallyFilledOrders,
-		Pairs:                         pairs,
+		Connection:                c.Connection,
+		LogLevel:                  c.LogLevel.String(),
+		ReloadConfig:              c.ReloadConfig,
+		ObservePriceLiquidation:   c.ObservePriceLiquidation,
+		BalancingOfMargin:         c.BalancingOfMargin,
+		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
+		PercentToDecreasePosition: c.PercentToDecreasePosition,
+		ObserverTimeOut:           c.ObserverTimeOut,
+		Pairs:                     pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		Connection                    *connection_types.Connection `json:"connection"`
-		LogLevel                      string                       `json:"log_level"`
-		ReloadConfig                  bool                         `json:"reload_config"`
-		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation         float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut               int                          `json:"observer_timeout"`
-		MaintainPartiallyFilledOrders bool                         `json:"maintain_partially_filled_orders"`
-		Pairs                         []*pairs_types.Pairs         `json:"pairs"`
+		Connection                *connection_types.Connection `json:"connection"`
+		LogLevel                  string                       `json:"log_level"`
+		ReloadConfig              bool                         `json:"reload_config"`
+		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
+		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOut           int                          `json:"observer_timeout"`
+		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
@@ -189,7 +181,6 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOut = temp.ObserverTimeOut
-	c.MaintainPartiallyFilledOrders = temp.MaintainPartiallyFilledOrders
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -208,7 +199,6 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		PercentsToStopSettingNewOrder: 0.05,
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOut:               1000,
-		MaintainPartiallyFilledOrders: false,
 		Pairs:                         btree.New(2),
 	}
 }

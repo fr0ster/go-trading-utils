@@ -440,8 +440,7 @@ func processOrder(
 				upPrice := grid_types.NewRecord(upOrder.OrderID, price, quantity, 0, order.GetPrice(), types.OrderSide(binance.SideTypeSell))
 				grid.Set(upPrice)
 				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status == binance.OrderStatusTypeFilled ||
-					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == binance.OrderStatusTypePartiallyFilled) {
+				if upOrder.Status == binance.OrderStatusTypeFilled {
 					takerPrice = upPrice
 					takerOrder = upOrder
 				}
@@ -460,8 +459,7 @@ func processOrder(
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Spots %s: Set Buy order %v on price %v status %v",
 				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
-			if downOrder.Status == binance.OrderStatusTypeFilled ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == binance.OrderStatusTypePartiallyFilled) {
+			if downOrder.Status == binance.OrderStatusTypeFilled {
 				takerPrice = downPrice
 				takerOrder = downOrder
 			}
@@ -500,8 +498,7 @@ func processOrder(
 				downPrice := grid_types.NewRecord(downOrder.OrderID, price, quantity, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy))
 				grid.Set(downPrice)
 				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status == binance.OrderStatusTypeFilled ||
-					(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && downOrder.Status == binance.OrderStatusTypePartiallyFilled) {
+				if downOrder.Status == binance.OrderStatusTypeFilled {
 					takerPrice = downPrice
 					takerOrder = downOrder
 				}
@@ -516,8 +513,7 @@ func processOrder(
 				printError()
 				return err
 			}
-			if upOrder.Status == binance.OrderStatusTypeFilled ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && upOrder.Status == binance.OrderStatusTypePartiallyFilled) {
+			if upOrder.Status == binance.OrderStatusTypeFilled {
 				takerPrice = upPrice
 				takerOrder = upOrder
 			}
@@ -661,8 +657,7 @@ func RunSpotGridTrading(
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-				(config.GetConfigurations().GetMaintainPartiallyFilledOrders() && event.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled)) {
+			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) {
 				grid.Lock()
 				if config.GetConfigurations().GetReloadConfig() {
 					config.Load()
