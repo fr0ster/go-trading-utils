@@ -196,7 +196,7 @@ func processOrder(
 				upRecord := grid_types.NewRecord(upOrder.OrderID, upPrice, quantity, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upRecord)
 				order.SetUpPrice(upPrice) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status == futures.OrderStatusTypeFilled {
+				if upOrder.Status == futures.OrderStatusTypeFilled || upOrder.Status == futures.OrderStatusTypePartiallyFilled {
 					takerRecord = upRecord
 					takerOrder = upOrder
 				}
@@ -230,7 +230,7 @@ func processOrder(
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
 			logrus.Debugf("Futures %s: From order %v Set Buy order %v on price %v status %v quantity %v",
 				pair.GetPair(), order.GetOrderId(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
-			if downOrder.Status == futures.OrderStatusTypeFilled {
+			if downOrder.Status == futures.OrderStatusTypeFilled || downOrder.Status == futures.OrderStatusTypePartiallyFilled {
 				takerRecord = downPrice
 				takerOrder = downOrder
 			}
@@ -276,7 +276,7 @@ func processOrder(
 				downRecord := grid_types.NewRecord(downOrder.OrderID, downPrice, quantity, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downRecord)
 				order.SetDownPrice(downPrice) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status == futures.OrderStatusTypeFilled {
+				if downOrder.Status == futures.OrderStatusTypeFilled || downOrder.Status == futures.OrderStatusTypePartiallyFilled {
 					takerRecord = downRecord
 					takerOrder = downOrder
 				}
@@ -305,7 +305,7 @@ func processOrder(
 				printError()
 				return err
 			}
-			if upOrder.Status == futures.OrderStatusTypeFilled {
+			if upOrder.Status == futures.OrderStatusTypeFilled || upOrder.Status == futures.OrderStatusTypePartiallyFilled {
 				takerRecord = upRecord
 				takerOrder = upOrder
 			}
@@ -587,7 +587,7 @@ func RunFuturesGridTrading(
 					}
 				}
 				orderId := order.GetOrderId()
-				if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled || event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
 					err = processOrder(
 						config,
 						pairProcessor,
