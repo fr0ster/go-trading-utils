@@ -527,7 +527,8 @@ func RunFuturesGridTrading(
 					}
 				}
 				// Обробка наближення ліквідаціі
-				if config.GetConfigurations().GetObservePriceLiquidation() {
+				if config.GetConfigurations().GetObservePriceLiquidation() &&
+					utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 					delta_percent := func(price float64) float64 {
 						return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 					}
