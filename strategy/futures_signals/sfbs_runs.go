@@ -515,6 +515,7 @@ func RunFuturesGridTrading(
 				}
 				// Балансування маржі як треба
 				if config.GetConfigurations().GetBalancingOfMargin() &&
+					utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 					utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
 					logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
