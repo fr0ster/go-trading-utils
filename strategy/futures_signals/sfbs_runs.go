@@ -193,8 +193,8 @@ func processOrder(
 					printError()
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
-					pair.GetPair(), upOrder.OrderID, upPrice, upOrder.Status, quantity)
+				logrus.Debugf("Futures %s: From order %v Set Sell order %v on price %v status %v quantity %v",
+					pair.GetPair(), order.GetOrderId(), upOrder.OrderID, upPrice, upOrder.Status, quantity)
 				// Записуємо ордер в грід
 				upRecord := grid_types.NewRecord(upOrder.OrderID, upPrice, quantity, 0, order.GetPrice(), types.OrderSide(futures.SideTypeSell))
 				grid.Set(upRecord)
@@ -231,8 +231,8 @@ func processOrder(
 			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
 			downPrice.SetQuantity(quantity)           // Записуємо кількість ордера в грід
 			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
+			logrus.Debugf("Futures %s: From order %v Set Buy order %v on price %v status %v quantity %v",
+				pair.GetPair(), order.GetOrderId(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status, quantity)
 			if downOrder.Status == futures.OrderStatusTypeFilled {
 				takerRecord = downPrice
 				takerOrder = downOrder
@@ -273,8 +273,8 @@ func processOrder(
 					printError()
 					return err
 				}
-				logrus.Debugf("Futures %s: Set Buy order %v on price %v status %v quantity %v",
-					pair.GetPair(), downOrder.OrderID, downPrice, downOrder.Status, quantity)
+				logrus.Debugf("Futures %s: From order %v Set Buy order %v on price %v status %v quantity %v",
+					pair.GetPair(), order.GetOrderId(), downOrder.OrderID, downPrice, downOrder.Status, quantity)
 				// Записуємо ордер в грід
 				downRecord := grid_types.NewRecord(downOrder.OrderID, downPrice, quantity, order.GetPrice(), 0, types.OrderSide(futures.SideTypeBuy))
 				grid.Set(downRecord)
@@ -315,8 +315,8 @@ func processOrder(
 			upRecord.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
 			upRecord.SetQuantity(quantity)            // Записуємо кількість ордера в грід
 			upRecord.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
-			logrus.Debugf("Futures %s: Set Sell order %v on price %v status %v quantity %v",
-				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
+			logrus.Debugf("Futures %s: From order %v Set Sell order %v on price %v status %v quantity %v",
+				pair.GetPair(), order.GetOrderId(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status, quantity)
 		}
 		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
 		order.SetQuantity(0)                   // Помічаємо ордер як виконаний
