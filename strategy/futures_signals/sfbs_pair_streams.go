@@ -10,7 +10,6 @@ import (
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
@@ -25,9 +24,13 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 		account      *futures_account.Account
 
-		userDataEvent      chan *futures.WsUserDataEvent
-		userDataEvent4AUE  chan *futures.WsUserDataEvent
-		accountUpdateEvent chan *futures.WsUserDataEvent
+		userDataEvent            chan *futures.WsUserDataEvent
+		userDataEvent4AUE        chan *futures.WsUserDataEvent
+		userDataEvent4OTU        chan *futures.WsUserDataEvent
+		userDataEvent4ACU        chan *futures.WsUserDataEvent
+		accountUpdateEvent       chan futures.WsAccountUpdate
+		orderTradeUpdateEvent    chan futures.WsOrderTradeUpdate
+		accountConfigUpdateEvent chan futures.WsAccountConfigUpdate
 
 		stop      chan os.Signal
 		limitsOut chan bool
@@ -59,12 +62,16 @@ func (pp *PairStreams) GetUserDataEvent() chan *futures.WsUserDataEvent {
 	return pp.userDataEvent
 }
 
-func (pp *PairStreams) GetUserDataEvent4AUE() chan *futures.WsUserDataEvent {
-	return pp.userDataEvent4AUE
+func (pp *PairStreams) GetAccountUpdateEvent() chan futures.WsAccountUpdate {
+	return pp.accountUpdateEvent
 }
 
-func (pp *PairStreams) GetAccountUpdateEvent() chan *futures.WsUserDataEvent {
-	return pp.accountUpdateEvent
+func (pp *PairStreams) GetOrderTradeUpdateEvent() chan futures.WsOrderTradeUpdate {
+	return pp.orderTradeUpdateEvent
+}
+
+func (pp *PairStreams) GetAccountConfigUpdateEvent() chan futures.WsAccountConfigUpdate {
+	return pp.accountConfigUpdateEvent
 }
 
 func (pp *PairStreams) GetStop() chan os.Signal {
@@ -207,9 +214,55 @@ func NewPairStreams(
 	// Запускаємо стрім подій користувача
 	userDataEventStart(pp.userDataEvent)
 	userDataEventStart(pp.userDataEvent4AUE)
+	go func() {
+		for {
+			select {
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case <-pp.limitsOut:
+				pp.stop <- os.Interrupt
+				return
+			case event := <-pp.userDataEvent4AUE:
+				pp.accountUpdateEvent <- event.AccountUpdate
+			}
+			time.Sleep(pp.timeOut)
+		}
+	}()
+	userDataEventStart(pp.userDataEvent4OTU)
+	go func() {
+		for {
+			select {
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case <-pp.limitsOut:
+				pp.stop <- os.Interrupt
+				return
+			case event := <-pp.userDataEvent4OTU:
+				pp.orderTradeUpdateEvent <- event.OrderTradeUpdate
+			}
+			time.Sleep(pp.timeOut)
+		}
+	}()
+	userDataEventStart(pp.userDataEvent4ACU)
+	go func() {
+		for {
+			select {
+			case <-pp.stop:
+				pp.stop <- os.Interrupt
+				return
+			case <-pp.limitsOut:
+				pp.stop <- os.Interrupt
+				return
+			case event := <-pp.userDataEvent4ACU:
+				pp.accountConfigUpdateEvent <- event.AccountConfigUpdate
+			}
+			time.Sleep(pp.timeOut)
+		}
+	}()
 
-	// Запускаємо стрім для відслідковування зміни статусу акаунта
-	pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
-	// Запускаємо стрім для відслідковування зміни статусу ордерів
+	// // Запускаємо стрім для відслідковування зміни статусу акаунта
+	// pp.accountUpdateEvent = futures_handlers.GetAccountInfoGuard(pp.account, pp.userDataEvent4AUE)
 	return
 }
