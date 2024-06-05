@@ -482,133 +482,131 @@ func RunFuturesGridTrading(
 		case <-quit:
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
-				if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-					grid.Lock()
-					logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
-						pair.GetPair(),
-						event.OrderTradeUpdate.ID,
-						event.OrderTradeUpdate.OriginalPrice,
-						event.OrderTradeUpdate.LastFilledQty,
-						event.OrderTradeUpdate.Side,
-						event.OrderTradeUpdate.Status)
-					currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-					// Знаходимо у гріді на якому був виконаний ордер
-					order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
-					if !ok {
-						if !(event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled) {
-							return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
-						} else {
-							continue // Вважаємо ордер обробили раніше???
-						}
+			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				grid.Lock()
+				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
+					pair.GetPair(),
+					event.OrderTradeUpdate.ID,
+					event.OrderTradeUpdate.OriginalPrice,
+					event.OrderTradeUpdate.LastFilledQty,
+					event.OrderTradeUpdate.Side,
+					event.OrderTradeUpdate.Status)
+				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+				// Знаходимо у гріді на якому був виконаний ордер
+				order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
+				if !ok {
+					if !(event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled) {
+						return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
+					} else {
+						continue // Вважаємо ордер обробили раніше???
 					}
-					orderId := order.GetOrderId()
-					account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-					if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-						locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-						free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					}
-					risk, err = pairProcessor.GetPositionRisk()
+				}
+				orderId := order.GetOrderId()
+				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
+					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+				}
+				risk, err = pairProcessor.GetPositionRisk()
+				if err != nil {
+					grid.Unlock()
+					printError()
+					return
+				}
+				// Балансування маржі як треба
+				if config.GetConfigurations().GetBalancingOfMargin() &&
+					utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+					logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
+						pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+					err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 					if err != nil {
 						grid.Unlock()
-						printError()
-						return
-					}
-					// Балансування маржі як треба
-					if config.GetConfigurations().GetBalancingOfMargin() &&
-						utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
-						logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
-							pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-						err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
-						if err != nil {
-							grid.Unlock()
-							printError()
-							return err
-						}
-					}
-					// Обробка наближення ліквідаціі
-					if config.GetConfigurations().GetObservePriceLiquidation() {
-						delta_percent := func(price float64) float64 {
-							return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
-						}
-						delta := delta_percent(currentPrice)
-						if delta < config.GetConfigurations().GetPercentToDecreasePosition() {
-							logrus.Debugf("Futures %s: Distance to liquidation %f%% less than %f%%",
-								pair.GetPair(), delta*100, config.GetConfigurations().GetPercentToDecreasePosition()*100)
-							if free > pair.GetCurrentPositionBalance() {
-								err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
-								if err != nil {
-									grid.Unlock()
-									printError()
-									return err
-								}
-								risk, err = pairProcessor.GetPositionRisk()
-								if err != nil {
-									grid.Unlock()
-									printError()
-									return err
-								}
-								logrus.Debugf("Futures %s: Old Margin %v, Add Margin %v, New Margin %v",
-									pair.GetPair(), pair.GetCurrentPositionBalance(), free-pair.GetCurrentPositionBalance(), risk.IsolatedMargin)
-							} else {
-								logrus.Debugf("Futures %s: Free %v <= current position balance %v",
-									pair.GetPair(), free, pair.GetCurrentPositionBalance())
-								if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-									_, err = pairProcessor.CreateOrder(
-										futures.OrderTypeMarket,    // orderType
-										futures.SideTypeBuy,        // sideType
-										futures.TimeInForceTypeGTC, // timeInForce
-										quantity,                   // quantity
-										false,                      // closePosition
-										price,                      // price
-										0,                          // stopPrice
-										0)                          // callbackRate
-								} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-									_, err = pairProcessor.CreateOrder(
-										futures.OrderTypeMarket,    // orderType
-										futures.SideTypeSell,       // sideType
-										futures.TimeInForceTypeGTC, // timeInForce
-										quantity,                   // quantity
-										false,                      // closePosition
-										price,                      // price
-										0,                          // stopPrice
-										0)                          // callbackRate
-								}
-								if err != nil {
-									grid.Unlock()
-									printError()
-									return err
-								}
-								risk, err = pairProcessor.GetPositionRisk()
-								if err != nil {
-									grid.Unlock()
-									printError()
-									return err
-								}
-							}
-						}
-					}
-					err = processOrder(
-						config,
-						pairProcessor,
-						pair,
-						pairStreams,
-						symbol,
-						event.OrderTradeUpdate.Side,
-						grid,
-						order,
-						quantity,
-						tickSizeExp,
-						locked,
-						risk)
-					if err != nil {
-						grid.Unlock()
-						pairProcessor.CancelAllOrders()
 						printError()
 						return err
 					}
-					grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
 				}
+				// Обробка наближення ліквідаціі
+				if config.GetConfigurations().GetObservePriceLiquidation() {
+					delta_percent := func(price float64) float64 {
+						return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+					}
+					delta := delta_percent(currentPrice)
+					if delta < config.GetConfigurations().GetPercentToDecreasePosition() {
+						logrus.Debugf("Futures %s: Distance to liquidation %f%% less than %f%%",
+							pair.GetPair(), delta*100, config.GetConfigurations().GetPercentToDecreasePosition()*100)
+						if free > pair.GetCurrentPositionBalance() {
+							err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance(), 1)
+							if err != nil {
+								grid.Unlock()
+								printError()
+								return err
+							}
+							risk, err = pairProcessor.GetPositionRisk()
+							if err != nil {
+								grid.Unlock()
+								printError()
+								return err
+							}
+							logrus.Debugf("Futures %s: Old Margin %v, Add Margin %v, New Margin %v",
+								pair.GetPair(), pair.GetCurrentPositionBalance(), free-pair.GetCurrentPositionBalance(), risk.IsolatedMargin)
+						} else {
+							logrus.Debugf("Futures %s: Free %v <= current position balance %v",
+								pair.GetPair(), free, pair.GetCurrentPositionBalance())
+							if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+								_, err = pairProcessor.CreateOrder(
+									futures.OrderTypeMarket,    // orderType
+									futures.SideTypeBuy,        // sideType
+									futures.TimeInForceTypeGTC, // timeInForce
+									quantity,                   // quantity
+									false,                      // closePosition
+									price,                      // price
+									0,                          // stopPrice
+									0)                          // callbackRate
+							} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+								_, err = pairProcessor.CreateOrder(
+									futures.OrderTypeMarket,    // orderType
+									futures.SideTypeSell,       // sideType
+									futures.TimeInForceTypeGTC, // timeInForce
+									quantity,                   // quantity
+									false,                      // closePosition
+									price,                      // price
+									0,                          // stopPrice
+									0)                          // callbackRate
+							}
+							if err != nil {
+								grid.Unlock()
+								printError()
+								return err
+							}
+							risk, err = pairProcessor.GetPositionRisk()
+							if err != nil {
+								grid.Unlock()
+								printError()
+								return err
+							}
+						}
+					}
+				}
+				err = processOrder(
+					config,
+					pairProcessor,
+					pair,
+					pairStreams,
+					symbol,
+					event.OrderTradeUpdate.Side,
+					grid,
+					order,
+					quantity,
+					tickSizeExp,
+					locked,
+					risk)
+				if err != nil {
+					grid.Unlock()
+					pairProcessor.CancelAllOrders()
+					printError()
+					return err
+				}
+				grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
 				grid.Unlock()
 			}
 		}
