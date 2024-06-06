@@ -917,7 +917,7 @@ func RunFuturesGridTradingV3(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice
+					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 					createNextPair := func(currentPrice float64, quantity float64) (err error) {
 						// Створюємо ордер на продаж
 						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
