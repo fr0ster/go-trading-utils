@@ -671,6 +671,8 @@ func RunFuturesGridTrading(
 	for {
 		select {
 		case <-quit:
+			pairProcessor.CancelAllOrders()
+			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
@@ -784,6 +786,8 @@ func RunFuturesGridTradingV2(
 	for {
 		select {
 		case <-quit:
+			pairProcessor.CancelAllOrders()
+			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
@@ -909,6 +913,7 @@ func RunFuturesGridTradingV3(
 		select {
 		case <-quit:
 			pairProcessor.CancelAllOrders()
+			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
