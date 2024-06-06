@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"math"
 	"runtime"
-	"strconv"
 	"time"
 
+	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	"github.com/adshao/go-binance/v2"
 
 	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 
-	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -42,6 +41,25 @@ func printError() {
 	}
 }
 
+func checkRun(
+	pair *pairs_types.Pairs,
+	accountType pairs_types.AccountType,
+	strategyType pairs_types.StrategyType) error {
+	if pair.GetAccountType() != accountType {
+		printError()
+		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
+	}
+	if pair.GetStrategy() != strategyType {
+		printError()
+		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
+	}
+	if pair.GetStage() == pairs_types.PositionClosedStage {
+		printError()
+		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	}
+	return nil
+}
+
 func RunSpotHolding(
 	config *config_types.ConfigFile,
 	client *binance.Client,
@@ -51,14 +69,9 @@ func RunSpotHolding(
 	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
-	if pair.GetAccountType() != pairs_types.SpotAccountType {
-		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
-	}
-	if pair.GetStrategy() != pairs_types.HoldingStrategyType {
-		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
-	}
-	if pair.GetStage() == pairs_types.PositionClosedStage || pair.GetStage() == pairs_types.OutputOfPositionStage {
-		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.HoldingStrategyType)
+	if err != nil {
+		return err
 	}
 
 	if config.GetConfigurations().GetReloadConfig() {
@@ -110,7 +123,7 @@ func RunSpotHolding(
 
 	collectionOutEvent := pairObserver.StopWorkInPositionSignal(triggerEvent)
 
-	pairStream, err := NewPairStreams(client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -144,14 +157,9 @@ func RunSpotScalping(
 	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
-	if pair.GetAccountType() != pairs_types.SpotAccountType {
-		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
-	}
-	if pair.GetStrategy() != pairs_types.ScalpingStrategyType {
-		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
-	}
-	if pair.GetStage() == pairs_types.PositionClosedStage {
-		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.ScalpingStrategyType)
+	if err != nil {
+		return err
 	}
 
 	if config.GetConfigurations().GetReloadConfig() {
@@ -201,7 +209,7 @@ func RunSpotScalping(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -269,14 +277,9 @@ func RunSpotTrading(
 	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool) (err error) {
-	if pair.GetAccountType() != pairs_types.SpotAccountType {
-		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
-	}
-	if pair.GetStrategy() != pairs_types.TradingStrategyType {
-		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
-	}
-	if pair.GetStage() == pairs_types.PositionClosedStage {
-		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.TradingStrategyType)
+	if err != nil {
+		return err
 	}
 
 	if config.GetConfigurations().GetReloadConfig() {
@@ -326,7 +329,7 @@ func RunSpotTrading(
 		}
 	}()
 
-	pairStream, err := NewPairStreams(client, pair, debug)
+	pairStream, err := NewPairStreams(client, pair, stopEvent, debug)
 	if err != nil {
 		return err
 	}
@@ -381,6 +384,169 @@ func RunSpotTrading(
 	return nil
 }
 
+// Округлення ціни до StepSize знаків після коми
+func getStepSizeExp(symbol *binance.Symbol) int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
+}
+
+// Округлення ціни до TickSize знаків після коми
+func getTickSizeExp(symbol *binance.Symbol) int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
+}
+
+func round(val float64, exp int) float64 {
+	return utils.RoundToDecimalPlace(val, exp)
+}
+func loadConfig(pair *pairs_types.Pairs, config *config_types.ConfigFile, pairStreams *PairStreams) (err error) {
+	baseValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	pair.SetCurrentBalance(baseValue)
+	config.Save()
+	if pair.GetInitialBalance() == 0 {
+		pair.SetInitialBalance(baseValue)
+		config.Save()
+	}
+	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
+		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
+		if err != nil {
+			printError()
+			return err
+		}
+		pair.SetBuyQuantity(targetValue)
+		config.Save()
+	}
+	return
+}
+
+func initRun(
+	config *config_types.ConfigFile,
+	client *binance.Client,
+	pair *pairs_types.Pairs,
+	quit chan struct{}) (pairStreams *PairStreams, pairProcessor *PairProcessor, err error) {
+	// Створюємо стрім подій
+	pairStreams, err = NewPairStreams(client, pair, quit, false)
+	if err != nil {
+		printError()
+		return
+	}
+	// Створюємо обробник пари
+	pairProcessor, err = NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), quit, false)
+	if err != nil {
+		printError()
+		return
+	}
+
+	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	if err != nil {
+		printError()
+		return
+	}
+	pair.SetCurrentBalance(balance)
+	config.Save()
+	if pair.GetInitialBalance() == 0 {
+		pair.SetInitialBalance(balance)
+		config.Save()
+	}
+	return
+}
+
+func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
+	if config.GetConfigurations().GetReloadConfig() {
+		temp := config_types.NewConfigFile(config.GetFileName())
+		temp.Load()
+		t_pair := config.GetConfigurations().GetPair(
+			pair.GetAccountType(),
+			pair.GetStrategy(),
+			pair.GetStage(),
+			pair.GetPair())
+		pair.SetLeverage(t_pair.GetLeverage())
+		pair.SetMarginType(t_pair.GetMarginType())
+		pair.SetLimitOnPosition(t_pair.GetLimitOnPosition())
+		pair.SetLimitOnTransaction(t_pair.GetLimitOnTransaction())
+		pair.SetSellDelta(t_pair.GetSellDelta())
+		pair.SetBuyDelta(t_pair.GetBuyDelta())
+		pair.SetUpBound(t_pair.GetUpBound())
+		pair.SetLowBound(t_pair.GetLowBound())
+	}
+}
+
+func initVars(
+	client *binance.Client,
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	pairStreams *PairStreams) (
+	symbol *binance.Symbol,
+	price,
+	quantity float64,
+	tickSizeExp,
+	stepSizeExp int,
+	err error) {
+	// Перевірка на коректність дельт
+	if pair.GetSellDelta() != pair.GetBuyDelta() {
+		err = fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
+		printError()
+		return
+	}
+	symbol, err = func() (res *binance.Symbol, err error) {
+		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()})
+		if val == nil {
+			printError()
+			return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
+		}
+		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
+	}()
+	if err != nil {
+		printError()
+		return
+	}
+	tickSizeExp = getTickSizeExp(symbol)
+	stepSizeExp = getStepSizeExp(symbol)
+	// Отримання середньої ціни
+	price = roundPrice(pair.GetMiddlePrice(), symbol)
+	if price == 0 {
+		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+		price = roundPrice(price, symbol)
+		pair.SetMiddlePrice(price)
+		config.Save()
+	}
+	setQuantity := func(symbol *binance.Symbol) (quantity float64) {
+		quantity = round(pair.GetCurrentBalance()*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/price, tickSizeExp)
+		minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
+		if quantity*price < minNotional {
+			quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+		}
+		return
+	}
+	quantity = setQuantity(symbol)
+	return
+}
+
+func initFirstPairOfOrders(
+	pair *pairs_types.Pairs,
+	price float64,
+	quantity float64,
+	tickSizeExp int,
+	pairProcessor *PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
+	_, err = pairProcessor.CancelAllOrders()
+	if err != nil {
+		printError()
+		return
+	}
+	// Створюємо ордери на продаж
+	sellOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	if err != nil {
+		printError()
+		return
+	}
+	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	if err != nil {
+		printError()
+		return
+	}
+	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	return
+}
+
 // Створення ордера для розміщення в грід
 func createOrderInGrid(
 	pairProcessor *PairProcessor,
@@ -405,296 +571,103 @@ func roundPrice(val float64, symbol *binance.Symbol) float64 {
 	return utils.RoundToDecimalPlace(val, exp)
 }
 
-// Обробка ордерів після виконання ордера з гріду
-func processOrder(
-	config *config_types.ConfigFile,
-	pairProcessor *PairProcessor,
-	pair *pairs_types.Pairs,
-	pairStreams *PairStreams,
-	symbol *binance.Symbol,
-	side binance.SideType,
-	grid *grid_types.Grid,
-	order *grid_types.Record,
-	quantity float64) (err error) {
-	var (
-		takerPrice *grid_types.Record
-		takerOrder *binance.CreateOrderResponse
-	)
-	// grid.Debug("Spots Grid Before processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
-	// pairProcessor.Debug("Spots Pair Before processOrder")
-	if side == binance.SideTypeSell {
-		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
-		if order.GetUpPrice() == 0 {
-			// Створюємо ордер на продаж
-			price := roundPrice(order.GetPrice()*(1+pair.GetSellDelta()), symbol)
-			lockedValue, _ := pairStreams.GetAccount().GetLockedAsset(pair.GetPair())
-			if (pair.GetUpBound() == 0 || price <= pair.GetUpBound()) && (lockedValue < pair.GetCurrentPositionBalance()) {
-				upOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, price)
-				if err != nil {
-					printError()
-					return err
-				}
-				logrus.Debugf("Spots %s: Set Sell order %v on price %v status %v",
-					pair.GetPair(), upOrder.OrderID, price, upOrder.Status)
-				// Записуємо ордер в грід
-				upPrice := grid_types.NewRecord(upOrder.OrderID, price, quantity, 0, order.GetPrice(), types.OrderSide(binance.SideTypeSell))
-				grid.Set(upPrice)
-				order.SetUpPrice(price) // Ставимо посилання на верхній запис в гріді
-				if upOrder.Status == binance.OrderStatusTypeFilled {
-					takerPrice = upPrice
-					takerOrder = upOrder
-				}
-			}
-		}
-		// Знаходимо у гріді відповідний запис, та записи на шабель нижче
-		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
-		if ok && downPrice.GetOrderId() == 0 {
-			// Створюємо ордер на купівлю
-			downOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, order.GetDownPrice())
-			if err != nil {
-				printError()
-				return err
-			}
-			downPrice.SetOrderId(downOrder.OrderID)   // Записуємо номер ордера в грід
-			downPrice.SetOrderSide(types.SideTypeBuy) // Записуємо сторону ордера в грід
-			logrus.Debugf("Spots %s: Set Buy order %v on price %v status %v",
-				pair.GetPair(), downOrder.OrderID, order.GetDownPrice(), downOrder.Status)
-			if downOrder.Status == binance.OrderStatusTypeFilled {
-				takerPrice = downPrice
-				takerOrder = downOrder
-			}
-		}
-		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
-		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
-		if takerOrder != nil {
-			err = processOrder(
-				config,
-				pairProcessor,
-				pair,
-				pairStreams,
-				symbol,
-				takerOrder.Side,
-				grid,
-				takerPrice,
-				quantity)
-			if err != nil {
-				printError()
-				return err
-			}
-		}
-	} else if side == binance.SideTypeBuy {
-		// Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
-		if order.GetDownPrice() == 0 {
-			// Створюємо ордер на купівлю
-			price := roundPrice(order.GetPrice()*(1-pair.GetSellDelta()), symbol)
-			if pair.GetLowBound() == 0 || price >= pair.GetLowBound() {
-				downOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, price)
-				if err != nil {
-					printError()
-					return err
-				}
-				logrus.Debugf("Spots %s: Add Buy order %v on price %v status %v", pair.GetPair(), downOrder.OrderID, price, downOrder.Status)
-				// Записуємо ордер в грід
-				downPrice := grid_types.NewRecord(downOrder.OrderID, price, quantity, order.GetPrice(), 0, types.OrderSide(binance.SideTypeBuy))
-				grid.Set(downPrice)
-				order.SetDownPrice(price) // Ставимо посилання на нижній запис в гріді
-				if downOrder.Status == binance.OrderStatusTypeFilled {
-					takerPrice = downPrice
-					takerOrder = downOrder
-				}
-			}
-		}
-		// Знаходимо у гріді відповідний запис, та записи на шабель вище
-		upPrice, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
-		if ok && upPrice.GetOrderId() == 0 {
-			// Створюємо ордер на продаж
-			upOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, order.GetUpPrice())
-			if err != nil {
-				printError()
-				return err
-			}
-			if upOrder.Status == binance.OrderStatusTypeFilled {
-				takerPrice = upPrice
-				takerOrder = upOrder
-			}
-			upPrice.SetOrderId(upOrder.OrderID)      // Записуємо номер ордера в грід
-			upPrice.SetOrderSide(types.SideTypeSell) // Записуємо сторону ордера в грід
-			logrus.Debugf("Spots %s: Set Sell order %v on price %v status %v",
-				pair.GetPair(), upOrder.OrderID, order.GetUpPrice(), upOrder.Status)
-		}
-		order.SetOrderId(0)                    // Помічаємо ордер як виконаний
-		order.SetOrderSide(types.SideTypeNone) // Помічаємо ордер як виконаний
-		if takerOrder != nil {
-			err = processOrder(
-				config,
-				pairProcessor,
-				pair,
-				pairStreams,
-				symbol,
-				takerOrder.Side,
-				grid,
-				takerPrice,
-				quantity)
-			if err != nil {
-				printError()
-				return err
-			}
-		}
-	}
-	grid.Debug("Spots Grid After processOrder", strconv.FormatInt(order.GetOrderId(), 10), pair.GetPair())
-	pairProcessor.Debug("Spots Pair After processOrder")
-	return
-}
-
 func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{}) (err error) {
-	if pair.GetAccountType() != pairs_types.SpotAccountType {
-		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
-	}
-	if pair.GetStrategy() != pairs_types.GridStrategyType {
-		return fmt.Errorf("pair %v has wrong strategy %v", pair.GetPair(), pair.GetStrategy())
-	}
-	if pair.GetStage() == pairs_types.PositionClosedStage {
-		return fmt.Errorf("pair %v has wrong stage %v", pair.GetPair(), pair.GetStage())
+	var (
+		quantity float64
+		// locked       float64
+		// free         float64
+		// currentPrice float64
+	)
+	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.GridStrategyType)
+	if err != nil {
+		return err
 	}
 	// Створюємо стрім подій
-	pairStreams, err := NewPairStreams(client, pair, false)
-	if err != nil {
-		printError()
-		return err
-	}
-	// Створюємо обробник пари
-	pairProcessor, err := NewPairProcessor(config, client, pair, pairStreams.GetExchangeInfo(), pairStreams.GetAccount(), pairStreams.GetUserDataEvent(), stopEvent, false)
+	pairStreams, pairProcessor, err := initRun(config, client, pair, stopEvent)
 	if err != nil {
 		return err
 	}
-	balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	err = loadConfig(pair, config, pairStreams)
 	if err != nil {
-		printError()
 		return err
 	}
-	pair.SetCurrentBalance(balance)
-	config.Save()
-	if pair.GetInitialBalance() == 0 {
-		pair.SetInitialBalance(balance)
-		config.Save()
-	}
-	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
-		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
-		if err != nil {
-			printError()
-			return err
-		}
-		pair.SetBuyQuantity(targetValue)
-		config.Save()
-	}
-	// Ініціалізація гріду
-	logrus.Debugf("Spot %s: Grid initialized", pair.GetPair())
-	grid := grid_types.New()
-	// Перевірка на коректність дельт
-	if pair.GetSellDelta() != pair.GetBuyDelta() {
-		printError()
-		return fmt.Errorf("spot %s: SellDelta %v != BuyDelta %v", pair.GetPair(), pair.GetSellDelta(), pair.GetBuyDelta())
-	}
-	symbol, err := func() (res *binance.Symbol, err error) {
-		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.SpotSymbol{Symbol: pair.GetPair()})
-		if val == nil {
-			return nil, fmt.Errorf("spot %s: Symbol not found", pair.GetPair())
-		}
-		return val.(*symbol_info.SpotSymbol).GetSpotSymbol()
-	}()
+	_, initPrice, quantity, tickSizeExp, _, err := initVars(client, config, pair, pairStreams)
 	if err != nil {
-		printError()
 		return err
 	}
-	// Отримання середньої ціни
-	price := roundPrice(pair.GetMiddlePrice(), symbol)
-	if price == 0 {
-		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-		price = roundPrice(price, symbol)
-	}
-	quantity := pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-	minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
-	if quantity*price < minNotional {
-		quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-	}
-	// Записуємо середню ціну в грід
-	grid.Set(grid_types.NewRecord(0, price, roundPrice(price*(1+pair.GetSellDelta()), symbol), quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol), types.SideTypeNone))
-	logrus.Debugf("Spot %s: Set Entry Price order on price %v", pair.GetPair(), price)
-	_, err = pairProcessor.CancelAllOrders()
+	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
-		printError()
 		return err
 	}
-	// Створюємо ордер на продаж
-	sellOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, roundPrice(price*(1+pair.GetSellDelta()), symbol))
-	if err != nil {
-		printError()
-		return err
-	}
-	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, price*(1+pair.GetSellDelta()), quantity, 0, price, types.SideTypeSell))
-	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), roundPrice(price*(1+pair.GetSellDelta()), symbol))
-	// Створюємо ордер на купівлю
-	buyOrder, err := createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, roundPrice(price*(1-pair.GetBuyDelta()), symbol))
-	if err != nil {
-		printError()
-		return err
-	}
-	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, roundPrice(price*(1-pair.GetSellDelta()), symbol), quantity, price, 0, types.SideTypeBuy))
-	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), roundPrice(price*(1-pair.GetBuyDelta()), symbol))
-
 	// Стартуємо обробку ордерів
-	grid.Debug("Spots Grid", "", pair.GetPair())
 	logrus.Debugf("Spot %s: Start Order Processing", pair.GetPair())
+	maintainedOrders := btree.New(2)
 	for {
 		select {
 		case <-stopEvent:
 			printError()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) {
-				grid.Lock()
-				if config.GetConfigurations().GetReloadConfig() {
-					config.Load()
-					pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
-					balance, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-					if err != nil {
-						close(stopEvent)
-						printError()
-						return err
-					}
-					pair.SetCurrentBalance(balance)
-					config.Save()
-					quantity = pair.GetCurrentBalance() * pair.GetLimitOnPosition() * pair.GetLimitOnTransaction() / price
-					minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
-					if quantity*price < minNotional {
-						quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-					}
-				}
+			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) && !maintainedOrders.Has(grid_types.OrderIdType(event.OrderUpdate.Id)) {
+				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderUpdate.Id))
 				logrus.Debugf("Spots %s: Order %v on price %v side %v status %s",
 					pair.GetPair(),
 					event.OrderUpdate.Id,
 					event.OrderUpdate.Price,
 					event.OrderUpdate.Side,
 					event.OrderUpdate.Status)
+				updateConfig(config, pair)
 				// Знаходимо у гріді відповідний запис, та записи на шабель вище та нижче
-				order, ok := grid.Get(&grid_types.Record{Price: utils.ConvStrToFloat64(event.OrderUpdate.Price)}).(*grid_types.Record)
-				if !ok {
-					return fmt.Errorf("uncorrected order ID: %v", event.OrderUpdate.Id)
+				if event.OrderUpdate.Side == string(binance.SideTypeSell) {
+					pair.SetSellQuantity(pair.GetSellQuantity() + utils.ConvStrToFloat64(event.OrderUpdate.FilledQuoteVolume))
+					pair.SetSellValue(pair.GetSellValue() + utils.ConvStrToFloat64(event.OrderUpdate.FilledQuoteVolume)*utils.ConvStrToFloat64(event.OrderUpdate.Price))
+				} else if event.OrderUpdate.Side == string(binance.SideTypeBuy) {
+					pair.SetBuyQuantity(pair.GetBuyQuantity() + utils.ConvStrToFloat64(event.OrderUpdate.FilledQuoteVolume))
+					pair.SetBuyValue(pair.GetBuyValue() + utils.ConvStrToFloat64(event.OrderUpdate.FilledQuoteVolume)*utils.ConvStrToFloat64(event.OrderUpdate.Price))
 				}
-				err = processOrder(config, pairProcessor, pair, pairStreams, symbol, binance.SideType(event.OrderUpdate.Side), grid, order, quantity)
+				err = pair.CalcMiddlePrice()
 				if err != nil {
-					pairProcessor.CancelAllOrders()
-					close(stopEvent)
-					printError()
-					return err
+					price, _ := GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+					pair.SetMiddlePrice(round(price, tickSizeExp))
 				}
-				grid.Unlock()
+				config.Save()
+
+				pairProcessor.CancelAllOrders()
+				logrus.Debugf("Spots %s: Other orders was cancelled", pair.GetPair())
+				createNextPair := func(currentPrice float64, quantity float64, limit float64) (err error) {
+					// Створюємо ордер на продаж
+					upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+					if limit >= quantity {
+						_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
+						if err != nil {
+							printError()
+							return err
+						}
+						logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
+					} else {
+						logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
+							pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
+					}
+					// Створюємо ордер на купівлю
+					downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+					if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
+						_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
+						if err != nil {
+							printError()
+							return err
+						}
+						logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
+					} else {
+						logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
+							pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
+					}
+					return nil
+				}
+				createNextPair(pair.GetMiddlePrice(), quantity, pair.GetBuyQuantity()-pair.GetSellQuantity())
 			}
 		}
 	}

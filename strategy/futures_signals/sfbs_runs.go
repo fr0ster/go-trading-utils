@@ -13,7 +13,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	// "github.com/fr0ster/go-trading-utils/binance/futures/account"
-	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+
 	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
@@ -359,6 +359,26 @@ func checkRun(
 	return nil
 }
 
+func loadConfig(pair *pairs_types.Pairs, config *config_types.ConfigFile, pairStreams *PairStreams) (err error) {
+	baseValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	pair.SetCurrentBalance(baseValue)
+	config.Save()
+	if pair.GetInitialBalance() == 0 {
+		pair.SetInitialBalance(baseValue)
+		config.Save()
+	}
+	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
+		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
+		if err != nil {
+			printError()
+			return err
+		}
+		pair.SetBuyQuantity(targetValue)
+		config.Save()
+	}
+	return
+}
+
 func initRun(
 	config *config_types.ConfigFile,
 	client *futures.Client,
@@ -639,6 +659,10 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
+	err = loadConfig(pair, config, pairStreams)
+	if err != nil {
+		return err
+	}
 	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -679,13 +703,10 @@ func RunFuturesGridTrading(
 					}
 				}
 				orderId := order.GetOrderId()
-				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					pair.SetCurrentBalance(free)
-					config.Save()
-				}
+				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				pair.SetCurrentBalance(free)
+				config.Save()
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					grid.Unlock()
@@ -752,6 +773,10 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
+	err = loadConfig(pair, config, pairStreams)
+	if err != nil {
+		return err
+	}
 	// Ініціалізація гріду
 	grid := grid_types.New()
 	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
@@ -804,13 +829,10 @@ func RunFuturesGridTradingV2(
 					event.OrderTradeUpdate.LastFilledQty,
 					event.OrderTradeUpdate.Side,
 					event.OrderTradeUpdate.Status)
-				account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-					pair.SetCurrentBalance(free)
-					config.Save()
-				}
+				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+				pair.SetCurrentBalance(free)
+				config.Save()
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					grid.Unlock()
@@ -862,8 +884,7 @@ func RunFuturesGridTradingV3(
 	pair *pairs_types.Pairs,
 	quit chan struct{}) (err error) {
 	var (
-		quantity float64
-		// locked       float64
+		quantity     float64
 		free         float64
 		currentPrice float64
 		risk         *futures.PositionRisk
@@ -877,8 +898,11 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
+	err = loadConfig(pair, config, pairStreams)
+	if err != nil {
+		return err
+	}
 	// Ініціалізація гріду
-	// symbol,
 	_, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -908,13 +932,9 @@ func RunFuturesGridTradingV3(
 						event.OrderTradeUpdate.LastFilledQty,
 						event.OrderTradeUpdate.Side,
 						event.OrderTradeUpdate.Status)
-					account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
-					if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
-						// locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-						free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
-						pair.SetCurrentBalance(free)
-						config.Save()
-					}
+					free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+					pair.SetCurrentBalance(free)
+					config.Save()
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
@@ -954,26 +974,28 @@ func RunFuturesGridTradingV3(
 					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 					createNextPair := func(currentPrice float64, quantity float64) (err error) {
 						// Створюємо ордер на продаж
+						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-							_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp))
+							_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
 							if err != nil {
 								printError()
 								return err
 							}
-							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp))
+							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
 						} else {
 							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v > current position balance %v",
 								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
 
 						}
 						// Створюємо ордер на купівлю
+						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 						if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-							_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp))
+							_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
 							if err != nil {
 								printError()
 								return err
 							}
-							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp))
+							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
 						} else {
 							logrus.Debugf("Futures %s: Position Value %v > 0 or Position Value %v > current position balance %v",
 								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())

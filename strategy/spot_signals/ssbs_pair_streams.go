@@ -26,6 +26,8 @@ type (
 		userDataEvent4AUE  chan *binance.WsUserDataEvent
 		accountUpdateEvent chan *binance.WsUserDataEvent
 
+		stop chan struct{}
+
 		pairInfo   *symbol_types.SpotSymbol
 		orderTypes map[string]bool
 		degree     int
@@ -72,6 +74,7 @@ func (pp *PairStreams) GetTimeOut() time.Duration {
 func NewPairStreams(
 	client *binance.Client,
 	pair *pairs_types.Pairs,
+	stop chan struct{},
 	debug bool) (pp *PairStreams, err error) {
 	pp = &PairStreams{
 		client:  client,
@@ -81,6 +84,8 @@ func NewPairStreams(
 		userDataEvent:      make(chan *binance.WsUserDataEvent),
 		userDataEvent4AUE:  make(chan *binance.WsUserDataEvent),
 		accountUpdateEvent: nil,
+
+		stop: stop,
 
 		pairInfo:   nil,
 		orderTypes: make(map[string]bool, 0),
