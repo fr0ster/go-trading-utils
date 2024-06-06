@@ -727,7 +727,7 @@ func RunFuturesGridTradingV2(
 		currentPrice float64
 		risk         *futures.PositionRisk
 	)
-	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyType)
+	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV2)
 	if err != nil {
 		return err
 	}
@@ -849,7 +849,7 @@ func RunFuturesGridTradingV3(
 		currentPrice float64
 		risk         *futures.PositionRisk
 	)
-	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyType)
+	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV3)
 	if err != nil {
 		return err
 	}
