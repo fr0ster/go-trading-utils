@@ -867,6 +867,7 @@ func RunFuturesGridTradingV3(
 	for {
 		select {
 		case <-quit:
+			pairProcessor.CancelAllOrders()
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
