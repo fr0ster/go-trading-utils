@@ -876,43 +876,45 @@ func RunFuturesGridTradingV3(
 		case <-quit:
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
-			// Знаходимо у гріді на якому був виконаний ордер
-			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
-				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
-				// Балансування маржі як треба
-				err = marginBalancing(config, pair, risk, pairProcessor)
-				if err != nil {
-					printError()
-					return err
-				}
-				// Обробка наближення ліквідаціі
-				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, price, quantity)
-				if err != nil {
-					return err
-				}
-				pairProcessor.CancelAllOrders()
-				if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-					_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
+			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				// Знаходимо у гріді на якому був виконаний ордер
+				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+					// Балансування маржі як треба
+					err = marginBalancing(config, pair, risk, pairProcessor)
 					if err != nil {
 						printError()
 						return err
 					}
-					_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
+					// Обробка наближення ліквідаціі
+					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, price, quantity)
 					if err != nil {
-						printError()
 						return err
 					}
-				} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-					_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
-					if err != nil {
-						printError()
-						return err
-					}
-					_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
-					if err != nil {
-						printError()
-						return err
+					pairProcessor.CancelAllOrders()
+					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
+						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
+						if err != nil {
+							printError()
+							return err
+						}
+						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
+						if err != nil {
+							printError()
+							return err
+						}
+					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
+						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
+						if err != nil {
+							printError()
+							return err
+						}
+						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
+						if err != nil {
+							printError()
+							return err
+						}
 					}
 				}
 			}
