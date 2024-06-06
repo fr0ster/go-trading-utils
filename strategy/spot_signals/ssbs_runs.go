@@ -532,12 +532,17 @@ func initFirstPairOfOrders(
 		return
 	}
 	// Створюємо ордери на продаж
-	sellOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
-	if err != nil {
-		printError()
-		return
+	if pair.GetBuyQuantity()-pair.GetSellQuantity() >= quantity {
+		sellOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+		if err != nil {
+			printError()
+			return
+		}
+		logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	} else {
+		logrus.Debugf("Spot %s: BuyQuantity %v - SellQuantity %v >= quantity %v",
+			pair.GetPair(), pair.GetBuyQuantity(), pair.GetSellQuantity(), quantity)
 	}
-	logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
 	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
 	if err != nil {
 		printError()
