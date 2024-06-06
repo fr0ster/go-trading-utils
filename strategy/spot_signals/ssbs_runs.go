@@ -541,7 +541,7 @@ func processOrder(
 			}
 		}
 	}
-	grid.Debug("Spots Grid After processOrder", strconv.FormatInt(order.OrderId, 10), pair.GetPair())
+	grid.Debug("Spots Grid After processOrder", strconv.FormatInt(order.GetOrderId(), 10), pair.GetPair())
 	pairProcessor.Debug("Spots Pair After processOrder")
 	return
 }
