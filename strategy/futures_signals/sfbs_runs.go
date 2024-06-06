@@ -414,8 +414,7 @@ func initRun(
 func initVars(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	pairStreams *PairStreams,
-	pairProcessor *PairProcessor) (
+	pairStreams *PairStreams) (
 	symbol *futures.Symbol,
 	price,
 	quantity float64,
@@ -444,14 +443,6 @@ func initVars(
 	stepSizeExp = getStepSizeExp(symbol)
 	// Отримання середньої ціни
 	price = round(pair.GetMiddlePrice(), tickSizeExp)
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return
-	}
-	if entryPrice := utils.ConvStrToFloat64(risk.EntryPrice); entryPrice != 0 {
-		price = round(entryPrice, tickSizeExp)
-	}
 	if price == 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = round(price, tickSizeExp)
@@ -626,15 +617,15 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, price, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
-	grid, err := initGrid(pair, price, quantity, tickSizeExp, sellOrder, buyOrder)
+	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	if err != nil {
 		return err
 	}
@@ -684,7 +675,7 @@ func RunFuturesGridTrading(
 					return err
 				}
 				// Обробка наближення ліквідаціі
-				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, price, quantity)
+				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 				if err != nil {
 					grid.Unlock()
 					return err
@@ -738,15 +729,15 @@ func RunFuturesGridTradingV2(
 	}
 	// Ініціалізація гріду
 	grid := grid_types.New()
-	symbol, price, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
-	initGrid(pair, price, quantity, tickSizeExp, sellOrder, buyOrder)
+	initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
@@ -806,7 +797,7 @@ func RunFuturesGridTradingV2(
 					return err
 				}
 				// Обробка наближення ліквідаціі
-				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, price, quantity)
+				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 				if err != nil {
 					grid.Unlock()
 					return err
@@ -860,11 +851,11 @@ func RunFuturesGridTradingV3(
 	}
 	// Ініціалізація гріду
 	// symbol,
-	_, price, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
+	_, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -892,9 +883,13 @@ func RunFuturesGridTradingV3(
 						printError()
 						return
 					}
-					// currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-					// currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
 					currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
+					if currentPrice == 0 {
+						currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+					}
+					if currentPrice == 0 {
+						currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+					}
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor)
 					if err != nil {
@@ -902,7 +897,7 @@ func RunFuturesGridTradingV3(
 						return err
 					}
 					// Обробка наближення ліквідаціі
-					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, price, quantity)
+					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
 						return err
 					}
