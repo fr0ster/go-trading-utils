@@ -886,13 +886,22 @@ func RunFuturesGridTradingV3(
 						return
 					}
 					if risk != nil {
-						currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
-						if currentPrice == 0 {
+						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
+							currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
+							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
+								pair.GetPair(), risk.BreakEvenPrice)
+						} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
 							currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
+						} else {
+							currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+							logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
+								pair.GetPair(), currentPrice)
 						}
-					}
-					if currentPrice == 0 {
-						currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+					} else {
+						err = fmt.Errorf("futures %s: PositionRisk is nil", pair.GetPair())
+						printError()
+						return
 					}
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor)
@@ -907,36 +916,44 @@ func RunFuturesGridTradingV3(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
+					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice
+					createNextPair := func(currentPrice float64, quantity float64) (err error) {
+						// Створюємо ордер на продаж
+						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+							_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp))
+							if err != nil {
+								printError()
+								return err
+							}
+							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp))
+						} else {
+							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v > current position balance %v",
+								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
+
+						}
+						// Створюємо ордер на купівлю
+						if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+							_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp))
+							if err != nil {
+								printError()
+								return err
+							}
+							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp))
+						} else {
+							logrus.Debugf("Futures %s: Position Value %v > 0 or Position Value %v > current position balance %v",
+								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
+						}
+						return nil
+					}
+					// TODO: У наступному можливо змінимо кількість на ордері відповідно від позиції та сторони виконаного ордера
 					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-						// Створюємо ордер на продаж
-						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
-						if err != nil {
-							printError()
-							return err
-						}
-						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetSellDelta()))
-						// Створюємо ордер на купівлю
-						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
-						if err != nil {
-							printError()
-							return err
-						}
-						logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), currentPrice*(1-pair.GetBuyDelta()))
+						err = createNextPair(currentPrice, quantity)
 					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-						// Створюємо ордер на продаж
-						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
-						if err != nil {
-							printError()
-							return err
-						}
-						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetBuyDelta()))
-						// Створюємо ордер на купівлю
-						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
-						if err != nil {
-							printError()
-							return err
-						}
-						logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), currentPrice*(1-pair.GetBuyDelta()))
+						err = createNextPair(currentPrice, quantity)
+					}
+					if err != nil {
+						printError()
+						return err
 					}
 				}
 			}
