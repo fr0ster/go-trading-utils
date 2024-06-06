@@ -26,6 +26,10 @@ func (cf *ConfigFile) Unlock() {
 	cf.mu.Unlock()
 }
 
+func (cf *ConfigFile) GetFileName() string {
+	return cf.filePath
+}
+
 func (cf *ConfigFile) Load() error {
 	cf.Lock()
 	defer cf.Unlock()
@@ -85,9 +89,7 @@ func (cf *ConfigFile) SetConfigurations(config config_types.Configuration) {
 }
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.
-func NewConfigFile(
-	file_path string,
-	degree int) (res *ConfigFile) {
+func NewConfigFile(file_path string) (res *ConfigFile) {
 	res = &ConfigFile{
 		filePath: file_path,
 		configs:  NewConfig(&connection_types.Connection{}),

@@ -411,7 +411,7 @@ func TestConfigFile_Load(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create a new ConfigFile instance
-	configFile := config_types.NewConfigFile(tmpFile.Name(), 2)
+	configFile := config_types.NewConfigFile(tmpFile.Name())
 	configFile.SetConfigurations(config)
 
 	// Load the config from the file
@@ -429,7 +429,7 @@ func TestConfigFile_Save(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	// Create a new ConfigFile instance
-	config_file := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file := config_types.NewConfigFile(tmpFile.Name())
 	config_file.SetConfigurations(config)
 	config_file.GetConfigurations().SetPair(pair_1)
 	config_file.GetConfigurations().SetPair(pair_2)
@@ -459,12 +459,12 @@ func TestConfigFile_Change(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	// Create a new ConfigFile instance
-	config_file := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file := config_types.NewConfigFile(tmpFile.Name())
 	config_file.SetConfigurations(config)
 	config_file.GetConfigurations().SetPair(&pair)
 	config_file.GetConfigurations().SetPair(pair_2)
 
-	config_file_test := config_types.NewConfigFile(tmpFile.Name(), 2)
+	config_file_test := config_types.NewConfigFile(tmpFile.Name())
 	config_file_test.SetConfigurations(config)
 	config_file_test.GetConfigurations().SetPair(&pair)
 	config_file_test.GetConfigurations().SetPair(pair_2)

@@ -411,6 +411,26 @@ func initRun(
 	return
 }
 
+func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
+	if config.GetConfigurations().GetReloadConfig() {
+		temp := config_types.NewConfigFile(config.GetFileName())
+		temp.Load()
+		t_pair := config.GetConfigurations().GetPair(
+			pair.GetAccountType(),
+			pair.GetStrategy(),
+			pair.GetStage(),
+			pair.GetPair())
+		pair.SetLeverage(t_pair.GetLeverage())
+		pair.SetMarginType(t_pair.GetMarginType())
+		pair.SetLimitOnPosition(t_pair.GetLimitOnPosition())
+		pair.SetLimitOnTransaction(t_pair.GetLimitOnTransaction())
+		pair.SetSellDelta(t_pair.GetSellDelta())
+		pair.SetBuyDelta(t_pair.GetBuyDelta())
+		pair.SetUpBound(t_pair.GetUpBound())
+		pair.SetLowBound(t_pair.GetLowBound())
+	}
+}
+
 func initVars(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
@@ -640,6 +660,7 @@ func RunFuturesGridTrading(
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 				grid.Lock()
+				updateConfig(config, pair)
 				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
 					pair.GetPair(),
 					event.OrderTradeUpdate.ID,
@@ -748,6 +769,7 @@ func RunFuturesGridTradingV2(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			grid.Lock()
+			updateConfig(config, pair)
 			// Знаходимо у гріді на якому був виконаний ордер
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
@@ -871,6 +893,7 @@ func RunFuturesGridTradingV3(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				updateConfig(config, pair)
 				// Знаходимо у гріді на якому був виконаний ордер
 				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
@@ -881,6 +904,13 @@ func RunFuturesGridTradingV3(
 						event.OrderTradeUpdate.LastFilledQty,
 						event.OrderTradeUpdate.Side,
 						event.OrderTradeUpdate.Status)
+					account, _ := futures_account.New(client, degree, []string{pair.GetBaseSymbol()}, []string{pair.GetTargetSymbol()})
+					if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
+						// locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+						free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+					}
+					pair.SetCurrentBalance(free)
+					config.Save()
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()

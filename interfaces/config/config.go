@@ -34,6 +34,7 @@ type (
 		GetObserverTimeOut() int
 	}
 	ConfigurationFile interface {
+		GetFileName() string
 		Save() error
 		Load() error
 		Lock()

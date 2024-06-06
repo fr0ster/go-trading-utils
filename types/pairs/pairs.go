@@ -269,6 +269,38 @@ func (pr *Pairs) GetSellValue() float64 {
 	return pr.SellValue
 }
 
+func (pr *Pairs) SetLimitOutputOfPosition(val float64) {
+	pr.LimitOutputOfPosition = val
+}
+
+func (pr *Pairs) SetLimitInputIntoPosition(val float64) {
+	pr.LimitInputIntoPosition = val
+}
+
+func (pr *Pairs) SetLimitOnPosition(val float64) {
+	pr.LimitOnPosition = val
+}
+
+func (pr *Pairs) SetLimitOnTransaction(val float64) {
+	pr.LimitOnTransaction = val
+}
+
+func (pr *Pairs) SetUpBound(val float64) {
+	pr.UpBound = val
+}
+
+func (pr *Pairs) SetLowBound(val float64) {
+	pr.LowBound = val
+}
+
+func (pr *Pairs) SetBuyDelta(val float64) {
+	pr.BuyDelta = val
+}
+
+func (pr *Pairs) SetSellDelta(val float64) {
+	pr.SellDelta = val
+}
+
 func (pr *Pairs) SetBuyQuantity(quantity float64) {
 	pr.BuyQuantity = quantity
 }
