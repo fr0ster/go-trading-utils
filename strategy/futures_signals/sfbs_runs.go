@@ -883,9 +883,11 @@ func RunFuturesGridTradingV3(
 						printError()
 						return
 					}
-					currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
-					if currentPrice == 0 {
-						currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+					if risk != nil {
+						currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
+						if currentPrice == 0 {
+							currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+						}
 					}
 					if currentPrice == 0 {
 						currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
