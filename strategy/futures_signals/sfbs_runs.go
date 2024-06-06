@@ -878,7 +878,6 @@ func RunFuturesGridTradingV3(
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 				// Знаходимо у гріді на якому був виконаний ордер
-				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
 					logrus.Debugf("Futures %s: Order filled %v on price %v with quantity %v side %v status %s",
@@ -888,6 +887,14 @@ func RunFuturesGridTradingV3(
 						event.OrderTradeUpdate.LastFilledQty,
 						event.OrderTradeUpdate.Side,
 						event.OrderTradeUpdate.Status)
+					risk, err = pairProcessor.GetPositionRisk()
+					if err != nil {
+						printError()
+						return
+					}
+					// currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+					// currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+					currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor)
 					if err != nil {
@@ -902,12 +909,14 @@ func RunFuturesGridTradingV3(
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
+						// Створюємо ордер на продаж
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
 						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetSellDelta()))
+						// Створюємо ордер на купівлю
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
 						if err != nil {
 							printError()
@@ -915,12 +924,14 @@ func RunFuturesGridTradingV3(
 						}
 						logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), currentPrice*(1-pair.GetBuyDelta()))
 					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
+						// Створюємо ордер на продаж
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
-						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetSellDelta()))
+						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetBuyDelta()))
+						// Створюємо ордер на купівлю
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
 						if err != nil {
 							printError()

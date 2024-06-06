@@ -697,8 +697,11 @@ func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
 }
 
 func (pp *PairProcessor) GetPositionRisk() (risks *futures.PositionRisk, err error) {
-	risks, err = pp.account.GetPositionRisk(pp.pair.GetPair())
-	return
+	risk, err := pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.GetSymbol()).Do(context.Background())
+	if err != nil && len(risk) > 0 {
+		return nil, err
+	}
+	return risk[0], nil
 }
 
 func (pp *PairProcessor) GetLeverage() int {
