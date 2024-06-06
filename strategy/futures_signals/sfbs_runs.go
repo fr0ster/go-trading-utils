@@ -683,6 +683,8 @@ func RunFuturesGridTrading(
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
 					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+					pair.SetCurrentBalance(free)
+					config.Save()
 				}
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
@@ -806,6 +808,8 @@ func RunFuturesGridTradingV2(
 				if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
 					locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 					free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+					pair.SetCurrentBalance(free)
+					config.Save()
 				}
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
@@ -908,9 +912,9 @@ func RunFuturesGridTradingV3(
 					if asset := account.GetAssets().Get(&futures_account.Asset{Asset: pair.GetBaseSymbol()}); asset != nil {
 						// locked = utils.ConvStrToFloat64(asset.(*futures_account.Asset).WalletBalance) - utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
 						free = utils.ConvStrToFloat64(asset.(*futures_account.Asset).AvailableBalance)
+						pair.SetCurrentBalance(free)
+						config.Save()
 					}
-					pair.SetCurrentBalance(free)
-					config.Save()
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
