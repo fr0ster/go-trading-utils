@@ -367,15 +367,6 @@ func loadConfig(pair *pairs_types.Pairs, config *config_types.ConfigFile, pairSt
 		pair.SetInitialBalance(baseValue)
 		config.Save()
 	}
-	if pair.GetSellQuantity() == 0 && pair.GetBuyQuantity() == 0 {
-		targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
-		if err != nil {
-			printError()
-			return err
-		}
-		pair.SetBuyQuantity(targetValue)
-		config.Save()
-	}
 	return
 }
 
