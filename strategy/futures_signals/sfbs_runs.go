@@ -881,6 +881,13 @@ func RunFuturesGridTradingV3(
 				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+					logrus.Debugf("Futures %s: Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor)
 					if err != nil {
@@ -893,28 +900,33 @@ func RunFuturesGridTradingV3(
 						return err
 					}
 					pairProcessor.CancelAllOrders()
+					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
+						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetSellDelta()))
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
+						logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), currentPrice*(1-pair.GetBuyDelta()))
 					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, currentPrice*(1+pair.GetSellDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
+						logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), currentPrice*(1+pair.GetSellDelta()))
 						_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, currentPrice*(1-pair.GetBuyDelta()))
 						if err != nil {
 							printError()
 							return err
 						}
+						logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), currentPrice*(1-pair.GetBuyDelta()))
 					}
 				}
 			}
