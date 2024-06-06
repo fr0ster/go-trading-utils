@@ -479,7 +479,7 @@ func initVars(
 		price = round(price, tickSizeExp)
 	}
 	setQuantity := func(symbol *futures.Symbol) (quantity float64) {
-		quantity = round(pair.GetCurrentBalance()*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()*float64(pair.GetLeverage())/price, stepSizeExp)
+		quantity = round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()*float64(pair.GetLeverage())/price, stepSizeExp)
 		minNotional := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 		if quantity*price < minNotional {
 			logrus.Debugf("Futures %s: Quantity %v * price %v < minNotional %v", pair.GetPair(), quantity, price, minNotional)
