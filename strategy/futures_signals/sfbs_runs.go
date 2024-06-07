@@ -917,7 +917,7 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -983,10 +983,7 @@ func RunFuturesGridTradingV3(
 					// pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-					createNextPair := func(sellOrder, buyOrder *futures.CreateOrderResponse, currentPrice float64, quantity float64) (err error) {
-						if sellOrder != nil {
-							pairProcessor.CancelOrder(sellOrder.OrderID)
-						}
+					createNextPair := func(currentPrice float64, quantity float64) (err error) {
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
@@ -1000,9 +997,6 @@ func RunFuturesGridTradingV3(
 							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v > current position balance %v",
 								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
 
-						}
-						if buyOrder != nil {
-							pairProcessor.CancelOrder(buyOrder.OrderID)
 						}
 						// Створюємо ордер на купівлю
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
@@ -1020,9 +1014,9 @@ func RunFuturesGridTradingV3(
 						return nil
 					}
 					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-						err = createNextPair(nil, buyOrder, currentPrice, quantity)
+						err = createNextPair(currentPrice, quantity)
 					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-						err = createNextPair(sellOrder, nil, currentPrice, quantity)
+						err = createNextPair(currentPrice, quantity)
 					}
 					if err != nil {
 						printError()
