@@ -5,6 +5,7 @@ import (
 	"math"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/btree"
@@ -51,7 +52,9 @@ func RunFuturesHolding(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -68,9 +71,10 @@ func RunScalpingHolding(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	quit chan struct{}) (err error) {
+	quit chan struct{},
+	wg *sync.WaitGroup) (err error) {
 	pair.SetStrategy(pairs_types.GridStrategyType)
-	return RunFuturesGridTrading(config, client, pair, quit)
+	return RunFuturesGridTrading(config, client, pair, quit, wg)
 }
 
 func RunFuturesTrading(
@@ -81,7 +85,9 @@ func RunFuturesTrading(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -631,7 +637,9 @@ func RunFuturesGridTrading(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	quit chan struct{}) (err error) {
+	quit chan struct{},
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	var (
 		quantity     float64
 		locked       float64
@@ -747,7 +755,9 @@ func RunFuturesGridTradingV2(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	quit chan struct{}) (err error) {
+	quit chan struct{},
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	var (
 		quantity     float64
 		locked       float64
@@ -875,7 +885,9 @@ func RunFuturesGridTradingV3(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	quit chan struct{}) (err error) {
+	quit chan struct{},
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	var (
 		quantity     float64
 		free         float64
@@ -1024,32 +1036,34 @@ func Run(
 	limit int,
 	pair *pairs_types.Pairs,
 	quit chan struct{},
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	wg.Add(1)
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		return RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug)
+		return RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug, wg)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		return RunScalpingHolding(config, client, pair, quit)
+		return RunScalpingHolding(config, client, pair, quit, wg)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		return RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug)
+		return RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug, wg)
 
 		// Відпрацьовуємо Grid стратегію
 	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		return RunFuturesGridTrading(config, client, pair, quit)
+		return RunFuturesGridTrading(config, client, pair, quit, wg)
 
 	} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
-		return RunFuturesGridTradingV2(config, client, pair, quit)
+		return RunFuturesGridTradingV2(config, client, pair, quit, wg)
 
 	} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV3 {
-		return RunFuturesGridTradingV3(config, client, pair, quit)
+		return RunFuturesGridTradingV3(config, client, pair, quit, wg)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/google/btree"
@@ -68,7 +69,9 @@ func RunSpotHolding(
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.HoldingStrategyType)
 	if err != nil {
 		return err
@@ -156,7 +159,9 @@ func RunSpotScalping(
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.ScalpingStrategyType)
 	if err != nil {
 		return err
@@ -276,7 +281,9 @@ func RunSpotTrading(
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.TradingStrategyType)
 	if err != nil {
 		return err
@@ -574,12 +581,11 @@ func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
 	pair *pairs_types.Pairs,
-	stopEvent chan struct{}) (err error) {
+	stopEvent chan struct{},
+	wg *sync.WaitGroup) (err error) {
+	defer wg.Done()
 	var (
 		quantity float64
-		// locked       float64
-		// free         float64
-		// currentPrice float64
 	)
 	err = checkRun(pair, pairs_types.SpotAccountType, pairs_types.GridStrategyType)
 	if err != nil {
@@ -680,26 +686,28 @@ func Run(
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool) (err error) {
+	debug bool,
+	wg *sync.WaitGroup) (err error) {
+	wg.Add(1)
 	// Відпрацьовуємо Arbitrage стратегію
 	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
 		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 		// Відпрацьовуємо  Holding стратегію
 	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		return RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug)
+		return RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
 		// Відпрацьовуємо Scalping стратегію
 	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		return RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug)
+		return RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
 		// Відпрацьовуємо Trading стратегію
 	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		return RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug)
+		return RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
 		// Відпрацьовуємо Grid стратегію
 	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		return RunSpotGridTrading(config, client, pair, stopEvent)
+		return RunSpotGridTrading(config, client, pair, stopEvent, wg)
 
 		// Невідома стратегія, виводимо попередження та завершуємо програму
 	} else {
