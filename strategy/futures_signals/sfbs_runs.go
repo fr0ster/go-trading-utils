@@ -431,8 +431,6 @@ func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
 			pair.GetStrategy(),
 			pair.GetStage(),
 			pair.GetPair())
-		pair.SetLeverage(t_pair.GetLeverage())
-		pair.SetMarginType(t_pair.GetMarginType())
 		pair.SetLimitOnPosition(t_pair.GetLimitOnPosition())
 		pair.SetLimitOnTransaction(t_pair.GetLimitOnTransaction())
 		pair.SetSellDelta(t_pair.GetSellDelta())
