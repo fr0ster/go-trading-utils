@@ -101,9 +101,14 @@ func RunFuturesTrading(
 	if config.GetConfigurations().GetReloadConfig() {
 		go func() {
 			for {
-				<-time.After(reloadTime)
-				config.Load()
-				pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+				select {
+				case <-quit:
+					logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
+					return
+				case <-time.After(reloadTime):
+					config.Load()
+					pair = config.GetConfigurations().GetPair(pair.GetAccountType(), pair.GetStrategy(), pair.GetStage(), pair.GetPair())
+				}
 			}
 		}()
 	}

@@ -614,7 +614,8 @@ func RunSpotGridTrading(
 	for {
 		select {
 		case <-stopEvent:
-			printError()
+			pairProcessor.CancelAllOrders()
+			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) && !maintainedOrders.Has(grid_types.OrderIdType(event.OrderUpdate.Id)) {
