@@ -474,7 +474,7 @@ func initVars(
 	stepSizeExp = getStepSizeExp(symbol)
 	// Отримання середньої ціни
 	price = round(pair.GetMiddlePrice(), tickSizeExp)
-	if price == 0 {
+	if price <= 0 {
 		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = round(price, tickSizeExp)
 	}
