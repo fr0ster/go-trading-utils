@@ -902,7 +902,7 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -965,10 +965,13 @@ func RunFuturesGridTradingV3(
 					if err != nil {
 						return err
 					}
-					pairProcessor.CancelAllOrders()
+					// pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-					createNextPair := func(currentPrice float64, quantity float64) (err error) {
+					createNextPair := func(sellOrder, buyOrder *futures.CreateOrderResponse, currentPrice float64, quantity float64) (err error) {
+						if sellOrder != nil {
+							pairProcessor.CancelOrder(sellOrder.OrderID)
+						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
@@ -982,6 +985,9 @@ func RunFuturesGridTradingV3(
 							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v > current position balance %v",
 								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
 
+						}
+						if buyOrder != nil {
+							pairProcessor.CancelOrder(buyOrder.OrderID)
 						}
 						// Створюємо ордер на купівлю
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
@@ -998,11 +1004,10 @@ func RunFuturesGridTradingV3(
 						}
 						return nil
 					}
-					// TODO: У наступному можливо змінимо кількість на ордері відповідно від позиції та сторони виконаного ордера
 					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-						err = createNextPair(currentPrice, quantity)
+						err = createNextPair(nil, buyOrder, currentPrice, quantity)
 					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-						err = createNextPair(currentPrice, quantity)
+						err = createNextPair(sellOrder, nil, currentPrice, quantity)
 					}
 					if err != nil {
 						printError()
