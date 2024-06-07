@@ -673,6 +673,7 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
+	// Ініціалізація гріду
 	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	if err != nil {
 		return err
@@ -783,8 +784,6 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	// Ініціалізація гріду
-	grid := grid_types.New()
 	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -793,7 +792,12 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
+	// Ініціалізація гріду
+	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
+	if err != nil {
+		printError()
+		return err
+	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	for {
@@ -994,8 +998,8 @@ func RunFuturesGridTradingV3(
 							}
 							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
 						} else {
-							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v > current position balance %v",
-								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
+							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v (absolute value) > current position balance %v",
+								pair.GetPair(), positionVal, math.Abs(positionVal), pair.GetCurrentPositionBalance())
 
 						}
 						// Створюємо ордер на купівлю
@@ -1008,8 +1012,8 @@ func RunFuturesGridTradingV3(
 							}
 							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
 						} else {
-							logrus.Debugf("Futures %s: Position Value %v > 0 or Position Value %v > current position balance %v",
-								pair.GetPair(), positionVal, positionVal, pair.GetCurrentPositionBalance())
+							logrus.Debugf("Futures %s: Position Value %v > 0 or Position Value %v (absolute value) > current position balance %v",
+								pair.GetPair(), positionVal, math.Abs(positionVal), pair.GetCurrentPositionBalance())
 						}
 						return nil
 					}
