@@ -980,7 +980,7 @@ func RunFuturesGridTradingV3(
 					if err != nil {
 						return err
 					}
-					// pairProcessor.CancelAllOrders()
+					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 					createNextPair := func(currentPrice float64, quantity float64) (err error) {
