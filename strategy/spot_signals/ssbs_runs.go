@@ -690,28 +690,31 @@ func Run(
 	debug bool,
 	wg *sync.WaitGroup) (err error) {
 	wg.Add(1)
-	// Відпрацьовуємо Arbitrage стратегію
-	if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-		return fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
+	go func() {
+		// Відпрацьовуємо Arbitrage стратегію
+		if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
+			err = fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
-		// Відпрацьовуємо  Holding стратегію
-	} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-		return RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			// Відпрацьовуємо  Holding стратегію
+		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
+			err = RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
-		// Відпрацьовуємо Scalping стратегію
-	} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-		return RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			// Відпрацьовуємо Scalping стратегію
+		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
+			err = RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
-		// Відпрацьовуємо Trading стратегію
-	} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-		return RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			// Відпрацьовуємо Trading стратегію
+		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
+			err = RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
 
-		// Відпрацьовуємо Grid стратегію
-	} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-		return RunSpotGridTrading(config, client, pair, stopEvent, wg)
+			// Відпрацьовуємо Grid стратегію
+		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
+			err = RunSpotGridTrading(config, client, pair, stopEvent, wg)
 
-		// Невідома стратегія, виводимо попередження та завершуємо програму
-	} else {
-		return fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
-	}
+			// Невідома стратегія, виводимо попередження та завершуємо програму
+		} else {
+			err = fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
+		}
+	}()
+	return
 }
