@@ -509,10 +509,10 @@ func initVars(
 		config.Save()
 	}
 	setQuantity := func(symbol *binance.Symbol) (quantity float64) {
-		quantity = round(pair.GetCurrentBalance()*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/price, tickSizeExp)
+		quantity = round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()/price, stepSizeExp)
 		minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
 		if quantity*price < minNotional {
-			quantity = utils.RoundToDecimalPlace(minNotional/price, int(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
+			quantity = utils.RoundToDecimalPlace(minNotional/price, stepSizeExp)
 		}
 		return
 	}
