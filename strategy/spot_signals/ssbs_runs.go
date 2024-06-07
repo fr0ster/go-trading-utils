@@ -526,11 +526,7 @@ func initFirstPairOfOrders(
 	quantity float64,
 	tickSizeExp int,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
-	_, err = pairProcessor.CancelAllOrders()
-	if err != nil {
-		printError()
-		return
-	}
+	_, _ = pairProcessor.CancelAllOrders()
 	// Створюємо ордери на продаж
 	if pair.GetBuyQuantity()-pair.GetSellQuantity() >= quantity {
 		sellOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
