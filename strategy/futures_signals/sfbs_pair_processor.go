@@ -586,7 +586,7 @@ func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *futures.Create
 }
 
 func (pp *PairProcessor) LimitUpdaterStream() {
-
+	var err error
 	go func() {
 		for {
 			select {
@@ -594,7 +594,13 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 				pp.updateTime,
 					pp.minuteOrderLimit,
 					pp.dayOrderLimit,
-					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
+					pp.minuteRawRequestLimit,
+					err = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
+				if err != nil {
+					logrus.Errorf("Can't update limits: %v", err)
+					close(pp.stop)
+					return
+				}
 			case <-pp.stop:
 				return
 			}
@@ -807,8 +813,12 @@ func NewPairProcessor(
 	pp.updateTime,
 		pp.minuteOrderLimit,
 		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit =
+		pp.minuteRawRequestLimit,
+		err =
 		LimitRead(pp.degree, []string{pp.pair.GetPair()}, client)
+	if err != nil {
+		return
+	}
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(

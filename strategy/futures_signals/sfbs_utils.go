@@ -2,6 +2,7 @@ package futures_signals
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -25,13 +26,18 @@ func LimitRead(degree int, symbols []string, client *futures.Client) (
 	updateTime time.Duration,
 	minuteOrderLimit *exchange_types.RateLimits,
 	dayOrderLimit *exchange_types.RateLimits,
-	minuteRawRequestLimit *exchange_types.RateLimits) {
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	err error) {
 	exchangeInfo := exchange_types.New()
 	futures_exchange_info.RestrictedInit(exchangeInfo, degree, symbols, client)
 
 	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
 	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
 	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
+	if minuteRawRequestLimit == nil {
+		err = fmt.Errorf("minute raw request limit is not found")
+		return
+	}
 	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
 	return
 }
