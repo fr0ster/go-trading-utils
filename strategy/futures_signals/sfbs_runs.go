@@ -534,11 +534,12 @@ func marginBalancing(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
-	pairProcessor *PairProcessor) (err error) {
+	pairProcessor *PairProcessor,
+	tickStepSize int) (err error) {
 	// Балансування маржі як треба
 	if config.GetConfigurations().GetBalancingOfMargin() &&
 		utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
-		utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+		round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) < round(pair.GetCurrentPositionBalance(), tickStepSize) {
 		logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 			pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 		err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
@@ -680,6 +681,7 @@ func RunFuturesGridTrading(
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
+	maintainedOrders := btree.New(2)
 	for {
 		select {
 		case <-quit:
@@ -688,70 +690,73 @@ func RunFuturesGridTrading(
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-				grid.Lock()
-				updateConfig(config, pair)
-				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
-				currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-				// Знаходимо у гріді на якому був виконаний ордер
-				order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
-				if !ok {
-					if !(event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled) {
-						return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
-					} else {
-						continue // Вважаємо ордер обробили раніше???
+				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+					grid.Lock()
+					updateConfig(config, pair)
+					logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+					currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+					// Знаходимо у гріді на якому був виконаний ордер
+					order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
+					if !ok {
+						if !(event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled) {
+							return fmt.Errorf("uncorrected order ID: %v", event.OrderTradeUpdate.ID)
+						} else {
+							continue // Вважаємо ордер обробили раніше???
+						}
 					}
-				}
-				orderId := order.GetOrderId()
-				locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
-				free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-				pair.SetCurrentBalance(free)
-				config.Save()
-				risk, err = pairProcessor.GetPositionRisk()
-				if err != nil {
+					orderId := order.GetOrderId()
+					locked, _ = pairStreams.GetAccount().GetLockedAsset(pair.GetBaseSymbol())
+					free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+					pair.SetCurrentBalance(free)
+					config.Save()
+					risk, err = pairProcessor.GetPositionRisk()
+					if err != nil {
+						grid.Unlock()
+						printError()
+						return
+					}
+					// Балансування маржі як треба
+					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+					if err != nil {
+						grid.Unlock()
+						printError()
+						return err
+					}
+					// Обробка наближення ліквідаціі
+					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
+					if err != nil {
+						grid.Unlock()
+						return err
+					}
+					err = processOrder(
+						config,
+						pairProcessor,
+						pair,
+						pairStreams,
+						symbol,
+						event.OrderTradeUpdate.Side,
+						grid,
+						order,
+						quantity,
+						tickSizeExp,
+						locked,
+						risk)
+					if err != nil {
+						grid.Unlock()
+						pairProcessor.CancelAllOrders()
+						printError()
+						return err
+					}
+					grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
 					grid.Unlock()
-					printError()
-					return
 				}
-				// Балансування маржі як треба
-				err = marginBalancing(config, pair, risk, pairProcessor)
-				if err != nil {
-					grid.Unlock()
-					printError()
-					return err
-				}
-				// Обробка наближення ліквідаціі
-				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
-				if err != nil {
-					grid.Unlock()
-					return err
-				}
-				err = processOrder(
-					config,
-					pairProcessor,
-					pair,
-					pairStreams,
-					symbol,
-					event.OrderTradeUpdate.Side,
-					grid,
-					order,
-					quantity,
-					tickSizeExp,
-					locked,
-					risk)
-				if err != nil {
-					grid.Unlock()
-					pairProcessor.CancelAllOrders()
-					printError()
-					return err
-				}
-				grid.Debug("Futures Grid processOrder", strconv.FormatInt(orderId, 10), pair.GetPair())
-				grid.Unlock()
 			}
 		}
 	}
@@ -794,6 +799,7 @@ func RunFuturesGridTradingV2(
 	}
 	// Ініціалізація гріду
 	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
+	maintainedOrders := btree.New(2)
 	if err != nil {
 		printError()
 		return err
@@ -817,23 +823,8 @@ func RunFuturesGridTradingV2(
 				return fmt.Errorf("we didn't work with order on price level %v before: %v", currentPrice, event.OrderTradeUpdate.ID)
 			}
 			orderId := order.GetOrderId()
-			firstPartFlag := false
-			if event.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
-				if !order.IsPartialFilled(event.OrderTradeUpdate.ID) {
-					order.AddPartialFilledOrder(event.OrderTradeUpdate.ID)
-					firstPartFlag = true
-				} else {
-					firstPartFlag = false
-				}
-			} else if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-				if order.IsPartialFilled(event.OrderTradeUpdate.ID) {
-					order.RemovePartialFilledOrder(event.OrderTradeUpdate.ID)
-					firstPartFlag = false
-				} else {
-					firstPartFlag = true
-				}
-			}
-			if firstPartFlag {
+			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
 				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
 					pair.GetPair(),
 					event.OrderTradeUpdate.ID,
@@ -852,7 +843,7 @@ func RunFuturesGridTradingV2(
 					return
 				}
 				// Балансування маржі як треба
-				err = marginBalancing(config, pair, risk, pairProcessor)
+				err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
 				if err != nil {
 					grid.Unlock()
 					printError()
@@ -953,6 +944,7 @@ func RunFuturesGridTradingV3(
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
+						close(quit)
 						return
 					}
 					if risk != nil {
@@ -971,10 +963,11 @@ func RunFuturesGridTradingV3(
 					} else {
 						err = fmt.Errorf("futures %s: PositionRisk is nil", pair.GetPair())
 						printError()
+						close(quit)
 						return
 					}
 					// Балансування маржі як треба
-					err = marginBalancing(config, pair, risk, pairProcessor)
+					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
 					if err != nil {
 						printError()
 						return err
@@ -982,6 +975,7 @@ func RunFuturesGridTradingV3(
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
+						close(quit)
 						return err
 					}
 					pairProcessor.CancelAllOrders()
@@ -994,6 +988,7 @@ func RunFuturesGridTradingV3(
 							_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
 							if err != nil {
 								printError()
+								close(quit)
 								return err
 							}
 							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
@@ -1008,6 +1003,7 @@ func RunFuturesGridTradingV3(
 							_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
 							if err != nil {
 								printError()
+								close(quit)
 								return err
 							}
 							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
@@ -1024,6 +1020,7 @@ func RunFuturesGridTradingV3(
 					}
 					if err != nil {
 						printError()
+						close(quit)
 						return err
 					}
 				}

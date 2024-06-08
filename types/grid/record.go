@@ -8,13 +8,12 @@ import (
 type (
 	OrderIdType int64
 	Record      struct {
-		Price               float64
-		quantity            float64
-		orderId             int64
-		partialFilledOrders btree.BTree
-		uPrice              float64
-		downPrice           float64
-		orderSide           types.OrderSide
+		Price     float64
+		quantity  float64
+		orderId   int64
+		uPrice    float64
+		downPrice float64
+		orderSide types.OrderSide
 	}
 )
 
@@ -82,34 +81,13 @@ func (g *Record) SetOrderSide(orderSide types.OrderSide) {
 	g.orderSide = orderSide
 }
 
-func (g *Record) GetPartialFilledOrders() btree.BTree {
-	return g.partialFilledOrders
-}
-
-func (g *Record) SetPartialFilledOrders(partialFilledOrders btree.BTree) {
-	g.partialFilledOrders = partialFilledOrders
-}
-
-func (g *Record) AddPartialFilledOrder(orderId int64) {
-	g.partialFilledOrders.ReplaceOrInsert(OrderIdType(orderId))
-}
-
-func (g *Record) RemovePartialFilledOrder(orderId int64) {
-	g.partialFilledOrders.Delete(OrderIdType(orderId))
-}
-
-func (g *Record) IsPartialFilled(orderId int64) bool {
-	return g.partialFilledOrders.Has(OrderIdType(orderId))
-}
-
 func NewRecord(orderId int64, price float64, quantity float64, upPrice float64, downPrice float64, orderSide types.OrderSide) *Record {
 	return &Record{
-		Price:               price,
-		quantity:            quantity,
-		orderId:             orderId,
-		partialFilledOrders: *btree.New(2),
-		uPrice:              upPrice,
-		downPrice:           downPrice,
-		orderSide:           orderSide,
+		Price:     price,
+		quantity:  quantity,
+		orderId:   orderId,
+		uPrice:    upPrice,
+		downPrice: downPrice,
+		orderSide: orderSide,
 	}
 }
