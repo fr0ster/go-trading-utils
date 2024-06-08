@@ -104,11 +104,12 @@ func (g *Record) IsPartialFilled(orderId int64) bool {
 
 func NewRecord(orderId int64, price float64, quantity float64, upPrice float64, downPrice float64, orderSide types.OrderSide) *Record {
 	return &Record{
-		Price:     price,
-		quantity:  quantity,
-		orderId:   orderId,
-		uPrice:    upPrice,
-		downPrice: downPrice,
-		orderSide: orderSide,
+		Price:               price,
+		quantity:            quantity,
+		orderId:             orderId,
+		partialFilledOrders: *btree.New(2),
+		uPrice:              upPrice,
+		downPrice:           downPrice,
+		orderSide:           orderSide,
 	}
 }
