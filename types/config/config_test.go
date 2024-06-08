@@ -35,6 +35,7 @@ const (
 	PercentsToLiquidation     = 0.05 // Відсоток до ліквідації
 	PercentToDecreasePosition = 0.03 // Відсоток для зменшення позиції
 	ObserverTimeOut           = 1000 // Таймаут спостереження
+	UsingBreakEvenPrice       = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
 
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
@@ -164,6 +165,7 @@ var (
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOut:               ObserverTimeOut,
+		UsingBreakEvenPrice:           UsingBreakEvenPrice,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -241,7 +243,7 @@ func getTestData() []byte {
 			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout": ` + strconv.Itoa(ObserverTimeOut) + `,
-			"maintain_partially_filled_orders": ` + strconv.FormatBool(MaintainPartiallyFilledOrders) + `,
+			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -323,9 +325,11 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
-	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
+	assert.Equal(t, BalancingOfMargin, config.GetBalancingOfMargin())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
+	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
+	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

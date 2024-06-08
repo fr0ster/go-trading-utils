@@ -947,27 +947,24 @@ func RunFuturesGridTradingV3(
 						close(quit)
 						return
 					}
-					// if risk != nil {
-					// 	if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
-					// 		currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
-					// 		logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
-					// 			pair.GetPair(), risk.BreakEvenPrice)
-					// 	} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
-					// 		currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
-					// 		logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
-					// 	} else {
-					// 		currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
-					// 		logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
-					// 			pair.GetPair(), currentPrice)
-					// 	}
-					// } else {
-					// 	err = fmt.Errorf("futures %s: PositionRisk is nil", pair.GetPair())
-					// 	printError()
-					// 	close(quit)
-					// 	return
-					// }
-					currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
-					logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
+					if config.GetConfigurations().GetUsingBreakEvenPrice() && risk != nil {
+						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
+							currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
+							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
+								pair.GetPair(), risk.BreakEvenPrice)
+						} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
+							currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
+						} else {
+							currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+							logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
+								pair.GetPair(), currentPrice)
+						}
+					} else {
+						currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+						logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
+							pair.GetPair(), currentPrice)
+					}
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
 					if err != nil {

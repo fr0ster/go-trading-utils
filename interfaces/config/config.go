@@ -32,6 +32,8 @@ type (
 		GetBalancingOfMargin() bool
 
 		GetObserverTimeOut() int
+
+		GetUsingBreakEvenPrice() bool
 	}
 	ConfigurationFile interface {
 		GetFileName() string

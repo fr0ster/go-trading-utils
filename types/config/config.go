@@ -24,6 +24,7 @@ type (
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut               int                          `json:"observer_timeout"`
+		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
 		Pairs                         *btree.BTree
 	}
 )
@@ -63,6 +64,10 @@ func (cf *Configs) GetBalancingOfMargin() bool {
 
 func (cf *Configs) GetObserverTimeOut() int {
 	return cf.ObserverTimeOut
+}
+
+func (cf *Configs) GetUsingBreakEvenPrice() bool {
+	return cf.UsingBreakEvenPrice
 }
 
 // Implement the GetPair method
