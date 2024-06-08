@@ -688,33 +688,32 @@ func Run(
 	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool,
-	wg *sync.WaitGroup) (err error) {
+	wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		// Відпрацьовуємо Arbitrage стратегію
 		if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-			err = fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
+			logrus.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 			// Відпрацьовуємо  Holding стратегію
 		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-			err = RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			logrus.Error(RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
 
 			// Відпрацьовуємо Scalping стратегію
 		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-			err = RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			logrus.Error(RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-			err = RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg)
+			logrus.Error(RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
 
 			// Відпрацьовуємо Grid стратегію
 		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-			err = RunSpotGridTrading(config, client, pair, stopEvent, wg)
+			logrus.Error(RunSpotGridTrading(config, client, pair, stopEvent, wg))
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
-			err = fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
+			logrus.Errorf("unknown strategy: %v", pair.GetStrategy())
 		}
 	}()
-	return
 }

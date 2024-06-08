@@ -1040,39 +1040,38 @@ func Run(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	debug bool,
-	wg *sync.WaitGroup) (err error) {
+	wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		// Відпрацьовуємо Arbitrage стратегію
 		if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-			err = fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
+			logrus.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 			// Відпрацьовуємо  Holding стратегію
 		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-			err = RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug, wg)
+			logrus.Error(RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug, wg))
 
 			// Відпрацьовуємо Scalping стратегію
 		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-			err = RunScalpingHolding(config, client, pair, quit, wg)
+			logrus.Error(RunScalpingHolding(config, client, pair, quit, wg))
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-			err = RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug, wg)
+			logrus.Error(RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug, wg))
 
 			// Відпрацьовуємо Grid стратегію
 		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-			err = RunFuturesGridTrading(config, client, pair, quit, wg)
+			logrus.Error(RunFuturesGridTrading(config, client, pair, quit, wg))
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
-			err = RunFuturesGridTradingV2(config, client, pair, quit, wg)
+			logrus.Error(RunFuturesGridTradingV2(config, client, pair, quit, wg))
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV3 {
-			err = RunFuturesGridTradingV3(config, client, pair, quit, wg)
+			logrus.Error(RunFuturesGridTradingV3(config, client, pair, quit, wg))
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
-			err = fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
+			logrus.Errorf("unknown strategy: %v", pair.GetStrategy())
 		}
 	}()
-	return
 }
