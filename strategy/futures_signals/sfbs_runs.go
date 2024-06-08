@@ -984,32 +984,42 @@ func RunFuturesGridTradingV3(
 					createNextPair := func(currentPrice float64, quantity float64) (err error) {
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
-						if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-							_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
-							if err != nil {
-								printError()
-								close(quit)
-								return err
-							}
-							logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
-						} else {
-							logrus.Debugf("Futures %s: Position Value %v < 0 or Position Value %v (absolute value) > current position balance %v",
-								pair.GetPair(), positionVal, math.Abs(positionVal), pair.GetCurrentPositionBalance())
+						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound()-upPrice {
+							if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
+								if err != nil {
+									printError()
+									close(quit)
+									return err
+								}
+								logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
+							} else {
+								logrus.Debugf("Futures %s: Position Value %v (absolute value) > current position balance %v",
+									pair.GetPair(), math.Abs(positionVal), pair.GetCurrentPositionBalance())
 
+							}
+						} else {
+							logrus.Debugf("Futures %s: upPrice %v more than upBound %v - upPrice %v",
+								pair.GetPair(), upPrice, pair.GetUpBound(), pair.GetUpBound()-upPrice)
 						}
 						// Створюємо ордер на купівлю
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-						if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-							_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
-							if err != nil {
-								printError()
-								close(quit)
-								return err
+						if pair.GetLowBound() != 0 && downPrice >= downPrice-pair.GetLowBound() {
+							if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
+								if err != nil {
+									printError()
+									close(quit)
+									return err
+								}
+								logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
+							} else {
+								logrus.Debugf("Futures %s: Position Value %v (absolute value) > current position balance %v",
+									pair.GetPair(), math.Abs(positionVal), pair.GetCurrentPositionBalance())
 							}
-							logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
 						} else {
-							logrus.Debugf("Futures %s: Position Value %v > 0 or Position Value %v (absolute value) > current position balance %v",
-								pair.GetPair(), positionVal, math.Abs(positionVal), pair.GetCurrentPositionBalance())
+							logrus.Debugf("Futures %s: downPrice %v less than downPrice %v - lowBound %v",
+								pair.GetPair(), downPrice, downPrice-pair.GetLowBound(), pair.GetLowBound())
 						}
 						return nil
 					}

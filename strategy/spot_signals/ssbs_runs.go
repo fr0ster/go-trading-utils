@@ -647,29 +647,39 @@ func RunSpotGridTrading(
 				createNextPair := func(currentPrice float64, quantity float64, limit float64) (err error) {
 					// Створюємо ордер на продаж
 					upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
-					if limit >= quantity {
-						_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
-						if err != nil {
-							printError()
-							return err
+					if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound()-upPrice {
+						if limit >= quantity {
+							_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
+							if err != nil {
+								printError()
+								return err
+							}
+							logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
+						} else {
+							logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
+								pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
 						}
-						logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
 					} else {
-						logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
-							pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
+						logrus.Debugf("Spots %s: upPrice %v <= upBound %v - upPrice %v",
+							pair.GetPair(), upPrice, pair.GetUpBound(), upPrice)
 					}
 					// Створюємо ордер на купівлю
 					downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-					if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
-						_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
-						if err != nil {
-							printError()
-							return err
+					if pair.GetLowBound() != 0 && downPrice >= downPrice-pair.GetLowBound() {
+						if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
+							_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
+							if err != nil {
+								printError()
+								return err
+							}
+							logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
+						} else {
+							logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
+								pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
 						}
-						logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
 					} else {
-						logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
-							pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
+						logrus.Debugf("Spots %s: downPrice %v >= downPrice %v - lowBound %v",
+							pair.GetPair(), downPrice, downPrice, pair.GetLowBound())
 					}
 					return nil
 				}
