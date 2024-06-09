@@ -946,23 +946,30 @@ func RunFuturesGridTradingV3(
 						printError()
 						return
 					}
-					if config.GetConfigurations().GetUsingBreakEvenPrice() && risk != nil {
+					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
+						pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+					if config.GetConfigurations().GetUsingBreakEvenPrice() {
 						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
-							currentPrice = round(utils.ConvStrToFloat64(risk.BreakEvenPrice), tickSizeExp)
+							currentPrice = round(val, tickSizeExp)
 							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
 								pair.GetPair(), risk.BreakEvenPrice)
 						} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
-							currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
+							currentPrice = round(val, tickSizeExp)
 							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
 						} else {
-							currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+							currentPrice = round(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice), tickSizeExp)
 							logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
 								pair.GetPair(), currentPrice)
 						}
 					} else {
-						currentPrice = round(utils.ConvStrToFloat64(risk.EntryPrice), tickSizeExp)
-						logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
-							pair.GetPair(), currentPrice)
+						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
+							currentPrice = round(val, tickSizeExp)
+							logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
+								pair.GetPair(), currentPrice)
+						} else {
+							val, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+							currentPrice = round(val, tickSizeExp)
+						}
 					}
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
