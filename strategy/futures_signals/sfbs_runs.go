@@ -984,15 +984,29 @@ func RunFuturesGridTradingV3(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-					// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-					quantityCoefficient := (pair.GetCurrentPositionBalance() - math.Abs(positionVal)) / pair.GetCurrentPositionBalance()
-					createNextPair := func(currentPrice float64, quantity float64) (err error) {
+					createNextPair := func(
+						currentPrice float64,
+						quantity float64,
+						risk *futures.PositionRisk,
+						side futures.SideType) (err error) {
+						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
+						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
+						quantityCoefficient := (pair.GetCurrentPositionBalance() - math.Abs(positionVal)) / pair.GetCurrentPositionBalance()
+						if quantityCoefficient < 0 {
+							quantityCoefficient = 0
+						}
+						correctedQuantityUp := quantity
+						correctedQuantityDown := quantity
+						if side == futures.SideTypeSell && positionVal < 0 {
+							correctedQuantityUp = quantity * quantityCoefficient
+						} else if side == futures.SideTypeBuy && positionVal > 0 {
+							correctedQuantityDown = quantity * quantityCoefficient
+						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-							if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity*quantityCoefficient, upPrice)
+							if correctedQuantityUp > 0 {
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, upPrice)
 								if err != nil {
 									printError()
 									return err
@@ -1010,8 +1024,8 @@ func RunFuturesGridTradingV3(
 						// Створюємо ордер на купівлю
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 						if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-							if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity*quantityCoefficient, downPrice)
+							if correctedQuantityDown > 0 {
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, downPrice)
 								if err != nil {
 									printError()
 									return err
@@ -1027,11 +1041,7 @@ func RunFuturesGridTradingV3(
 						}
 						return nil
 					}
-					if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-						err = createNextPair(currentPrice, quantity)
-					} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-						err = createNextPair(currentPrice, quantity)
-					}
+					err = createNextPair(currentPrice, quantity, risk, event.OrderTradeUpdate.Side)
 					if err != nil {
 						printError()
 						return err
