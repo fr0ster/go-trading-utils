@@ -458,6 +458,7 @@ func initVars(
 	symbol *futures.Symbol,
 	price,
 	quantity float64,
+	minNotional float64,
 	tickSizeExp,
 	stepSizeExp int,
 	err error) {
@@ -666,7 +667,7 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
@@ -789,7 +790,7 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
@@ -908,7 +909,7 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	// Ініціалізація гріду
-	_, initPrice, quantity, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	_, initPrice, quantity, minNotional, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
@@ -987,9 +988,11 @@ func RunFuturesGridTradingV3(
 					createNextPair := func(
 						currentPrice float64,
 						quantity float64,
+						minNotional float64,
 						risk *futures.PositionRisk,
 						side futures.SideType) (err error) {
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
+						minQuantity := minNotional / currentPrice
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
 						quantityCoefficient := (pair.GetCurrentPositionBalance() - math.Abs(positionVal)) / pair.GetCurrentPositionBalance()
 						if quantityCoefficient < 0 {
@@ -998,9 +1001,9 @@ func RunFuturesGridTradingV3(
 						correctedQuantityUp := quantity
 						correctedQuantityDown := quantity
 						if side == futures.SideTypeSell && positionVal < 0 {
-							correctedQuantityUp = quantity * quantityCoefficient
+							correctedQuantityUp = (quantity-minQuantity)*quantityCoefficient + minQuantity
 						} else if side == futures.SideTypeBuy && positionVal > 0 {
-							correctedQuantityDown = quantity * quantityCoefficient
+							correctedQuantityDown = (quantity-minQuantity)*quantityCoefficient + minQuantity
 						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
@@ -1041,7 +1044,7 @@ func RunFuturesGridTradingV3(
 						}
 						return nil
 					}
-					err = createNextPair(currentPrice, quantity, risk, event.OrderTradeUpdate.Side)
+					err = createNextPair(currentPrice, quantity, minNotional, risk, event.OrderTradeUpdate.Side)
 					if err != nil {
 						printError()
 						return err
