@@ -944,7 +944,6 @@ func RunFuturesGridTradingV3(
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
-						close(quit)
 						return
 					}
 					if config.GetConfigurations().GetUsingBreakEvenPrice() && risk != nil {
@@ -974,7 +973,6 @@ func RunFuturesGridTradingV3(
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
-						close(quit)
 						return err
 					}
 					pairProcessor.CancelAllOrders()
@@ -988,7 +986,6 @@ func RunFuturesGridTradingV3(
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
 								if err != nil {
 									printError()
-									close(quit)
 									return err
 								}
 								logrus.Debugf("Futures %s: Create Sell order on price %v", pair.GetPair(), upPrice)
@@ -1008,7 +1005,6 @@ func RunFuturesGridTradingV3(
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
 								if err != nil {
 									printError()
-									close(quit)
 									return err
 								}
 								logrus.Debugf("Futures %s: Create Buy order on price %v", pair.GetPair(), downPrice)
@@ -1029,7 +1025,6 @@ func RunFuturesGridTradingV3(
 					}
 					if err != nil {
 						printError()
-						close(quit)
 						return err
 					}
 				}
@@ -1049,35 +1044,40 @@ func Run(
 	wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
+		var err error
 		// Відпрацьовуємо Arbitrage стратегію
 		if pair.GetStrategy() == pairs_types.ArbitrageStrategyType {
-			logrus.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
+			err = fmt.Errorf("arbitrage strategy is not implemented yet for %v", pair.GetPair())
 
 			// Відпрацьовуємо  Holding стратегію
 		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-			logrus.Error(RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug, wg))
+			err = RunFuturesHolding(config, client, degree, limit, pair, quit, time.Second, debug, wg)
 
 			// Відпрацьовуємо Scalping стратегію
 		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-			logrus.Error(RunScalpingHolding(config, client, pair, quit, wg))
+			err = RunScalpingHolding(config, client, pair, quit, wg)
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-			logrus.Error(RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug, wg))
+			err = RunFuturesTrading(config, client, degree, limit, pair, quit, time.Second, debug, wg)
 
 			// Відпрацьовуємо Grid стратегію
 		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-			logrus.Error(RunFuturesGridTrading(config, client, pair, quit, wg))
+			err = RunFuturesGridTrading(config, client, pair, quit, wg)
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
-			logrus.Error(RunFuturesGridTradingV2(config, client, pair, quit, wg))
+			err = RunFuturesGridTradingV2(config, client, pair, quit, wg)
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV3 {
-			logrus.Error(RunFuturesGridTradingV3(config, client, pair, quit, wg))
+			err = RunFuturesGridTradingV3(config, client, pair, quit, wg)
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
-			logrus.Errorf("unknown strategy: %v", pair.GetStrategy())
+			err = fmt.Errorf("unknown strategy: %v", pair.GetStrategy())
+		}
+		if err != nil {
+			logrus.Error(err)
+			close(quit)
 		}
 	}()
 }
