@@ -647,7 +647,7 @@ func RunSpotGridTrading(
 				createNextPair := func(currentPrice float64, quantity float64, limit float64) (err error) {
 					// Створюємо ордер на продаж
 					upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
-					if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound()-upPrice {
+					if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 						if limit >= quantity {
 							_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
 							if err != nil {
@@ -660,12 +660,12 @@ func RunSpotGridTrading(
 								pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
 						}
 					} else {
-						logrus.Debugf("Spots %s: upPrice %v <= upBound %v - upPrice %v",
-							pair.GetPair(), upPrice, pair.GetUpBound(), upPrice)
+						logrus.Debugf("Spots %s: upPrice %v <= upBound %v",
+							pair.GetPair(), upPrice, pair.GetUpBound())
 					}
 					// Створюємо ордер на купівлю
 					downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-					if pair.GetLowBound() != 0 && downPrice >= downPrice-pair.GetLowBound() {
+					if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 						if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
 							_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
 							if err != nil {
@@ -678,8 +678,8 @@ func RunSpotGridTrading(
 								pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
 						}
 					} else {
-						logrus.Debugf("Spots %s: downPrice %v >= downPrice %v - lowBound %v",
-							pair.GetPair(), downPrice, downPrice, pair.GetLowBound())
+						logrus.Debugf("Spots %s: downPrice %v >= lowBound %v",
+							pair.GetPair(), downPrice, pair.GetLowBound())
 					}
 					return nil
 				}

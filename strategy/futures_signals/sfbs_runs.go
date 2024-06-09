@@ -1022,8 +1022,8 @@ func RunFuturesGridTradingV3(
 									pair.GetPair(), math.Abs(positionVal), pair.GetCurrentPositionBalance())
 							}
 						} else {
-							logrus.Debugf("Futures %s: downPrice %v less than upBound %v",
-								pair.GetPair(), downPrice, downPrice-pair.GetLowBound())
+							logrus.Debugf("Futures %s: downPrice %v less than downBound %v",
+								pair.GetPair(), downPrice, pair.GetLowBound())
 						}
 						return nil
 					}
