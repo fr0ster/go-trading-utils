@@ -985,12 +985,14 @@ func RunFuturesGridTradingV3(
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
+					// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
+					quantityCoefficient := (pair.GetCurrentPositionBalance() - math.Abs(positionVal)) / pair.GetCurrentPositionBalance()
 					createNextPair := func(currentPrice float64, quantity float64) (err error) {
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 							if positionVal >= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity*quantityCoefficient, upPrice)
 								if err != nil {
 									printError()
 									return err
@@ -1009,7 +1011,7 @@ func RunFuturesGridTradingV3(
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 						if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 							if positionVal <= 0 || math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
-								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
+								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity*quantityCoefficient, downPrice)
 								if err != nil {
 									printError()
 									return err
