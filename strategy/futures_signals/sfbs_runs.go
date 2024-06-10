@@ -661,32 +661,28 @@ func positionLossObservation(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	pairProcessor *PairProcessor,
-	price float64) (err error) {
+	quantity float64,
+	price float64,
+	tickSizeExp int) (err error) {
+	var (
+		side futures.SideType
+	)
 	// Обробка наближення ліквідаціі
 	if config.GetConfigurations().GetObservePositionLoss() &&
 		utils.ConvStrToFloat64(risk.UnRealizedProfit) < pair.GetUnRealizedProfitLowBound() {
 		logrus.Debugf("Futures %s: UnRealizedProfit %v < UnRealizedProfitLowBound %v",
 			pair.GetPair(), utils.ConvStrToFloat64(risk.UnRealizedProfit), pair.GetUnRealizedProfitLowBound())
+		pairProcessor.CancelAllOrders()
 		if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			_, err = pairProcessor.CreateOrder(
-				futures.OrderTypeTakeProfit, // orderType
-				futures.SideTypeBuy,         // sideType
-				futures.TimeInForceTypeGTC,  // timeInForce
-				0,                           // quantity
-				true,                        // closePosition
-				price,                       // price
-				0,                           // stopPrice
-				0)                           // callbackRate
+			side = futures.SideTypeSell
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			_, err = pairProcessor.CreateOrder(
-				futures.OrderTypeTakeProfit, // orderType
-				futures.SideTypeBuy,         // sideType
-				futures.TimeInForceTypeGTC,  // timeInForce
-				0,                           // quantity
-				true,                        // closePosition
-				price,                       // price
-				price,                       // stopPrice
-				0)                           // callbackRate
+			side = futures.SideTypeBuy
+		}
+		pairProcessor.ClosePosition(side, price, tickSizeExp)
+		// Створюємо початкові ордери на продаж та купівлю
+		_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+		if err != nil {
+			return err
 		}
 	}
 	return err
@@ -1138,7 +1134,7 @@ func RunFuturesGridTradingV3(
 				return err
 			}
 			// Обробка втрат по поточній позиції
-			err = positionLossObservation(config, pair, risk, pairProcessor, currentPrice)
+			err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, tickSizeExp)
 			if err != nil {
 				return err
 			}
