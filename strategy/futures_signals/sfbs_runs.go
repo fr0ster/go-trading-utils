@@ -1016,9 +1016,9 @@ func RunFuturesGridTradingV3(
 						correctedQuantityUp := quantity
 						correctedQuantityDown := quantity
 						if side == futures.SideTypeSell && positionVal < 0 {
-							correctedQuantityUp = (quantity-minQuantity)*quantityCoefficient + minQuantity
+							correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
 						} else if side == futures.SideTypeBuy && positionVal > 0 {
-							correctedQuantityDown = (quantity-minQuantity)*quantityCoefficient + minQuantity
+							correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
 						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
