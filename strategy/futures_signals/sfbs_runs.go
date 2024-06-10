@@ -523,13 +523,13 @@ func initFirstPairOfOrders(
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
 	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
 	if err != nil {
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Buy order on price %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
 	return
 }
 

@@ -539,7 +539,7 @@ func initFirstPairOfOrders(
 			printError()
 			return
 		}
-		logrus.Debugf("Spot %s: Set Sell order on price %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp))
+		logrus.Debugf("Spot %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
 	} else {
 		logrus.Debugf("Spot %s: BuyQuantity %v - SellQuantity %v >= quantity %v",
 			pair.GetPair(), pair.GetBuyQuantity(), pair.GetSellQuantity(), quantity)
@@ -549,7 +549,7 @@ func initFirstPairOfOrders(
 		printError()
 		return
 	}
-	logrus.Debugf("Spot %s: Set Buy order on price %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	logrus.Debugf("Spot %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
 	return
 }
 
@@ -683,7 +683,12 @@ func RunSpotGridTrading(
 					}
 					return nil
 				}
-				createNextPair(pair.GetMiddlePrice(), quantity, pair.GetBuyQuantity()-pair.GetSellQuantity())
+				targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
+				if err != nil {
+					printError()
+					return err
+				}
+				createNextPair(pair.GetMiddlePrice(), quantity, targetValue)
 			}
 		}
 	}
