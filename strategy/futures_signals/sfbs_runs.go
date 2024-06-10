@@ -1011,6 +1011,9 @@ func RunFuturesGridTradingV3(
 						minQuantity := round(minNotional/currentPrice, stepSizeExp)
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
 						quantityCoefficient := (pair.GetCurrentPositionBalance() - minNotional - math.Abs(positionVal)) / (pair.GetCurrentPositionBalance() - minNotional)
+						if quantityCoefficient < 0 {
+							quantityCoefficient = 0
+						}
 						logrus.Debugf("Futures %s: Position Value %v MinNotional %v, QuantityCoefficient %v",
 							pair.GetPair(), positionVal, minNotional, quantityCoefficient)
 						correctedQuantityUp := quantity
