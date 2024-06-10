@@ -1005,7 +1005,8 @@ func RunFuturesGridTradingV3(
 						risk *futures.PositionRisk,
 						side futures.SideType,
 						tickSizeExp int,
-						stepSizeExp int) (err error) {
+						stepSizeExp int,
+						pairProcessor *PairProcessor) (err error) {
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 						minQuantity := minNotional / currentPrice
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
@@ -1019,16 +1020,6 @@ func RunFuturesGridTradingV3(
 						} else if side == futures.SideTypeBuy && positionVal > 0 {
 							correctedQuantityDown = (quantity-minQuantity)*quantityCoefficient + minQuantity
 						}
-						// if correctedQuantityUp*currentPrice < minNotional {
-						// 	logrus.Debugf("Futures %s: Up Quantity %v * price %v < minNotional %v",
-						// 		pair.GetPair(), correctedQuantityUp, currentPrice, minNotional)
-						// 	correctedQuantityUp = round(minNotional/currentPrice, stepSizeExp)
-						// }
-						// if correctedQuantityDown*currentPrice < minNotional {
-						// 	logrus.Debugf("Futures %s: Down Quantity %v * price %v < minNotional %v",
-						// 		pair.GetPair(), correctedQuantityDown, currentPrice, minNotional)
-						// 	correctedQuantityDown = round(minNotional/currentPrice, stepSizeExp)
-						// }
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
@@ -1068,7 +1059,7 @@ func RunFuturesGridTradingV3(
 						}
 						return nil
 					}
-					err = createNextPair(currentPrice, quantity, minNotional, risk, event.OrderTradeUpdate.Side, tickSizeExp, stepSizeExp)
+					err = createNextPair(currentPrice, quantity, minNotional, risk, event.OrderTradeUpdate.Side, tickSizeExp, stepSizeExp, pairProcessor)
 					if err != nil {
 						return err
 					}
