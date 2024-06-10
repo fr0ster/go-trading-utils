@@ -1008,9 +1008,9 @@ func RunFuturesGridTradingV3(
 						stepSizeExp int,
 						pairProcessor *PairProcessor) (err error) {
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-						minQuantity := minNotional / currentPrice
+						minQuantity := round(minNotional/currentPrice, stepSizeExp)
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-						quantityCoefficient := (pair.GetCurrentPositionBalance() - minNotional - math.Abs(positionVal)) / pair.GetCurrentPositionBalance()
+						quantityCoefficient := (pair.GetCurrentPositionBalance() - minNotional - math.Abs(positionVal)) / (pair.GetCurrentPositionBalance() - minNotional)
 						logrus.Debugf("Futures %s: Position Value %v MinNotional %v, QuantityCoefficient %v",
 							pair.GetPair(), positionVal, minNotional, quantityCoefficient)
 						correctedQuantityUp := quantity
@@ -1023,7 +1023,7 @@ func RunFuturesGridTradingV3(
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-							if correctedQuantityUp > round(minNotional/currentPrice, stepSizeExp) {
+							if correctedQuantityUp >= minQuantity {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, upPrice)
 								if err != nil {
 									printError()
@@ -1031,8 +1031,8 @@ func RunFuturesGridTradingV3(
 								}
 								logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, correctedQuantityUp)
 							} else {
-								logrus.Debugf("Futures %s: Up Corrected Quantity  %v should be more than minNotional %v/currentPrice %v",
-									pair.GetPair(), correctedQuantityUp, minNotional, currentPrice)
+								logrus.Debugf("Futures %s: Up Corrected Quantity  %v should be more than Min Quantity %v == minNotional %v/currentPrice %v",
+									pair.GetPair(), correctedQuantityUp, minQuantity, minNotional, currentPrice)
 
 							}
 						} else {
@@ -1050,8 +1050,8 @@ func RunFuturesGridTradingV3(
 								}
 								logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, correctedQuantityDown)
 							} else {
-								logrus.Debugf("Futures %s: Down Corrected Quantity  %v should be more than minNotional %v/currentPrice %v",
-									pair.GetPair(), correctedQuantityDown, minNotional, currentPrice)
+								logrus.Debugf("Futures %s: Down Corrected Quantity  %v should be more than Min Quantity %v == minNotional %v/currentPrice %v",
+									pair.GetPair(), correctedQuantityDown, minQuantity, minNotional, currentPrice)
 							}
 						} else {
 							logrus.Debugf("Futures %s: downPrice %v less than downBound %v",
