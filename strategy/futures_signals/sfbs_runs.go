@@ -451,6 +451,17 @@ func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
 	}
 }
 
+func getSymbol(
+	pair *pairs_types.Pairs,
+	pairStreams *PairStreams) (res *futures.Symbol, err error) {
+	val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()})
+	if val == nil {
+		printError()
+		return nil, fmt.Errorf("futures %s: Symbol not found", pair.GetPair())
+	}
+	return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
+}
+
 func initVars(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
@@ -468,14 +479,7 @@ func initVars(
 		printError()
 		return
 	}
-	symbol, err = func() (res *futures.Symbol, err error) {
-		val := pairStreams.GetExchangeInfo().GetSymbol(&symbol_info.FuturesSymbol{Symbol: pair.GetPair()})
-		if val == nil {
-			printError()
-			return nil, fmt.Errorf("futures %s: Symbol not found", pair.GetPair())
-		}
-		return val.(*symbol_info.FuturesSymbol).GetFuturesSymbol()
-	}()
+	symbol, err = getSymbol(pair, pairStreams)
 	if err != nil {
 		printError()
 		return
@@ -890,17 +894,23 @@ func RunFuturesGridTradingV3(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		quantity     float64
-		free         float64
-		currentPrice float64
-		risk         *futures.PositionRisk
+		initPrice     float64
+		quantity      float64
+		free          float64
+		currentPrice  float64
+		minNotional   float64
+		tickSizeExp   int
+		stepSizeExp   int
+		pairStreams   *PairStreams
+		pairProcessor *PairProcessor
+		risk          *futures.PositionRisk
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV3)
 	if err != nil {
 		return err
 	}
 	// Створюємо стрім подій
-	pairStreams, pairProcessor, err := initRun(config, client, pair, quit)
+	pairStreams, pairProcessor, err = initRun(config, client, pair, quit)
 	if err != nil {
 		return err
 	}
@@ -909,10 +919,13 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	// Ініціалізація гріду
-	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err := initVars(client, pair, pairStreams)
+	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
+	logrus.Debugf("Futures %s: Initial price %v, Quantity %v, MinNotional %v, TickSizeExp %v, StepSizeExp %v",
+		pair.GetPair(), initPrice, quantity, minNotional, tickSizeExp, stepSizeExp)
+	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
