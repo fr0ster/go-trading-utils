@@ -31,6 +31,7 @@ const (
 	CurrentBalance = 2000.0 // Поточний баланс
 
 	ObservePriceLiquidation    = true // Скасування обмежених ордерів які за лімітом
+	ObservePositionLoss        = true // Скасування збитковоі позиції
 	BalancingOfMargin          = true // Балансування маржі
 	PercentsToLiquidation      = 0.05 // Відсоток до ліквідації
 	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
@@ -249,6 +250,7 @@ func getTestData() []byte {
 			"log_level": "` + InfoLevel.String() + `",
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
+			"observe_position_loss": ` + strconv.FormatBool(ObservePositionLoss) + `,
 			"balancing_of_margin": ` + strconv.FormatBool(BalancingOfMargin) + `,
 			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
@@ -339,6 +341,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
+	assert.Equal(t, ObservePositionLoss, config.GetObservePositionLoss())
 	assert.Equal(t, BalancingOfMargin, config.GetBalancingOfMargin())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
