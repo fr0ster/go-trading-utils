@@ -196,7 +196,8 @@ func (pp *PairProcessor) ClosePosition() (res *futures.CreateOrderResponse, err 
 		Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
 		Type(futures.OrderTypeMarket).
 		Side(side).
-		StopPrice(risk.EntryPrice).
+		Price(risk.BreakEvenPrice).
+		StopPrice(risk.BreakEvenPrice).
 		ClosePosition(true).
 		Do(context.Background())
 }

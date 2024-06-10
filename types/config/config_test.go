@@ -30,12 +30,12 @@ const (
 	InitialBalance = 1000.0 // Початковий баланс
 	CurrentBalance = 2000.0 // Поточний баланс
 
-	ObservePriceLiquidation   = true // Скасування обмежених ордерів які за лімітом
-	BalancingOfMargin         = true // Балансування маржі
-	PercentsToLiquidation     = 0.05 // Відсоток до ліквідації
-	PercentToDecreasePosition = 0.03 // Відсоток для зменшення позиції
-	ObserverTimeOut           = 1000 // Таймаут спостереження
-	UsingBreakEvenPrice       = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
+	ObservePriceLiquidation    = true // Скасування обмежених ордерів які за лімітом
+	BalancingOfMargin          = true // Балансування маржі
+	PercentsToLiquidation      = 0.05 // Відсоток до ліквідації
+	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
+	ObserverTimeOutMillisecond = 1000 // Таймаут спостереження
+	UsingBreakEvenPrice        = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
 
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
@@ -73,6 +73,9 @@ const (
 	LimitOnTransaction_1     = 0.10                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	InitialPositionBalance_1 = InitialBalance * LimitOnPosition_1 // Початковий баланс позиції
 	CurrentPositionBalance_1 = CurrentBalance * LimitOnPosition_1 // Поточний баланс позиції
+
+	UnRealizedProfitLowBound_1 = 0.1 // Нижня межа нереалізованого прибутку
+	UnRealizedProfitUpBound_1  = 0.9 // Верхня межа нереалізованого прибутку
 
 	UpBound_1  = 80000.0 // Верхня межа
 	LowBound_1 = 40000.0 // Нижня межа
@@ -116,6 +119,9 @@ const (
 	LimitOnTransaction_2     = 0.01                               // Ліміт на транзакцію, відсоток від ліміту на позицію
 	InitialPositionBalance_2 = InitialBalance * LimitOnPosition_2 // Початковий баланс позиції
 	CurrentPositionBalance_2 = CurrentBalance * LimitOnPosition_2 // Поточний баланс позиції
+
+	UnRealizedProfitLowBound_2 = 0.1 // Нижня межа нереалізованого прибутку
+	UnRealizedProfitUpBound_2  = 0.9 // Верхня межа нереалізованого прибутку
 
 	UpBound_2  = 14.0 // Верхня межа
 	LowBound_2 = 4.0  // Нижня межа
@@ -164,65 +170,69 @@ var (
 		BalancingOfMargin:             BalancingOfMargin,
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
-		ObserverTimeOut:               ObserverTimeOut,
+		ObserverTimeOutMillisecond:    ObserverTimeOutMillisecond,
 		UsingBreakEvenPrice:           UsingBreakEvenPrice,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		InitialBalance:         InitialBalance,
-		CurrentBalance:         CurrentBalance,
-		AccountType:            AccountType_1,
-		StrategyType:           StrategyType_1,
-		StageType:              StageType_1,
-		Pair:                   Pair_1,
-		TargetSymbol:           TargetSymbol_1,
-		BaseSymbol:             BaseSymbol_1,
-		MarginType:             MarginType_1,
-		Leverage:               Leverage_1,
-		MiddlePrice:            MiddlePrice_1,
-		LimitInputIntoPosition: LimitInputIntoPosition_1,
-		LimitOutputOfPosition:  LimitOutputOfPosition_1,
-		LimitOnPosition:        LimitOnPosition_1,
-		LimitOnTransaction:     LimitOnTransaction_1,
-		UpBound:                UpBound_1,
-		LowBound:               LowBound_1,
-		BuyDelta:               BuyDelta_1,
-		BuyQuantity:            BuyQuantity_1,
-		BuyValue:               BuyValue_1,
-		BuyCommission:          BuyCommission_1,
-		SellDelta:              SellDelta_1,
-		SellQuantity:           SellQuantity_1,
-		SellValue:              SellValue_1,
-		SellCommission:         SellCommission_1,
-		Commission:             Commission,
+		InitialBalance:           InitialBalance,
+		CurrentBalance:           CurrentBalance,
+		AccountType:              AccountType_1,
+		StrategyType:             StrategyType_1,
+		StageType:                StageType_1,
+		Pair:                     Pair_1,
+		TargetSymbol:             TargetSymbol_1,
+		BaseSymbol:               BaseSymbol_1,
+		MarginType:               MarginType_1,
+		Leverage:                 Leverage_1,
+		MiddlePrice:              MiddlePrice_1,
+		LimitInputIntoPosition:   LimitInputIntoPosition_1,
+		LimitOutputOfPosition:    LimitOutputOfPosition_1,
+		LimitOnPosition:          LimitOnPosition_1,
+		LimitOnTransaction:       LimitOnTransaction_1,
+		UnRealizedProfitLowBound: UnRealizedProfitLowBound_1,
+		UnRealizedProfitUpBound:  UnRealizedProfitUpBound_1,
+		UpBound:                  UpBound_1,
+		LowBound:                 LowBound_1,
+		BuyDelta:                 BuyDelta_1,
+		BuyQuantity:              BuyQuantity_1,
+		BuyValue:                 BuyValue_1,
+		BuyCommission:            BuyCommission_1,
+		SellDelta:                SellDelta_1,
+		SellQuantity:             SellQuantity_1,
+		SellValue:                SellValue_1,
+		SellCommission:           SellCommission_1,
+		Commission:               Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
-		InitialBalance:         InitialBalance,
-		CurrentBalance:         CurrentBalance,
-		AccountType:            AccountType_2,
-		StrategyType:           StrategyType_2,
-		StageType:              StageType_2,
-		Pair:                   Pair_2,
-		TargetSymbol:           TargetSymbol_2,
-		BaseSymbol:             BaseSymbol_2,
-		MarginType:             MarginType_2,
-		Leverage:               Leverage_2,
-		MiddlePrice:            MiddlePrice_2,
-		LimitInputIntoPosition: LimitInputIntoPosition_2,
-		LimitOutputOfPosition:  LimitOutputOfPosition_2,
-		LimitOnPosition:        LimitOnPosition_2,
-		LimitOnTransaction:     LimitOnTransaction_2,
-		UpBound:                UpBound_2,
-		LowBound:               LowBound_2,
-		BuyDelta:               BuyDelta_2,
-		BuyQuantity:            BuyQuantity_2,
-		BuyValue:               BuyValue_2,
-		BuyCommission:          BuyCommission_2,
-		SellDelta:              SellDelta_2,
-		SellQuantity:           SellQuantity_2,
-		SellValue:              SellValue_2,
-		SellCommission:         SellCommission_2,
-		Commission:             Commission,
+		InitialBalance:           InitialBalance,
+		CurrentBalance:           CurrentBalance,
+		AccountType:              AccountType_2,
+		StrategyType:             StrategyType_2,
+		StageType:                StageType_2,
+		Pair:                     Pair_2,
+		TargetSymbol:             TargetSymbol_2,
+		BaseSymbol:               BaseSymbol_2,
+		MarginType:               MarginType_2,
+		Leverage:                 Leverage_2,
+		MiddlePrice:              MiddlePrice_2,
+		LimitInputIntoPosition:   LimitInputIntoPosition_2,
+		LimitOutputOfPosition:    LimitOutputOfPosition_2,
+		LimitOnPosition:          LimitOnPosition_2,
+		LimitOnTransaction:       LimitOnTransaction_2,
+		UnRealizedProfitLowBound: UnRealizedProfitLowBound_2,
+		UnRealizedProfitUpBound:  UnRealizedProfitUpBound_2,
+		UpBound:                  UpBound_2,
+		LowBound:                 LowBound_2,
+		BuyDelta:                 BuyDelta_2,
+		BuyQuantity:              BuyQuantity_2,
+		BuyValue:                 BuyValue_2,
+		BuyCommission:            BuyCommission_2,
+		SellDelta:                SellDelta_2,
+		SellQuantity:             SellQuantity_2,
+		SellValue:                SellValue_2,
+		SellCommission:           SellCommission_2,
+		Commission:               Commission,
 	}
 )
 
@@ -242,7 +252,7 @@ func getTestData() []byte {
 			"balancing_of_margin": ` + strconv.FormatBool(BalancingOfMargin) + `,
 			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
-			"observer_timeout": ` + strconv.Itoa(ObserverTimeOut) + `,
+			"observer_timeout_millisecond": ` + strconv.Itoa(ObserverTimeOutMillisecond) + `,
 			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
 			"pairs": [
 				{
@@ -263,6 +273,8 @@ func getTestData() []byte {
 					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
 					"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
+					"unrealized_profit_low_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitLowBound_1, 'f', -1, 64)).String() + `,
+					"unrealized_profit_up_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitUpBound_1, 'f', -1, 64)).String() + `,
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_1, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_1, 'f', -1, 64)).String() + `,
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
@@ -294,6 +306,8 @@ func getTestData() []byte {
 					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 					"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
+					"unrealized_profit_low_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitLowBound_2, 'f', -1, 64)).String() + `,
+					"unrealized_profit_up_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitUpBound_2, 'f', -1, 64)).String() + `,
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_2, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_2, 'f', -1, 64)).String() + `,
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
@@ -328,7 +342,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, BalancingOfMargin, config.GetBalancingOfMargin())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
-	assert.Equal(t, ObserverTimeOut, config.GetObserverTimeOut())
+	assert.Equal(t, ObserverTimeOutMillisecond, config.GetObserverTimeOutMillisecond())
 	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
@@ -352,6 +366,9 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (checkingDate)[0].GetLimitOnPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[0].GetLimitOnTransaction(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnTransaction())
+
+	assert.Equal(t, (checkingDate)[0].GetUnRealizedProfitLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUnRealizedProfitLowBound())
+	assert.Equal(t, (checkingDate)[0].GetUnRealizedProfitUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUnRealizedProfitUpBound())
 
 	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpBound())
 	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
@@ -379,14 +396,17 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetPair(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetPair())
 	assert.Equal(t, (checkingDate)[1].GetTargetSymbol(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetTargetSymbol())
 	assert.Equal(t, (checkingDate)[1].GetBaseSymbol(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBaseSymbol())
-	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMarginType())
-	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLeverage())
+	assert.Equal(t, (checkingDate)[1].GetMarginType(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMarginType())
+	assert.Equal(t, (checkingDate)[1].GetLeverage(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLeverage())
 
 	assert.Equal(t, (checkingDate)[1].GetMiddlePrice(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMiddlePrice())
 	assert.Equal(t, (checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitInputIntoPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOnPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOnTransaction(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnTransaction())
+
+	assert.Equal(t, (checkingDate)[1].GetUnRealizedProfitLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUnRealizedProfitLowBound())
+	assert.Equal(t, (checkingDate)[1].GetUnRealizedProfitUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUnRealizedProfitUpBound())
 
 	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpBound())
 	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())

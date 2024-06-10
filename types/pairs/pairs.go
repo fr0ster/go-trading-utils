@@ -75,9 +75,6 @@ type (
 		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
 		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
 
-		// InitialPositionBalance float64 `json:"initial_position_balance"` // Початковий баланс позиції
-		// CurrentPositionBalance float64 `json:"current_position_balance"` // Поточний баланс позиції
-
 		MiddlePrice float64 `json:"middle_price"` // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
@@ -92,8 +89,11 @@ type (
 		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		UpBound  float64 `json:"up_bound"`  // Верхня межа
-		LowBound float64 `json:"low_bound"` // Нижня межа
+		UnRealizedProfitLowBound float64 `json:"unrealized_profit_low_bound"` // Нижня (відсоток від ліміту на позицію) межа нереалізованого прибутку
+		UnRealizedProfitUpBound  float64 `json:"unrealized_profit_up_bound"`  // Верхня межа нереалізованого прибутку
+
+		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
+		LowBound float64 `json:"low_bound"` // Нижня межа ціни
 
 		BuyDelta       float64            `json:"buy_delta"`       // Дельта для купівлі
 		BuyQuantity    float64            `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
@@ -235,6 +235,14 @@ func (pr *Pairs) GetLimitOnPosition() float64 {
 
 func (pr *Pairs) GetLimitOnTransaction() float64 {
 	return pr.LimitOnTransaction
+}
+
+func (pr *Pairs) GetUnRealizedProfitLowBound() float64 {
+	return pr.UnRealizedProfitLowBound
+}
+
+func (pr *Pairs) GetUnRealizedProfitUpBound() float64 {
+	return pr.UnRealizedProfitUpBound
 }
 
 func (pr *Pairs) GetUpBound() float64 {
@@ -382,7 +390,8 @@ func (pr *Pairs) CheckingPair() bool {
 	return pr.MiddlePrice != 0 &&
 		pr.LimitInputIntoPosition != 0 &&
 		pr.LimitOutputOfPosition != 0 &&
-		pr.LimitInputIntoPosition < pr.LimitOutputOfPosition
+		pr.LimitInputIntoPosition < pr.LimitOutputOfPosition &&
+		pr.UnRealizedProfitLowBound < pr.UnRealizedProfitUpBound
 }
 
 func New(
@@ -395,24 +404,26 @@ func New(
 	baseSymbol string,
 ) *Pairs {
 	return &Pairs{
-		InitialBalance:         0.0,
-		CurrentBalance:         0.0,
-		AccountType:            accountType,
-		StrategyType:           strategyType,
-		StageType:              stageType,
-		Pair:                   pair,
-		TargetSymbol:           targetSymbol,
-		BaseSymbol:             baseSymbol,
-		LimitInputIntoPosition: 0.1,
-		LimitOutputOfPosition:  0.5,
-		LimitOnPosition:        1.0,
-		LimitOnTransaction:     0.01,
-		BuyDelta:               0.01,
-		BuyQuantity:            0.0,
-		BuyValue:               0.0,
-		SellDelta:              0.05,
-		SellQuantity:           0.0,
-		SellValue:              0.0,
-		Commission:             Commission{},
+		InitialBalance:           0.0,
+		CurrentBalance:           0.0,
+		AccountType:              accountType,
+		StrategyType:             strategyType,
+		StageType:                stageType,
+		Pair:                     pair,
+		TargetSymbol:             targetSymbol,
+		BaseSymbol:               baseSymbol,
+		LimitInputIntoPosition:   0.1,
+		LimitOutputOfPosition:    0.5,
+		LimitOnPosition:          1.0,
+		LimitOnTransaction:       0.01,
+		UnRealizedProfitLowBound: 0.1,
+		UnRealizedProfitUpBound:  1,
+		BuyDelta:                 0.01,
+		BuyQuantity:              0.0,
+		BuyValue:                 0.0,
+		SellDelta:                0.05,
+		SellQuantity:             0.0,
+		SellValue:                0.0,
+		Commission:               Commission{},
 	}
 }

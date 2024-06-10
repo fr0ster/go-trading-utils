@@ -37,6 +37,9 @@ type (
 		GetLimitOnPosition() float64
 		GetLimitOnTransaction() float64
 
+		GetUnRealizedProfitLowBound() float64
+		GetUnRealizedProfitUpBound() float64
+
 		GetUpBound() float64
 		GetLowBound() float64
 

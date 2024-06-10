@@ -20,10 +20,11 @@ type (
 		LogLevel                      logrus.Level                 `json:"log_level"`
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss           bool                         `json:"observe_position_loss"`
 		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut               int                          `json:"observer_timeout"`
+		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
 		Pairs                         *btree.BTree
 	}
@@ -50,6 +51,10 @@ func (cf *Configs) GetObservePriceLiquidation() bool {
 	return cf.ObservePriceLiquidation
 }
 
+func (cf *Configs) GetObservePositionLoss() bool {
+	return cf.ObservePositionLoss
+}
+
 func (cf *Configs) GetPercentsToStopSettingNewOrder() float64 {
 	return cf.PercentsToStopSettingNewOrder
 }
@@ -62,8 +67,8 @@ func (cf *Configs) GetBalancingOfMargin() bool {
 	return cf.BalancingOfMargin
 }
 
-func (cf *Configs) GetObserverTimeOut() int {
-	return cf.ObserverTimeOut
+func (cf *Configs) GetObserverTimeOutMillisecond() int {
+	return cf.ObserverTimeOutMillisecond
 }
 
 func (cf *Configs) GetUsingBreakEvenPrice() bool {
@@ -134,20 +139,22 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		LogLevel                  string                       `json:"log_level"`
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss       bool                         `json:"observe_position_loss"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut           int                          `json:"observer_timeout"`
+		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:                c.Connection,
 		LogLevel:                  c.LogLevel.String(),
 		ReloadConfig:              c.ReloadConfig,
 		ObservePriceLiquidation:   c.ObservePriceLiquidation,
+		ObservePositionLoss:       c.ObservePositionLoss,
 		BalancingOfMargin:         c.BalancingOfMargin,
 		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
 		PercentToDecreasePosition: c.PercentToDecreasePosition,
-		ObserverTimeOut:           c.ObserverTimeOut,
+		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
 		Pairs:                     pairs,
 	}, "", "  ")
 }
@@ -158,10 +165,11 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		LogLevel                  string                       `json:"log_level"`
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss       bool                         `json:"observe_position_loss"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut           int                          `json:"observer_timeout"`
+		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -182,10 +190,11 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
+	c.ObservePositionLoss = temp.ObservePositionLoss
 	c.BalancingOfMargin = temp.BalancingOfMargin
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
-	c.ObserverTimeOut = temp.ObserverTimeOut
+	c.ObserverTimeOutMillisecond = temp.ObserverTimeOut
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -201,9 +210,11 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		LogLevel:                      logrus.InfoLevel,
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
+		ObservePositionLoss:           false,
 		PercentsToStopSettingNewOrder: 0.05,
 		PercentToDecreasePosition:     0.03,
-		ObserverTimeOut:               1000,
+		ObserverTimeOutMillisecond:    1000,
+		UsingBreakEvenPrice:           false,
 		Pairs:                         btree.New(2),
 	}
 }

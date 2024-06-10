@@ -533,7 +533,40 @@ func initFirstPairOfOrders(
 	return
 }
 
-// func initGrid
+func getPrice(
+	client *futures.Client,
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
+	tickSizeExp int,
+	originalPrice float64) (currentPrice float64) {
+	if config.GetConfigurations().GetUsingBreakEvenPrice() {
+		if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
+			currentPrice = round(val, tickSizeExp)
+			logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
+				pair.GetPair(), risk.BreakEvenPrice)
+		} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
+			currentPrice = round(val, tickSizeExp)
+			logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
+		} else {
+			currentPrice = round(originalPrice, tickSizeExp)
+			logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
+				pair.GetPair(), currentPrice)
+		}
+	} else {
+		if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
+			currentPrice = round(val, tickSizeExp)
+			logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
+				pair.GetPair(), currentPrice)
+		} else if val := round(originalPrice, tickSizeExp); val != 0 {
+			currentPrice = val
+		} else {
+			val, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+			currentPrice = round(val, tickSizeExp)
+		}
+	}
+	return
+}
 
 func marginBalancing(
 	config *config_types.ConfigFile,
@@ -621,6 +654,42 @@ func liquidationObservation(
 		}
 	}
 	return
+}
+
+func positionLossObservation(
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
+	pairProcessor *PairProcessor,
+	price float64) (err error) {
+	// Обробка наближення ліквідаціі
+	if config.GetConfigurations().GetObservePositionLoss() &&
+		utils.ConvStrToFloat64(risk.UnRealizedProfit) < pair.GetUnRealizedProfitLowBound() {
+		logrus.Debugf("Futures %s: UnRealizedProfit %v < UnRealizedProfitLowBound %v",
+			pair.GetPair(), utils.ConvStrToFloat64(risk.UnRealizedProfit), pair.GetUnRealizedProfitLowBound())
+		if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+			_, err = pairProcessor.CreateOrder(
+				futures.OrderTypeTakeProfit, // orderType
+				futures.SideTypeBuy,         // sideType
+				futures.TimeInForceTypeGTC,  // timeInForce
+				0,                           // quantity
+				true,                        // closePosition
+				price,                       // price
+				0,                           // stopPrice
+				0)                           // callbackRate
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+			_, err = pairProcessor.CreateOrder(
+				futures.OrderTypeTakeProfit, // orderType
+				futures.SideTypeBuy,         // sideType
+				futures.TimeInForceTypeGTC,  // timeInForce
+				0,                           // quantity
+				true,                        // closePosition
+				price,                       // price
+				price,                       // stopPrice
+				0)                           // callbackRate
+		}
+	}
+	return err
 }
 
 func initGrid(
@@ -962,29 +1031,8 @@ func RunFuturesGridTradingV3(
 					}
 					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 						pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
-					if config.GetConfigurations().GetUsingBreakEvenPrice() {
-						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
-							currentPrice = round(val, tickSizeExp)
-							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
-								pair.GetPair(), risk.BreakEvenPrice)
-						} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
-							currentPrice = round(val, tickSizeExp)
-							logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
-						} else {
-							currentPrice = round(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice), tickSizeExp)
-							logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
-								pair.GetPair(), currentPrice)
-						}
-					} else {
-						if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
-							currentPrice = round(val, tickSizeExp)
-							logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
-								pair.GetPair(), currentPrice)
-						} else {
-							val, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-							currentPrice = round(val, tickSizeExp)
-						}
-					}
+					// Визначаємо поточну ціну
+					currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
 					// Балансування маржі як треба
 					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
 					if err != nil {
@@ -1067,6 +1115,32 @@ func RunFuturesGridTradingV3(
 						return err
 					}
 				}
+			}
+		case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
+			risk, err = pairProcessor.GetPositionRisk()
+			if err != nil {
+				printError()
+				return
+			}
+			logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
+				pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+			// Визначаємо поточну ціну
+			currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
+			// Балансування маржі як треба
+			err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+			if err != nil {
+				printError()
+				return err
+			}
+			// Обробка наближення ліквідаціі
+			err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
+			if err != nil {
+				return err
+			}
+			// Обробка втрат по поточній позиції
+			err = positionLossObservation(config, pair, risk, pairProcessor, currentPrice)
+			if err != nil {
+				return err
 			}
 		}
 	}

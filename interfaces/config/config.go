@@ -26,12 +26,13 @@ type (
 		GetReloadConfig() bool
 
 		GetObservePriceLiquidation() bool
+		GetObservePositionLoss() bool
 		GetPercentsToStopSettingNewOrder() float64
 		GetPercentToDecreasePosition() float64
 
 		GetBalancingOfMargin() bool
 
-		GetObserverTimeOut() int
+		GetObserverTimeOutMillisecond() int
 
 		GetUsingBreakEvenPrice() bool
 	}
