@@ -1185,8 +1185,6 @@ func RunFuturesGridTradingV3(
 				printError()
 				return
 			}
-			logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
-				pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
 			// Визначаємо поточну ціну
 			if val, err := GetPrice(client, pair.GetPair()); err == nil { // Отримання ціни по ринку для пари
 				currentPrice = round(val, tickSizeExp)
