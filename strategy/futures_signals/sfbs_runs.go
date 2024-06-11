@@ -672,10 +672,10 @@ func positionLossObservation(
 		// Позиція від'ємна
 		utils.ConvStrToFloat64(risk.UnRealizedProfit) < 0 &&
 		// Позиція більша за встановлений ліміт, тобто потенційна втрата більша за встановлений ліміт
-		math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) < pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()) {
+		math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()) {
 		logrus.Debugf("Futures %s: UnRealizedProfit %v < CurrentPositionBalance %v * (1+UnRealizedProfitLowBound %v ) %v",
 			pair.GetPair(),
-			utils.ConvStrToFloat64(risk.UnRealizedProfit),
+			math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)),
 			pair.GetCurrentPositionBalance(),
 			pair.GetUnRealizedProfitLowBound(),
 			pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()))
