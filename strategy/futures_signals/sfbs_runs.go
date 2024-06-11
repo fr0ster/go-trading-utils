@@ -667,19 +667,29 @@ func positionLossObservation(
 	var (
 		side futures.SideType
 	)
-	// Обробка наближення ліквідаціі
+	// Обробка втрат по позиції
 	if config.GetConfigurations().GetObservePositionLoss() &&
-		utils.ConvStrToFloat64(risk.UnRealizedProfit) < pair.GetUnRealizedProfitLowBound() {
-		logrus.Debugf("Futures %s: UnRealizedProfit %v < UnRealizedProfitLowBound %v",
-			pair.GetPair(), utils.ConvStrToFloat64(risk.UnRealizedProfit), pair.GetUnRealizedProfitLowBound())
+		utils.ConvStrToFloat64(risk.UnRealizedProfit) < pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()) {
+		logrus.Debugf("Futures %s: UnRealizedProfit %v < CurrentPositionBalance %v * (1+UnRealizedProfitLowBound %v ) %v",
+			pair.GetPair(),
+			utils.ConvStrToFloat64(risk.UnRealizedProfit),
+			pair.GetCurrentPositionBalance(),
+			pair.GetUnRealizedProfitLowBound(),
+			pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()))
+		// Скасовуємо всі ордери
 		pairProcessor.CancelAllOrders()
 		if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			side = futures.SideTypeSell
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			side = futures.SideTypeBuy
 		}
-		pairProcessor.ClosePosition(side, price, tickSizeExp)
-		// Створюємо початкові ордери на продаж та купівлю
+		// Закриваємо позицію
+		_, err = pairProcessor.ClosePosition(side, price, tickSizeExp)
+		if err != nil {
+			printError()
+			return err
+		}
+		// Створюємо початкові ордери на продаж та купівлю з новими цінами
 		_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
 		if err != nil {
 			return err
@@ -1050,11 +1060,12 @@ func RunFuturesGridTradingV3(
 						side futures.SideType,
 						tickSizeExp int,
 						stepSizeExp int,
+						positionLimit float64,
 						pairProcessor *PairProcessor) (err error) {
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 						minQuantity := round(minNotional/currentPrice, stepSizeExp)
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-						quantityCoefficient := (pair.GetCurrentPositionBalance() - minNotional - math.Abs(positionVal)) / (pair.GetCurrentPositionBalance() - minNotional)
+						quantityCoefficient := (positionLimit - minNotional - math.Abs(positionVal)) / (positionLimit - minNotional)
 						if quantityCoefficient < 0 {
 							quantityCoefficient = 0
 						}
@@ -1106,7 +1117,16 @@ func RunFuturesGridTradingV3(
 						}
 						return nil
 					}
-					err = createNextPair(currentPrice, quantity, minNotional, risk, event.OrderTradeUpdate.Side, tickSizeExp, stepSizeExp, pairProcessor)
+					err = createNextPair(
+						currentPrice,
+						quantity,
+						minNotional,
+						risk,
+						event.OrderTradeUpdate.Side,
+						tickSizeExp,
+						stepSizeExp,
+						pair.GetCurrentPositionBalance(),
+						pairProcessor)
 					if err != nil {
 						return err
 					}

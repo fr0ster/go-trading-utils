@@ -89,8 +89,11 @@ type (
 		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		UnRealizedProfitLowBound float64 `json:"unrealized_profit_low_bound"` // Нижня (відсоток від ліміту на позицію) межа нереалізованого прибутку
-		UnRealizedProfitUpBound  float64 `json:"unrealized_profit_up_bound"`  // Верхня межа нереалізованого прибутку
+		// Нижня (відсоток від ліміту на позицію) межа нереалізованого прибутку (відсоток від середньої ціни)
+		// Використовуется як CurrentBalance * LimitOnPosition * (1 + UnRealizedProfitLowBound)
+		UnRealizedProfitLowBound float64 `json:"unrealized_profit_low_bound"`
+		// Використовуется як CurrentBalance * LimitOnPosition * (1 + UnRealizedProfitUpBound)
+		UnRealizedProfitUpBound float64 `json:"unrealized_profit_up_bound"` // Верхня межа нереалізованого прибутку
 
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
