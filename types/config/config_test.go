@@ -207,7 +207,7 @@ var (
 		SellQuantity:             SellQuantity_1,
 		SellValue:                SellValue_1,
 		SellCommission:           SellCommission_1,
-		DeltaStep:                DeltaStep_1,
+		DeltaStepPerMille:        DeltaStep_1,
 		Commission:               Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
@@ -238,7 +238,7 @@ var (
 		SellQuantity:             SellQuantity_2,
 		SellValue:                SellValue_2,
 		SellCommission:           SellCommission_2,
-		DeltaStep:                DeltaStep_2,
+		DeltaStepPerMille:        DeltaStep_2,
 		Commission:               Commission,
 	}
 )
@@ -396,7 +396,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
 	assert.Equal(t, (checkingDate)[0].GetSellCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellCommission())
 
-	assert.Equal(t, (checkingDate)[0].GetDeltaStep(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetDeltaStep())
+	assert.Equal(t, (checkingDate)[0].GetDeltaStepPerMille(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetDeltaStepPerMille())
 
 	assert.Equal(t, (checkingDate)[1].GetInitialBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[1].GetCurrentBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCurrentBalance())
@@ -436,7 +436,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
 	assert.Equal(t, (checkingDate)[1].GetSellCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellCommission())
 
-	assert.Equal(t, (checkingDate)[1].GetDeltaStep(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetDeltaStep())
+	assert.Equal(t, (checkingDate)[1].GetDeltaStepPerMille(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetDeltaStepPerMille())
 
 }
 

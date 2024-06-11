@@ -37,7 +37,7 @@ func getTestData() *btree.BTree {
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
-		DeltaStep:                0.01,
+		DeltaStepPerMille:        0.01,
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
@@ -69,7 +69,7 @@ func getTestData() *btree.BTree {
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
-		DeltaStep:                0.01,
+		DeltaStepPerMille:        0.01,
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
@@ -144,7 +144,7 @@ func assertPair(
 	assert.Equal(t, 0.05, pair.GetSellDelta())
 
 	// Test GetDeltaStep
-	assert.Equal(t, 0.01, pair.GetDeltaStep())
+	assert.Equal(t, 0.01, pair.GetDeltaStepPerMille())
 
 	// Test GetBuyQuantity
 	assert.Equal(t, 0.3, pair.GetBuyQuantity())

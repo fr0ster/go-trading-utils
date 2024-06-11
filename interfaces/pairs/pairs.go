@@ -57,7 +57,7 @@ type (
 		SetBuyQuantity(float64)
 		SetSellQuantity(float64)
 
-		SetDeltaStep(float64)
+		SetDeltaStepPerMille(float64)
 
 		SetBuyValue(float64)
 		SetSellValue(float64)

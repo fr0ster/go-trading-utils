@@ -109,8 +109,10 @@ type (
 		// Крок дельти, як ціна рухається тіко в один бік і позиція збільшується в абсолютному значенні,
 		// то збільшуємо відповідну дельту на зазначений крок, якшо нуль,
 		// то вираховуємо дельту автоматично відповідно відстани позиції до ліміту
-		DeltaStep  float64            `json:"delta_step"`
-		Commission map[string]float64 `json:"commission"` // Комісія
+		// При використанні дельти, ділимо значення на 1000, щоб вирахувати відсоток,
+		// бо використовуємо проценти а в конфігурації вказуємо проміле
+		DeltaStepPerMille float64            `json:"delta_step"`
+		Commission        map[string]float64 `json:"commission"` // Комісія
 	}
 )
 
@@ -260,12 +262,12 @@ func (pr *Pairs) GetLowBound() float64 {
 	return pr.LowBound
 }
 
-func (pr *Pairs) GetDeltaStep() float64 {
-	return pr.DeltaStep
+func (pr *Pairs) GetDeltaStepPerMille() float64 {
+	return pr.DeltaStepPerMille
 }
 
-func (pr *Pairs) SetDeltaStep(deltaStep float64) {
-	pr.DeltaStep = deltaStep
+func (pr *Pairs) SetDeltaStepPerMille(deltaStep float64) {
+	pr.DeltaStepPerMille = deltaStep
 }
 
 func (pr *Pairs) GetBuyDelta() float64 {
@@ -439,7 +441,7 @@ func New(
 		SellDelta:                0.05,
 		SellQuantity:             0.0,
 		SellValue:                0.0,
-		DeltaStep:                0.0,
+		DeltaStepPerMille:        0.0,
 		Commission:               Commission{},
 	}
 }

@@ -996,7 +996,7 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	// Ініціалізація гріду
-	oldDeltaStep = pair.GetDeltaStep()
+	oldDeltaStep = pair.GetDeltaStepPerMille()
 	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -1108,18 +1108,18 @@ func RunFuturesGridTradingV3(
 								// то відновлюємо кількість на новому ордері на купівлю
 								correctedQuantityDown = quantity
 								// А шаг до нової ціни повертаємо до дефолтного
-								deltaStepDown = pair.GetDeltaStep()
+								deltaStepDown = pair.GetDeltaStepPerMille()
 							} else if side == futures.SideTypeBuy && positionVal < oldPositionVal && positionVal > 0 {
 								// Якщо позиція позитивна, а виконаний ордер зменьшує значення позиції
 								// Якщо позиція від'ємна, а виконаний ордер збільшує значення позиції
 								// то відновлюємо кількість на новому ордері на купівлю
 								correctedQuantityDown = quantity
 								// А шаг до нової ціни повертаємо до дефолтного
-								deltaStepDown = pair.GetDeltaStep()
+								deltaStepDown = pair.GetDeltaStepPerMille()
 							}
 						}
 						// Створюємо ордер на продаж
-						upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp), tickSizeExp)
+						upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 							if correctedQuantityUp >= minQuantity {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, upPrice)
@@ -1138,7 +1138,7 @@ func RunFuturesGridTradingV3(
 								pair.GetPair(), upPrice, pair.GetUpBound())
 						}
 						// Створюємо ордер на купівлю
-						downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown), tickSizeExp)
+						downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 						if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 							if correctedQuantityDown > round(minNotional/currentPrice, stepSizeExp) {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, downPrice)
