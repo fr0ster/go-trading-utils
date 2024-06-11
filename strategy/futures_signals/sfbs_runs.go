@@ -969,16 +969,18 @@ func RunFuturesGridTradingV3(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		initPrice     float64
-		quantity      float64
-		free          float64
-		currentPrice  float64
-		minNotional   float64
-		tickSizeExp   int
-		stepSizeExp   int
-		pairStreams   *PairStreams
-		pairProcessor *PairProcessor
-		risk          *futures.PositionRisk
+		initPrice      float64
+		quantity       float64
+		free           float64
+		currentPrice   float64
+		minNotional    float64
+		tickSizeExp    int
+		stepSizeExp    int
+		oldPositionVal float64
+		oldDeltaStep   float64
+		pairStreams    *PairStreams
+		pairProcessor  *PairProcessor
+		risk           *futures.PositionRisk
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV3)
 	if err != nil {
@@ -994,6 +996,7 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	// Ініціалізація гріду
+	oldDeltaStep = pair.GetDeltaStep()
 	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -1061,9 +1064,14 @@ func RunFuturesGridTradingV3(
 						tickSizeExp int,
 						stepSizeExp int,
 						positionLimit float64,
-						pairProcessor *PairProcessor) (err error) {
+						oldPositionVal float64,
+						oldDeltaStep float64,
+						pairProcessor *PairProcessor) (saveOldPositionVal, saveOldDeltaStep float64, err error) {
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 						minQuantity := round(minNotional/currentPrice, stepSizeExp)
+						deltaStep := oldDeltaStep
+						deltaStepUp := 1.0
+						deltaStepDown := 1.0
 						// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
 						quantityCoefficient := (positionLimit - minNotional - math.Abs(positionVal)) / (positionLimit - minNotional)
 						if quantityCoefficient < 0 {
@@ -1071,21 +1079,53 @@ func RunFuturesGridTradingV3(
 						}
 						logrus.Debugf("Futures %s: Position Value %v MinNotional %v, QuantityCoefficient %v",
 							pair.GetPair(), positionVal, minNotional, quantityCoefficient)
+						// Ставимо дефолтну кількість
 						correctedQuantityUp := quantity
 						correctedQuantityDown := quantity
-						if side == futures.SideTypeSell && positionVal < 0 {
-							correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-						} else if side == futures.SideTypeBuy && positionVal > 0 {
-							correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+						if config.GetConfigurations().GetDynamicDelta() {
+							if side == futures.SideTypeSell && positionVal < oldPositionVal && positionVal < 0 {
+								// Якщо позиція від'ємна, а виконаний ордер зменьшує значення позиції
+								// то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+								correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepUp = deltaStep
+								} else {
+									deltaStepUp = quantityCoefficient
+								}
+							} else if side == futures.SideTypeBuy && positionVal > oldPositionVal && positionVal > 0 {
+								// Якщо позиція позитивна, а виконаний ордер збільшує значення позиції
+								// то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+								correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepDown = deltaStep
+								} else {
+									deltaStepDown = quantityCoefficient
+								}
+							} else if side == futures.SideTypeSell && positionVal > oldPositionVal && positionVal < 0 {
+								// Якщо позиція від'ємна, а виконаний ордер збільшує значення позиції
+								// то відновлюємо кількість на новому ордері на купівлю
+								correctedQuantityDown = quantity
+								// А шаг до нової ціни повертаємо до дефолтного
+								deltaStepDown = pair.GetDeltaStep()
+							} else if side == futures.SideTypeBuy && positionVal < oldPositionVal && positionVal > 0 {
+								// Якщо позиція позитивна, а виконаний ордер зменьшує значення позиції
+								// Якщо позиція від'ємна, а виконаний ордер збільшує значення позиції
+								// то відновлюємо кількість на новому ордері на купівлю
+								correctedQuantityDown = quantity
+								// А шаг до нової ціни повертаємо до дефолтного
+								deltaStepDown = pair.GetDeltaStep()
+							}
 						}
 						// Створюємо ордер на продаж
-						upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+						upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 							if correctedQuantityUp >= minQuantity {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, upPrice)
 								if err != nil {
 									printError()
-									return err
+									return
 								}
 								logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, correctedQuantityUp)
 							} else {
@@ -1098,13 +1138,13 @@ func RunFuturesGridTradingV3(
 								pair.GetPair(), upPrice, pair.GetUpBound())
 						}
 						// Створюємо ордер на купівлю
-						downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+						downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown), tickSizeExp)
 						if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 							if correctedQuantityDown > round(minNotional/currentPrice, stepSizeExp) {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, downPrice)
 								if err != nil {
 									printError()
-									return err
+									return
 								}
 								logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, correctedQuantityDown)
 							} else {
@@ -1115,9 +1155,11 @@ func RunFuturesGridTradingV3(
 							logrus.Debugf("Futures %s: downPrice %v less than downBound %v",
 								pair.GetPair(), downPrice, pair.GetLowBound())
 						}
-						return nil
+						saveOldPositionVal = positionVal
+						saveOldDeltaStep = deltaStep
+						return
 					}
-					err = createNextPair(
+					oldPositionVal, oldDeltaStep, err = createNextPair(
 						currentPrice,
 						quantity,
 						minNotional,
@@ -1126,6 +1168,8 @@ func RunFuturesGridTradingV3(
 						tickSizeExp,
 						stepSizeExp,
 						pair.GetCurrentPositionBalance(),
+						oldPositionVal,
+						oldDeltaStep,
 						pairProcessor)
 					if err != nil {
 						return err

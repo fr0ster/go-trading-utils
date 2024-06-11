@@ -26,6 +26,7 @@ type (
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
+		DynamicDelta                  bool                         `json:"dynamic_delta"`
 		Pairs                         *btree.BTree
 	}
 )
@@ -73,6 +74,10 @@ func (cf *Configs) GetObserverTimeOutMillisecond() int {
 
 func (cf *Configs) GetUsingBreakEvenPrice() bool {
 	return cf.UsingBreakEvenPrice
+}
+
+func (cf *Configs) GetDynamicDelta() bool {
+	return cf.DynamicDelta
 }
 
 // Implement the GetPair method
@@ -144,6 +149,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
+		DynamicDelta              bool                         `json:"dynamic_delta"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:                c.Connection,
@@ -155,6 +162,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
 		PercentToDecreasePosition: c.PercentToDecreasePosition,
 		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
+		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
+		DynamicDelta:              c.DynamicDelta,
 		Pairs:                     pairs,
 	}, "", "  ")
 }
@@ -170,6 +179,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
+		DynamicDelta              bool                         `json:"dynamic_delta"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -195,6 +206,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOutMillisecond = temp.ObserverTimeOut
+	c.UsingBreakEvenPrice = temp.UsingBreakEvenPrice
+	c.DynamicDelta = temp.DynamicDelta
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -215,6 +228,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOutMillisecond:    1000,
 		UsingBreakEvenPrice:           false,
+		DynamicDelta:                  false,
 		Pairs:                         btree.New(2),
 	}
 }

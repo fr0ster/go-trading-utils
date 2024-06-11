@@ -35,6 +35,8 @@ type (
 		GetObserverTimeOutMillisecond() int
 
 		GetUsingBreakEvenPrice() bool
+
+		GetDynamicDelta() bool
 	}
 	ConfigurationFile interface {
 		GetFileName() string
