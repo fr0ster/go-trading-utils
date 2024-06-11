@@ -37,6 +37,7 @@ const (
 	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
 	ObserverTimeOutMillisecond = 1000 // Таймаут спостереження
 	UsingBreakEvenPrice        = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
+	DynamicDelta               = true // Динамічна дельта та кількість
 
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
@@ -261,6 +262,7 @@ func getTestData() []byte {
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout_millisecond": ` + strconv.Itoa(ObserverTimeOutMillisecond) + `,
 			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
+			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -354,6 +356,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 	assert.Equal(t, ObserverTimeOutMillisecond, config.GetObserverTimeOutMillisecond())
 	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
+	assert.Equal(t, DynamicDelta, config.GetDynamicDelta())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())
