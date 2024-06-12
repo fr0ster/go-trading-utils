@@ -1062,12 +1062,15 @@ func RunFuturesGridTradingV3(
 						quantity float64,
 						minNotional float64,
 						risk *futures.PositionRisk,
-						side futures.SideType,
 						tickSizeExp int,
 						stepSizeExp int,
 						positionLimit float64,
 						oldDeltaStep float64,
 						pairProcessor *PairProcessor) (saveOldDeltaStep float64, err error) {
+						var (
+							correctedQuantityUp   float64
+							correctedQuantityDown float64
+						)
 						positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 						minQuantity := round(minNotional/currentPrice, stepSizeExp)
 						deltaStep := oldDeltaStep
@@ -1081,42 +1084,43 @@ func RunFuturesGridTradingV3(
 						logrus.Debugf("Futures %s: Position Value %v MinNotional %v, QuantityCoefficient %v",
 							pair.GetPair(), positionVal, minNotional, quantityCoefficient)
 						// Ставимо дефолтну кількість
-						correctedQuantityUp := quantity
-						correctedQuantityDown := quantity
+						correctedQuantityUp = quantity
+						correctedQuantityDown = quantity
 						if config.GetConfigurations().GetDynamicDelta() {
-							if side == futures.SideTypeSell {
-								if positionVal < 0 {
-									// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
-									correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-									// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-									if deltaStep != 0 {
-										deltaStepUp = deltaStep
-									} else {
-										deltaStepUp = quantityCoefficient
-									}
+							if positionVal < 0 {
+								// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+								correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepUp = deltaStep
 								} else {
-									// Інакше відновлюємо кількість на новому ордері на купівлю
-									correctedQuantityDown = quantity
-									// А шаг до нової ціни повертаємо до дефолтного
-									deltaStepDown = pair.GetDeltaStepPerMille()
+									deltaStepUp = quantityCoefficient
 								}
-							} else if side == futures.SideTypeBuy {
-								if positionVal > 0 {
-									// Якщо позиція позитивна,
-									// то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
-									correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-									// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-									if deltaStep != 0 {
-										deltaStepDown = deltaStep
-									} else {
-										deltaStepDown = quantityCoefficient
-									}
+								// // Та відновлюємо кількість на новому ордері на купівлю
+								// correctedQuantityDown = quantity
+								// // Та шаг до нової ціни повертаємо до дефолтного
+								// deltaStepDown = pair.GetDeltaStepPerMille()
+							} else if positionVal > 0 {
+								// Якщо позиція позитивна,
+								// то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
+								correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepDown = deltaStep
 								} else {
-									// Інакше то відновлюємо кількість на новому ордері на продаж
-									correctedQuantityDown = quantity
-									// А шаг до нової ціни повертаємо до дефолтного
-									deltaStepDown = pair.GetDeltaStepPerMille()
+									deltaStepDown = quantityCoefficient
 								}
+								// // Інакше то відновлюємо кількість на новому ордері на продаж
+								// correctedQuantityUp = quantity
+								// // А шаг до нової ціни повертаємо до дефолтного
+								// deltaStepUp = pair.GetDeltaStepPerMille()
+								// } else {
+								// 	// Якщо позиція нейтральна, то просто ставимо дефолтну кількість
+								// 	correctedQuantityUp = quantity
+								// 	correctedQuantityDown = quantity
+								// 	// І шаг до нової ціни повертаємо до дефолтного
+								// 	deltaStepUp = pair.GetDeltaStepPerMille()
+								// 	deltaStepDown = pair.GetDeltaStepPerMille()
 							}
 						}
 						// Створюємо ордер на продаж
@@ -1168,7 +1172,6 @@ func RunFuturesGridTradingV3(
 						quantity,
 						minNotional,
 						risk,
-						event.OrderTradeUpdate.Side,
 						tickSizeExp,
 						stepSizeExp,
 						pair.GetCurrentPositionBalance(),
