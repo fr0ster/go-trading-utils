@@ -507,7 +507,6 @@ func initVars(
 
 func initFirstPairOfOrders(
 	pair *pairs_types.Pairs,
-	// grid *grid_types.Grid,
 	price float64,
 	quantity float64,
 	tickSizeExp int,
@@ -997,8 +996,11 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	// Ініціалізація гріду
-	oldDeltaStep = pair.GetDeltaStepPerMille()
+	if config.GetConfigurations().GetDynamicDelta() {
+		oldDeltaStep = pair.GetDeltaStepPerMille()
+	} else {
+		oldDeltaStep = 1.0
+	}
 	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
@@ -1086,29 +1088,27 @@ func RunFuturesGridTradingV3(
 						// Ставимо дефолтну кількість
 						correctedQuantityUp = quantity
 						correctedQuantityDown = quantity
-						if config.GetConfigurations().GetDynamicDelta() {
-							if positionVal < 0 {
-								// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
-								correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-								if config.GetConfigurations().GetDynamicDelta() {
-									// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-									if deltaStep != 0 {
-										deltaStepUp = deltaStep
-									} else {
-										deltaStepUp = quantityCoefficient
-									}
+						if positionVal < 0 {
+							// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+							correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+							if config.GetConfigurations().GetDynamicDelta() {
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepUp = deltaStep
+								} else {
+									deltaStepUp = quantityCoefficient
 								}
-							} else if positionVal > 0 {
-								// Якщо позиція позитивна,
-								// то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
-								correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-								if config.GetConfigurations().GetDynamicDelta() {
-									// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-									if deltaStep != 0 {
-										deltaStepDown = deltaStep
-									} else {
-										deltaStepDown = quantityCoefficient
-									}
+							}
+						} else if positionVal > 0 {
+							// Якщо позиція позитивна,
+							// то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
+							correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+							if config.GetConfigurations().GetDynamicDelta() {
+								// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
+								if deltaStep != 0 {
+									deltaStepDown = deltaStep
+								} else {
+									deltaStepDown = quantityCoefficient
 								}
 							}
 						}
