@@ -1118,17 +1118,13 @@ func RunFuturesGridTradingV3(
 									deltaStepDown = pair.GetDeltaStepPerMille()
 								}
 							}
-							logrus.Debugf("Futures %s: quantity %v, minQuantity %v, quantityCoefficient %v, positionVal %v",
-								pair.GetPair(), quantity, minQuantity, quantityCoefficient, positionVal)
-							logrus.Debugf("Futures %s: Corrected Quantity Up %v, DeltaStepUp %v",
-								pair.GetPair(), correctedQuantityUp, deltaStepUp)
-							logrus.Debugf("Futures %s: Corrected Quantity Down %v, DeltaStepDown %v",
-								pair.GetPair(), correctedQuantityDown, deltaStepDown)
 						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 						if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-							if correctedQuantityUp >= minQuantity {
+							logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
+								pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
+							if correctedQuantityUp*upPrice >= minNotional {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, upPrice)
 								if err != nil {
 									printError()
@@ -1147,7 +1143,9 @@ func RunFuturesGridTradingV3(
 						// Створюємо ордер на купівлю
 						downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 						if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-							if correctedQuantityDown > minQuantity {
+							logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
+								pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityUp*upPrice, minNotional)
+							if correctedQuantityDown*downPrice >= minNotional {
 								_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, downPrice)
 								if err != nil {
 									printError()
