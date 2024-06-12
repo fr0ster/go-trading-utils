@@ -1118,6 +1118,12 @@ func RunFuturesGridTradingV3(
 									deltaStepDown = pair.GetDeltaStepPerMille()
 								}
 							}
+							logrus.Debugf("Futures %s: quantity %v, minQuantity %v, quantityCoefficient %v, positionVal %v",
+								pair.GetPair(), quantity, minQuantity, quantityCoefficient, positionVal)
+							logrus.Debugf("Futures %s: Corrected Quantity Up %v, DeltaStepUp %v",
+								pair.GetPair(), correctedQuantityUp, deltaStepUp)
+							logrus.Debugf("Futures %s: Corrected Quantity Down %v, DeltaStepDown %v",
+								pair.GetPair(), correctedQuantityDown, deltaStepDown)
 						}
 						// Створюємо ордер на продаж
 						upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
