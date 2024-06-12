@@ -694,6 +694,7 @@ func positionLossObservation(
 		// Створюємо початкові ордери на продаж та купівлю з новими цінами
 		_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
 		if err != nil {
+			printError()
 			return err
 		}
 	}
@@ -1055,6 +1056,7 @@ func RunFuturesGridTradingV3(
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
+						printError()
 						return err
 					}
 					pairProcessor.CancelAllOrders()
