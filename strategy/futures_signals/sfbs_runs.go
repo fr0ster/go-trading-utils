@@ -577,9 +577,9 @@ func marginBalancing(
 	if config.GetConfigurations().GetBalancingOfMargin() &&
 		utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 		round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) < round(pair.GetCurrentPositionBalance(), tickStepSize) {
+		err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 		logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 			pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 	}
 	return
 }
