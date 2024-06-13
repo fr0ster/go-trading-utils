@@ -1025,17 +1025,16 @@ func createNextPair(
 	deltaStepUp := 1.0
 	deltaStepDown := 1.0
 	// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-	quantityCoefficient := (positionLimit - minNotional - math.Abs(positionVal)) / (positionLimit - minNotional)
+	quantityCoefficient := (positionLimit - math.Abs(positionVal)) / positionLimit
 	if quantityCoefficient < 0 {
 		quantityCoefficient = 0
 	}
-	logrus.Debugf("Futures %s: (Position limit %v - MinNotional %v - math.Abs(positionVal) %v) %v / (Position limit - minNotional) %v = QuantityCoefficient %v",
+	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
 		pair.GetPair(),
 		positionLimit,
-		minNotional,
 		math.Abs(positionVal),
-		(positionLimit - minNotional - math.Abs(positionVal)),
-		(positionLimit - minNotional),
+		(positionLimit - math.Abs(positionVal)),
+		positionLimit,
 		quantityCoefficient)
 	// Ставимо дефолтну кількість
 	correctedQuantityUp = quantity
