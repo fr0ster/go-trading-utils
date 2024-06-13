@@ -1029,8 +1029,8 @@ func createNextPair(
 	if quantityCoefficient < 0 {
 		quantityCoefficient = 0
 	}
-	logrus.Debugf("Futures %s: Position Value %v MinNotional %v, QuantityCoefficient %v",
-		pair.GetPair(), positionVal, minNotional, quantityCoefficient)
+	logrus.Debugf("Futures %s: (Position limit %v - MinNotional %v - math.Abs(positionVal) %v) / (Position limit - minNotional) %v = QuantityCoefficient %v",
+		pair.GetPair(), positionLimit, minNotional, math.Abs(positionVal), (positionLimit - minNotional), quantityCoefficient)
 	// Ставимо дефолтну кількість
 	correctedQuantityUp = quantity
 	correctedQuantityDown = quantity
