@@ -1066,7 +1066,7 @@ func createNextPair(
 	// Створюємо ордер на продаж
 	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-		if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+		if utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityUp*upPrice >= minNotional {
@@ -1092,7 +1092,7 @@ func createNextPair(
 	// Створюємо ордер на купівлю
 	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		if utils.ConvStrToFloat64(risk.IsolatedMargin) < pair.GetCurrentPositionBalance() {
+		if utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityDown*downPrice >= minNotional {
