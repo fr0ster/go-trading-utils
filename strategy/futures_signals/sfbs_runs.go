@@ -442,12 +442,29 @@ func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
 			pair.GetStrategy(),
 			pair.GetStage(),
 			pair.GetPair())
+
 		pair.SetLimitOnPosition(t_pair.GetLimitOnPosition())
 		pair.SetLimitOnTransaction(t_pair.GetLimitOnTransaction())
 		pair.SetSellDelta(t_pair.GetSellDelta())
 		pair.SetBuyDelta(t_pair.GetBuyDelta())
 		pair.SetUpBound(t_pair.GetUpBound())
 		pair.SetLowBound(t_pair.GetLowBound())
+
+		config.GetConfigurations().SetLogLevel(temp.GetConfigurations().GetLogLevel())
+		config.GetConfigurations().SetReloadConfig(temp.GetConfigurations().GetReloadConfig())
+		config.GetConfigurations().SetObservePriceLiquidation(temp.GetConfigurations().GetObservePriceLiquidation())
+		config.GetConfigurations().SetObservePositionLoss(temp.GetConfigurations().GetObservePositionLoss())
+		config.GetConfigurations().SetClosePositionOnRestart(temp.GetConfigurations().GetClosePositionOnRestart())
+		config.GetConfigurations().SetBalancingOfMargin(temp.GetConfigurations().GetBalancingOfMargin())
+		config.GetConfigurations().SetPercentsToStopSettingNewOrder(temp.GetConfigurations().GetPercentsToStopSettingNewOrder())
+		config.GetConfigurations().SetPercentToDecreasePosition(temp.GetConfigurations().GetPercentToDecreasePosition())
+		config.GetConfigurations().SetObserverTimeOutMillisecond(temp.GetConfigurations().GetObserverTimeOutMillisecond())
+		config.GetConfigurations().SetUsingBreakEvenPrice(temp.GetConfigurations().GetUsingBreakEvenPrice())
+		config.GetConfigurations().SetDynamicDelta(temp.GetConfigurations().GetDynamicDelta())
+		config.GetConfigurations().SetBuyDeltaLoss(temp.GetConfigurations().GetBuyDeltaLoss())
+		config.GetConfigurations().SetSellDeltaLoss(temp.GetConfigurations().GetSellDeltaLoss())
+
+		config.Save()
 	}
 }
 

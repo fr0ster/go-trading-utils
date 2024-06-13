@@ -24,24 +24,36 @@ type (
 		SetLogLevel(level logrus.Level)
 
 		GetReloadConfig() bool
+		SetReloadConfig(bool)
 
 		GetObservePriceLiquidation() bool
+		SetObservePriceLiquidation(bool)
 		GetObservePositionLoss() bool
+		SetObservePositionLoss(bool)
 		GetClosePositionOnRestart() bool
+		SetClosePositionOnRestart(bool)
 
 		GetBalancingOfMargin() bool
+		SetBalancingOfMargin(bool)
 
 		GetPercentsToStopSettingNewOrder() float64
+		SetPercentsToStopSettingNewOrder(float64)
 		GetPercentToDecreasePosition() float64
+		SetPercentToDecreasePosition(float64)
 
 		GetObserverTimeOutMillisecond() int
+		SetObserverTimeOutMillisecond(int)
 
 		GetUsingBreakEvenPrice() bool
+		SetUsingBreakEvenPrice(bool)
 
 		GetDynamicDelta() bool
+		SetDynamicDelta(bool)
 
 		GetBuyDeltaLoss() float64
+		SetBuyDeltaLoss(float64)
 		GetSellDeltaLoss() float64
+		SetSellDeltaLoss(float64)
 	}
 	ConfigurationFile interface {
 		GetFileName() string

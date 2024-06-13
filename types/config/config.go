@@ -51,48 +51,96 @@ func (cf *Configs) GetReloadConfig() bool {
 	return cf.ReloadConfig
 }
 
+func (cf *Configs) SetReloadConfig(reload bool) {
+	cf.ReloadConfig = reload
+}
+
 func (cf *Configs) GetObservePriceLiquidation() bool {
 	return cf.ObservePriceLiquidation
+}
+
+func (cf *Configs) SetObservePriceLiquidation(observe bool) {
+	cf.ObservePriceLiquidation = observe
 }
 
 func (cf *Configs) GetObservePositionLoss() bool {
 	return cf.ObservePositionLoss
 }
 
+func (cf *Configs) SetObservePositionLoss(observe bool) {
+	cf.ObservePositionLoss = observe
+}
+
 func (cf *Configs) GetClosePositionOnRestart() bool {
 	return cf.ClosePositionOnRestart
+}
+
+func (cf *Configs) SetClosePositionOnRestart(close bool) {
+	cf.ClosePositionOnRestart = close
 }
 
 func (cf *Configs) GetBalancingOfMargin() bool {
 	return cf.BalancingOfMargin
 }
 
+func (cf *Configs) SetBalancingOfMargin(balancing bool) {
+	cf.BalancingOfMargin = balancing
+}
+
 func (cf *Configs) GetPercentsToStopSettingNewOrder() float64 {
 	return cf.PercentsToStopSettingNewOrder
+}
+
+func (cf *Configs) SetPercentsToStopSettingNewOrder(percent float64) {
+	cf.PercentsToStopSettingNewOrder = percent
 }
 
 func (cf *Configs) GetPercentToDecreasePosition() float64 {
 	return cf.PercentToDecreasePosition
 }
 
+func (cf *Configs) SetPercentToDecreasePosition(percent float64) {
+	cf.PercentToDecreasePosition = percent
+}
+
 func (cf *Configs) GetObserverTimeOutMillisecond() int {
 	return cf.ObserverTimeOutMillisecond
+}
+
+func (cf *Configs) SetObserverTimeOutMillisecond(timeout int) {
+	cf.ObserverTimeOutMillisecond = timeout
 }
 
 func (cf *Configs) GetUsingBreakEvenPrice() bool {
 	return cf.UsingBreakEvenPrice
 }
 
+func (cf *Configs) SetUsingBreakEvenPrice(use bool) {
+	cf.UsingBreakEvenPrice = use
+}
+
 func (cf *Configs) GetDynamicDelta() bool {
 	return cf.DynamicDelta
+}
+
+func (cf *Configs) SetDynamicDelta(dynamic bool) {
+	cf.DynamicDelta = dynamic
 }
 
 func (cf *Configs) GetBuyDeltaLoss() float64 {
 	return cf.BuyDeltaLoss
 }
 
+func (cf *Configs) SetBuyDeltaLoss(delta float64) {
+	cf.BuyDeltaLoss = delta
+}
+
 func (cf *Configs) GetSellDeltaLoss() float64 {
 	return cf.SellDeltaLoss
+}
+
+func (cf *Configs) SetSellDeltaLoss(delta float64) {
+	cf.SellDeltaLoss = delta
 }
 
 // Implement the GetPair method
