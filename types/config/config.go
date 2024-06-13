@@ -21,7 +21,7 @@ type (
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss           bool                         `json:"observe_position_loss"`
-		RestartClosedPosition         bool                         `json:"restart_closed_position"`
+		ClosePositionOnRestart        bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
@@ -59,8 +59,8 @@ func (cf *Configs) GetObservePositionLoss() bool {
 	return cf.ObservePositionLoss
 }
 
-func (cf *Configs) GetRestartClosedPosition() bool {
-	return cf.RestartClosedPosition
+func (cf *Configs) GetClosePositionOnRestart() bool {
+	return cf.ClosePositionOnRestart
 }
 
 func (cf *Configs) GetBalancingOfMargin() bool {
@@ -160,7 +160,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss       bool                         `json:"observe_position_loss"`
-		RestartClosedPosition     bool                         `json:"restart_closed_position"`
+		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
@@ -176,7 +176,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig:              c.ReloadConfig,
 		ObservePriceLiquidation:   c.ObservePriceLiquidation,
 		ObservePositionLoss:       c.ObservePositionLoss,
-		RestartClosedPosition:     c.RestartClosedPosition,
+		RestartClosedPosition:     c.ClosePositionOnRestart,
 		BalancingOfMargin:         c.BalancingOfMargin,
 		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
 		PercentToDecreasePosition: c.PercentToDecreasePosition,
@@ -196,7 +196,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss       bool                         `json:"observe_position_loss"`
-		RestartClosedPosition     bool                         `json:"restart_closed_position"`
+		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
@@ -226,7 +226,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
 	c.ObservePositionLoss = temp.ObservePositionLoss
-	c.RestartClosedPosition = temp.RestartClosedPosition
+	c.ClosePositionOnRestart = temp.RestartClosedPosition
 	c.BalancingOfMargin = temp.BalancingOfMargin
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
@@ -251,7 +251,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
 		ObservePositionLoss:           false,
-		RestartClosedPosition:         false,
+		ClosePositionOnRestart:        false,
 		PercentsToStopSettingNewOrder: 0.05,
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOutMillisecond:    1000,

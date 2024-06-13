@@ -32,7 +32,7 @@ const (
 
 	ObservePriceLiquidation    = true // Скасування обмежених ордерів які за лімітом
 	ObservePositionLoss        = true // Скасування збитковоі позиції
-	RestartClosedPosition      = true // Рестарт закритої позиції
+	ClosePositionOnRestart     = true // Рестарт закритої позиції
 	BalancingOfMargin          = true // Балансування маржі
 	PercentsToLiquidation      = 0.05 // Відсоток до ліквідації
 	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
@@ -176,7 +176,7 @@ var (
 		ReloadConfig:                  ReloadConfig,
 		ObservePriceLiquidation:       ObservePriceLiquidation,
 		ObservePositionLoss:           ObservePositionLoss,
-		RestartClosedPosition:         RestartClosedPosition,
+		ClosePositionOnRestart:        ClosePositionOnRestart,
 		BalancingOfMargin:             BalancingOfMargin,
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
@@ -265,7 +265,7 @@ func getTestData() []byte {
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
 			"observe_position_loss": ` + strconv.FormatBool(ObservePositionLoss) + `,
-			"restart_closed_position": ` + strconv.FormatBool(RestartClosedPosition) + `,
+			"close_position_on_restart": ` + strconv.FormatBool(ClosePositionOnRestart) + `,
 			"balancing_of_margin": ` + strconv.FormatBool(BalancingOfMargin) + `,
 			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
@@ -362,7 +362,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObservePositionLoss, config.GetObservePositionLoss())
-	assert.Equal(t, RestartClosedPosition, config.GetRestartClosedPosition())
+	assert.Equal(t, ClosePositionOnRestart, config.GetClosePositionOnRestart())
 	assert.Equal(t, BalancingOfMargin, config.GetBalancingOfMargin())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())

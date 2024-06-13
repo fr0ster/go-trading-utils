@@ -27,7 +27,7 @@ type (
 
 		GetObservePriceLiquidation() bool
 		GetObservePositionLoss() bool
-		GetRestartClosedPosition() bool
+		GetClosePositionOnRestart() bool
 
 		GetBalancingOfMargin() bool
 
