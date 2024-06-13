@@ -591,12 +591,12 @@ func marginBalancing(
 	pairProcessor *PairProcessor,
 	tickStepSize int) (err error) {
 	// Балансування маржі як треба
-	if config.GetConfigurations().GetBalancingOfMargin() && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-		if round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) < round(pair.GetCurrentPositionBalance(), tickStepSize) {
+	if config.GetConfigurations().GetBalancingOfMargin() && round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) < round(pair.GetCurrentPositionBalance(), tickStepSize) {
+		if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 			logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		} else {
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 2)
 			logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
@@ -1070,7 +1070,7 @@ func createNextPair(
 	// Створюємо ордер на продаж
 	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-		if utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
+		if math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityUp*upPrice >= minNotional {
@@ -1096,7 +1096,7 @@ func createNextPair(
 	// Створюємо ордер на купівлю
 	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		if utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() {
+		if math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityDown*downPrice >= minNotional {
