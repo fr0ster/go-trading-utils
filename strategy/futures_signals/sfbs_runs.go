@@ -780,6 +780,11 @@ func RunFuturesGridTrading(
 	for {
 		select {
 		case <-quit:
+			err = loadConfig(pair, config, pairStreams)
+			if err != nil {
+				printError()
+				return err
+			}
 			pairProcessor.CancelAllOrders()
 			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
@@ -904,6 +909,11 @@ func RunFuturesGridTradingV2(
 	for {
 		select {
 		case <-quit:
+			err = loadConfig(pair, config, pairStreams)
+			if err != nil {
+				printError()
+				return err
+			}
 			pairProcessor.CancelAllOrders()
 			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
@@ -1180,6 +1190,11 @@ func RunFuturesGridTradingV3(
 	for {
 		select {
 		case <-quit:
+			err = loadConfig(pair, config, pairStreams)
+			if err != nil {
+				printError()
+				return err
+			}
 			pairProcessor.CancelAllOrders()
 			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
