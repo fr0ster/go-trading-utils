@@ -688,7 +688,7 @@ func positionLossObservation(
 			if sellDelta > config.GetConfigurations().GetSellDeltaLoss() || buyDelta > config.GetConfigurations().GetBuyDeltaLoss() {
 				// Скасовуємо всі ордери
 				pairProcessor.CancelAllOrders()
-				if config.GetConfigurations().GetRestartClosedPosition() {
+				if config.GetConfigurations().GetClosePositionOnRestart() {
 					// Закриваємо позицію
 					if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 						side = futures.SideTypeSell
