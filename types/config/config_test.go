@@ -32,12 +32,16 @@ const (
 
 	ObservePriceLiquidation    = true // Скасування обмежених ордерів які за лімітом
 	ObservePositionLoss        = true // Скасування збитковоі позиції
+	RestartClosedPosition      = true // Рестарт закритої позиції
 	BalancingOfMargin          = true // Балансування маржі
 	PercentsToLiquidation      = 0.05 // Відсоток до ліквідації
 	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
 	ObserverTimeOutMillisecond = 1000 // Таймаут спостереження
 	UsingBreakEvenPrice        = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
 	DynamicDelta               = true // Динамічна дельта та кількість
+
+	BuyDeltaLoss  = 0.01 // Дельта для рестарту
+	SellDeltaLoss = 0.01 // Дельта для рестарту
 
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
@@ -172,11 +176,15 @@ var (
 		ReloadConfig:                  ReloadConfig,
 		ObservePriceLiquidation:       ObservePriceLiquidation,
 		ObservePositionLoss:           ObservePositionLoss,
+		RestartClosedPosition:         RestartClosedPosition,
 		BalancingOfMargin:             BalancingOfMargin,
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOutMillisecond:    ObserverTimeOutMillisecond,
 		UsingBreakEvenPrice:           UsingBreakEvenPrice,
+		DynamicDelta:                  DynamicDelta,
+		BuyDeltaLoss:                  BuyDeltaLoss,
+		SellDeltaLoss:                 SellDeltaLoss,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -257,12 +265,15 @@ func getTestData() []byte {
 			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
 			"observe_position_loss": ` + strconv.FormatBool(ObservePositionLoss) + `,
+			"restart_closed_position": ` + strconv.FormatBool(RestartClosedPosition) + `,
 			"balancing_of_margin": ` + strconv.FormatBool(BalancingOfMargin) + `,
 			"percents_to_stop_setting_new_order": ` + json.Number(strconv.FormatFloat(PercentsToLiquidation, 'f', -1, 64)).String() + `,
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout_millisecond": ` + strconv.Itoa(ObserverTimeOutMillisecond) + `,
 			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
 			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
+			"buy_delta_loss": ` + json.Number(strconv.FormatFloat(BuyDeltaLoss, 'f', -1, 64)).String() + `,
+			"sell_delta_loss": ` + json.Number(strconv.FormatFloat(SellDeltaLoss, 'f', -1, 64)).String() + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -351,12 +362,15 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObservePositionLoss, config.GetObservePositionLoss())
+	assert.Equal(t, RestartClosedPosition, config.GetRestartClosedPosition())
 	assert.Equal(t, BalancingOfMargin, config.GetBalancingOfMargin())
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 	assert.Equal(t, ObserverTimeOutMillisecond, config.GetObserverTimeOutMillisecond())
 	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
 	assert.Equal(t, DynamicDelta, config.GetDynamicDelta())
+	assert.Equal(t, BuyDeltaLoss, config.GetBuyDeltaLoss())
+	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

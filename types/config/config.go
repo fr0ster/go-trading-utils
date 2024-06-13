@@ -21,12 +21,15 @@ type (
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss           bool                         `json:"observe_position_loss"`
+		RestartClosedPosition         bool                         `json:"restart_closed_position"`
 		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
 		DynamicDelta                  bool                         `json:"dynamic_delta"`
+		BuyDeltaLoss                  float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss                 float64                      `json:"sell_delta_loss"`
 		Pairs                         *btree.BTree
 	}
 )
@@ -56,16 +59,20 @@ func (cf *Configs) GetObservePositionLoss() bool {
 	return cf.ObservePositionLoss
 }
 
+func (cf *Configs) GetRestartClosedPosition() bool {
+	return cf.RestartClosedPosition
+}
+
+func (cf *Configs) GetBalancingOfMargin() bool {
+	return cf.BalancingOfMargin
+}
+
 func (cf *Configs) GetPercentsToStopSettingNewOrder() float64 {
 	return cf.PercentsToStopSettingNewOrder
 }
 
 func (cf *Configs) GetPercentToDecreasePosition() float64 {
 	return cf.PercentToDecreasePosition
-}
-
-func (cf *Configs) GetBalancingOfMargin() bool {
-	return cf.BalancingOfMargin
 }
 
 func (cf *Configs) GetObserverTimeOutMillisecond() int {
@@ -78,6 +85,14 @@ func (cf *Configs) GetUsingBreakEvenPrice() bool {
 
 func (cf *Configs) GetDynamicDelta() bool {
 	return cf.DynamicDelta
+}
+
+func (cf *Configs) GetBuyDeltaLoss() float64 {
+	return cf.BuyDeltaLoss
+}
+
+func (cf *Configs) GetSellDeltaLoss() float64 {
+	return cf.SellDeltaLoss
 }
 
 // Implement the GetPair method
@@ -145,12 +160,15 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss       bool                         `json:"observe_position_loss"`
+		RestartClosedPosition     bool                         `json:"restart_closed_position"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
 		DynamicDelta              bool                         `json:"dynamic_delta"`
+		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:                c.Connection,
@@ -158,12 +176,15 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ReloadConfig:              c.ReloadConfig,
 		ObservePriceLiquidation:   c.ObservePriceLiquidation,
 		ObservePositionLoss:       c.ObservePositionLoss,
+		RestartClosedPosition:     c.RestartClosedPosition,
 		BalancingOfMargin:         c.BalancingOfMargin,
 		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
 		PercentToDecreasePosition: c.PercentToDecreasePosition,
 		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
 		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
 		DynamicDelta:              c.DynamicDelta,
+		BuyDeltaLoss:              c.BuyDeltaLoss,
+		SellDeltaLoss:             c.SellDeltaLoss,
 		Pairs:                     pairs,
 	}, "", "  ")
 }
@@ -175,12 +196,15 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
 		ObservePositionLoss       bool                         `json:"observe_position_loss"`
+		RestartClosedPosition     bool                         `json:"restart_closed_position"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
 		DynamicDelta              bool                         `json:"dynamic_delta"`
+		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -202,12 +226,15 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
 	c.ObservePositionLoss = temp.ObservePositionLoss
+	c.RestartClosedPosition = temp.RestartClosedPosition
 	c.BalancingOfMargin = temp.BalancingOfMargin
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOutMillisecond = temp.ObserverTimeOut
 	c.UsingBreakEvenPrice = temp.UsingBreakEvenPrice
 	c.DynamicDelta = temp.DynamicDelta
+	c.BuyDeltaLoss = temp.BuyDeltaLoss
+	c.SellDeltaLoss = temp.SellDeltaLoss
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -224,11 +251,14 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
 		ObservePositionLoss:           false,
+		RestartClosedPosition:         false,
 		PercentsToStopSettingNewOrder: 0.05,
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOutMillisecond:    1000,
 		UsingBreakEvenPrice:           false,
 		DynamicDelta:                  false,
+		BuyDeltaLoss:                  0.05,
+		SellDeltaLoss:                 0.05,
 		Pairs:                         btree.New(2),
 	}
 }

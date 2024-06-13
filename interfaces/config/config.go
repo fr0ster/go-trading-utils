@@ -27,16 +27,21 @@ type (
 
 		GetObservePriceLiquidation() bool
 		GetObservePositionLoss() bool
-		GetPercentsToStopSettingNewOrder() float64
-		GetPercentToDecreasePosition() float64
+		GetRestartClosedPosition() bool
 
 		GetBalancingOfMargin() bool
+
+		GetPercentsToStopSettingNewOrder() float64
+		GetPercentToDecreasePosition() float64
 
 		GetObserverTimeOutMillisecond() int
 
 		GetUsingBreakEvenPrice() bool
 
 		GetDynamicDelta() bool
+
+		GetBuyDeltaLoss() float64
+		GetSellDeltaLoss() float64
 	}
 	ConfigurationFile interface {
 		GetFileName() string
