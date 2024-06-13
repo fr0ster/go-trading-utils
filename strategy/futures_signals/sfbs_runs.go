@@ -597,6 +597,10 @@ func marginBalancing(
 		err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
 		logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
 			pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+	} else {
+		err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 2)
+		logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
+			pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 	}
 	return
 }
