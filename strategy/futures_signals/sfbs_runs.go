@@ -589,17 +589,21 @@ func marginBalancing(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	pairProcessor *PairProcessor,
+	free float64,
 	tickStepSize int) (err error) {
 	// Балансування маржі як треба
-	if config.GetConfigurations().GetBalancingOfMargin() && round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) < round(pair.GetCurrentPositionBalance(), tickStepSize) {
-		if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
-			logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
-				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 2)
-			logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
-				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+	if config.GetConfigurations().GetBalancingOfMargin() && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		delta := round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize) - round(pair.GetCurrentPositionBalance(), tickStepSize)
+		if delta <= free {
+			if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 1)
+				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
+					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+			} else if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+				err = pairProcessor.SetPositionMargin(pair.GetCurrentPositionBalance()-utils.ConvStrToFloat64(risk.IsolatedMargin), 2)
+				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v",
+					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+			}
 		}
 	}
 	return
@@ -844,7 +848,7 @@ func RunFuturesGridTrading(
 						return
 					}
 					// Балансування маржі як треба
-					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+					err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					if err != nil {
 						grid.Unlock()
 						printError()
@@ -969,7 +973,7 @@ func RunFuturesGridTradingV2(
 					return
 				}
 				// Балансування маржі як треба
-				err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+				err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				if err != nil {
 					grid.Unlock()
 					printError()
@@ -1153,7 +1157,7 @@ func timeProcess(
 		}
 	}
 	// Балансування маржі як треба
-	err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+	err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 	if err != nil {
 		printError()
 		return err
@@ -1260,7 +1264,7 @@ func RunFuturesGridTradingV3(
 					// Визначаємо поточну ціну
 					currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
 					// Балансування маржі як треба
-					err = marginBalancing(config, pair, risk, pairProcessor, tickSizeExp)
+					err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					if err != nil {
 						printError()
 						return err
