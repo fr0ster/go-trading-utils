@@ -257,8 +257,8 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ObserverTimeOutMillisecond:    1000,
 		UsingBreakEvenPrice:           false,
 		DynamicDelta:                  false,
-		BuyDeltaLoss:                  0.05,
-		SellDeltaLoss:                 0.05,
+		BuyDeltaLoss:                  0.015,
+		SellDeltaLoss:                 0.015,
 		Pairs:                         btree.New(2),
 	}
 }
