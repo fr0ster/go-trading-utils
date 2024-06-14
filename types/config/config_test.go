@@ -182,7 +182,6 @@ var (
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOutMillisecond:    ObserverTimeOutMillisecond,
 		UsingBreakEvenPrice:           UsingBreakEvenPrice,
-		DynamicDelta:                  DynamicDelta,
 		BuyDeltaLoss:                  BuyDeltaLoss,
 		SellDeltaLoss:                 SellDeltaLoss,
 		Pairs:                         btree.New(2),
@@ -368,7 +367,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 	assert.Equal(t, ObserverTimeOutMillisecond, config.GetObserverTimeOutMillisecond())
 	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
-	assert.Equal(t, DynamicDelta, config.GetDynamicDelta())
 	assert.Equal(t, BuyDeltaLoss, config.GetBuyDeltaLoss())
 	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
 

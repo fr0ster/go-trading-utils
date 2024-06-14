@@ -47,9 +47,6 @@ type (
 		GetUsingBreakEvenPrice() bool
 		SetUsingBreakEvenPrice(bool)
 
-		GetDynamicDelta() bool
-		SetDynamicDelta(bool)
-
 		GetBuyDeltaLoss() float64
 		SetBuyDeltaLoss(float64)
 		GetSellDeltaLoss() float64

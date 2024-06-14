@@ -460,9 +460,6 @@ func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
 		config.GetConfigurations().SetPercentToDecreasePosition(temp.GetConfigurations().GetPercentToDecreasePosition())
 		config.GetConfigurations().SetObserverTimeOutMillisecond(temp.GetConfigurations().GetObserverTimeOutMillisecond())
 		config.GetConfigurations().SetUsingBreakEvenPrice(temp.GetConfigurations().GetUsingBreakEvenPrice())
-		config.GetConfigurations().SetDynamicDelta(temp.GetConfigurations().GetDynamicDelta())
-		config.GetConfigurations().SetBuyDeltaLoss(temp.GetConfigurations().GetBuyDeltaLoss())
-		config.GetConfigurations().SetSellDeltaLoss(temp.GetConfigurations().GetSellDeltaLoss())
 
 		config.Save()
 	}

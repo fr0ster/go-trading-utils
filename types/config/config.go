@@ -27,7 +27,6 @@ type (
 		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
-		DynamicDelta                  bool                         `json:"dynamic_delta"`
 		BuyDeltaLoss                  float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss                 float64                      `json:"sell_delta_loss"`
 		Pairs                         *btree.BTree
@@ -117,14 +116,6 @@ func (cf *Configs) GetUsingBreakEvenPrice() bool {
 
 func (cf *Configs) SetUsingBreakEvenPrice(use bool) {
 	cf.UsingBreakEvenPrice = use
-}
-
-func (cf *Configs) GetDynamicDelta() bool {
-	return cf.DynamicDelta
-}
-
-func (cf *Configs) SetDynamicDelta(dynamic bool) {
-	cf.DynamicDelta = dynamic
 }
 
 func (cf *Configs) GetBuyDeltaLoss() float64 {
@@ -230,7 +221,6 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		PercentToDecreasePosition: c.PercentToDecreasePosition,
 		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
 		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
-		DynamicDelta:              c.DynamicDelta,
 		BuyDeltaLoss:              c.BuyDeltaLoss,
 		SellDeltaLoss:             c.SellDeltaLoss,
 		Pairs:                     pairs,
@@ -250,7 +240,6 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
-		DynamicDelta              bool                         `json:"dynamic_delta"`
 		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
@@ -280,7 +269,6 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.PercentToDecreasePosition = temp.PercentToDecreasePosition
 	c.ObserverTimeOutMillisecond = temp.ObserverTimeOut
 	c.UsingBreakEvenPrice = temp.UsingBreakEvenPrice
-	c.DynamicDelta = temp.DynamicDelta
 	c.BuyDeltaLoss = temp.BuyDeltaLoss
 	c.SellDeltaLoss = temp.SellDeltaLoss
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
@@ -304,7 +292,6 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		PercentToDecreasePosition:     0.03,
 		ObserverTimeOutMillisecond:    1000,
 		UsingBreakEvenPrice:           false,
-		DynamicDelta:                  false,
 		BuyDeltaLoss:                  0.015,
 		SellDeltaLoss:                 0.015,
 		Pairs:                         btree.New(2),
