@@ -120,7 +120,7 @@ func (pp *PairProcessor) GetTargetBalance() (
 //  7. Trigger order price rules against market price for both MARKET and LIMIT versions:
 //     Price above market price: STOP_LOSS BUY, TAKE_PROFIT SELL
 //     Price below market price: STOP_LOSS SELL, TAKE_PROFIT BUY
-func (pp *PairProcessor) CreateOrder(
+func (pp *PairProcessor) createOrder(
 	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	sideType binance.SideType, // BUY, SELL
 	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
@@ -135,8 +135,13 @@ func (pp *PairProcessor) CreateOrder(
 	stopPrice float64,
 	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
-	trailingDelta int) (
+	trailingDelta int,
+	times int) (
 	order *binance.CreateOrderResponse, err error) {
+	if times == 0 {
+		err = fmt.Errorf("can't create order")
+		return
+	}
 	symbol, err := (*pp.pairInfo).GetSpotSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
@@ -208,7 +213,62 @@ func (pp *PairProcessor) CreateOrder(
 			return
 		}
 	}
-	return service.Do(context.Background())
+	order, err = service.Do(context.Background())
+	if err != nil {
+		apiError, _ := utils.ParseAPIError(err)
+		if apiError == nil {
+			return
+		}
+		if apiError.Code == -1007 {
+			time.Sleep(1 * time.Second)
+			orders, err := pp.GetOpenOrders()
+			if err != nil {
+				return nil, err
+			}
+			for _, order := range orders {
+				if order.Symbol == pp.GetPair().GetPair() && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+					return &binance.CreateOrderResponse{
+						Symbol:                   order.Symbol,
+						OrderID:                  order.OrderID,
+						ClientOrderID:            order.ClientOrderID,
+						Price:                    order.Price,
+						OrigQuantity:             order.OrigQuantity,
+						ExecutedQuantity:         order.ExecutedQuantity,
+						CummulativeQuoteQuantity: order.CummulativeQuoteQuantity,
+						IsIsolated:               order.IsIsolated,
+						Status:                   order.Status,
+						TimeInForce:              order.TimeInForce,
+						Type:                     order.Type,
+						Side:                     order.Side,
+					}, nil
+				}
+			}
+		} else if apiError.Code == -1008 {
+			time.Sleep(3 * time.Second)
+			return pp.createOrder(orderType, sideType, timeInForce, quantity, quantityQty, price, stopPrice, trailingDelta, times-1)
+		}
+	}
+	return
+}
+
+func (pp *PairProcessor) CreateOrder(
+	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	sideType binance.SideType, // BUY, SELL
+	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
+	quantity float64, // BTC for example if we buy or sell BTC
+	quantityQty float64, // USDT for example if we buy or sell BTC
+	// price for 1 BTC
+	// it's price of order execution for LIMIT, LIMIT_MAKER
+	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
+	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
+	price float64,
+	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	stopPrice float64,
+	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
+	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
+	trailingDelta int) (
+	order *binance.CreateOrderResponse, err error) {
+	return pp.createOrder(orderType, sideType, timeInForce, quantity, quantityQty, price, stopPrice, trailingDelta, 3)
 }
 
 func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {

@@ -109,7 +109,7 @@ type (
 //  6. selfTradePreventionMode is only effective when timeInForce set to IOC or GTC or GTD.
 //  7. In extreme market conditions,
 //     timeInForce GTD order auto cancel time might be delayed comparing to goodTillDate
-func (pp *PairProcessor) CreateOrder(
+func (pp *PairProcessor) createOrder(
 	orderType futures.OrderType,
 	sideType futures.SideType,
 	timeInForce futures.TimeInForceType,
@@ -117,8 +117,13 @@ func (pp *PairProcessor) CreateOrder(
 	closePosition bool,
 	price float64,
 	stopPrice float64,
-	callbackRate float64) (
+	callbackRate float64,
+	times int) (
 	order *futures.CreateOrderResponse, err error) {
+	if times == 0 {
+		err = fmt.Errorf("can't create order")
+		return
+	}
 	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
@@ -173,7 +178,67 @@ func (pp *PairProcessor) CreateOrder(
 				ActivationPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
 		}
 	}
-	return service.Do(context.Background())
+	order, err = service.Do(context.Background())
+	if err != nil {
+		apiError, _ := utils.ParseAPIError(err)
+		if apiError == nil {
+			return
+		}
+		if apiError.Code == -1007 {
+			time.Sleep(1 * time.Second)
+			orders, err := pp.GetOpenOrders()
+			if err != nil {
+				return nil, err
+			}
+			for _, order := range orders {
+				if order.Symbol == pp.GetPair().GetPair() && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+					return &futures.CreateOrderResponse{
+						Symbol:                  order.Symbol,
+						OrderID:                 order.OrderID,
+						ClientOrderID:           order.ClientOrderID,
+						Price:                   order.Price,
+						OrigQuantity:            order.OrigQuantity,
+						ExecutedQuantity:        order.ExecutedQuantity,
+						CumQuote:                order.CumQuote,
+						ReduceOnly:              order.ReduceOnly,
+						Status:                  order.Status,
+						StopPrice:               order.StopPrice,
+						TimeInForce:             order.TimeInForce,
+						Type:                    order.Type,
+						Side:                    order.Side,
+						UpdateTime:              order.UpdateTime,
+						WorkingType:             order.WorkingType,
+						ActivatePrice:           order.ActivatePrice,
+						PriceRate:               order.PriceRate,
+						AvgPrice:                order.AvgPrice,
+						PositionSide:            order.PositionSide,
+						ClosePosition:           order.ClosePosition,
+						PriceProtect:            order.PriceProtect,
+						PriceMatch:              order.PriceMatch,
+						SelfTradePreventionMode: order.SelfTradePreventionMode,
+						GoodTillDate:            order.GoodTillDate,
+						CumQty:                  order.CumQuantity,
+						OrigType:                order.OrigType,
+					}, nil
+				}
+			}
+		} else if apiError.Code == -1008 {
+			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1)
+		}
+	}
+	return
+}
+func (pp *PairProcessor) CreateOrder(
+	orderType futures.OrderType,
+	sideType futures.SideType,
+	timeInForce futures.TimeInForceType,
+	quantity float64,
+	closePosition bool,
+	price float64,
+	stopPrice float64,
+	callbackRate float64) (
+	order *futures.CreateOrderResponse, err error) {
+	return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, 3)
 }
 
 func (pp *PairProcessor) ClosePosition(side futures.SideType, price float64, exp int) (res *futures.CreateOrderResponse, err error) {
