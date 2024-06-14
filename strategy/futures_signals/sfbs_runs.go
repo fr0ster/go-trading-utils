@@ -601,10 +601,10 @@ func marginBalancing(
 				err = pairProcessor.SetPositionMargin(delta, 1)
 				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v and we have enough free %v",
 					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance(), free)
-			} else if delta < 0 {
-				err = pairProcessor.SetPositionMargin(math.Abs(delta), 2)
-				logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
-					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+				// } else if delta < 0 {
+				// 	err = pairProcessor.SetPositionMargin(math.Abs(delta), 2)
+				// 	logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
+				// 		pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 			}
 		}
 	}
