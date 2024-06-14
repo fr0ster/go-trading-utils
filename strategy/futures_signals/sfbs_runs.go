@@ -604,6 +604,14 @@ func marginBalancing(
 		if delta != 0 {
 			if delta > 0 && delta < free {
 				err = pairProcessor.SetPositionMargin(delta, 1)
+				if err != nil {
+					errApi, _ := utils.ParseAPIError(err)
+					if errApi != nil {
+						if errApi.Code == -1007 {
+							return nil
+						}
+					}
+				}
 				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v and we have enough free %v",
 					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance(), free)
 			}
