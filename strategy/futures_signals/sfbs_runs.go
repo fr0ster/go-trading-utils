@@ -594,17 +594,11 @@ func marginBalancing(
 	// Балансування маржі як треба
 	if config.GetConfigurations().GetBalancingOfMargin() && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		delta := round(pair.GetCurrentPositionBalance(), tickStepSize) - round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize)
-		logrus.Debugf("Futures %s: Delta %v = Current Position Balance %v - Isolated Margin %v, free %v",
-			pair.GetPair(), delta, pair.GetCurrentPositionBalance(), utils.ConvStrToFloat64(risk.IsolatedMargin), free)
 		if delta != 0 {
 			if delta > 0 && delta < free {
 				err = pairProcessor.SetPositionMargin(delta, 1)
 				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v and we have enough free %v",
 					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance(), free)
-				// } else if delta < 0 {
-				// 	err = pairProcessor.SetPositionMargin(math.Abs(delta), 2)
-				// 	logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
-				// 		pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
 			}
 		}
 	}
