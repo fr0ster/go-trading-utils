@@ -577,6 +577,52 @@ func roundPrice(val float64, symbol *binance.Symbol) float64 {
 	return utils.RoundToDecimalPlace(val, exp)
 }
 
+func createNextPair(
+	pair *pairs_types.Pairs,
+	pairProcessor *PairProcessor,
+	currentPrice float64,
+	quantity float64,
+	limit float64,
+	tickSizeExp int) (err error) {
+	// Створюємо ордер на продаж
+	upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
+		if limit >= quantity {
+			_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
+			if err != nil {
+				printError()
+				return err
+			}
+			logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
+		} else {
+			logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
+				pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
+		}
+	} else {
+		logrus.Debugf("Spots %s: upPrice %v <= upBound %v",
+			pair.GetPair(), upPrice, pair.GetUpBound())
+	}
+	// Створюємо ордер на купівлю
+	downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
+		if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
+			_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
+			if err != nil {
+				printError()
+				return err
+			}
+			logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
+		} else {
+			logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
+				pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
+		}
+	} else {
+		logrus.Debugf("Spots %s: downPrice %v >= lowBound %v",
+			pair.GetPair(), downPrice, pair.GetLowBound())
+	}
+	return nil
+}
+
 func RunSpotGridTrading(
 	config *config_types.ConfigFile,
 	client *binance.Client,
@@ -644,51 +690,17 @@ func RunSpotGridTrading(
 
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Spots %s: Other orders was cancelled", pair.GetPair())
-				createNextPair := func(currentPrice float64, quantity float64, limit float64) (err error) {
-					// Створюємо ордер на продаж
-					upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
-					if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-						if limit >= quantity {
-							_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
-							if err != nil {
-								printError()
-								return err
-							}
-							logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
-						} else {
-							logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
-								pair.GetPair(), limit, quantity, upPrice, pair.GetCurrentPositionBalance())
-						}
-					} else {
-						logrus.Debugf("Spots %s: upPrice %v <= upBound %v",
-							pair.GetPair(), upPrice, pair.GetUpBound())
-					}
-					// Створюємо ордер на купівлю
-					downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-					if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-						if (limit + quantity*downPrice) <= pair.GetCurrentPositionBalance() {
-							_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
-							if err != nil {
-								printError()
-								return err
-							}
-							logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
-						} else {
-							logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
-								pair.GetPair(), limit, quantity, downPrice, pair.GetCurrentPositionBalance())
-						}
-					} else {
-						logrus.Debugf("Spots %s: downPrice %v >= lowBound %v",
-							pair.GetPair(), downPrice, pair.GetLowBound())
-					}
-					return nil
-				}
 				targetValue, err := pairStreams.GetAccount().GetFreeAsset(pair.GetTargetSymbol())
 				if err != nil {
 					printError()
+					pairProcessor.CancelAllOrders()
 					return err
 				}
-				createNextPair(pair.GetMiddlePrice(), quantity, targetValue)
+				err = createNextPair(pair, pairProcessor, pair.GetMiddlePrice(), quantity, targetValue, tickSizeExp)
+				if err != nil {
+					pairProcessor.CancelAllOrders()
+					return err
+				}
 			}
 		}
 	}

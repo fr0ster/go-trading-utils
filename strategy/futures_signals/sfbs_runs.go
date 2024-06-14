@@ -1257,6 +1257,7 @@ func RunFuturesGridTradingV3(
 					risk, err = pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
+						pairProcessor.CancelAllOrders()
 						return
 					}
 					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
@@ -1267,12 +1268,14 @@ func RunFuturesGridTradingV3(
 					err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					if err != nil {
 						printError()
+						pairProcessor.CancelAllOrders()
 						return err
 					}
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
 						printError()
+						pairProcessor.CancelAllOrders()
 						return err
 					}
 					pairProcessor.CancelAllOrders()
@@ -1290,12 +1293,13 @@ func RunFuturesGridTradingV3(
 						oldDeltaStep,
 						pairProcessor)
 					if err != nil {
+						pairProcessor.CancelAllOrders()
 						return err
 					}
 				}
 			}
 		case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
-			timeProcess(
+			err = timeProcess(
 				config,
 				client,
 				pair,
@@ -1306,6 +1310,10 @@ func RunFuturesGridTradingV3(
 				free,
 				initPrice,
 				pairProcessor)
+			if err != nil {
+				pairProcessor.CancelAllOrders()
+				return err
+			}
 		}
 	}
 }
