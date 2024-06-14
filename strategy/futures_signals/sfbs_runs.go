@@ -604,14 +604,6 @@ func marginBalancing(
 		if delta != 0 {
 			if delta > 0 && delta < free {
 				err = pairProcessor.SetPositionMargin(delta, 1)
-				if err != nil {
-					errApi, _ := utils.ParseAPIError(err)
-					if errApi != nil {
-						if errApi.Code == -1007 {
-							return nil
-						}
-					}
-				}
 				logrus.Debugf("Futures %s: IsolatedMargin %v < current position balance %v and we have enough free %v",
 					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance(), free)
 			}
@@ -859,12 +851,7 @@ func RunFuturesGridTrading(
 						return
 					}
 					// Балансування маржі як треба
-					err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-					if err != nil {
-						grid.Unlock()
-						printError()
-						return err
-					}
+					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
@@ -984,12 +971,7 @@ func RunFuturesGridTradingV2(
 					return
 				}
 				// Балансування маржі як треба
-				err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-				if err != nil {
-					grid.Unlock()
-					printError()
-					return err
-				}
+				_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				// Обробка наближення ліквідаціі
 				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 				if err != nil {
@@ -1133,11 +1115,7 @@ func timeProcess(
 		}
 	}
 	// Балансування маржі як треба
-	err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-	if err != nil {
-		printError()
-		return err
-	}
+	_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 	// Обробка наближення ліквідаціі
 	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 	if err != nil {
@@ -1280,12 +1258,7 @@ func RunFuturesGridTradingV3(
 					// Визначаємо поточну ціну
 					currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
 					// Балансування маржі як треба
-					err = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-					if err != nil {
-						printError()
-						pairProcessor.CancelAllOrders()
-						return err
-					}
+					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
