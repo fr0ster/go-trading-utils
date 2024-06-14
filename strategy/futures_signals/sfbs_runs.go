@@ -1193,6 +1193,10 @@ func getQuantity(
 		}
 		// Але зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
 		correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+	} else {
+		// Якщо позиція нульова, то кількість на продаж та купівлю однакова
+		correctedQuantityUp = quantity
+		correctedQuantityDown = quantity
 	}
 	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
 		pair.GetPair(),
