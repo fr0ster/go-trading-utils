@@ -529,12 +529,9 @@ func initVars(
 
 func initFirstPairOfOrders(
 	pair *pairs_types.Pairs,
-	risk *futures.PositionRisk,
 	price float64,
 	quantity float64,
-	minNotional float64,
 	tickSizeExp int,
-	stepSizeExp int,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
@@ -542,33 +539,20 @@ func initFirstPairOfOrders(
 		return
 	}
 
-	// Визначаємо кількість для нових ордерів
-	correctedQuantityUp, correctedQuantityDown, _, positionVal, _ := getQuantity(
-		pair,
-		risk,
-		price,
-		quantity,
-		minNotional,
-		stepSizeExp,
-		pair.GetCurrentPositionBalance())
-	if positionVal >= -pair.GetCurrentPositionBalance() {
-		// Створюємо ордери на продаж
-		sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, round(price*(1+pair.GetSellDelta()), tickSizeExp))
-		if err != nil {
-			printError()
-			return
-		}
-		logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
+	// Створюємо ордери на продаж
+	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	if err != nil {
+		printError()
+		return
 	}
-	if positionVal <= pair.GetCurrentPositionBalance() {
-		// Створюємо ордери на купівлю
-		buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
-		if err != nil {
-			printError()
-			return
-		}
-		logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
+	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
+	// Створюємо ордери на купівлю
+	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	if err != nil {
+		printError()
+		return
 	}
+	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
 	return
 }
 
@@ -706,9 +690,7 @@ func positionLossObservation(
 	pairProcessor *PairProcessor,
 	quantity float64,
 	price float64,
-	minNotional float64,
-	tickSizeExp int,
-	stepSizeExp int) (err error) {
+	tickSizeExp int) (err error) {
 	var (
 		side futures.SideType
 	)
@@ -748,7 +730,7 @@ func positionLossObservation(
 					}
 				}
 				// Створюємо початкові ордери на продаж та купівлю з новими цінами
-				_, _, err = initFirstPairOfOrders(pair, risk, price, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
+				_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
 				if err != nil {
 					printError()
 					return err
@@ -807,11 +789,11 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, _, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -935,11 +917,11 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, _, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1119,9 +1101,7 @@ func timeProcess(
 	currentPrice float64,
 	quantity float64,
 	risk *futures.PositionRisk,
-	minNotional float64,
 	tickSizeExp int,
-	stepSizeExp int,
 	free float64,
 	initPrice float64,
 	pairProcessor *PairProcessor) (err error) {
@@ -1156,7 +1136,7 @@ func timeProcess(
 		return err
 	}
 	// Обробка втрат по поточній позиції
-	err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, minNotional, tickSizeExp, stepSizeExp)
+	err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, tickSizeExp)
 	if err != nil {
 		return err
 	}
@@ -1247,7 +1227,7 @@ func RunFuturesGridTradingV3(
 	logrus.Debugf("Futures %s: Initial price %v, Quantity %v, MinNotional %v, TickSizeExp %v, StepSizeExp %v",
 		pair.GetPair(), initPrice, quantity, minNotional, tickSizeExp, stepSizeExp)
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1332,9 +1312,7 @@ func RunFuturesGridTradingV3(
 				currentPrice,
 				quantity,
 				risk,
-				minNotional,
 				tickSizeExp,
-				stepSizeExp,
 				free,
 				initPrice,
 				pairProcessor)
