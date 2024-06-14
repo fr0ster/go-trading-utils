@@ -482,8 +482,10 @@ func getSymbol(
 func initVars(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	pairStreams *PairStreams) (
+	pairStreams *PairStreams,
+	pairProcessor *PairProcessor) (
 	symbol *futures.Symbol,
+	risk *futures.PositionRisk,
 	price,
 	quantity float64,
 	minNotional float64,
@@ -519,11 +521,18 @@ func initVars(
 		return
 	}
 	quantity = setQuantity(symbol)
+	risk, err = pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		pairProcessor.CancelAllOrders()
+		return
+	}
 	return
 }
 
 func initFirstPairOfOrders(
 	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
 	price float64,
 	quantity float64,
 	tickSizeExp int,
@@ -533,19 +542,25 @@ func initFirstPairOfOrders(
 		printError()
 		return
 	}
-	// Створюємо ордери на продаж
-	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
-	if err != nil {
-		printError()
-		return
+	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * price / float64(pair.GetLeverage())
+	if positionVal <= -pair.GetCurrentPositionBalance() {
+		// Створюємо ордери на продаж
+		sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+		if err != nil {
+			printError()
+			return
+		}
+		logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
-	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
-	if err != nil {
-		printError()
-		return
+	if positionVal <= pair.GetCurrentPositionBalance() {
+		// Створюємо ордери на купівлю
+		buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+		if err != nil {
+			printError()
+			return
+		}
+		logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
 	}
-	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
 	return
 }
 
@@ -723,7 +738,7 @@ func positionLossObservation(
 					}
 				}
 				// Створюємо початкові ордери на продаж та купівлю з новими цінами
-				_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+				_, _, err = initFirstPairOfOrders(pair, risk, price, quantity, tickSizeExp, pairProcessor)
 				if err != nil {
 					printError()
 					return err
@@ -782,11 +797,11 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, risk, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -910,11 +925,11 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, risk, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1070,7 +1085,7 @@ func createNextPair(
 	// Створюємо ордер на продаж
 	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-		if math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+		if positionVal <= -pair.GetCurrentPositionBalance() && correctedQuantityUp > minQuantity {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityUp*upPrice >= minNotional {
@@ -1096,7 +1111,7 @@ func createNextPair(
 	// Створюємо ордер на купівлю
 	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		if math.Abs(positionVal) <= pair.GetCurrentPositionBalance() {
+		if positionVal <= pair.GetCurrentPositionBalance() && correctedQuantityUp > minQuantity {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityUp*upPrice, minNotional)
 			if correctedQuantityDown*downPrice >= minNotional {
@@ -1209,14 +1224,14 @@ func RunFuturesGridTradingV3(
 	} else {
 		oldDeltaStep = 1.0
 	}
-	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
+	_, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
 	logrus.Debugf("Futures %s: Initial price %v, Quantity %v, MinNotional %v, TickSizeExp %v, StepSizeExp %v",
 		pair.GetPair(), initPrice, quantity, minNotional, tickSizeExp, stepSizeExp)
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
