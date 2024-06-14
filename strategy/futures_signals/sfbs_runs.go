@@ -535,17 +535,28 @@ func initFirstPairOfOrders(
 	risk *futures.PositionRisk,
 	price float64,
 	quantity float64,
+	minNotional float64,
 	tickSizeExp int,
+	stepSizeExp int,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
 		printError()
 		return
 	}
-	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * price / float64(pair.GetLeverage())
+
+	// Визначаємо кількість для нових ордерів
+	correctedQuantityUp, correctedQuantityDown, _, positionVal, _ := getQuantity(
+		pair,
+		risk,
+		price,
+		quantity,
+		minNotional,
+		stepSizeExp,
+		pair.GetCurrentPositionBalance())
 	if positionVal <= -pair.GetCurrentPositionBalance() {
 		// Створюємо ордери на продаж
-		sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+		sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, correctedQuantityUp, round(price*(1+pair.GetSellDelta()), tickSizeExp))
 		if err != nil {
 			printError()
 			return
@@ -554,7 +565,7 @@ func initFirstPairOfOrders(
 	}
 	if positionVal <= pair.GetCurrentPositionBalance() {
 		// Створюємо ордери на купівлю
-		buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+		buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
 		if err != nil {
 			printError()
 			return
@@ -698,7 +709,9 @@ func positionLossObservation(
 	pairProcessor *PairProcessor,
 	quantity float64,
 	price float64,
-	tickSizeExp int) (err error) {
+	minNotional float64,
+	tickSizeExp int,
+	stepSizeExp int) (err error) {
 	var (
 		side futures.SideType
 	)
@@ -738,7 +751,7 @@ func positionLossObservation(
 					}
 				}
 				// Створюємо початкові ордери на продаж та купівлю з новими цінами
-				_, _, err = initFirstPairOfOrders(pair, risk, price, quantity, tickSizeExp, pairProcessor)
+				_, _, err = initFirstPairOfOrders(pair, risk, price, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
 				if err != nil {
 					printError()
 					return err
@@ -797,11 +810,11 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, risk, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -925,11 +938,11 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, risk, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams, pairProcessor)
+	symbol, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err := initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1023,7 +1036,6 @@ func RunFuturesGridTradingV2(
 }
 
 func createNextPair(
-	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	currentPrice float64,
 	quantity float64,
@@ -1032,56 +1044,23 @@ func createNextPair(
 	tickSizeExp int,
 	stepSizeExp int,
 	positionLimit float64,
-	oldDeltaStep float64,
-	pairProcessor *PairProcessor) (saveOldDeltaStep float64, err error) {
+	pairProcessor *PairProcessor) (err error) {
 	var (
 		correctedQuantityUp   float64
 		correctedQuantityDown float64
 	)
-	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-	minQuantity := round(minNotional/currentPrice, stepSizeExp)
-	deltaStep := oldDeltaStep
-	deltaStepUp := 1.0
-	deltaStepDown := 1.0
-	// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-	quantityCoefficient := (positionLimit - math.Abs(positionVal)) / positionLimit
-	if quantityCoefficient < 0 {
-		quantityCoefficient = 0
-	}
-	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
-		pair.GetPair(),
-		positionLimit,
-		math.Abs(positionVal),
-		(positionLimit - math.Abs(positionVal)),
-		positionLimit,
-		quantityCoefficient)
-	// Ставимо дефолтну кількість
-	correctedQuantityUp = quantity
-	correctedQuantityDown = quantity
-	if positionVal < 0 {
-		// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
-		correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-		if config.GetConfigurations().GetDynamicDelta() {
-			// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-			if deltaStep != 0 {
-				deltaStepUp = deltaStep
-			} else {
-				deltaStepUp = quantityCoefficient
-			}
-		}
-	} else if positionVal > 0 {
-		// Якщо позиція позитивна,
-		// то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
-		correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-		if config.GetConfigurations().GetDynamicDelta() {
-			// А шаг до нової ціни збільшуємо на коефіцієнт коррекції
-			if deltaStep != 0 {
-				deltaStepDown = deltaStep
-			} else {
-				deltaStepDown = quantityCoefficient
-			}
-		}
-	}
+	// Визначаємо кількість для нових ордерів
+	correctedQuantityUp, correctedQuantityDown, _, positionVal, minQuantity := getQuantity(
+		pair,
+		risk,
+		currentPrice,
+		quantity,
+		minNotional,
+		stepSizeExp,
+		positionLimit)
+	// Визначаємо шаг для нових ордерів
+	deltaStepUp := pair.GetSellDelta()
+	deltaStepDown := pair.GetBuyDelta()
 	// Створюємо ордер на продаж
 	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepUp/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
@@ -1133,7 +1112,6 @@ func createNextPair(
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
 	}
-	saveOldDeltaStep = deltaStep
 	return
 }
 
@@ -1144,7 +1122,9 @@ func timeProcess(
 	currentPrice float64,
 	quantity float64,
 	risk *futures.PositionRisk,
+	minNotional float64,
 	tickSizeExp int,
+	stepSizeExp int,
 	free float64,
 	initPrice float64,
 	pairProcessor *PairProcessor) (err error) {
@@ -1179,10 +1159,51 @@ func timeProcess(
 		return err
 	}
 	// Обробка втрат по поточній позиції
-	err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, tickSizeExp)
+	err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, minNotional, tickSizeExp, stepSizeExp)
 	if err != nil {
 		return err
 	}
+	return
+}
+
+func getQuantity(
+	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
+	currentPrice float64,
+	quantity float64,
+	minNotional float64,
+	stepSizeExp int,
+	positionLimit float64) (correctedQuantityUp, correctedQuantityDown, quantityCoefficient, positionVal, minQuantity float64) {
+	positionVal = utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
+	minQuantity = round(minNotional/currentPrice, stepSizeExp)
+	// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
+	quantityCoefficient = (positionLimit - math.Abs(positionVal)) / positionLimit
+	if positionVal < 0 {
+		// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
+		correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+		// Але кількість на купівлю не змінюємо
+		if quantity > minQuantity {
+			correctedQuantityDown = quantity
+		} else {
+			correctedQuantityDown = minQuantity
+		}
+	} else if positionVal > 0 {
+		// Якщо позиція позитивна,кількість на продаж не змінюємо
+		if quantity > minQuantity {
+			correctedQuantityUp = quantity
+		} else {
+			correctedQuantityUp = minQuantity
+		}
+		// Але зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+		correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+	}
+	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
+		pair.GetPair(),
+		positionLimit,
+		math.Abs(positionVal),
+		(positionLimit - math.Abs(positionVal)),
+		positionLimit,
+		quantityCoefficient)
 	return
 }
 
@@ -1201,7 +1222,6 @@ func RunFuturesGridTradingV3(
 		minNotional   float64
 		tickSizeExp   int
 		stepSizeExp   int
-		oldDeltaStep  float64
 		pairStreams   *PairStreams
 		pairProcessor *PairProcessor
 		risk          *futures.PositionRisk
@@ -1219,11 +1239,6 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	if config.GetConfigurations().GetDynamicDelta() {
-		oldDeltaStep = pair.GetDeltaStepPerMille()
-	} else {
-		oldDeltaStep = 1.0
-	}
 	_, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams, pairProcessor)
 	if err != nil {
 		return err
@@ -1231,7 +1246,7 @@ func RunFuturesGridTradingV3(
 	logrus.Debugf("Futures %s: Initial price %v, Quantity %v, MinNotional %v, TickSizeExp %v, StepSizeExp %v",
 		pair.GetPair(), initPrice, quantity, minNotional, tickSizeExp, stepSizeExp)
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, risk, initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, risk, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1291,8 +1306,7 @@ func RunFuturesGridTradingV3(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-					oldDeltaStep, err = createNextPair(
-						config,
+					err = createNextPair(
 						pair,
 						currentPrice,
 						quantity,
@@ -1301,7 +1315,6 @@ func RunFuturesGridTradingV3(
 						tickSizeExp,
 						stepSizeExp,
 						pair.GetCurrentPositionBalance(),
-						oldDeltaStep,
 						pairProcessor)
 					if err != nil {
 						pairProcessor.CancelAllOrders()
@@ -1318,7 +1331,9 @@ func RunFuturesGridTradingV3(
 				currentPrice,
 				quantity,
 				risk,
+				minNotional,
 				tickSizeExp,
+				stepSizeExp,
 				free,
 				initPrice,
 				pairProcessor)
