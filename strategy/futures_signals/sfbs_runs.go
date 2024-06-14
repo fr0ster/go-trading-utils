@@ -594,7 +594,7 @@ func marginBalancing(
 	// Балансування маржі як треба
 	if config.GetConfigurations().GetBalancingOfMargin() && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		delta := round(pair.GetCurrentPositionBalance(), tickStepSize) - round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize)
-		logrus.Debugf("Futures %s: Delta %v = Current Position Balance %v - Isolated Margin %v, Free %v",
+		logrus.Debugf("Futures %s: Delta %v = Current Position Balance %v - Isolated Margin %v, free %v",
 			pair.GetPair(), delta, pair.GetCurrentPositionBalance(), utils.ConvStrToFloat64(risk.IsolatedMargin), free)
 		if delta != 0 {
 			if delta > 0 && delta < free {
@@ -1301,6 +1301,7 @@ func RunFuturesGridTradingV3(
 				}
 			}
 		case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
+			free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 			err = timeProcess(
 				config,
 				client,
