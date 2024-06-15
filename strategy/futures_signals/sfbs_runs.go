@@ -1286,6 +1286,8 @@ func RunFuturesGridTradingV3(
 			}
 		case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
 			free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+			val, _ := GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+			currentPrice = round(val, tickSizeExp)
 			err = timeProcess(
 				config,
 				client,
