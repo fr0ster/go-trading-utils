@@ -1363,9 +1363,7 @@ func RunFuturesGridTradingV4(
 		quantity      float64
 		free          float64
 		currentPrice  float64
-		minNotional   float64
 		tickSizeExp   int
-		stepSizeExp   int
 		pairStreams   *PairStreams
 		pairProcessor *PairProcessor
 		risk          *futures.PositionRisk
@@ -1383,12 +1381,10 @@ func RunFuturesGridTradingV4(
 	if err != nil {
 		return err
 	}
-	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairStreams)
+	_, initPrice, quantity, _, tickSizeExp, _, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Futures %s: Initial price %v, Quantity %v, MinNotional %v, TickSizeExp %v, StepSizeExp %v",
-		pair.GetPair(), initPrice, quantity, minNotional, tickSizeExp, stepSizeExp)
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
 	if err != nil {
