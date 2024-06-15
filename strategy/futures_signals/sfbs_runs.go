@@ -700,20 +700,20 @@ func positionLossObservation(
 		// Якщо є тільки один ордер, це означає що ціна може піти занадто далеко
 		// шоб чекати на повернення і краще рестартувати з нового рівня
 		if len(openOrders) == 1 {
-			sellDelta := 0.0
-			buyDelta := 0.0
+			sellDeltaPercent := 0.0
+			buyDeltaPercent := 0.0
 			for _, order := range openOrders {
 				if order.Side == futures.SideTypeSell {
-					sellDelta = math.Max(buyDelta, (utils.ConvStrToFloat64(order.Price)-price)/price)
+					sellDeltaPercent = math.Abs(utils.ConvStrToFloat64(order.Price)-price) / price
 				} else if order.Side == futures.SideTypeBuy {
-					buyDelta = math.Max(sellDelta, (price-utils.ConvStrToFloat64(order.Price))/price)
+					buyDeltaPercent = math.Abs(utils.ConvStrToFloat64(order.Price)-price) / price
 				}
 			}
 			// Позиція від'ємна
 			// if utils.ConvStrToFloat64(risk.UnRealizedProfit) < 0 &&
 			// 	// Позиція більша за встановлений ліміт, тобто потенційна втрата більша за встановлений ліміт
 			// 	math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > pair.GetCurrentPositionBalance()*(1+pair.GetUnRealizedProfitLowBound()) {
-			if sellDelta > config.GetConfigurations().GetSellDeltaLoss() || buyDelta > config.GetConfigurations().GetBuyDeltaLoss() {
+			if sellDeltaPercent > config.GetConfigurations().GetSellDeltaLoss() || buyDeltaPercent > config.GetConfigurations().GetBuyDeltaLoss() {
 				// Скасовуємо всі ордери
 				pairProcessor.CancelAllOrders()
 				if config.GetConfigurations().GetClosePositionOnRestart() {
