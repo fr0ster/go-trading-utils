@@ -1088,23 +1088,24 @@ func timeProcess(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	currentPrice float64,
 	quantity float64,
 	risk *futures.PositionRisk,
 	tickSizeExp int,
-	free float64,
+	pairStreams *PairStreams,
 	pairProcessor *PairProcessor) (err error) {
-	if config.GetConfigurations().GetObservePriceLiquidation() ||
-		config.GetConfigurations().GetObservePositionLoss() ||
-		config.GetConfigurations().GetBalancingOfMargin() {
+	var (
+		free         float64
+		currentPrice float64
+	)
+	if config.GetConfigurations().GetBalancingOfMargin() ||
+		config.GetConfigurations().GetObservePriceLiquidation() ||
+		config.GetConfigurations().GetObservePositionLoss() {
 		risk, err = pairProcessor.GetPositionRisk()
 		if err != nil {
 			printError()
 			return
 		}
-	}
-	if config.GetConfigurations().GetObservePriceLiquidation() ||
-		config.GetConfigurations().GetObservePositionLoss() {
+		free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 		// Визначаємо поточну ціну
 		if val, err := GetPrice(client, pair.GetPair()); err == nil { // Отримання ціни по ринку для пари
 			currentPrice = round(val, tickSizeExp)
@@ -1284,18 +1285,14 @@ func RunFuturesGridTradingV3(
 				}
 			}
 		case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
-			free, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
-			val, _ := GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-			currentPrice = round(val, tickSizeExp)
 			err = timeProcess(
 				config,
 				client,
 				pair,
-				currentPrice,
 				quantity,
 				risk,
 				tickSizeExp,
-				free,
+				pairStreams,
 				pairProcessor)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
