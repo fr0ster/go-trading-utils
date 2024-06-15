@@ -1385,7 +1385,7 @@ func RunFuturesGridTradingV4(
 		deltaStepPerMilleOut float64
 		risk                 *futures.PositionRisk
 	)
-	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV3)
+	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
 		return err
 	}
