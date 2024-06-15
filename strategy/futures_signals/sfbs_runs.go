@@ -1093,7 +1093,6 @@ func timeProcess(
 	risk *futures.PositionRisk,
 	tickSizeExp int,
 	free float64,
-	initPrice float64,
 	pairProcessor *PairProcessor) (err error) {
 	if config.GetConfigurations().GetObservePriceLiquidation() ||
 		config.GetConfigurations().GetObservePositionLoss() ||
@@ -1117,7 +1116,7 @@ func timeProcess(
 	// Балансування маржі як треба
 	_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 	// Обробка наближення ліквідаціі
-	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
+	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
 	if err != nil {
 		return err
 	}
@@ -1297,7 +1296,6 @@ func RunFuturesGridTradingV3(
 				risk,
 				tickSizeExp,
 				free,
-				initPrice,
 				pairProcessor)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
