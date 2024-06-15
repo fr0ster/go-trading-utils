@@ -416,16 +416,16 @@ func New(
 		Pair:                     pair,
 		TargetSymbol:             targetSymbol,
 		BaseSymbol:               baseSymbol,
-		LimitInputIntoPosition:   0.1,
-		LimitOutputOfPosition:    0.5,
-		LimitOnPosition:          1.0,
-		LimitOnTransaction:       0.01,
-		UnRealizedProfitLowBound: 0.1,
-		UnRealizedProfitUpBound:  1,
-		BuyDelta:                 0.01,
+		LimitInputIntoPosition:   0.1,  // 10%
+		LimitOutputOfPosition:    0.5,  // 50%
+		LimitOnPosition:          1.0,  // 100%
+		LimitOnTransaction:       0.01, // 1%
+		UnRealizedProfitLowBound: 0.1,  // 10%
+		UnRealizedProfitUpBound:  1,    // 100%
+		BuyDelta:                 0.01, // 1%
 		BuyQuantity:              0.0,
 		BuyValue:                 0.0,
-		SellDelta:                0.05,
+		SellDelta:                0.05, // 5%
 		SellQuantity:             0.0,
 		SellValue:                0.0,
 		Commission:               Commission{},

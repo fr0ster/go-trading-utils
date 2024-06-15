@@ -301,13 +301,13 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		ObservePriceLiquidation:       false,
 		ObservePositionLoss:           false,
 		ClosePositionOnRestart:        false,
-		PercentsToStopSettingNewOrder: 0.05,
-		PercentToDecreasePosition:     0.03,
+		PercentsToStopSettingNewOrder: 0.05, // 5%
+		PercentToDecreasePosition:     0.03, // 3%
 		ObserverTimeOutMillisecond:    1000,
 		UsingBreakEvenPrice:           false,
-		BuyDeltaLoss:                  0.015,
-		SellDeltaLoss:                 0.015,
-		DeltaStepPercent:              100.0, // 0.1%
+		BuyDeltaLoss:                  0.015, // 1.5%
+		SellDeltaLoss:                 0.015, // 1.5%
+		DeltaStepPercent:              0.001, // 0.1%
 		Pairs:                         btree.New(2),
 	}
 }
