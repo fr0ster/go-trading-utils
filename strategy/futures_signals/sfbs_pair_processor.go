@@ -754,8 +754,23 @@ func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
 	return pp.orderStatusEvent
 }
 
+func (pp *PairProcessor) getPositionRisk(times int) (risks []*futures.PositionRisk, err error) {
+	if times == 0 {
+		return
+	}
+	risks, err = pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.GetSymbol()).Do(context.Background())
+	if err != nil {
+		errApi, _ := utils.ParseAPIError(err)
+		if errApi != nil && errApi.Code == -1021 {
+			time.Sleep(3 * time.Second)
+			return pp.getPositionRisk(times - 1)
+		}
+	}
+	return
+}
+
 func (pp *PairProcessor) GetPositionRisk() (risks *futures.PositionRisk, err error) {
-	risk, err := pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.GetSymbol()).Do(context.Background())
+	risk, err := pp.getPositionRisk(3)
 	if err != nil {
 		return nil, err
 	} else if len(risk) == 0 {
