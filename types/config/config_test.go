@@ -90,7 +90,6 @@ const (
 
 	BuyDelta_1       = 0.01  // Дельта для купівлі
 	SellDelta_1      = 0.01  // Дельта для продажу
-	DeltaStep_1      = 0.01  // Крок дельти
 	BuyQuantity_1    = 1.0   // Кількість для купівлі, суммарно по позиції
 	BuyCommission_1  = 0.001 // Комісія за купівлю
 	SellQuantity_1   = 1.0   // Кількість для продажу, суммарно по позиції
@@ -137,7 +136,6 @@ const (
 
 	BuyDelta_2       = 0.01   // Дельта для купівлі
 	SellDelta_2      = 0.01   // Дельта для продажу
-	DeltaStep_2      = 0.03   // Крок дельти
 	BuyQuantity_2    = 1.0    // Кількість для купівлі, суммарно по позиції
 	BuyCommission_2  = 0.0002 // Комісія за купівлю
 	SellQuantity_2   = 1.0    // Кількість для продажу, суммарно по позиції
@@ -217,7 +215,6 @@ var (
 		SellQuantity:             SellQuantity_1,
 		SellValue:                SellValue_1,
 		SellCommission:           SellCommission_1,
-		DeltaStepPerMille:        DeltaStep_1,
 		Commission:               Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
@@ -248,7 +245,6 @@ var (
 		SellQuantity:             SellQuantity_2,
 		SellValue:                SellValue_2,
 		SellCommission:           SellCommission_2,
-		DeltaStepPerMille:        DeltaStep_2,
 		Commission:               Commission,
 	}
 )
@@ -308,7 +304,6 @@ func getTestData() []byte {
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_1, 'f', -1, 64)).String() + `,
-					"delta_step": ` + json.Number(strconv.FormatFloat(DeltaStep_1, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -342,7 +337,6 @@ func getTestData() []byte {
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_2, 'f', -1, 64)).String() + `,
-					"delta_step": ` + json.Number(strconv.FormatFloat(DeltaStep_2, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -413,8 +407,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
 	assert.Equal(t, (checkingDate)[0].GetSellCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellCommission())
 
-	assert.Equal(t, (checkingDate)[0].GetDeltaStepPerMille(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetDeltaStepPerMille())
-
 	assert.Equal(t, (checkingDate)[1].GetInitialBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[1].GetCurrentBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCurrentBalance())
 
@@ -452,8 +444,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellQuantity())
 	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
 	assert.Equal(t, (checkingDate)[1].GetSellCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellCommission())
-
-	assert.Equal(t, (checkingDate)[1].GetDeltaStepPerMille(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetDeltaStepPerMille())
 
 }
 

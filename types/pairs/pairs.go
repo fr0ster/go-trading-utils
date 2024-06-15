@@ -99,21 +99,15 @@ type (
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
 
-		BuyDelta       float64 `json:"buy_delta"`       // Дельта для купівлі
-		BuyQuantity    float64 `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
-		BuyValue       float64 `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
-		BuyCommission  float64 `json:"buy_commission"`  // Комісія за купівлю
-		SellDelta      float64 `json:"sell_delta"`      // Дельта для продажу, суммарно по позиції
-		SellQuantity   float64 `json:"sell_quantity"`   // Кількість для продажу, суммарно по позиції
-		SellValue      float64 `json:"sell_value"`      // Вартість для продажу, суммарно по позиції
-		SellCommission float64 `json:"sell_commission"` // Комісія за продаж
-		// Крок дельти, як ціна рухається тіко в один бік і позиція збільшується в абсолютному значенні,
-		// то збільшуємо відповідну дельту на зазначений крок, якшо нуль,
-		// то вираховуємо дельту автоматично відповідно відстани позиції до ліміту
-		// При використанні дельти, ділимо значення на 1000, щоб вирахувати відсоток,
-		// бо використовуємо проценти а в конфігурації вказуємо проміле
-		DeltaStepPerMille float64            `json:"delta_step"`
-		Commission        map[string]float64 `json:"commission"` // Комісія
+		BuyDelta       float64            `json:"buy_delta"`       // Дельта для купівлі
+		BuyQuantity    float64            `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
+		BuyValue       float64            `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
+		BuyCommission  float64            `json:"buy_commission"`  // Комісія за купівлю
+		SellDelta      float64            `json:"sell_delta"`      // Дельта для продажу, суммарно по позиції
+		SellQuantity   float64            `json:"sell_quantity"`   // Кількість для продажу, суммарно по позиції
+		SellValue      float64            `json:"sell_value"`      // Вартість для продажу, суммарно по позиції
+		SellCommission float64            `json:"sell_commission"` // Комісія за продаж
+		Commission     map[string]float64 `json:"commission"`      // Комісія
 	}
 )
 
@@ -261,14 +255,6 @@ func (pr *Pairs) GetUpBound() float64 {
 
 func (pr *Pairs) GetLowBound() float64 {
 	return pr.LowBound
-}
-
-func (pr *Pairs) GetDeltaStepPerMille() float64 {
-	return pr.DeltaStepPerMille
-}
-
-func (pr *Pairs) SetDeltaStepPerMille(deltaStep float64) {
-	pr.DeltaStepPerMille = deltaStep
 }
 
 func (pr *Pairs) GetBuyDelta() float64 {
@@ -442,7 +428,6 @@ func New(
 		SellDelta:                0.05,
 		SellQuantity:             0.0,
 		SellValue:                0.0,
-		DeltaStepPerMille:        0.0,
 		Commission:               Commission{},
 	}
 }
