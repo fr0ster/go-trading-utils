@@ -51,6 +51,9 @@ type (
 		SetBuyDeltaLoss(float64)
 		GetSellDeltaLoss() float64
 		SetSellDeltaLoss(float64)
+
+		GetDeltaStepPercent() float64
+		SetDeltaStepPercent(float64)
 	}
 	ConfigurationFile interface {
 		GetFileName() string

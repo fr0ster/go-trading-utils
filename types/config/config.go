@@ -29,6 +29,7 @@ type (
 		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
 		BuyDeltaLoss                  float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss                 float64                      `json:"sell_delta_loss"`
+		DeltaStepPercent              float64                      `json:"delta_step_percent"`
 		Pairs                         *btree.BTree
 	}
 )
@@ -134,6 +135,14 @@ func (cf *Configs) SetSellDeltaLoss(delta float64) {
 	cf.SellDeltaLoss = delta
 }
 
+func (cf *Configs) GetDeltaStepPercent() float64 {
+	return cf.DeltaStepPercent
+}
+
+func (cf *Configs) SetDeltaStepPercent(delta float64) {
+	cf.DeltaStepPercent = delta
+}
+
 // Implement the GetPair method
 func (cf *Configs) GetPair(
 	account pairs_types.AccountType,
@@ -208,6 +217,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		DynamicDelta              bool                         `json:"dynamic_delta"`
 		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
+		DeltaStepPerMille         float64                      `json:"delta_step_percent"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:                c.Connection,
@@ -223,6 +233,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
 		BuyDeltaLoss:              c.BuyDeltaLoss,
 		SellDeltaLoss:             c.SellDeltaLoss,
+		DeltaStepPerMille:         c.DeltaStepPercent,
 		Pairs:                     pairs,
 	}, "", "  ")
 }
@@ -242,6 +253,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
 		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
+		DeltaStepPercent          float64                      `json:"delta_step_percent"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -271,6 +283,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.UsingBreakEvenPrice = temp.UsingBreakEvenPrice
 	c.BuyDeltaLoss = temp.BuyDeltaLoss
 	c.SellDeltaLoss = temp.SellDeltaLoss
+	c.DeltaStepPercent = temp.DeltaStepPercent
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -294,6 +307,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		UsingBreakEvenPrice:           false,
 		BuyDeltaLoss:                  0.015,
 		SellDeltaLoss:                 0.015,
+		DeltaStepPercent:              100.0, // 0.1%
 		Pairs:                         btree.New(2),
 	}
 }

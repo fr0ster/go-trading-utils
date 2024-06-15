@@ -43,6 +43,8 @@ const (
 	BuyDeltaLoss  = 0.01 // Дельта для рестарту
 	SellDeltaLoss = 0.01 // Дельта для рестарту
 
+	DeltaStopPercent = 0.01 // Відсоток росту дельти
+
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
@@ -184,6 +186,7 @@ var (
 		UsingBreakEvenPrice:           UsingBreakEvenPrice,
 		BuyDeltaLoss:                  BuyDeltaLoss,
 		SellDeltaLoss:                 SellDeltaLoss,
+		DeltaStepPercent:              DeltaStopPercent,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -273,6 +276,7 @@ func getTestData() []byte {
 			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
 			"buy_delta_loss": ` + json.Number(strconv.FormatFloat(BuyDeltaLoss, 'f', -1, 64)).String() + `,
 			"sell_delta_loss": ` + json.Number(strconv.FormatFloat(SellDeltaLoss, 'f', -1, 64)).String() + `,
+			"delta_step_percent": ` + json.Number(strconv.FormatFloat(DeltaStopPercent, 'f', -1, 64)).String() + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -369,6 +373,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
 	assert.Equal(t, BuyDeltaLoss, config.GetBuyDeltaLoss())
 	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
+	assert.Equal(t, DeltaStopPercent, config.GetDeltaStepPercent())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

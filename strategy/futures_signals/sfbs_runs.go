@@ -1438,20 +1438,14 @@ func RunFuturesGridTradingV4(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-					if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && event.OrderTradeUpdate.Side == futures.SideTypeSell {
-						deltaStepPerMilleUp += config.GetConfigurations().GetSellDeltaLoss()
-					}
-					if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-						deltaStepPerMilleDown += config.GetConfigurations().GetBuyDeltaLoss()
-					}
 					if priorSide != event.OrderTradeUpdate.Side {
 						deltaStepPerMilleUp = 0
 						deltaStepPerMilleDown = 0
 					} else {
 						if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && event.OrderTradeUpdate.Side == futures.SideTypeSell {
-							deltaStepPerMilleUp += config.GetConfigurations().GetSellDeltaLoss()
+							deltaStepPerMilleUp += pair.GetDeltaStepPerMille()
 						} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-							deltaStepPerMilleDown += config.GetConfigurations().GetBuyDeltaLoss()
+							deltaStepPerMilleDown += pair.GetDeltaStepPerMille()
 						}
 					}
 					priorSide = event.OrderTradeUpdate.Side
