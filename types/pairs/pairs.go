@@ -38,6 +38,7 @@ const (
 	GridStrategyType      StrategyType = "GRID"
 	GridStrategyTypeV2    StrategyType = "GRID_V2"
 	GridStrategyTypeV3    StrategyType = "GRID_V3"
+	GridStrategyTypeV4    StrategyType = "GRID_V4"
 	// INPUT_INTO_POSITION - Режим входу - накопичуємо цільовий токен
 	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
 	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
