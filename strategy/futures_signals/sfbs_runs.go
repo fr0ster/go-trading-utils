@@ -1059,9 +1059,9 @@ func createNextPair(
 	// Створюємо ордер на купівлю
 	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepDown/1000), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		if positionVal <= pair.GetCurrentPositionBalance() && correctedQuantityUp > minQuantity {
+		if positionVal <= pair.GetCurrentPositionBalance() && correctedQuantityDown > minQuantity {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
-				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityUp*upPrice, minNotional)
+				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityDown*upPrice, minNotional)
 			if correctedQuantityDown*downPrice >= minNotional {
 				_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, correctedQuantityDown, downPrice)
 				if err != nil {
