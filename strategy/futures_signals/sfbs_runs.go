@@ -1297,6 +1297,7 @@ func RunFuturesGridTradingV3(
 func createNextPair_v1(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
+	currentPrice float64,
 	quantity float64,
 	tickSizeExp int,
 	pairProcessor *PairProcessor) (err error) {
@@ -1320,8 +1321,8 @@ func createNextPair_v1(
 		upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
 		downQuantity = quantity
 	} else {
-		upPrice = round(entryPrice*(1+pair.GetSellDelta()), tickSizeExp)
-		downPrice = round(entryPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		upQuantity = quantity
 		downQuantity = quantity
 	}
@@ -1444,6 +1445,7 @@ func RunFuturesGridTradingV4(
 					err = createNextPair_v1(
 						pair,
 						risk,
+						currentPrice,
 						quantity,
 						tickSizeExp,
 						pairProcessor)
