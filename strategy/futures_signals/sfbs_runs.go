@@ -1447,12 +1447,8 @@ func RunFuturesGridTradingV4(
 						pair,
 						currentPrice,
 						quantity,
-						// minNotional,
-						// risk,
 						tickSizeExp,
-						// stepSizeExp,
 						deltaStepPerMilleOut,
-						// pair.GetCurrentPositionBalance(),
 						pairProcessor)
 					if err != nil {
 						pairProcessor.CancelAllOrders()
