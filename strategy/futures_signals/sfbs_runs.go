@@ -1315,31 +1315,18 @@ func createNextPair_v1(
 	pairProcessor *PairProcessor) (
 	deltaStepPerMilleOut float64,
 	err error) {
-	// // Визначаємо кількість для нових ордерів
-	// _, _, positionVal := getQuantity(
-	// 	pair,
-	// 	risk,
-	// 	currentPrice,
-	// 	quantity,
-	// 	minNotional,
-	// 	stepSizeExp,
-	// 	positionLimit)
 	// Визначаємо шаг для нових ордерів
 	deltaStepPerMilleOut = pair.GetDeltaStepPerMille() + deltaStepPerMille
 	// Створюємо ордер на продаж
 	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepPerMilleOut/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-		// if positionVal >= -pair.GetCurrentPositionBalance() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
 		if err != nil {
 			printError()
 			return
 		}
-		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, quantity)
-		// } else {
-		// 	logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
-		// 		pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		// }
+		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v deltaPrice %v%%",
+			pair.GetPair(), upPrice, quantity, 1+pair.GetSellDelta()+deltaStepPerMilleOut/1000)
 	} else {
 		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
 			pair.GetPair(), upPrice, pair.GetUpBound())
@@ -1347,17 +1334,13 @@ func createNextPair_v1(
 	// Створюємо ордер на купівлю
 	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepPerMilleOut/1000), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		// if positionVal <= pair.GetCurrentPositionBalance() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
 		if err != nil {
 			printError()
 			return
 		}
-		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, quantity)
-		// } else {
-		// 	logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
-		// 		pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		// }
+		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v deltaPrice %v%%",
+			pair.GetPair(), downPrice, quantity, 1-pair.GetBuyDelta()+deltaStepPerMilleOut/1000)
 	} else {
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
