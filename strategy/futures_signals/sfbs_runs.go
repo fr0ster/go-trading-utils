@@ -1307,11 +1307,11 @@ func createNextPair_v1(
 	currentPrice float64,
 	quantity float64,
 	tickSizeExp int,
-	deltaStepPerMilleUp float64,
-	deltaStepPerMilleDown float64,
+	deltaStepPercentUp float64,
+	deltaStepPercentDown float64,
 	pairProcessor *PairProcessor) (err error) {
 	// Створюємо ордер на продаж
-	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepPerMilleUp/1000), tickSizeExp)
+	upPrice := round(currentPrice*(1+pair.GetSellDelta()+deltaStepPercentUp/1000), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, upPrice)
 		if err != nil {
@@ -1319,13 +1319,13 @@ func createNextPair_v1(
 			return
 		}
 		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v deltaPrice %v%%",
-			pair.GetPair(), upPrice, quantity, 1+pair.GetSellDelta()+deltaStepPerMilleUp/1000)
+			pair.GetPair(), upPrice, quantity, 1+pair.GetSellDelta()+deltaStepPercentUp)
 	} else {
 		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
 			pair.GetPair(), upPrice, pair.GetUpBound())
 	}
 	// Створюємо ордер на купівлю
-	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepPerMilleDown/1000), tickSizeExp)
+	downPrice := round(currentPrice*(1-pair.GetBuyDelta()+deltaStepPercentDown), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, downPrice)
 		if err != nil {
@@ -1333,7 +1333,7 @@ func createNextPair_v1(
 			return
 		}
 		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v deltaPrice %v%%",
-			pair.GetPair(), downPrice, quantity, 1-pair.GetBuyDelta()+deltaStepPerMilleDown/1000)
+			pair.GetPair(), downPrice, quantity, 1-pair.GetBuyDelta()+deltaStepPercentDown/1000)
 	} else {
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
@@ -1349,19 +1349,19 @@ func RunFuturesGridTradingV4(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		initPrice             float64
-		quantity              float64
-		free                  float64
-		currentPrice          float64
-		minNotional           float64
-		tickSizeExp           int
-		stepSizeExp           int
-		pairStreams           *PairStreams
-		pairProcessor         *PairProcessor
-		deltaStepPerMilleUp   float64
-		deltaStepPerMilleDown float64
-		risk                  *futures.PositionRisk
-		priorSide             futures.SideType
+		initPrice            float64
+		quantity             float64
+		free                 float64
+		currentPrice         float64
+		minNotional          float64
+		tickSizeExp          int
+		stepSizeExp          int
+		pairStreams          *PairStreams
+		pairProcessor        *PairProcessor
+		deltaStepPercentUp   float64
+		deltaStepPercentDown float64
+		risk                 *futures.PositionRisk
+		priorSide            futures.SideType
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
@@ -1439,13 +1439,13 @@ func RunFuturesGridTradingV4(
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					if priorSide != event.OrderTradeUpdate.Side {
-						deltaStepPerMilleUp = 0
-						deltaStepPerMilleDown = 0
+						deltaStepPercentUp = 0
+						deltaStepPercentDown = 0
 					} else {
 						if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && event.OrderTradeUpdate.Side == futures.SideTypeSell {
-							deltaStepPerMilleUp += config.GetConfigurations().GetDeltaStepPercent()
+							deltaStepPercentUp += config.GetConfigurations().GetDeltaStepPercent()
 						} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-							deltaStepPerMilleDown += config.GetConfigurations().GetDeltaStepPercent()
+							deltaStepPercentDown += config.GetConfigurations().GetDeltaStepPercent()
 						}
 					}
 					priorSide = event.OrderTradeUpdate.Side
@@ -1454,8 +1454,8 @@ func RunFuturesGridTradingV4(
 						currentPrice,
 						quantity,
 						tickSizeExp,
-						deltaStepPerMilleUp,
-						deltaStepPerMilleDown,
+						deltaStepPercentUp,
+						deltaStepPercentDown,
 						pairProcessor)
 					if err != nil {
 						pairProcessor.CancelAllOrders()
