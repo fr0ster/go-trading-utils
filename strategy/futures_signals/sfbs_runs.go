@@ -1443,9 +1443,9 @@ func RunFuturesGridTradingV4(
 						deltaStepPerMilleDown = 0
 					} else {
 						if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && event.OrderTradeUpdate.Side == futures.SideTypeSell {
-							deltaStepPerMilleUp += pair.GetDeltaStepPerMille()
+							deltaStepPerMilleUp += config.GetConfigurations().GetDeltaStepPercent()
 						} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-							deltaStepPerMilleDown += pair.GetDeltaStepPerMille()
+							deltaStepPerMilleDown += config.GetConfigurations().GetDeltaStepPercent()
 						}
 					}
 					priorSide = event.OrderTradeUpdate.Side
