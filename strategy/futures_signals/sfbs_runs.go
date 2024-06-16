@@ -1295,7 +1295,6 @@ func createNextPair_v1(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	currentPrice float64,
-	quantity float64,
 	tickSizeExp int,
 	pairProcessor *PairProcessor) (err error) {
 	var (
@@ -1304,31 +1303,33 @@ func createNextPair_v1(
 		upQuantity   float64
 		downQuantity float64
 	)
-	getQuantity := func(risk *futures.PositionRisk) (upQuantity, downQuantity float64) {
+	// Визначаємо ціну для нових ордерів
+	upPrice, downPrice = getPrice(pair, risk, currentPrice, tickSizeExp)
+	getQuantity := func(risk *futures.PositionRisk, upPrice, downPrice float64) (upQuantity, downQuantity float64) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			upQuantity = quantity
+			upQuantity = round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
 			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
 			// Визначаємо кількість для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-			downQuantity = quantity
+			downQuantity = round(downPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
 			// Визначаємо кількість для нових ордерів коли позиція нульова
 		} else {
-			upQuantity = quantity
-			downQuantity = quantity
+			upQuantity = round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
+			downQuantity = round(downPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
 		}
 		return
 	}
-	upPrice, downPrice = getPrice(pair, risk, currentPrice, tickSizeExp)
-	upQuantity, downQuantity = getQuantity(risk)
+	// Визначаємо кількість для нових ордерів
+	upQuantity, downQuantity = getQuantity(risk, upPrice, downPrice)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, upQuantity, upPrice)
 		if err != nil {
 			printError()
 			return
 		}
-		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, quantity)
+		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
 	} else {
 		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
 			pair.GetPair(), upPrice, pair.GetUpBound())
@@ -1340,7 +1341,7 @@ func createNextPair_v1(
 			printError()
 			return
 		}
-		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, quantity)
+		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
 	} else {
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
@@ -1442,7 +1443,6 @@ func RunFuturesGridTradingV4(
 						pair,
 						risk,
 						currentPrice,
-						quantity,
 						tickSizeExp,
 						pairProcessor)
 					if err != nil {
