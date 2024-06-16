@@ -1386,7 +1386,7 @@ func createNextPair_v1(
 	upQuantity, downQuantity = getQuantity(risk, upPrice, downPrice)
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
-		if downClosePosition {
+		if upClosePosition {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
 		} else {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
