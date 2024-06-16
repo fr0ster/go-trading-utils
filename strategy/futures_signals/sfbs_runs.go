@@ -568,8 +568,9 @@ func marginBalancing(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	pairProcessor *PairProcessor,
+	pairStreams *PairStreams,
 	free float64,
-	tickStepSize int) (err error) {
+	tickStepSize int) (freeOut float64, err error) {
 	// Балансування маржі як треба
 	if config.GetConfigurations().GetBalancingOfMargin() && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		delta := round(pair.GetCurrentPositionBalance(), tickStepSize) - round(utils.ConvStrToFloat64(risk.IsolatedMargin), tickStepSize)
@@ -580,6 +581,7 @@ func marginBalancing(
 					pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance(), free)
 			}
 		}
+		freeOut, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
 	}
 	return
 }
@@ -828,7 +830,7 @@ func RunFuturesGridTrading(
 						return
 					}
 					// Балансування маржі як треба
-					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+					free, _ = marginBalancing(config, pair, risk, pairProcessor, pairStreams, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
@@ -953,7 +955,7 @@ func RunFuturesGridTradingV2(
 					return
 				}
 				// Балансування маржі як треба
-				_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+				free, _ = marginBalancing(config, pair, risk, pairProcessor, pairStreams, free, tickSizeExp)
 				// Обробка наближення ліквідаціі
 				err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 				if err != nil {
@@ -1175,7 +1177,7 @@ func timeProcess(
 		}
 	}
 	// Балансування маржі як треба
-	_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+	free, _ = marginBalancing(config, pair, risk, pairProcessor, pairStreams, free, tickSizeExp)
 	// Обробка наближення ліквідаціі
 	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
 	if err != nil {
@@ -1276,7 +1278,7 @@ func RunFuturesGridTradingV3(
 					// Визначаємо поточну ціну
 					currentPrice = getCurrentPrice(client, pair, tickSizeExp)
 					// Балансування маржі як треба
-					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+					free, _ = marginBalancing(config, pair, risk, pairProcessor, pairStreams, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
@@ -1506,7 +1508,7 @@ func RunFuturesGridTradingV4(
 					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 						pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
 					// Балансування маржі як треба
-					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+					free, _ = marginBalancing(config, pair, risk, pairProcessor, pairStreams, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, initPrice, quantity)
 					if err != nil {
