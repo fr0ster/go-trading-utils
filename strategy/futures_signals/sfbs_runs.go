@@ -1403,6 +1403,7 @@ func RunFuturesGridTradingV4(
 		priorSide       futures.SideType
 		priceMultiplier float64
 		deltaStep       float64
+		stepCount       float64
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
@@ -1485,10 +1486,11 @@ func RunFuturesGridTradingV4(
 					if pair.GetLowBound() != 0 && pair.GetUpBound() != 0 && pair.GetLowBound() < pair.GetUpBound() {
 						if priorSide != event.OrderTradeUpdate.Side {
 							priceMultiplier = 1
+							stepCount = free / (pair.GetCurrentPositionBalance() * pair.GetLimitOnTransaction())
 							if event.OrderTradeUpdate.Side == futures.SideTypeSell {
-								deltaStep = findRatio(currentPrice, pair.GetUpBound(), priceMultiplier) - 1 - pair.GetSellDelta()
+								deltaStep = findRatio(currentPrice, pair.GetUpBound(), stepCount) - 1 - pair.GetSellDelta()
 							} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-								deltaStep = 1 - findRatio(currentPrice, pair.GetLowBound(), priceMultiplier) - pair.GetBuyDelta()
+								deltaStep = 1 - findRatio(currentPrice, pair.GetLowBound(), stepCount) - pair.GetBuyDelta()
 							}
 						} else {
 							priceMultiplier++
