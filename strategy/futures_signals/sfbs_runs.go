@@ -1053,8 +1053,8 @@ func getPrice(
 		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		// Визначаємо ціну для нових ордерів коли позиція позитивна
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()+deltaStepPercent*priceMultiplier), tickSizeExp)
-		downPrice = round(entryPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		downPrice = round(entryPrice*(1-pair.GetBuyDelta()-deltaStepPercent*priceMultiplier), tickSizeExp)
 		// Визначаємо ціну для нових ордерів коли позиція нульова
 	} else {
 		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
@@ -1488,7 +1488,7 @@ func RunFuturesGridTradingV4(
 							if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 								deltaStep = findRatio(currentPrice, pair.GetUpBound(), priceMultiplier) - 1 - pair.GetSellDelta()
 							} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
-								deltaStep = findRatio(currentPrice, pair.GetLowBound(), priceMultiplier) - 1 - pair.GetBuyDelta()
+								deltaStep = 1 - findRatio(currentPrice, pair.GetLowBound(), priceMultiplier) - pair.GetBuyDelta()
 							}
 						} else {
 							priceMultiplier++
