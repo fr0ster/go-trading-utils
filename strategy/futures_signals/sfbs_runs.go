@@ -1323,7 +1323,7 @@ func createNextPair_v1(
 	}
 	// Визначаємо кількість для нових ордерів
 	upQuantity, downQuantity = getQuantity(risk, upPrice, downPrice)
-	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
+	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, upQuantity, upPrice)
 		if err != nil {
 			printError()
@@ -1331,11 +1331,15 @@ func createNextPair_v1(
 		}
 		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
 	} else {
-		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
-			pair.GetPair(), upPrice, pair.GetUpBound())
+		if upQuantity <= 0 {
+			logrus.Debugf("Futures %s: upQuantity %v less than 0", pair.GetPair(), upQuantity)
+		} else {
+			logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
+				pair.GetPair(), upPrice, pair.GetUpBound())
+		}
 	}
 	// Створюємо ордер на купівлю
-	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
+	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, downQuantity, downPrice)
 		if err != nil {
 			printError()
@@ -1343,8 +1347,12 @@ func createNextPair_v1(
 		}
 		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
 	} else {
-		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
-			pair.GetPair(), downPrice, pair.GetLowBound())
+		if downQuantity <= 0 {
+			logrus.Debugf("Futures %s: downQuantity %v less than 0", pair.GetPair(), downQuantity)
+		} else {
+			logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
+				pair.GetPair(), downPrice, pair.GetLowBound())
+		}
 	}
 	return
 }
