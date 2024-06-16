@@ -222,7 +222,8 @@ func (pp *PairProcessor) createOrder(
 					}, nil
 				}
 			}
-		} else if apiError.Code == -1008 {
+			// На наступних кодах помилок можна спробувати ще раз
+		} else if apiError.Code == -1008 || apiError.Code == -5028 {
 			time.Sleep(3 * time.Second)
 			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1)
 		}
