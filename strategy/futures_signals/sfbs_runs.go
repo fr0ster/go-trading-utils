@@ -659,7 +659,6 @@ func positionLossObservation(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	pairProcessor *PairProcessor,
-	quantity float64,
 	price float64,
 	tickSizeExp int) (err error) {
 	var (
@@ -1166,7 +1165,7 @@ func timeProcess(
 		return err
 	}
 	// Обробка втрат по поточній позиції
-	err = positionLossObservation(config, pair, risk, pairProcessor, quantity, currentPrice, tickSizeExp)
+	err = positionLossObservation(config, pair, risk, pairProcessor, currentPrice, tickSizeExp)
 	if err != nil {
 		return err
 	}
