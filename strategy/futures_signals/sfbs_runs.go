@@ -1345,10 +1345,16 @@ func createNextPair_v1(
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			upQuantity = round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
 			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
+			if downQuantity < upQuantity {
+				downQuantity = upQuantity
+			}
 			// Визначаємо кількість для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
 			downQuantity = round(downPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
+			if upQuantity < downQuantity {
+				upQuantity = downQuantity
+			}
 			// Визначаємо кількість для нових ордерів коли позиція нульова
 		} else {
 			upQuantity = round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
