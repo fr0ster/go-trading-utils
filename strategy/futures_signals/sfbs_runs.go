@@ -550,38 +550,12 @@ func initFirstPairOfOrders(
 	return
 }
 
-func getPrice(
+func getCurrentPrice(
 	client *futures.Client,
-	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
-	risk *futures.PositionRisk,
-	tickSizeExp int,
-	originalPrice float64) (currentPrice float64) {
-	if config.GetConfigurations().GetUsingBreakEvenPrice() {
-		if val := utils.ConvStrToFloat64(risk.BreakEvenPrice); val != 0 {
-			currentPrice = round(val, tickSizeExp)
-			logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from BreakEvenPrice %v",
-				pair.GetPair(), risk.BreakEvenPrice)
-		} else if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
-			currentPrice = round(val, tickSizeExp)
-			logrus.Debugf("Futures %s: BreakEvenPrice isn't 0, set Current Price from EntryPrice %v", pair.GetPair(), currentPrice)
-		} else {
-			currentPrice = round(originalPrice, tickSizeExp)
-			logrus.Debugf("Futures %s: BreakEvenPrice and EntryPrice are 0, set Current Price from OriginalPrice %v",
-				pair.GetPair(), currentPrice)
-		}
-	} else {
-		if val := utils.ConvStrToFloat64(risk.EntryPrice); val != 0 {
-			currentPrice = round(val, tickSizeExp)
-			logrus.Debugf("Futures %s: We don't use BreakEvenPrice, set Current Price from EntryPrice %v",
-				pair.GetPair(), currentPrice)
-		} else if val := round(originalPrice, tickSizeExp); val != 0 {
-			currentPrice = val
-		} else {
-			val, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
-			currentPrice = round(val, tickSizeExp)
-		}
-	}
+	tickSizeExp int) (currentPrice float64) {
+	val, _ := GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+	currentPrice = round(val, tickSizeExp)
 	return
 }
 
@@ -1051,6 +1025,29 @@ func getQuantity(
 	return
 }
 
+func getPrice(
+	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
+	currentPrice float64,
+	tickSizeExp int) (upPrice, downPrice float64) {
+	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+	entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
+	// Визначаємо ціну для нових ордерів коли позиція від'ємна
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		upPrice = round(entryPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		// Визначаємо ціну для нових ордерів коли позиція позитивна
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		downPrice = round(entryPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		// Визначаємо ціну для нових ордерів коли позиція нульова
+	} else {
+		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+	}
+	return
+}
+
 func createNextPair_v0(
 	pair *pairs_types.Pairs,
 	currentPrice float64,
@@ -1074,8 +1071,9 @@ func createNextPair_v0(
 		minNotional,
 		stepSizeExp,
 		positionLimit)
+	// Визначаємо ціну для нових ордерів
+	upPrice, downPrice := getPrice(pair, risk, currentPrice, tickSizeExp)
 	// Створюємо ордер на продаж
-	upPrice := round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		if positionVal >= -pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
@@ -1095,7 +1093,6 @@ func createNextPair_v0(
 			pair.GetPair(), upPrice, pair.GetUpBound())
 	}
 	// Створюємо ордер на купівлю
-	downPrice := round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 		if positionVal <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
@@ -1242,7 +1239,7 @@ func RunFuturesGridTradingV3(
 					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 						pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
 					// Визначаємо поточну ціну
-					currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
+					currentPrice = getCurrentPrice(client, pair, tickSizeExp)
 					// Балансування маржі як треба
 					_ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 					// Обробка наближення ліквідаціі
@@ -1307,25 +1304,24 @@ func createNextPair_v1(
 		upQuantity   float64
 		downQuantity float64
 	)
-	// Визначаємо ціну для нових ордерів коли позиція від'ємна
-	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-	entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		upPrice = round(entryPrice*(1+pair.GetSellDelta()), tickSizeExp)
-		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-		upQuantity = quantity
-		downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
-		downPrice = round(entryPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-		upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-		downQuantity = quantity
-	} else {
-		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
-		downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-		upQuantity = quantity
-		downQuantity = quantity
+	getQuantity := func(risk *futures.PositionRisk) (upQuantity, downQuantity float64) {
+		// Визначаємо кількість для нових ордерів коли позиція від'ємна
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+			upQuantity = quantity
+			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
+			// Визначаємо кількість для нових ордерів коли позиція позитивна
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
+			downQuantity = quantity
+			// Визначаємо кількість для нових ордерів коли позиція нульова
+		} else {
+			upQuantity = quantity
+			downQuantity = quantity
+		}
+		return
 	}
+	upPrice, downPrice = getPrice(pair, risk, currentPrice, tickSizeExp)
+	upQuantity, downQuantity = getQuantity(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, upQuantity, upPrice)
 		if err != nil {
@@ -1428,7 +1424,7 @@ func RunFuturesGridTradingV4(
 						return
 					}
 					// Визначаємо поточну ціну
-					currentPrice = getPrice(client, config, pair, risk, tickSizeExp, currentPrice)
+					currentPrice = getCurrentPrice(client, pair, tickSizeExp)
 					logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 						pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
 					// Балансування маржі як треба
