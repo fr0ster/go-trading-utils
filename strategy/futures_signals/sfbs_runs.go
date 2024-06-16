@@ -1042,16 +1042,18 @@ func getPrice(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	currentPrice float64,
+	priceMultiplier float64,
+	deltaStepPercent float64,
 	tickSizeExp int) (upPrice, downPrice float64) {
 	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 	entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
 	// Визначаємо ціну для нових ордерів коли позиція від'ємна
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		upPrice = round(entryPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		upPrice = round(entryPrice*(1+pair.GetSellDelta()+deltaStepPercent*priceMultiplier), tickSizeExp)
 		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		// Визначаємо ціну для нових ордерів коли позиція позитивна
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()+deltaStepPercent*priceMultiplier), tickSizeExp)
 		downPrice = round(entryPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		// Визначаємо ціну для нових ордерів коли позиція нульова
 	} else {
@@ -1085,7 +1087,7 @@ func createNextPair_v0(
 		stepSizeExp,
 		positionLimit)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice := getPrice(pair, risk, currentPrice, tickSizeExp)
+	upPrice, downPrice := getPrice(pair, risk, currentPrice, 0, 0, tickSizeExp)
 	// Створюємо ордер на продаж
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		if positionVal >= -pair.GetCurrentPositionBalance() {
@@ -1314,6 +1316,8 @@ func createNextPair_v1(
 	risk *futures.PositionRisk,
 	currentPrice float64,
 	tickSizeExp int,
+	priceMultiplier float64,
+	deltaStep float64,
 	pairProcessor *PairProcessor) (err error) {
 	var (
 		upPrice      float64
@@ -1322,7 +1326,7 @@ func createNextPair_v1(
 		downQuantity float64
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice = getPrice(pair, risk, currentPrice, tickSizeExp)
+	upPrice, downPrice = getPrice(pair, risk, currentPrice, priceMultiplier, deltaStep, tickSizeExp)
 	getQuantity := func(risk *futures.PositionRisk, upPrice, downPrice float64) (upQuantity, downQuantity float64) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
@@ -1375,6 +1379,10 @@ func createNextPair_v1(
 	return
 }
 
+func findRatio(A1, An, n float64) float64 {
+	return math.Pow(An/A1, 1/(n-1))
+}
+
 func RunFuturesGridTradingV4(
 	config *config_types.ConfigFile,
 	client *futures.Client,
@@ -1383,15 +1391,18 @@ func RunFuturesGridTradingV4(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		initPrice     float64
-		quantity      float64
-		free          float64
-		minNotional   float64
-		currentPrice  float64
-		tickSizeExp   int
-		pairStreams   *PairStreams
-		pairProcessor *PairProcessor
-		risk          *futures.PositionRisk
+		initPrice       float64
+		quantity        float64
+		free            float64
+		minNotional     float64
+		currentPrice    float64
+		tickSizeExp     int
+		pairStreams     *PairStreams
+		pairProcessor   *PairProcessor
+		risk            *futures.PositionRisk
+		priorSide       futures.SideType
+		priceMultiplier float64
+		deltaStep       float64
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
@@ -1471,11 +1482,28 @@ func RunFuturesGridTradingV4(
 					}
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
+					if pair.GetLowBound() != 0 && pair.GetUpBound() != 0 && pair.GetLowBound() < pair.GetUpBound() {
+						if priorSide != event.OrderTradeUpdate.Side {
+							priceMultiplier = 1
+							if event.OrderTradeUpdate.Side == futures.SideTypeSell {
+								deltaStep = findRatio(currentPrice, pair.GetUpBound(), priceMultiplier) - 1 - pair.GetSellDelta()
+							} else if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
+								deltaStep = findRatio(currentPrice, pair.GetLowBound(), priceMultiplier) - 1 - pair.GetBuyDelta()
+							}
+						} else {
+							priceMultiplier++
+						}
+					} else {
+						priceMultiplier = 0
+						deltaStep = 0
+					}
 					err = createNextPair_v1(
 						pair,
 						risk,
 						currentPrice,
 						tickSizeExp,
+						priceMultiplier,
+						deltaStep,
 						pairProcessor)
 					if err != nil {
 						pairProcessor.CancelAllOrders()
