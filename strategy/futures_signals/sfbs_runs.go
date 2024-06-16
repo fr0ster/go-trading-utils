@@ -524,7 +524,6 @@ func initVars(
 func initFirstPairOfOrders(
 	pair *pairs_types.Pairs,
 	price float64,
-	quantity float64,
 	tickSizeExp int,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
@@ -702,7 +701,7 @@ func positionLossObservation(
 					}
 				}
 				// Створюємо початкові ордери на продаж та купівлю з новими цінами
-				_, _, err = initFirstPairOfOrders(pair, price, quantity, tickSizeExp, pairProcessor)
+				_, _, err = initFirstPairOfOrders(pair, price, tickSizeExp, pairProcessor)
 				if err != nil {
 					printError()
 					return err
@@ -743,6 +742,7 @@ func RunFuturesGridTrading(
 	defer wg.Done()
 	var (
 		quantity     float64
+		minNotional  float64
 		locked       float64
 		free         float64
 		currentPrice float64
@@ -761,11 +761,16 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, initPrice, quantity, minNotional, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, quantity, tickSizeExp, pairProcessor)
+	if minNotional > pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction() {
+		printError()
+		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
+			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -884,11 +889,16 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, _, tickSizeExp, _, err := initVars(client, pair, pairStreams)
+	symbol, initPrice, quantity, minNotional, tickSizeExp, _, err := initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, quantity, tickSizeExp, pairProcessor)
+	if minNotional > pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction() {
+		printError()
+		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
+			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, currentPrice, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1199,8 +1209,13 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
+	if minNotional > pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction() {
+		printError()
+		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
+			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, initPrice, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1372,6 +1387,7 @@ func RunFuturesGridTradingV4(
 		initPrice     float64
 		quantity      float64
 		free          float64
+		minNotional   float64
 		currentPrice  float64
 		tickSizeExp   int
 		pairStreams   *PairStreams
@@ -1391,12 +1407,17 @@ func RunFuturesGridTradingV4(
 	if err != nil {
 		return err
 	}
-	_, initPrice, quantity, _, tickSizeExp, _, err = initVars(client, pair, pairStreams)
+	_, initPrice, quantity, minNotional, tickSizeExp, _, err = initVars(client, pair, pairStreams)
 	if err != nil {
 		return err
 	}
+	if minNotional > pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction() {
+		printError()
+		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
+			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = initFirstPairOfOrders(pair, initPrice, tickSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
