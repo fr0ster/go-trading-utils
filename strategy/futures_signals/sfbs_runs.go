@@ -534,19 +534,23 @@ func initFirstPairOfOrders(
 	}
 
 	// Створюємо ордери на продаж
-	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, quantity, round(price*(1+pair.GetSellDelta()), tickSizeExp))
+	upPrice := round(price*(1+pair.GetSellDelta()), tickSizeExp)
+	sellQuantity := round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
+	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, sellQuantity, upPrice)
 	if err != nil {
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), round(price*(1+pair.GetSellDelta()), tickSizeExp), quantity)
+	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), upPrice, sellQuantity)
 	// Створюємо ордери на купівлю
-	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, quantity, round(price*(1-pair.GetBuyDelta()), tickSizeExp))
+	buyPrice := round(price*(1-pair.GetSellDelta()), tickSizeExp)
+	buyQuantity := round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
+	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, buyQuantity, buyPrice)
 	if err != nil {
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), round(price*(1-pair.GetBuyDelta()), tickSizeExp), quantity)
+	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), buyPrice, buyQuantity)
 	return
 }
 
