@@ -1387,7 +1387,7 @@ func createNextPair_v1(
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
+			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		} else {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		}
@@ -1407,7 +1407,7 @@ func createNextPair_v1(
 	// Створюємо ордер на купівлю
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		if downClosePosition {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, downClosePosition)
+			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 		} else {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 		}
