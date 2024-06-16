@@ -131,7 +131,7 @@ func createOrderInGrid(
 		quantity,                   // quantity
 		closePosition,              // closePosition
 		price,                      // price
-		0,                          // stopPrice
+		price,                      // stopPrice
 		0)                          // callbackRate
 	return
 }
