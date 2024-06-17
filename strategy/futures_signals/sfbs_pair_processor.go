@@ -1036,11 +1036,13 @@ func NewPairProcessor(
 	resetEvent := make(chan bool, 1)
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
+		logrus.Debugf("Future order error: %v", err)
 		resetEvent <- true
 	}
 	// Ініціалізуємо обробник подій
 	wsHandler := func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
+			logrus.Debugf("Future order event: %v", event)
 			pp.userDataEvent <- event
 		}
 	}
