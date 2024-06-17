@@ -533,17 +533,17 @@ func initFirstPairOfOrders(
 	}
 
 	// Створюємо ордери на продаж
-	upPrice := round(price*(1+pair.GetSellDelta()), tickSizeExp)
-	sellQuantity := round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
-	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, upPrice, false)
+	sellPrice := round(price*(1+pair.GetSellDelta()), tickSizeExp)
+	sellQuantity := round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()/sellPrice, tickSizeExp)
+	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, sellPrice, false)
 	if err != nil {
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), upPrice, sellQuantity)
+	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), sellPrice, sellQuantity)
 	// Створюємо ордери на купівлю
 	buyPrice := round(price*(1-pair.GetSellDelta()), tickSizeExp)
-	buyQuantity := round(upPrice/pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction(), tickSizeExp)
+	buyQuantity := round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()/buyPrice, tickSizeExp)
 	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, buyQuantity, buyPrice, false)
 	if err != nil {
 		printError()
