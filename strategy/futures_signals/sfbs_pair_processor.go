@@ -992,8 +992,8 @@ func NewPairProcessor(
 		orderExecutionGuardProcessRun:  false,
 		stopOrderExecutionGuardProcess: nil,
 
-		userDataEvent:    nil,
-		orderStatusEvent: nil,
+		userDataEvent:    make(chan *futures.WsUserDataEvent),
+		orderStatusEvent: make(chan *futures.WsUserDataEvent),
 
 		stop: stop,
 
