@@ -1376,12 +1376,12 @@ func createNextPair_v1(
 	getQuantity := func(risk *futures.PositionRisk, minNotional, upPrice, downPrice float64, stepSizeExp int) (upQuantity, downQuantity float64) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			if free > pair.GetCurrentPositionBalance() {
+			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
 				freeUp = pair.GetCurrentPositionBalance() / 2
 			} else {
 				freeUp = free * pair.GetLimitOnPosition() / 2
 			}
-			upQuantity = round(freeUp*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
+			upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
 			if upQuantity*upPrice < minNotional {
 				upQuantity = round(minNotional/upPrice, stepSizeExp)
 			}
@@ -1392,12 +1392,12 @@ func createNextPair_v1(
 			// Визначаємо кількість для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-			if free > pair.GetCurrentPositionBalance() {
+			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
 				freeDown = pair.GetCurrentPositionBalance() / 2
 			} else {
 				freeDown = free * pair.GetLimitOnPosition() / 2
 			}
-			downQuantity = round(freeDown*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
+			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
 			if upQuantity < downQuantity {
 				upQuantity = downQuantity
 			}
@@ -1530,7 +1530,6 @@ func getCallBack(
 					free,
 					pairProcessor)
 				if err != nil {
-					pairProcessor.CancelAllOrders()
 					close(quit)
 				}
 			}
