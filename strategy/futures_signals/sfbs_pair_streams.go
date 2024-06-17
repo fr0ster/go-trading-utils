@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/sirupsen/logrus"
 
 	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
@@ -37,6 +38,7 @@ type (
 		orderTypes map[futures.OrderType]bool
 		degree     int
 		timeOut    time.Duration
+		// eventTimeOut time.Duration
 	}
 )
 
@@ -115,6 +117,7 @@ func NewPairStreams(
 		orderTypes: make(map[futures.OrderType]bool, 0),
 		degree:     3,
 		timeOut:    1 * time.Hour,
+		// eventTimeOut: 100 * time.Millisecond,
 	}
 
 	// Ініціалізуємо інформацію про біржу
@@ -214,9 +217,10 @@ func NewPairStreams(
 			case <-pp.stop:
 				return
 			case event := <-pp.userDataEvent4AUE:
+				logrus.Debugf("Futures %s: AUE event %v", pp.pair.GetPair(), event)
 				pp.accountUpdateEvent <- event.AccountUpdate
 			}
-			time.Sleep(pp.timeOut)
+			// time.Sleep(pp.timeOut)
 		}
 	}()
 	userDataEventStart(pp.userDataEvent4OTU)
@@ -226,9 +230,10 @@ func NewPairStreams(
 			case <-pp.stop:
 				return
 			case event := <-pp.userDataEvent4OTU:
+				logrus.Debugf("Futures %s: OTU event %v", pp.pair.GetPair(), event)
 				pp.orderTradeUpdateEvent <- event.OrderTradeUpdate
 			}
-			time.Sleep(pp.timeOut)
+			// time.Sleep(pp.timeOut)
 		}
 	}()
 	userDataEventStart(pp.userDataEvent4ACU)
@@ -238,9 +243,10 @@ func NewPairStreams(
 			case <-pp.stop:
 				return
 			case event := <-pp.userDataEvent4ACU:
+				logrus.Debugf("Futures %s: ACU event %v", pp.pair.GetPair(), event)
 				pp.accountConfigUpdateEvent <- event.AccountConfigUpdate
 			}
-			time.Sleep(pp.timeOut)
+			// time.Sleep(pp.timeOut)
 		}
 	}()
 	return
