@@ -1025,32 +1025,7 @@ func NewPairProcessor(
 		pp.orderTypes[orderType] = true
 	}
 
-	// pp.userDataEventStart(pp.userDataEvent, futures.UserDataEventTypeOrderTradeUpdate)
-
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		logrus.Debugf("Future order error: %v", err)
-		resetEvent <- true
-	}
-	// Ініціалізуємо обробник подій
-	wsHandler := func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
-			logrus.Debugf("Future order event: %v", event)
-			pp.userDataEvent <- event
-		}
-	}
-	// Запускаємо стрім подій користувача
-	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
+	pp.userDataEventStart(pp.userDataEvent, futures.UserDataEventTypeOrderTradeUpdate)
 
 	// Визначаємо статуси ордерів які нас цікавлять та ...
 	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
