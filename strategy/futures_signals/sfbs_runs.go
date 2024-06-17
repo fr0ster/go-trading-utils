@@ -581,6 +581,8 @@ func marginBalancing(
 			}
 		}
 		freeOut, _ = pairStreams.GetAccount().GetFreeAsset(pair.GetBaseSymbol())
+	} else {
+		freeOut = free
 	}
 	return
 }
