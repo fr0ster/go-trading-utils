@@ -1079,8 +1079,16 @@ func getPrice(
 		} else {
 			deltaUp = 0
 		}
-		upPrice = round(entryPrice*(1+pair.GetSellDelta()+deltaUp), tickSizeExp)
-		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		if entryPrice > currentPrice {
+			upPrice = round(entryPrice*(1+pair.GetSellDelta()+deltaUp), tickSizeExp)
+		} else {
+			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		}
+		if breakEvenPrice < currentPrice {
+			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		} else {
+			downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		}
 		// Визначаємо ціну для нових ордерів коли позиція позитивна
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 		if pair.GetLowBound() != 0 {
@@ -1094,8 +1102,16 @@ func getPrice(
 		} else {
 			deltaDown = 0
 		}
-		upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
-		downPrice = round(entryPrice*(1-pair.GetBuyDelta()-deltaDown), tickSizeExp)
+		if breakEvenPrice > currentPrice {
+			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		} else {
+			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+		}
+		if entryPrice < currentPrice {
+			downPrice = round(entryPrice*(1-pair.GetBuyDelta()-deltaDown), tickSizeExp)
+		} else {
+			downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+		}
 		// Визначаємо ціну для нових ордерів коли позиція нульова
 	} else {
 		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
