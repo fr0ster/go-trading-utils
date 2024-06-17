@@ -115,7 +115,7 @@ func RunFuturesTrading(
 }
 
 // Створення ордера для розміщення в грід
-func createOrderInGrid(
+func createOrder(
 	pairProcessor *PairProcessor,
 	side futures.SideType,
 	orderType futures.OrderType,
@@ -196,7 +196,7 @@ func processOrder(
 				delta_percent(upPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, upPrice, false)
+				upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, upPrice, false)
 				if err != nil {
 					printError()
 					return err
@@ -231,7 +231,7 @@ func processOrder(
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 		if ok && downPrice.GetOrderId() == 0 && downPrice.GetQuantity() <= 0 {
 			// Створюємо ордер на купівлю
-			downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, order.GetDownPrice(), false)
+			downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, order.GetDownPrice(), false)
 			if err != nil {
 				printError()
 				return err
@@ -276,7 +276,7 @@ func processOrder(
 				delta_percent(downPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				downOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, downPrice, false)
+				downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, downPrice, false)
 				if err != nil {
 					printError()
 					return err
@@ -311,7 +311,7 @@ func processOrder(
 		upRecord, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 		if ok && upRecord.GetOrderId() == 0 && upRecord.GetQuantity() <= 0 {
 			// Створюємо ордер на продаж
-			upOrder, err := createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, order.GetUpPrice(), false)
+			upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, order.GetUpPrice(), false)
 			if err != nil {
 				printError()
 				return err
@@ -540,7 +540,7 @@ func initFirstPairOfOrders(
 	if sellQuantity*price < minNotional {
 		sellQuantity = round(minNotional/price, stepSizeExp)
 	}
-	sellOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, sellPrice, false)
+	sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, sellPrice, false)
 	if err != nil {
 		printError()
 		return
@@ -552,7 +552,7 @@ func initFirstPairOfOrders(
 	if buyQuantity*price < minNotional {
 		buyQuantity = round(minNotional/price, stepSizeExp)
 	}
-	buyOrder, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, buyQuantity, buyPrice, false)
+	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, buyQuantity, buyPrice, false)
 	if err != nil {
 		printError()
 		return
@@ -1150,7 +1150,7 @@ func createNextPair_v0(
 		if positionVal >= -pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, false)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, false)
 			if err != nil {
 				printError()
 				return
@@ -1169,7 +1169,7 @@ func createNextPair_v0(
 		if positionVal <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityDown*upPrice, minNotional)
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, false)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, false)
 			if err != nil {
 				printError()
 				return
@@ -1411,7 +1411,7 @@ func createNextPair_v1(
 				freeDown = free * pair.GetLimitOnPosition() / 2
 			}
 			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-			if downQuantity < minNotional {
+			if downQuantity*downPrice < minNotional {
 				downQuantity = round(minNotional/downPrice, stepSizeExp)
 			}
 			// Визначаємо кількість для нових ордерів коли позиція нульова
@@ -1422,7 +1422,7 @@ func createNextPair_v1(
 				upQuantity = round(minNotional/upPrice, stepSizeExp)
 			}
 			downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-			if downQuantity < minNotional {
+			if downQuantity*downPrice < minNotional {
 				downQuantity = round(minNotional/downPrice, stepSizeExp)
 			}
 		}
@@ -1450,15 +1450,16 @@ func createNextPair_v1(
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
 			} else {
-				_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 			}
 		} else {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		}
 		if err != nil {
-			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
+			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v",
+				pair.GetPair(), upPrice, upQuantity, minNotional/upPrice)
 			printError()
 			return
 		}
@@ -1475,15 +1476,16 @@ func createNextPair_v1(
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		if downClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, downClosePosition)
 			} else {
-				_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 			}
 		} else {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 		}
 		if err != nil {
-			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
+			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
+				pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
 			printError()
 			return
 		}
@@ -1516,13 +1518,23 @@ func getCallBack(
 			// Знаходимо у гріді на якому був виконаний ордер
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
-				logrus.Debugf("Futures %s: Order filled %v on price %v with quantity %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
+				if event.OrderTradeUpdate.Type == futures.OrderTypeLimit {
+					logrus.Debugf("Futures %s: Limited Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				} else if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
+					logrus.Debugf("Futures %s: Take Profit Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				}
 				free, _ := pairProcessor.GetBaseBalance()
 				pair.SetCurrentBalance(free)
 				config.Save()
@@ -1534,8 +1546,8 @@ func getCallBack(
 				}
 				// Визначаємо поточну ціну
 				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
-				logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
-					pair.GetPair(), risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
+					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
 				// Балансування маржі як треба
 				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				pairProcessor.CancelAllOrders()
