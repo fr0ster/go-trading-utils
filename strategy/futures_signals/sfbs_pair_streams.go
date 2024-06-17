@@ -143,7 +143,7 @@ func NewPairStreams(
 		pp.orderTypes[orderType] = true
 	}
 
-	userDataEventStart := func(eventOut chan *futures.WsUserDataEvent) {
+	userDataEventStart := func(eventOut chan *futures.WsUserDataEvent, eventType ...futures.UserDataEventType) {
 		// Ініціалізуємо стріми для відмірювання часу
 		ticker := time.NewTicker(pp.timeOut)
 		// Ініціалізуємо маркер для останньої відповіді
@@ -161,7 +161,9 @@ func NewPairStreams(
 		}
 		// Ініціалізуємо обробник подій
 		wsHandler := func(event *futures.WsUserDataEvent) {
-			eventOut <- event
+			if len(eventType) != 1 || event.Event == eventType[0] {
+				eventOut <- event
+			}
 		}
 		// Запускаємо стрім подій користувача
 		var stopC chan struct{}
@@ -210,7 +212,7 @@ func NewPairStreams(
 	}
 	// Запускаємо стрім подій користувача
 	userDataEventStart(pp.userDataEvent)
-	userDataEventStart(pp.userDataEvent4AUE)
+	userDataEventStart(pp.userDataEvent4AUE, futures.UserDataEventTypeAccountUpdate)
 	go func() {
 		for {
 			select {
@@ -223,7 +225,7 @@ func NewPairStreams(
 			// time.Sleep(pp.timeOut)
 		}
 	}()
-	userDataEventStart(pp.userDataEvent4OTU)
+	userDataEventStart(pp.userDataEvent4OTU, futures.UserDataEventTypeOrderTradeUpdate)
 	go func() {
 		for {
 			select {
@@ -236,7 +238,7 @@ func NewPairStreams(
 			// time.Sleep(pp.timeOut)
 		}
 	}()
-	userDataEventStart(pp.userDataEvent4ACU)
+	userDataEventStart(pp.userDataEvent4ACU, futures.UserDataEventTypeAccountConfigUpdate)
 	go func() {
 		for {
 			select {
