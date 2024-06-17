@@ -13,8 +13,6 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	// "github.com/fr0ster/go-trading-utils/binance/futures/account"
-
 	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
@@ -1055,10 +1053,11 @@ func getPrice(
 		deltaDown float64
 	)
 	// Визначаємо ціну для нових ордерів коли позиція від'ємна
-	stepUp := free / (pair.GetCurrentPositionBalance() * pair.GetLimitOnTransaction())
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		if pair.GetUpBound() != 0 && stepUp != 0 {
-			deltaUp = findRatio(currentPrice, pair.GetUpBound(), stepUp) - 1 - pair.GetSellDelta()
+		if pair.GetUpBound() != 0 {
+			deltaUp = ((free*(pair.GetUpBound()-entryPrice)/(pair.GetUpBound()-pair.GetLowBound()))/
+				(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()))/
+				(pair.GetUpBound()-entryPrice) - pair.GetSellDelta()
 		} else {
 			deltaUp = 0
 		}
@@ -1066,8 +1065,10 @@ func getPrice(
 		downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		// Визначаємо ціну для нових ордерів коли позиція позитивна
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		if pair.GetLowBound() != 0 && stepUp != 0 {
-			deltaDown = 1 - findRatio(currentPrice, pair.GetUpBound(), stepUp) - pair.GetBuyDelta()
+		if pair.GetLowBound() != 0 {
+			deltaDown = ((free*(entryPrice-pair.GetLowBound())/(pair.GetUpBound()-pair.GetLowBound()))/
+				(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()))/
+				(entryPrice-pair.GetLowBound()) - pair.GetBuyDelta()
 		} else {
 			deltaDown = 0
 		}
@@ -1387,7 +1388,7 @@ func createNextPair_v1(
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
 		} else {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		}
@@ -1407,7 +1408,7 @@ func createNextPair_v1(
 	// Створюємо ордер на купівлю
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		if downClosePosition {
-			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, downClosePosition)
 		} else {
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 		}
@@ -1425,10 +1426,6 @@ func createNextPair_v1(
 		}
 	}
 	return
-}
-
-func findRatio(A1, An, n float64) float64 {
-	return math.Pow(An/A1, 1/(n-1))
 }
 
 func RunFuturesGridTradingV4(
