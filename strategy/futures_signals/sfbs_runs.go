@@ -1442,6 +1442,7 @@ func createNextPair_v1(
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		}
 		if err != nil {
+			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
 			printError()
 			return
 		}
@@ -1466,6 +1467,7 @@ func createNextPair_v1(
 			_, err = createOrderInGrid(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
 		}
 		if err != nil {
+			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
 			printError()
 			return
 		}
