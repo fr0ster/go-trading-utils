@@ -1386,9 +1386,6 @@ func createNextPair_v1(
 				upQuantity = round(minNotional/upPrice, stepSizeExp)
 			}
 			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-			if downQuantity < upQuantity {
-				downQuantity = upQuantity
-			}
 			// Визначаємо кількість для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
@@ -1398,14 +1395,20 @@ func createNextPair_v1(
 				freeDown = free * pair.GetLimitOnPosition() / 2
 			}
 			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-			if upQuantity < downQuantity {
-				upQuantity = downQuantity
+			if downQuantity < minNotional {
+				downQuantity = round(minNotional/downPrice, stepSizeExp)
 			}
 			// Визначаємо кількість для нових ордерів коли позиція нульова
 		} else {
 			freeNew := free * pair.GetLimitOnPosition() / 2
 			upQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
+			if upQuantity*upPrice < minNotional {
+				upQuantity = round(minNotional/upPrice, stepSizeExp)
+			}
 			downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
+			if downQuantity < minNotional {
+				downQuantity = round(minNotional/downPrice, stepSizeExp)
+			}
 		}
 		return
 	}
