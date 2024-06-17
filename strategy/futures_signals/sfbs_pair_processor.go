@@ -12,7 +12,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
-	futures_account "github.com/fr0ster/go-trading-utils/binance/futures/account"
+	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -30,7 +30,6 @@ type (
 		client       *futures.Client
 		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
-		account      *futures_account.Account
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -350,13 +349,13 @@ func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.Pa
 					if params.Price == 0 || params.Quantity == 0 {
 						continue
 					}
-					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
+					targetBalance, err := pp.GetTargetAsset()
 					if err != nil {
 						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
 						close(pp.stop)
 						return
 					}
-					if targetBalance < params.Price*params.Quantity {
+					if utils.ConvStrToFloat64(targetBalance.AvailableBalance) < params.Price*params.Quantity {
 						logrus.Warnf("We don't have enough %s to sell %s lots of %s",
 							pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
 						continue
@@ -827,6 +826,61 @@ func (pp *PairProcessor) GetPair() *pairs_types.Pairs {
 	return pp.pair
 }
 
+func (pp *PairProcessor) GetSymbol() *symbol_types.FuturesSymbol {
+	// Ініціалізуємо інформацію про пару
+	pp.pairInfo = pp.exchangeInfo.GetSymbol(
+		&symbol_types.FuturesSymbol{Symbol: pp.pair.GetPair()}).(*symbol_types.FuturesSymbol)
+	return pp.pairInfo
+}
+
+func (pp *PairProcessor) GetAccount() (account *futures.Account, err error) {
+	return pp.client.NewGetAccountService().Do(context.Background())
+}
+
+func (pp *PairProcessor) GetBaseAsset() (asset *futures.AccountAsset, err error) {
+	account, err := pp.GetAccount()
+	if err != nil {
+		return
+	}
+	for _, asset := range account.Assets {
+		if asset.Asset == pp.pair.GetBaseSymbol() {
+			return asset, nil
+		}
+	}
+	return nil, fmt.Errorf("can't find asset %s", pp.pair.GetBaseSymbol())
+}
+
+func (pp *PairProcessor) GetTargetAsset() (asset *futures.AccountAsset, err error) {
+	account, err := pp.GetAccount()
+	if err != nil {
+		return
+	}
+	for _, asset := range account.Assets {
+		if asset.Asset == pp.pair.GetTargetSymbol() {
+			return asset, nil
+		}
+	}
+	return nil, fmt.Errorf("can't find asset %s", pp.pair.GetTargetSymbol())
+}
+
+func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
+	asset, err := pp.GetTargetAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	return
+}
+
 func (pp *PairProcessor) Debug(fl, id string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		orders, _ := pp.GetOpenOrders()
@@ -837,20 +891,90 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
+func (pp *PairProcessor) userDataEventStart(eventOut chan *futures.WsUserDataEvent, eventType ...futures.UserDataEventType) {
+	// Ініціалізуємо стріми для відмірювання часу
+	ticker := time.NewTicker(pp.timeOut)
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
+	// Отримуємо ключ для прослуховування подій користувача
+	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return
+	}
+	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+	resetEvent := make(chan bool, 1)
+	// Ініціалізуємо обробник помилок
+	wsErrorHandler := func(err error) {
+		resetEvent <- true
+	}
+	// Ініціалізуємо обробник подій
+	wsHandler := func(event *futures.WsUserDataEvent) {
+		if len(eventType) != 1 || event.Event == eventType[0] {
+			eventOut <- event
+		}
+	}
+	// Запускаємо стрім подій користувача
+	var stopC chan struct{}
+	_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+	if err != nil {
+		return
+	}
+	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
+	go func() {
+		for {
+			select {
+			case <-resetEvent:
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
+				if err != nil {
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
+					}
+				}
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				// Запускаємо стрім подій користувача
+				_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+			case <-ticker.C:
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
+				if err != nil {
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
+					}
+				}
+				// Перевіряємо чи не вийшли за ліміт часу відповіді
+				if time.Since(lastResponse) > pp.timeOut {
+					// Зупиняємо стрім подій користувача
+					stopC <- struct{}{}
+					// Запускаємо стрім подій користувача
+					_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+				}
+			}
+		}
+	}()
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	exchangeInfo *exchange_types.ExchangeInfo,
-	account *futures_account.Account,
-	userDataEvent chan *futures.WsUserDataEvent,
 	stop chan struct{},
 	debug bool) (pp *PairProcessor, err error) {
+	exchangeInfo := exchange_types.New()
+	err = futures_exchange_info.Init(exchangeInfo, 3, client)
+
+	if err != nil {
+		return
+	}
 	pp = &PairProcessor{
 		client:       client,
 		pair:         pair,
 		exchangeInfo: exchangeInfo,
-		account:      account,
 
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},
@@ -868,7 +992,7 @@ func NewPairProcessor(
 		orderExecutionGuardProcessRun:  false,
 		stopOrderExecutionGuardProcess: nil,
 
-		userDataEvent:    userDataEvent,
+		userDataEvent:    nil,
 		orderStatusEvent: nil,
 
 		stop: stop,
@@ -900,6 +1024,8 @@ func NewPairProcessor(
 	for _, orderType := range pp.pairInfo.OrderType {
 		pp.orderTypes[orderType] = true
 	}
+
+	pp.userDataEventStart(pp.userDataEvent, futures.UserDataEventTypeOrderTradeUpdate)
 
 	// Визначаємо статуси ордерів які нас цікавлять та ...
 	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять

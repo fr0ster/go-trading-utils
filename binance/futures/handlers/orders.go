@@ -15,6 +15,7 @@ func GetChangingOfOrdersGuard(
 				for _, status := range statuses {
 					if event.OrderTradeUpdate.Status == status {
 						out <- event
+						return
 					}
 				}
 			}
