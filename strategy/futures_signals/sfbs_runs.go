@@ -1370,7 +1370,7 @@ func createNextPair_v1(
 			} else {
 				freeUp = free / 2
 			}
-			upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, sizeSizeExp)
+			upQuantity = round(freeUp*pair.GetLimitOnTransaction()*pair.GetLimitOnTransaction()/upPrice, sizeSizeExp)
 			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
 			if downQuantity < upQuantity {
 				downQuantity = upQuantity
@@ -1383,15 +1383,15 @@ func createNextPair_v1(
 			} else {
 				freeDown = free / 2
 			}
-			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, sizeSizeExp)
+			downQuantity = round(freeDown*pair.GetLimitOnTransaction()*pair.GetLimitOnTransaction()/downPrice, sizeSizeExp)
 			if upQuantity < downQuantity {
 				upQuantity = downQuantity
 			}
 			// Визначаємо кількість для нових ордерів коли позиція нульова
 		} else {
 			freeNew := free / 2
-			upQuantity = round(upPrice/freeNew*pair.GetLimitOnTransaction(), sizeSizeExp)
-			downQuantity = round(downPrice/freeNew*pair.GetLimitOnTransaction(), sizeSizeExp)
+			upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, sizeSizeExp)
+			downQuantity = round(freeNew*pair.GetLimitOnTransaction()/downPrice, sizeSizeExp)
 		}
 		return
 	}
