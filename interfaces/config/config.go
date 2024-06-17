@@ -54,6 +54,9 @@ type (
 
 		GetDeltaStepPercent() float64
 		SetDeltaStepPercent(float64)
+
+		GetClosePositionByTakeProfitMarketOrder() bool
+		SetClosePositionByTakeProfitMarketOrder(bool)
 	}
 	ConfigurationFile interface {
 		GetFileName() string

@@ -16,21 +16,22 @@ import (
 
 type (
 	Configs struct {
-		Connection                    *connection_types.Connection `json:"connection"`
-		LogLevel                      logrus.Level                 `json:"log_level"`
-		ReloadConfig                  bool                         `json:"reload_config"`
-		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss           bool                         `json:"observe_position_loss"`
-		ClosePositionOnRestart        bool                         `json:"close_position_on_restart"`
-		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
-		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
-		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
-		BuyDeltaLoss                  float64                      `json:"buy_delta_loss"`
-		SellDeltaLoss                 float64                      `json:"sell_delta_loss"`
-		DeltaStepPercent              float64                      `json:"delta_step_percent"`
-		Pairs                         *btree.BTree
+		Connection                           *connection_types.Connection `json:"connection"`
+		LogLevel                             logrus.Level                 `json:"log_level"`
+		ReloadConfig                         bool                         `json:"reload_config"`
+		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
+		ClosePositionOnRestart               bool                         `json:"close_position_on_restart"`
+		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
+		PercentsToStopSettingNewOrder        float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOutMillisecond           int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
+		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
+		DeltaStepPercent                     float64                      `json:"delta_step_percent"`
+		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		Pairs                                *btree.BTree
 	}
 )
 
@@ -143,6 +144,14 @@ func (cf *Configs) SetDeltaStepPercent(delta float64) {
 	cf.DeltaStepPercent = delta
 }
 
+func (cf *Configs) GetClosePositionByTakeProfitMarketOrder() bool {
+	return cf.ClosePositionByTakeProfitMarketOrder
+}
+
+func (cf *Configs) SetClosePositionByTakeProfitMarketOrder(close bool) {
+	cf.ClosePositionByTakeProfitMarketOrder = close
+}
+
 // Implement the GetPair method
 func (cf *Configs) GetPair(
 	account pairs_types.AccountType,
@@ -203,58 +212,61 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		Connection                *connection_types.Connection `json:"connection"`
-		LogLevel                  string                       `json:"log_level"`
-		ReloadConfig              bool                         `json:"reload_config"`
-		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss       bool                         `json:"observe_position_loss"`
-		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
-		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
-		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
-		DynamicDelta              bool                         `json:"dynamic_delta"`
-		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
-		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
-		DeltaStepPerMille         float64                      `json:"delta_step_percent"`
-		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
+		Connection                           *connection_types.Connection `json:"connection"`
+		LogLevel                             string                       `json:"log_level"`
+		ReloadConfig                         bool                         `json:"reload_config"`
+		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
+		RestartClosedPosition                bool                         `json:"close_position_on_restart"`
+		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation                float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOut                      int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
+		DynamicDelta                         bool                         `json:"dynamic_delta"`
+		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
+		DeltaStepPerMille                    float64                      `json:"delta_step_percent"`
+		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		Pairs                                []*pairs_types.Pairs         `json:"pairs"`
 	}{
-		Connection:                c.Connection,
-		LogLevel:                  c.LogLevel.String(),
-		ReloadConfig:              c.ReloadConfig,
-		ObservePriceLiquidation:   c.ObservePriceLiquidation,
-		ObservePositionLoss:       c.ObservePositionLoss,
-		RestartClosedPosition:     c.ClosePositionOnRestart,
-		BalancingOfMargin:         c.BalancingOfMargin,
-		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
-		PercentToDecreasePosition: c.PercentToDecreasePosition,
-		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
-		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
-		BuyDeltaLoss:              c.BuyDeltaLoss,
-		SellDeltaLoss:             c.SellDeltaLoss,
-		DeltaStepPerMille:         c.DeltaStepPercent,
-		Pairs:                     pairs,
+		Connection:                           c.Connection,
+		LogLevel:                             c.LogLevel.String(),
+		ReloadConfig:                         c.ReloadConfig,
+		ObservePriceLiquidation:              c.ObservePriceLiquidation,
+		ObservePositionLoss:                  c.ObservePositionLoss,
+		RestartClosedPosition:                c.ClosePositionOnRestart,
+		BalancingOfMargin:                    c.BalancingOfMargin,
+		PercentsToLiquidation:                c.PercentsToStopSettingNewOrder,
+		PercentToDecreasePosition:            c.PercentToDecreasePosition,
+		ObserverTimeOut:                      c.ObserverTimeOutMillisecond,
+		UsingBreakEvenPrice:                  c.UsingBreakEvenPrice,
+		BuyDeltaLoss:                         c.BuyDeltaLoss,
+		SellDeltaLoss:                        c.SellDeltaLoss,
+		DeltaStepPerMille:                    c.DeltaStepPercent,
+		ClosePositionByTakeProfitMarketOrder: c.ClosePositionByTakeProfitMarketOrder,
+		Pairs:                                pairs,
 	}, "", "  ")
 }
 
 func (c *Configs) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		Connection                *connection_types.Connection `json:"connection"`
-		LogLevel                  string                       `json:"log_level"`
-		ReloadConfig              bool                         `json:"reload_config"`
-		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss       bool                         `json:"observe_position_loss"`
-		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
-		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
-		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
-		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
-		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
-		DeltaStepPercent          float64                      `json:"delta_step_percent"`
-		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
+		Connection                           *connection_types.Connection `json:"connection"`
+		LogLevel                             string                       `json:"log_level"`
+		ReloadConfig                         bool                         `json:"reload_config"`
+		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
+		RestartClosedPosition                bool                         `json:"close_position_on_restart"`
+		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation                float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOut                      int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
+		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
+		DeltaStepPercent                     float64                      `json:"delta_step_percent"`
+		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		Pairs                                []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
@@ -284,6 +296,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.BuyDeltaLoss = temp.BuyDeltaLoss
 	c.SellDeltaLoss = temp.SellDeltaLoss
 	c.DeltaStepPercent = temp.DeltaStepPercent
+	c.ClosePositionByTakeProfitMarketOrder = temp.ClosePositionByTakeProfitMarketOrder
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}

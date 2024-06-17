@@ -45,6 +45,8 @@ const (
 
 	DeltaStopPercent = 0.01 // Відсоток росту дельти
 
+	ClosePositionByTakeProfitMarketOrder = true // Закриття позиції за TakeProfitMarket ордером
+
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
 	SpotCommissionMaker = 0.001 // Комісія за мейкером
@@ -172,20 +174,21 @@ var (
 			CommissionMaker: SpotCommissionMaker,
 			CommissionTaker: SpotCommissionTaker,
 		},
-		LogLevel:                      InfoLevel,
-		ReloadConfig:                  ReloadConfig,
-		ObservePriceLiquidation:       ObservePriceLiquidation,
-		ObservePositionLoss:           ObservePositionLoss,
-		ClosePositionOnRestart:        ClosePositionOnRestart,
-		BalancingOfMargin:             BalancingOfMargin,
-		PercentsToStopSettingNewOrder: PercentsToLiquidation,
-		PercentToDecreasePosition:     PercentToDecreasePosition,
-		ObserverTimeOutMillisecond:    ObserverTimeOutMillisecond,
-		UsingBreakEvenPrice:           UsingBreakEvenPrice,
-		BuyDeltaLoss:                  BuyDeltaLoss,
-		SellDeltaLoss:                 SellDeltaLoss,
-		DeltaStepPercent:              DeltaStopPercent,
-		Pairs:                         btree.New(2),
+		LogLevel:                             InfoLevel,
+		ReloadConfig:                         ReloadConfig,
+		ObservePriceLiquidation:              ObservePriceLiquidation,
+		ObservePositionLoss:                  ObservePositionLoss,
+		ClosePositionOnRestart:               ClosePositionOnRestart,
+		BalancingOfMargin:                    BalancingOfMargin,
+		PercentsToStopSettingNewOrder:        PercentsToLiquidation,
+		PercentToDecreasePosition:            PercentToDecreasePosition,
+		ObserverTimeOutMillisecond:           ObserverTimeOutMillisecond,
+		UsingBreakEvenPrice:                  UsingBreakEvenPrice,
+		BuyDeltaLoss:                         BuyDeltaLoss,
+		SellDeltaLoss:                        SellDeltaLoss,
+		DeltaStepPercent:                     DeltaStopPercent,
+		ClosePositionByTakeProfitMarketOrder: ClosePositionByTakeProfitMarketOrder,
+		Pairs:                                btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
 		InitialBalance:           InitialBalance,
@@ -273,6 +276,7 @@ func getTestData() []byte {
 			"buy_delta_loss": ` + json.Number(strconv.FormatFloat(BuyDeltaLoss, 'f', -1, 64)).String() + `,
 			"sell_delta_loss": ` + json.Number(strconv.FormatFloat(SellDeltaLoss, 'f', -1, 64)).String() + `,
 			"delta_step_percent": ` + json.Number(strconv.FormatFloat(DeltaStopPercent, 'f', -1, 64)).String() + `,
+			"close_position_by_take_profit_market_order": ` + strconv.FormatBool(ClosePositionByTakeProfitMarketOrder) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -368,6 +372,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, BuyDeltaLoss, config.GetBuyDeltaLoss())
 	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
 	assert.Equal(t, DeltaStopPercent, config.GetDeltaStepPercent())
+	assert.Equal(t, ClosePositionByTakeProfitMarketOrder, config.GetClosePositionByTakeProfitMarketOrder())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())
