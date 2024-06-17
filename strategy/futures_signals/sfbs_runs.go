@@ -1530,6 +1530,7 @@ func getCallBack(
 					free,
 					pairProcessor)
 				if err != nil {
+					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 					close(quit)
 				}
 			}
