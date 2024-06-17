@@ -1500,6 +1500,15 @@ func RunFuturesGridTradingV4(
 			logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 			return nil
 		case event := <-pairProcessor.GetOrderStatusEvent():
+			if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
+				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
+					pair.GetPair(),
+					event.OrderTradeUpdate.ID,
+					event.OrderTradeUpdate.OriginalPrice,
+					event.OrderTradeUpdate.LastFilledQty,
+					event.OrderTradeUpdate.Side,
+					event.OrderTradeUpdate.Status)
+			}
 			if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 				updateConfig(config, pair)
 				// Знаходимо у гріді на якому був виконаний ордер
