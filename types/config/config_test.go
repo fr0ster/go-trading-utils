@@ -38,7 +38,9 @@ const (
 	PercentToDecreasePosition  = 0.03 // Відсоток для зменшення позиції
 	ObserverTimeOutMillisecond = 1000 // Таймаут спостереження
 	UsingBreakEvenPrice        = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
-	DynamicDelta               = true // Динамічна дельта та кількість
+
+	DynamicDelta    = true // Динамічна дельта та кількість
+	DynamicQuantity = true // Динамічна кількість
 
 	BuyDeltaLoss  = 0.01 // Дельта для рестарту
 	SellDeltaLoss = 0.01 // Дельта для рестарту
@@ -192,6 +194,8 @@ var (
 		SellDeltaLoss:                        SellDeltaLoss,
 		DeltaStepPercent:                     DeltaStopPercent,
 		ClosePositionByTakeProfitMarketOrder: ClosePositionByTakeProfitMarketOrder,
+		DynamicDelta:                         DynamicDelta,
+		DynamicQuantity:                      DynamicQuantity,
 		Pairs:                                btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -278,11 +282,12 @@ func getTestData() []byte {
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout_millisecond": ` + strconv.Itoa(ObserverTimeOutMillisecond) + `,
 			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
-			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
 			"buy_delta_loss": ` + json.Number(strconv.FormatFloat(BuyDeltaLoss, 'f', -1, 64)).String() + `,
 			"sell_delta_loss": ` + json.Number(strconv.FormatFloat(SellDeltaLoss, 'f', -1, 64)).String() + `,
 			"delta_step_percent": ` + json.Number(strconv.FormatFloat(DeltaStopPercent, 'f', -1, 64)).String() + `,
 			"close_position_by_take_profit_market_order": ` + strconv.FormatBool(ClosePositionByTakeProfitMarketOrder) + `,
+			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
+			"dynamic_quantity": ` + strconv.FormatBool(DynamicQuantity) + `,
 			"pairs": [
 				{
 					"initial_balance": ` + json.Number(strconv.FormatFloat(InitialBalance, 'f', -1, 64)).String() + `,
@@ -381,6 +386,8 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
 	assert.Equal(t, DeltaStopPercent, config.GetDeltaStepPercent())
 	assert.Equal(t, ClosePositionByTakeProfitMarketOrder, config.GetClosePositionByTakeProfitMarketOrder())
+	assert.Equal(t, DynamicDelta, config.GetDynamicDelta())
+	assert.Equal(t, DynamicQuantity, config.GetDynamicQuantity())
 
 	assert.Equal(t, (checkingDate)[0].GetInitialBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetInitialBalance())
 	assert.Equal(t, (checkingDate)[0].GetCurrentBalance(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCurrentBalance())

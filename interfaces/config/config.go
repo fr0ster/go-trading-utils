@@ -57,6 +57,12 @@ type (
 
 		GetClosePositionByTakeProfitMarketOrder() bool
 		SetClosePositionByTakeProfitMarketOrder(bool)
+
+		GetDynamicDelta() bool
+		SetDynamicDelta(bool)
+
+		GetDynamicQuantity() bool
+		SetDynamicQuantity(bool)
 	}
 	ConfigurationFile interface {
 		GetFileName() string

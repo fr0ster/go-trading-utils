@@ -31,6 +31,8 @@ type (
 		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
 		DeltaStepPercent                     float64                      `json:"delta_step_percent"`
 		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		DynamicDelta                         bool                         `json:"dynamic_delta"`
+		DynamicQuantity                      bool                         `json:"dynamic_quantity"`
 		Pairs                                *btree.BTree
 	}
 )
@@ -152,6 +154,22 @@ func (cf *Configs) SetClosePositionByTakeProfitMarketOrder(close bool) {
 	cf.ClosePositionByTakeProfitMarketOrder = close
 }
 
+func (cf *Configs) GetDynamicDelta() bool {
+	return cf.DynamicDelta
+}
+
+func (cf *Configs) SetDynamicDelta(dynamic bool) {
+	cf.DynamicDelta = dynamic
+}
+
+func (cf *Configs) GetDynamicQuantity() bool {
+	return cf.DynamicQuantity
+}
+
+func (cf *Configs) SetDynamicQuantity(dynamic bool) {
+	cf.DynamicQuantity = dynamic
+}
+
 // Implement the GetPair method
 func (cf *Configs) GetPair(
 	account pairs_types.AccountType,
@@ -223,11 +241,12 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
 		ObserverTimeOut                      int                          `json:"observer_timeout_millisecond"`
 		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
-		DynamicDelta                         bool                         `json:"dynamic_delta"`
 		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
 		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
 		DeltaStepPerMille                    float64                      `json:"delta_step_percent"`
 		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		DynamicDelta                         bool                         `json:"dynamic_delta"`
+		DynamicQuantity                      bool                         `json:"dynamic_quantity"`
 		Pairs                                []*pairs_types.Pairs         `json:"pairs"`
 	}{
 		Connection:                           c.Connection,
@@ -245,6 +264,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		SellDeltaLoss:                        c.SellDeltaLoss,
 		DeltaStepPerMille:                    c.DeltaStepPercent,
 		ClosePositionByTakeProfitMarketOrder: c.ClosePositionByTakeProfitMarketOrder,
+		DynamicDelta:                         c.DynamicDelta,
+		DynamicQuantity:                      c.DynamicQuantity,
 		Pairs:                                pairs,
 	}, "", "  ")
 }
@@ -266,6 +287,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
 		DeltaStepPercent                     float64                      `json:"delta_step_percent"`
 		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
+		DynamicDelta                         bool                         `json:"dynamic_delta"`
+		DynamicQuantity                      bool                         `json:"dynamic_quantity"`
 		Pairs                                []*pairs_types.Pairs         `json:"pairs"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
@@ -297,6 +320,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.SellDeltaLoss = temp.SellDeltaLoss
 	c.DeltaStepPercent = temp.DeltaStepPercent
 	c.ClosePositionByTakeProfitMarketOrder = temp.ClosePositionByTakeProfitMarketOrder
+	c.DynamicDelta = temp.DynamicDelta
+	c.DynamicQuantity = temp.DynamicQuantity
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
 		c.Pairs = btree.New(2)
 	}
@@ -308,19 +333,22 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 
 func NewConfig(connection *connection_types.Connection) *Configs {
 	return &Configs{
-		Connection:                    connection,
-		LogLevel:                      logrus.InfoLevel,
-		ReloadConfig:                  false,
-		ObservePriceLiquidation:       false,
-		ObservePositionLoss:           false,
-		ClosePositionOnRestart:        false,
-		PercentsToStopSettingNewOrder: 0.05, // 5%
-		PercentToDecreasePosition:     0.03, // 3%
-		ObserverTimeOutMillisecond:    1000,
-		UsingBreakEvenPrice:           false,
-		BuyDeltaLoss:                  0.015, // 1.5%
-		SellDeltaLoss:                 0.015, // 1.5%
-		DeltaStepPercent:              0.001, // 0.1%
-		Pairs:                         btree.New(2),
+		Connection:                           connection,
+		LogLevel:                             logrus.InfoLevel,
+		ReloadConfig:                         false,
+		ObservePriceLiquidation:              false,
+		ObservePositionLoss:                  false,
+		ClosePositionOnRestart:               false,
+		PercentsToStopSettingNewOrder:        0.05, // 5%
+		PercentToDecreasePosition:            0.03, // 3%
+		ObserverTimeOutMillisecond:           1000,
+		UsingBreakEvenPrice:                  false,
+		BuyDeltaLoss:                         0.015, // 1.5%
+		SellDeltaLoss:                        0.015, // 1.5%
+		DeltaStepPercent:                     0.001, // 0.1%
+		ClosePositionByTakeProfitMarketOrder: false,
+		DynamicDelta:                         false,
+		DynamicQuantity:                      false,
+		Pairs:                                btree.New(2),
 	}
 }
