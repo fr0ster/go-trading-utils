@@ -1920,17 +1920,29 @@ func createNextPair_v5(
 		if upClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
 				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callbackRate, upClosePosition)
+				if err != nil {
+					logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v",
+						pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+					printError()
+					return
+				}
 			} else {
 				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
+				if err != nil {
+					logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v",
+						pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+					printError()
+					return
+				}
 			}
 		} else {
 			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
-		}
-		if err != nil {
-			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v, ",
-				pair.GetPair(), upPrice, upQuantity, minNotional/upPrice)
-			printError()
-			return
+			if err != nil {
+				logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v",
+					pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+				printError()
+				return
+			}
 		}
 		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
 	} else {
@@ -1946,17 +1958,29 @@ func createNextPair_v5(
 		if downClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
 				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, downQuantity, downPrice, callbackRate, downClosePosition)
+				if err != nil {
+					logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
+						pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+					printError()
+					return
+				}
 			} else {
 				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
+				if err != nil {
+					logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
+						pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+					printError()
+					return
+				}
 			}
 		} else {
 			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
-		}
-		if err != nil {
-			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
-				pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
-			printError()
-			return
+			if err != nil {
+				logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
+					pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
+				printError()
+				return
+			}
 		}
 		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
 	} else {
