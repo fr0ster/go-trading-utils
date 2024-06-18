@@ -1070,13 +1070,14 @@ func getPrice(
 	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
 		multiplier = 2
 	}
+	delta := (math.Pow(1.35, float64(countOut))) // TODO 1.35 це хардкод, треба взяти з конфігурації чи якось інакше
 	// Визначаємо ціну для нових ордерів коли позиція від'ємна
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 		countOut = countIn + 1
 		if entryPrice > currentPrice {
-			upPrice = round(entryPrice*(1+pair.GetSellDelta()*float64(countOut)), tickSizeExp)
+			upPrice = round(entryPrice*(1+pair.GetSellDelta()*delta), tickSizeExp)
 		} else {
-			upPrice = round(currentPrice*(1+pair.GetSellDelta()*float64(countOut)), tickSizeExp)
+			upPrice = round(currentPrice*(1+pair.GetSellDelta()*delta), tickSizeExp)
 		}
 		if breakEvenPrice < currentPrice {
 			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
@@ -1092,9 +1093,9 @@ func getPrice(
 			upPrice = round(currentPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
 		}
 		if entryPrice < currentPrice {
-			downPrice = round(entryPrice*(1-pair.GetBuyDelta()*float64(countOut)), tickSizeExp)
+			downPrice = round(entryPrice*(1-pair.GetBuyDelta()*delta), tickSizeExp)
 		} else {
-			downPrice = round(currentPrice*(1-pair.GetBuyDelta()*float64(countOut)), tickSizeExp)
+			downPrice = round(currentPrice*(1-pair.GetBuyDelta()*delta), tickSizeExp)
 		}
 		// Визначаємо ціну для нових ордерів коли позиція нульова
 	} else {
