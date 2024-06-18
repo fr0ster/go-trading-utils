@@ -1052,6 +1052,7 @@ func getQuantity(
 }
 
 func getPrice(
+	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	currentPrice float64,
@@ -1059,6 +1060,10 @@ func getPrice(
 	countIn int) (upPrice, downPrice float64, countOut int) {
 	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 	entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
+	multiplier := 1
+	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
+		multiplier = 2
+	}
 	// Визначаємо ціну для нових ордерів коли позиція від'ємна
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 		countOut = countIn + 1
@@ -1068,17 +1073,17 @@ func getPrice(
 			upPrice = round(currentPrice*(1+pair.GetSellDelta()*float64(countOut)), tickSizeExp)
 		}
 		if breakEvenPrice < currentPrice {
-			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
 		} else {
-			downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
+			downPrice = round(currentPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
 		}
 		// Визначаємо ціну для нових ордерів коли позиція позитивна
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 		countOut = countIn + 1
 		if breakEvenPrice > currentPrice {
-			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()), tickSizeExp)
+			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
 		} else {
-			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
+			upPrice = round(currentPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
 		}
 		if entryPrice < currentPrice {
 			downPrice = round(entryPrice*(1-pair.GetBuyDelta()*float64(countOut)), tickSizeExp)
@@ -1095,6 +1100,7 @@ func getPrice(
 }
 
 func createNextPair_v0(
+	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	currentPrice float64,
 	quantity float64,
@@ -1118,7 +1124,7 @@ func createNextPair_v0(
 		stepSizeExp,
 		positionLimit)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, _ := getPrice(pair, risk, currentPrice, tickSizeExp, int(1))
+	upPrice, downPrice, _ := getPrice(config, pair, risk, currentPrice, tickSizeExp, int(1))
 	// Створюємо ордер на продаж
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		if positionVal >= -pair.GetCurrentPositionBalance() {
@@ -1303,6 +1309,7 @@ func RunFuturesGridTradingV3(
 					pairProcessor.CancelAllOrders()
 					logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 					err = createNextPair_v0(
+						config,
 						pair,
 						currentPrice,
 						quantity,
@@ -1364,7 +1371,7 @@ func createNextPair_v1(
 		divider      float64 = 1
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = getPrice(pair, risk, currentPrice, tickSizeExp, countIn)
+	upPrice, downPrice, countOut = getPrice(config, pair, risk, currentPrice, tickSizeExp, countIn)
 	getQuantity := func(risk *futures.PositionRisk, minNotional, upPrice, downPrice float64, stepSizeExp int) (upQuantity, downQuantity float64) {
 		if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
 			divider = 2
