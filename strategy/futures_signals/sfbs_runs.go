@@ -1361,16 +1361,20 @@ func createNextPair_v1(
 		downQuantity float64
 		freeUp       float64
 		freeDown     float64
+		divider      float64 = 1
 	)
 	// Визначаємо ціну для нових ордерів
 	upPrice, downPrice, countOut = getPrice(pair, risk, currentPrice, tickSizeExp, countIn)
 	getQuantity := func(risk *futures.PositionRisk, minNotional, upPrice, downPrice float64, stepSizeExp int) (upQuantity, downQuantity float64) {
+		if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
+			divider = 2
+		}
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-				freeUp = pair.GetCurrentPositionBalance() / 2
+				freeUp = pair.GetCurrentPositionBalance() / divider
 			} else {
-				freeUp = free * pair.GetLimitOnPosition() / 2
+				freeUp = free * pair.GetLimitOnPosition() / divider
 			}
 			upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
 			if upQuantity*upPrice < minNotional {
@@ -1381,9 +1385,9 @@ func createNextPair_v1(
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
 			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-				freeDown = pair.GetCurrentPositionBalance() / 2
+				freeDown = pair.GetCurrentPositionBalance() / divider
 			} else {
-				freeDown = free * pair.GetLimitOnPosition() / 2
+				freeDown = free * pair.GetLimitOnPosition() / divider
 			}
 			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
 			if downQuantity*downPrice < minNotional {
@@ -1391,7 +1395,7 @@ func createNextPair_v1(
 			}
 			// Визначаємо кількість для нових ордерів коли позиція нульова
 		} else {
-			freeNew := free * pair.GetLimitOnPosition() / 2
+			freeNew := free * pair.GetLimitOnPosition() / divider
 			upQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
 			if upQuantity*upPrice < minNotional {
 				upQuantity = round(minNotional/upPrice, stepSizeExp)
