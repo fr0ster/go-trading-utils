@@ -1453,11 +1453,108 @@ func RunFuturesGridTradingV3(
 	return nil
 }
 
+func streamStart(
+	client *futures.Client,
+	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan bool, err error) {
+	// Отримуємо ключ для прослуховування подій користувача
+	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return
+	}
+	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+	resetEvent = make(chan bool, 1)
+	// Ініціалізуємо обробник помилок
+	wsErrorHandler := func(err error) {
+		resetEvent <- true
+	}
+	// Запускаємо стрім подій користувача
+	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+	return
+}
+
+func getCallBack_v4(
+	config *config_types.ConfigFile,
+	client *futures.Client,
+	pair *pairs_types.Pairs,
+	pairProcessor *PairProcessor,
+	quantity float64,
+	tickSizeExp int,
+	stepSizeExp int,
+	minNotional float64,
+	quit chan struct{},
+	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
+	var (
+		count int
+	)
+	return func(event *futures.WsUserDataEvent) {
+		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
+			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+			updateConfig(config, pair)
+			// Знаходимо у гріді на якому був виконаний ордер
+			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+				if event.OrderTradeUpdate.Type == futures.OrderTypeLimit {
+					logrus.Debugf("Futures %s: Limited Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				} else if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
+					logrus.Debugf("Futures %s: Take Profit Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				}
+				free, _ := pairProcessor.GetFreeBalance()
+				pair.SetCurrentBalance(free)
+				config.Save()
+				risk, err := pairProcessor.GetPositionRisk()
+				if err != nil {
+					printError()
+					pairProcessor.CancelAllOrders()
+					return
+				}
+				// Визначаємо поточну ціну
+				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
+				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
+					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+				// Балансування маржі як треба
+				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+				pairProcessor.CancelAllOrders()
+				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
+				count, err = createNextPair_v4(
+					config,
+					pair,
+					risk,
+					minNotional,
+					quantity,
+					currentPrice,
+					tickSizeExp,
+					stepSizeExp,
+					free,
+					count,
+					pairProcessor)
+				if err != nil {
+					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
+					printError()
+					close(quit)
+				}
+			}
+		}
+	}
+}
+
 func createNextPair_v4(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	minNotional float64,
+	quantity float64,
 	currentPrice float64,
 	tickSizeExp int,
 	sizeSizeExp int,
@@ -1537,7 +1634,12 @@ func createNextPair_v4(
 		return
 	}
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantity(risk, minNotional, upPrice, downPrice, sizeSizeExp)
+	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
+		upQuantity, downQuantity = getQuantity(risk, minNotional, upPrice, downPrice, sizeSizeExp)
+	} else {
+		upQuantity = quantity
+		downQuantity = quantity
+	}
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
@@ -1593,100 +1695,6 @@ func createNextPair_v4(
 	return
 }
 
-func getCallBack_v4(
-	config *config_types.ConfigFile,
-	client *futures.Client,
-	pair *pairs_types.Pairs,
-	pairProcessor *PairProcessor,
-	tickSizeExp int,
-	stepSizeExp int,
-	minNotional float64,
-	quit chan struct{},
-	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
-	var (
-		count int
-	)
-	return func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
-			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-			updateConfig(config, pair)
-			// Знаходимо у гріді на якому був виконаний ордер
-			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
-				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
-				if event.OrderTradeUpdate.Type == futures.OrderTypeLimit {
-					logrus.Debugf("Futures %s: Limited Order filled %v on price %v with quantity %v side %v status %s",
-						pair.GetPair(),
-						event.OrderTradeUpdate.ID,
-						event.OrderTradeUpdate.OriginalPrice,
-						event.OrderTradeUpdate.LastFilledQty,
-						event.OrderTradeUpdate.Side,
-						event.OrderTradeUpdate.Status)
-				} else if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
-					logrus.Debugf("Futures %s: Take Profit Order filled %v on price %v with quantity %v side %v status %s",
-						pair.GetPair(),
-						event.OrderTradeUpdate.ID,
-						event.OrderTradeUpdate.OriginalPrice,
-						event.OrderTradeUpdate.LastFilledQty,
-						event.OrderTradeUpdate.Side,
-						event.OrderTradeUpdate.Status)
-				}
-				free, _ := pairProcessor.GetFreeBalance()
-				pair.SetCurrentBalance(free)
-				config.Save()
-				risk, err := pairProcessor.GetPositionRisk()
-				if err != nil {
-					printError()
-					pairProcessor.CancelAllOrders()
-					return
-				}
-				// Визначаємо поточну ціну
-				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
-				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
-					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
-				// Балансування маржі як треба
-				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-				pairProcessor.CancelAllOrders()
-				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-				count, err = createNextPair_v4(
-					config,
-					pair,
-					risk,
-					minNotional,
-					currentPrice,
-					tickSizeExp,
-					stepSizeExp,
-					free,
-					count,
-					pairProcessor)
-				if err != nil {
-					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
-					printError()
-					close(quit)
-				}
-			}
-		}
-	}
-}
-
-func streamStart(
-	client *futures.Client,
-	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan bool, err error) {
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent = make(chan bool, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- true
-	}
-	// Запускаємо стрім подій користувача
-	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	return
-}
-
 func RunFuturesGridTradingV4(
 	config *config_types.ConfigFile,
 	client *futures.Client,
@@ -1696,6 +1704,7 @@ func RunFuturesGridTradingV4(
 	defer wg.Done()
 	var (
 		initPrice     float64
+		quantity      float64
 		minNotional   float64
 		tickSizeExp   int
 		stepSizeExp   int
@@ -1726,7 +1735,7 @@ func RunFuturesGridTradingV4(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	errorCh, err := streamStart(client, getCallBack_v4(config, client, pair, pairProcessor, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	errorCh, err := streamStart(client, getCallBack_v4(config, client, pair, pairProcessor, quantity, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
 	if err != nil {
 		printError()
 		return err
@@ -1757,6 +1766,7 @@ func getCallBack_v5(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	pairProcessor *PairProcessor,
+	quantity float64,
 	tickSizeExp int,
 	stepSizeExp int,
 	minNotional float64,
@@ -1812,6 +1822,7 @@ func getCallBack_v5(
 					risk,
 					minNotional,
 					currentPrice,
+					quantity,
 					tickSizeExp,
 					stepSizeExp,
 					free,
@@ -1832,6 +1843,7 @@ func createNextPair_v5(
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	minNotional float64,
+	quantity float64,
 	currentPrice float64,
 	tickSizeExp int,
 	sizeSizeExp int,
@@ -1912,7 +1924,12 @@ func createNextPair_v5(
 		return
 	}
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantity(risk, minNotional, upPrice, downPrice, sizeSizeExp)
+	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
+		upQuantity, downQuantity = getQuantity(risk, minNotional, upPrice, downPrice, sizeSizeExp)
+	} else {
+		upQuantity = quantity
+		downQuantity = quantity
+	}
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
@@ -2001,6 +2018,7 @@ func RunFuturesGridTradingV5(
 	defer wg.Done()
 	var (
 		initPrice     float64
+		quantity      float64
 		minNotional   float64
 		tickSizeExp   int
 		stepSizeExp   int
@@ -2019,7 +2037,7 @@ func RunFuturesGridTradingV5(
 	if err != nil {
 		return err
 	}
-	_, initPrice, _, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
+	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -2031,7 +2049,7 @@ func RunFuturesGridTradingV5(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	errorCh, err := streamStart(client, getCallBack_v5(config, client, pair, pairProcessor, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	errorCh, err := streamStart(client, getCallBack_v5(config, client, pair, pairProcessor, quantity, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
 	if err != nil {
 		printError()
 		return err
