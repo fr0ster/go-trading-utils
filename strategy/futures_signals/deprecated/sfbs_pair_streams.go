@@ -16,6 +16,10 @@ import (
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
+const (
+	degree = 3
+)
+
 type (
 	PairStreams struct {
 		client       *futures.Client
@@ -211,44 +215,5 @@ func NewPairStreams(
 	}
 	// Запускаємо стрім подій користувача
 	userDataEventStart(pp.userDataEvent)
-	// userDataEventStart(pp.userDataEvent4AUE, futures.UserDataEventTypeAccountUpdate)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-pp.stop:
-	// 			return
-	// 		case event := <-pp.userDataEvent4AUE:
-	// 			logrus.Debugf("Futures %s: AUE event %v", pp.pair.GetPair(), event)
-	// 			pp.accountUpdateEvent <- event.AccountUpdate
-	// 		}
-	// 		time.Sleep(pp.eventTimeOut)
-	// 	}
-	// }()
-	// userDataEventStart(pp.userDataEvent4OTU, futures.UserDataEventTypeOrderTradeUpdate)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-pp.stop:
-	// 			return
-	// 		case event := <-pp.userDataEvent4OTU:
-	// 			logrus.Debugf("Futures %s: OTU event %v", pp.pair.GetPair(), event)
-	// 			pp.orderTradeUpdateEvent <- event.OrderTradeUpdate
-	// 		}
-	// 		time.Sleep(pp.eventTimeOut)
-	// 	}
-	// }()
-	// userDataEventStart(pp.userDataEvent4ACU, futures.UserDataEventTypeAccountConfigUpdate)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-pp.stop:
-	// 			return
-	// 		case event := <-pp.userDataEvent4ACU:
-	// 			logrus.Debugf("Futures %s: ACU event %v", pp.pair.GetPair(), event)
-	// 			pp.accountConfigUpdateEvent <- event.AccountConfigUpdate
-	// 		}
-	// 		time.Sleep(pp.eventTimeOut)
-	// 	}
-	// }()
 	return
 }

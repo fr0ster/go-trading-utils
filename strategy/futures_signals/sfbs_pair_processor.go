@@ -13,20 +13,17 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
-	futures_handlers "github.com/fr0ster/go-trading-utils/binance/futures/handlers"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 type (
 	PairProcessor struct {
-		config       *config_types.ConfigFile
 		client       *futures.Client
 		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
@@ -35,29 +32,6 @@ type (
 		minuteOrderLimit      *exchange_types.RateLimits
 		dayOrderLimit         *exchange_types.RateLimits
 		minuteRawRequestLimit *exchange_types.RateLimits
-
-		buyEvent       chan *pair_price_types.PairPrice
-		stopBuy        chan bool
-		buyProcessRun  bool
-		buyOrderEvent  chan *futures.CreateOrderResponse
-		sellEvent      chan *pair_price_types.PairPrice
-		stopSell       chan bool
-		sellProcessRun bool
-		sellOrderEvent chan *futures.CreateOrderResponse
-
-		startProcessBuyTakeProfitEvent  chan *futures.CreateOrderResponse
-		buyTakeProfitProcessRun         bool
-		stopBuyTakeProfitProcess        chan bool
-		startProcessSellTakeProfitEvent chan *futures.CreateOrderResponse
-		sellTakeProfitProcessRun        bool
-		stopSellTakeProfitProcess       chan bool
-
-		orderExecuted                  chan bool
-		orderExecutionGuardProcessRun  bool
-		stopOrderExecutionGuardProcess chan bool
-
-		userDataEvent    chan *futures.WsUserDataEvent
-		orderStatusEvent chan *futures.WsUserDataEvent
 
 		stop chan struct{}
 
@@ -253,390 +227,6 @@ func (pp *PairProcessor) ClosePosition(side futures.SideType, price float64, exp
 		Do(context.Background())
 }
 
-func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *futures.CreateOrderResponse) {
-	if !pp.buyProcessRun {
-		if pp.buyEvent == nil {
-			pp.buyEvent = triggerEvent
-		}
-		if pp.buyOrderEvent == nil {
-			pp.buyOrderEvent = make(chan *futures.CreateOrderResponse)
-		}
-		nextTriggerEvent = pp.buyOrderEvent
-		go func() {
-			for {
-				select {
-				case <-pp.stopBuy:
-					pp.stopBuy <- true
-					return
-				case <-pp.stop:
-					return
-				case params := <-pp.buyEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if params.Price == 0 || params.Quantity == 0 {
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							futures.OrderTypeMarket,
-							futures.SideTypeBuy,
-							futures.TimeInForceTypeGTC,
-							params.Quantity,
-							false, // We close position manually
-							params.Price,
-							0,
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), futures.SideTypeBuy, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == futures.OrderStatusTypeNew {
-							nextTriggerEvent <- order
-						} else {
-							fillPrice := utils.ConvStrToFloat64(order.Price)
-							fillQuantity := utils.ConvStrToFloat64(order.ExecutedQuantity)
-							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-							pp.pair.CalcMiddlePrice()
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-	} else {
-		nextTriggerEvent = pp.buyOrderEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.PairPrice) (startSellOrderEvent chan *futures.CreateOrderResponse) {
-	if !pp.sellProcessRun {
-		if pp.sellEvent == nil {
-			pp.sellEvent = triggerEvent
-		}
-		if pp.sellOrderEvent == nil {
-			pp.sellOrderEvent = make(chan *futures.CreateOrderResponse, 1)
-		}
-		startSellOrderEvent = make(chan *futures.CreateOrderResponse, 1)
-		go func() {
-			for {
-				select {
-				case <-pp.stopSell:
-					pp.stopSell <- true
-					return
-				case <-pp.stop:
-					return
-				case params := <-pp.sellEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if params.Price == 0 || params.Quantity == 0 {
-						continue
-					}
-					targetBalance, err := pp.GetTargetAsset()
-					if err != nil {
-						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						close(pp.stop)
-						return
-					}
-					if utils.ConvStrToFloat64(targetBalance.AvailableBalance) < params.Price*params.Quantity {
-						logrus.Warnf("We don't have enough %s to sell %s lots of %s",
-							pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							futures.OrderTypeMarket,
-							futures.SideTypeBuy,
-							futures.TimeInForceTypeGTC,
-							params.Quantity,
-							false, // We close position manually
-							params.Price,
-							0,
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), futures.SideTypeSell, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == futures.OrderStatusTypeNew {
-							startSellOrderEvent <- order
-						} else {
-							fillPrice := utils.ConvStrToFloat64(order.Price)
-							fillQuantity := utils.ConvStrToFloat64(order.ExecutedQuantity)
-							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-							pp.pair.CalcMiddlePrice()
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetSellQuantity(params.Quantity)
-						pp.pair.SetSellValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.sellProcessRun = true
-	} else {
-		startSellOrderEvent = pp.sellOrderEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) StopBuySignal() {
-	if pp.buyProcessRun {
-		pp.buyProcessRun = false
-		pp.stopBuy <- true
-	}
-}
-
-func (pp *PairProcessor) StopSellSignal() {
-	if pp.sellProcessRun {
-		pp.sellProcessRun = false
-		pp.stopSell <- true
-	}
-}
-
-func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (startProcessBuyTakeProfitEvent chan *futures.CreateOrderResponse) {
-	if !pp.buyTakeProfitProcessRun {
-		if pp.startProcessBuyTakeProfitEvent == nil {
-			pp.startProcessBuyTakeProfitEvent = make(chan *futures.CreateOrderResponse)
-		}
-		startProcessBuyTakeProfitEvent = pp.startProcessBuyTakeProfitEvent
-		go func() {
-			for {
-				select {
-				case <-pp.stopBuyTakeProfitProcess:
-					return
-				case <-pp.stop:
-					return
-				case params := <-pp.buyEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							futures.OrderTypeTakeProfit,
-							futures.SideTypeBuy,
-							futures.TimeInForceTypeGTC,
-							params.Quantity,
-							false, // We close position manually
-							params.Price,
-							params.Price*(1-float64(trailingDelta)/100),
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), futures.SideTypeBuy, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == futures.OrderStatusTypeNew {
-							orderExecutionGuard := pp.OrderExecutionGuard(order)
-							<-orderExecutionGuard
-							startProcessBuyTakeProfitEvent <- order
-						} else {
-							fillPrice := utils.ConvStrToFloat64(order.Price)
-							fillQuantity := utils.ConvStrToFloat64(order.ExecutedQuantity)
-							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-							pp.pair.CalcMiddlePrice()
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.buyTakeProfitProcessRun = true
-	} else {
-		startProcessBuyTakeProfitEvent = pp.startProcessBuyTakeProfitEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (startProcessSellTakeProfitEvent chan *futures.CreateOrderResponse) {
-	if !pp.sellTakeProfitProcessRun {
-		if pp.startProcessSellTakeProfitEvent == nil {
-			pp.startProcessSellTakeProfitEvent = make(chan *futures.CreateOrderResponse)
-		}
-		startProcessSellTakeProfitEvent = pp.startProcessSellTakeProfitEvent
-		go func() {
-			for {
-				select {
-				case <-pp.stopSellTakeProfitProcess:
-					return
-				case <-pp.stop:
-					return
-				case params := <-pp.sellEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							futures.OrderTypeTakeProfit,
-							futures.SideTypeSell,
-							futures.TimeInForceTypeGTC,
-							params.Quantity,
-							false, // We close position manually
-							params.Price,
-							params.Price*(1+float64(trailingDelta)/100),
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), futures.SideTypeSell, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == futures.OrderStatusTypeNew {
-							orderExecutionGuard := pp.OrderExecutionGuard(order)
-							<-orderExecutionGuard
-							startProcessSellTakeProfitEvent <- order
-						} else {
-							fillPrice := utils.ConvStrToFloat64(order.Price)
-							fillQuantity := utils.ConvStrToFloat64(order.ExecutedQuantity)
-							pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-							pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-							pp.pair.CalcMiddlePrice()
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetSellQuantity(params.Quantity)
-						pp.pair.SetSellValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.sellTakeProfitProcessRun = true
-	} else {
-		startProcessSellTakeProfitEvent = pp.startProcessSellTakeProfitEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) StopBuyTakeProfitSignal() {
-	if pp.buyTakeProfitProcessRun {
-		pp.buyTakeProfitProcessRun = false
-		pp.stopBuyTakeProfitProcess <- true
-	}
-}
-
-func (pp *PairProcessor) StopSellTakeProfitSignal() {
-	if pp.sellTakeProfitProcessRun {
-		pp.sellTakeProfitProcessRun = false
-		pp.stopSellTakeProfitProcess <- true
-	}
-}
-
-func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *futures.CreateOrderResponse) {
-	go func() {
-		for {
-			select {
-			case <-pp.stopBuy:
-				pp.stopBuy <- true
-				return
-			case <-pp.stopSell:
-				pp.stopSell <- true
-				return
-			case <-pp.stop:
-				return
-			case order := <-triggerEvent:
-				if order != nil {
-					for {
-						orderEvent := <-pp.orderStatusEvent
-						logrus.Debug("Order status changed")
-						if orderEvent.OrderTradeUpdate.ID == order.OrderID || orderEvent.OrderTradeUpdate.ClientOrderID == order.ClientOrderID {
-							if orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
-								orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty))
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty)*utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledPrice))
-								pp.pair.CalcMiddlePrice()
-								pp.config.Save()
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-	}()
-}
-
-func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *futures.CreateOrderResponse) {
-	go func() {
-		for {
-			select {
-			case <-pp.stopBuy:
-				pp.stopBuy <- true
-				return
-			case <-pp.stopSell:
-				pp.stopSell <- true
-				return
-			case <-pp.stop:
-				return
-			case order := <-triggerEvent:
-				if order != nil {
-					for {
-						orderEvent := <-pp.orderStatusEvent
-						logrus.Debug("Order status changed")
-						if orderEvent.OrderTradeUpdate.ID == order.OrderID || orderEvent.OrderTradeUpdate.ClientOrderID == order.ClientOrderID {
-							if orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
-								orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
-								pp.pair.SetSellQuantity(pp.pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty))
-								pp.pair.SetSellValue(pp.pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty)*utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledPrice))
-								pp.pair.CalcMiddlePrice()
-								pp.config.Save()
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-	}()
-}
-
 func (pp *PairProcessor) LimitUpdaterStream() {
 	var err error
 	go func() {
@@ -672,47 +262,6 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 	}()
 }
 
-func (pp *PairProcessor) OrderExecutionGuard(order *futures.CreateOrderResponse) chan bool {
-	if !pp.orderExecutionGuardProcessRun {
-		if pp.orderExecuted == nil {
-			pp.orderExecuted = make(chan bool)
-		}
-		go func() {
-			for {
-				select {
-				case <-pp.stopOrderExecutionGuardProcess:
-					return
-				case <-pp.stop:
-					return
-				case orderEvent := <-pp.orderStatusEvent:
-					logrus.Debug("Order status changed")
-					if orderEvent.OrderTradeUpdate.ID == order.OrderID || orderEvent.OrderTradeUpdate.ClientOrderID == order.ClientOrderID {
-						if orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled ||
-							orderEvent.OrderTradeUpdate.Status == futures.OrderStatusTypePartiallyFilled {
-							pp.pair.SetSellQuantity(pp.pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty))
-							pp.pair.SetSellValue(pp.pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledQty)*utils.ConvStrToFloat64(orderEvent.OrderTradeUpdate.LastFilledPrice))
-							pp.pair.CalcMiddlePrice()
-							pp.pair.SetStage(pairs_types.PositionClosedStage)
-							pp.config.Save()
-							pp.orderExecuted <- true
-							return
-						}
-					}
-				}
-			}
-		}()
-		pp.orderExecutionGuardProcessRun = true
-	}
-	return pp.orderExecuted
-}
-
-func (pp *PairProcessor) StopOrderExecutionGuard() {
-	if pp.orderExecutionGuardProcessRun {
-		pp.orderExecutionGuardProcessRun = false
-		pp.stopOrderExecutionGuardProcess <- true
-	}
-}
-
 func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
@@ -746,13 +295,13 @@ func (pp *PairProcessor) CancelAllOrders() (err error) {
 	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
 }
 
-func (pp *PairProcessor) GetUserDataEvent() chan *futures.WsUserDataEvent {
-	return pp.userDataEvent
-}
+// func (pp *PairProcessor) GetUserDataEvent() chan *futures.WsUserDataEvent {
+// 	return pp.userDataEvent
+// }
 
-func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
-	return pp.orderStatusEvent
-}
+// func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
+// 	return pp.orderStatusEvent
+// }
 
 func (pp *PairProcessor) getPositionRisk(times int) (risks []*futures.PositionRisk, err error) {
 	if times == 0 {
@@ -868,7 +417,7 @@ func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	balance = utils.ConvStrToFloat64(asset.WalletBalance) // Convert string to float64
 	return
 }
 
@@ -878,6 +427,24 @@ func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
 		return
 	}
 	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetFreeBalance() (balance float64, err error) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
 	return
 }
 
@@ -891,7 +458,7 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) userDataEventStart(eventOut chan *futures.WsUserDataEvent, eventType ...futures.UserDataEventType) {
+func (pp *PairProcessor) UserDataEventStart(eventOut chan *futures.WsUserDataEvent, callBack func(event *futures.WsUserDataEvent), eventType ...futures.UserDataEventType) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -908,9 +475,13 @@ func (pp *PairProcessor) userDataEventStart(eventOut chan *futures.WsUserDataEve
 		resetEvent <- true
 	}
 	// Ініціалізуємо обробник подій
+	eventMap := make(map[futures.UserDataEventType]bool)
+	for _, event := range eventType {
+		eventMap[event] = true
+	}
 	wsHandler := func(event *futures.WsUserDataEvent) {
-		if len(eventType) != 1 || event.Event == eventType[0] {
-			eventOut <- event
+		if len(eventType) == 0 || eventMap[event.Event] {
+			callBack(event)
 		}
 	}
 	// Запускаємо стрім подій користувача
@@ -981,20 +552,6 @@ func NewPairProcessor(
 		dayOrderLimit:         &exchange_types.RateLimits{},
 		minuteRawRequestLimit: &exchange_types.RateLimits{},
 
-		buyEvent:       nil,
-		stopBuy:        nil,
-		buyProcessRun:  false,
-		sellEvent:      nil,
-		stopSell:       nil,
-		sellProcessRun: false,
-
-		orderExecuted:                  nil,
-		orderExecutionGuardProcessRun:  false,
-		stopOrderExecutionGuardProcess: nil,
-
-		userDataEvent:    make(chan *futures.WsUserDataEvent),
-		orderStatusEvent: make(chan *futures.WsUserDataEvent),
-
 		stop: stop,
 
 		pairInfo:     nil,
@@ -1024,12 +581,6 @@ func NewPairProcessor(
 	for _, orderType := range pp.pairInfo.OrderType {
 		pp.orderTypes[orderType] = true
 	}
-
-	pp.userDataEventStart(pp.userDataEvent, futures.UserDataEventTypeOrderTradeUpdate)
-
-	// Визначаємо статуси ордерів які нас цікавлять та ...
-	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = futures_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, futures.OrderStatusTypeFilled, futures.OrderStatusTypePartiallyFilled)
 
 	return
 }
