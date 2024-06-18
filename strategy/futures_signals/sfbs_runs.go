@@ -1980,7 +1980,7 @@ func RunFuturesGridTradingV5(
 		stepSizeExp   int
 		pairProcessor *PairProcessor
 	)
-	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
+	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV5)
 	if err != nil {
 		return err
 	}
@@ -2071,6 +2071,9 @@ func Run(
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV4 {
 			err = RunFuturesGridTradingV4(config, client, pair, quit, wg)
+
+		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
+			err = RunFuturesGridTradingV5(config, client, pair, quit, wg)
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
