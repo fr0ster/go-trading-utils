@@ -37,6 +37,7 @@ func getTestData() *btree.BTree {
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
+		CallbackRate:             0.1, // CallbackRate 0.1%
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
@@ -68,6 +69,7 @@ func getTestData() *btree.BTree {
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
+		CallbackRate:             0.1, // CallbackRate 0.1%
 		Commission: map[string]float64{
 			"BTC": 0.001,
 			"ETH": 0.002,
@@ -155,6 +157,9 @@ func assertPair(
 
 	// Test GetSellValue
 	assert.Equal(t, 200.0, pair.GetSellValue())
+
+	// Test GetCallbackRate
+	assert.Equal(t, 0.1, pair.GetCallbackRate())
 
 	// Test GetCommission
 	assert.Equal(t, pairs_types.Commission{"BTC": 0.001, "ETH": 0.002}, pair.GetCommission())

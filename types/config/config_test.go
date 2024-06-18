@@ -99,6 +99,8 @@ const (
 	SellValue_1      = 100.0 // Вартість для продажу, суммарно по позиції
 	SellCommission_1 = 0.001 // Комісія за продаж
 
+	CallbackRate_1 = 0.1 // CallbackRate 0.1%
+
 	FuturesCommissionMaker = 0.002 // Комісія за мейкером
 	FuturesCommissionTaker = 0.005 // Комісія за тейкером
 
@@ -144,6 +146,8 @@ const (
 	BuyValue_2       = 100.0  // Вартість для купівлі, суммарно по позиції
 	SellValue_2      = 100.0  // Вартість для продажу, суммарно по позиції
 	SellCommission_2 = 0.0002 // Комісія за продаж
+
+	CallbackRate_2 = 0.5 // CallbackRate 0.5%
 )
 
 var (
@@ -218,6 +222,7 @@ var (
 		SellQuantity:             SellQuantity_1,
 		SellValue:                SellValue_1,
 		SellCommission:           SellCommission_1,
+		CallbackRate:             CallbackRate_1,
 		Commission:               Commission,
 	}
 	pair_2 = &pairs_types.Pairs{
@@ -248,6 +253,7 @@ var (
 		SellQuantity:             SellQuantity_2,
 		SellValue:                SellValue_2,
 		SellCommission:           SellCommission_2,
+		CallbackRate:             CallbackRate_2,
 		Commission:               Commission,
 	}
 )
@@ -308,6 +314,7 @@ func getTestData() []byte {
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_1, 'f', -1, 64)).String() + `,
+					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_1, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -341,6 +348,7 @@ func getTestData() []byte {
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_2, 'f', -1, 64)).String() + `,
+					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_2, 'f', -1, 64)).String() + `,
 					"commission": {
 						"` + CommissionAsset_1 + `": ` + json.Number(strconv.FormatFloat(Commission_1, 'f', -1, 64)).String() + `,
 						"` + CommissionAsset_2 + `": ` + json.Number(strconv.FormatFloat(Commission_2, 'f', -1, 64)).String() + `
@@ -410,6 +418,9 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetSellDelta(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellDelta())
 	assert.Equal(t, (checkingDate)[0].GetSellQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellQuantity())
 	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
+
+	assert.Equal(t, (checkingDate)[0].GetCallbackRate(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCallbackRate())
+
 	assert.Equal(t, (checkingDate)[0].GetSellCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellCommission())
 
 	assert.Equal(t, (checkingDate)[1].GetInitialBalance(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetInitialBalance())
@@ -448,6 +459,9 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetSellDelta(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellDelta())
 	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellQuantity())
 	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
+
+	assert.Equal(t, (checkingDate)[1].GetCallbackRate(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCallbackRate())
+
 	assert.Equal(t, (checkingDate)[1].GetSellCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellCommission())
 
 }

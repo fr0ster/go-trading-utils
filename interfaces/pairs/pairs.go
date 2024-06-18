@@ -71,6 +71,9 @@ type (
 		SetBuyData(float64, float64, float64)
 		SetSellData(float64, float64, float64)
 
+		GetCallbackRate() float64
+		SetCallbackRate(float64)
+
 		CalcMiddlePrice() error
 		GetMiddlePrice() float64
 		SetMiddlePrice(float64)

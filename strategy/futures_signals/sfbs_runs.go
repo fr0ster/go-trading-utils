@@ -1838,9 +1838,6 @@ func createNextPair_v5(
 	free float64,
 	countIn int,
 	pairProcessor *PairProcessor) (countOut int, err error) {
-	const (
-		callbackRate = 0.5
-	)
 	var (
 		upPrice      float64
 		downPrice    float64
@@ -1849,6 +1846,7 @@ func createNextPair_v5(
 		freeUp       float64
 		freeDown     float64
 		divider      float64 = 1
+		callbackRate float64 = pair.GetCallbackRate()
 	)
 	// Визначаємо ціну для нових ордерів
 	upPrice, downPrice, countOut = getPrice(config, pair, risk, currentPrice, tickSizeExp, 1, countIn)

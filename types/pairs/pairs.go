@@ -100,15 +100,18 @@ type (
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
 
-		BuyDelta       float64            `json:"buy_delta"`       // Дельта для купівлі
-		BuyQuantity    float64            `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
-		BuyValue       float64            `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
-		BuyCommission  float64            `json:"buy_commission"`  // Комісія за купівлю
-		SellDelta      float64            `json:"sell_delta"`      // Дельта для продажу, суммарно по позиції
-		SellQuantity   float64            `json:"sell_quantity"`   // Кількість для продажу, суммарно по позиції
-		SellValue      float64            `json:"sell_value"`      // Вартість для продажу, суммарно по позиції
-		SellCommission float64            `json:"sell_commission"` // Комісія за продаж
-		Commission     map[string]float64 `json:"commission"`      // Комісія
+		BuyDelta       float64 `json:"buy_delta"`       // Дельта для купівлі
+		BuyQuantity    float64 `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
+		BuyValue       float64 `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
+		BuyCommission  float64 `json:"buy_commission"`  // Комісія за купівлю
+		SellDelta      float64 `json:"sell_delta"`      // Дельта для продажу, суммарно по позиції
+		SellQuantity   float64 `json:"sell_quantity"`   // Кількість для продажу, суммарно по позиції
+		SellValue      float64 `json:"sell_value"`      // Вартість для продажу, суммарно по позиції
+		SellCommission float64 `json:"sell_commission"` // Комісія за продаж
+
+		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
+
+		Commission map[string]float64 `json:"commission"` // Комісія
 	}
 )
 
@@ -370,6 +373,14 @@ func (pr *Pairs) SetCommission(commission Commission) {
 	pr.Commission = commission
 }
 
+func (pr *Pairs) GetCallbackRate() float64 {
+	return pr.CallbackRate
+}
+
+func (pr *Pairs) SetCallbackRate(rate float64) {
+	pr.CallbackRate = rate
+}
+
 func (pr *Pairs) CalcMiddlePrice() error {
 	if pr.BuyQuantity == pr.SellQuantity {
 		return fmt.Errorf("BuyQuantity: %f and SellQuantity %f, can't calculate middle price", pr.BuyQuantity, pr.SellQuantity)
@@ -426,9 +437,12 @@ func New(
 		BuyDelta:                 0.01, // 1%
 		BuyQuantity:              0.0,
 		BuyValue:                 0.0,
+		BuyCommission:            0.0,
 		SellDelta:                0.05, // 5%
 		SellQuantity:             0.0,
 		SellValue:                0.0,
+		SellCommission:           0.0,
+		CallbackRate:             0.1, // 0.1%
 		Commission:               Commission{},
 	}
 }
