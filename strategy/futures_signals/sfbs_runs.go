@@ -121,6 +121,7 @@ func createOrder(
 	orderType futures.OrderType,
 	quantity,
 	price float64,
+	callbackRate float64,
 	closePosition bool) (order *futures.CreateOrderResponse, err error) {
 	order, err = pairProcessor.CreateOrder(
 		orderType,                  // orderType
@@ -130,7 +131,7 @@ func createOrder(
 		closePosition,              // closePosition
 		price,                      // price
 		price,                      // stopPrice
-		0)                          // callbackRate
+		callbackRate)               // callbackRate
 	return
 }
 
@@ -196,7 +197,7 @@ func processOrder(
 				delta_percent(upPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, upPrice, false)
+				upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, upPrice, 0, false)
 				if err != nil {
 					printError()
 					return err
@@ -231,7 +232,7 @@ func processOrder(
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 		if ok && downPrice.GetOrderId() == 0 && downPrice.GetQuantity() <= 0 {
 			// Створюємо ордер на купівлю
-			downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, order.GetDownPrice(), false)
+			downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, order.GetDownPrice(), 0, false)
 			if err != nil {
 				printError()
 				return err
@@ -276,7 +277,7 @@ func processOrder(
 				delta_percent(downPrice) >= config.GetConfigurations().GetPercentsToStopSettingNewOrder() &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pair.GetCurrentPositionBalance() &&
 				locked <= pair.GetCurrentPositionBalance() {
-				downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, downPrice, false)
+				downOrder, err := createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, downPrice, 0, false)
 				if err != nil {
 					printError()
 					return err
@@ -311,7 +312,7 @@ func processOrder(
 		upRecord, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 		if ok && upRecord.GetOrderId() == 0 && upRecord.GetQuantity() <= 0 {
 			// Створюємо ордер на продаж
-			upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, order.GetUpPrice(), false)
+			upOrder, err := createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, order.GetUpPrice(), 0, false)
 			if err != nil {
 				printError()
 				return err
@@ -540,7 +541,7 @@ func initFirstPairOfOrders(
 	if sellQuantity*price < minNotional {
 		sellQuantity = round(minNotional/price, stepSizeExp)
 	}
-	sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, sellPrice, false)
+	sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, sellQuantity, sellPrice, 0, false)
 	if err != nil {
 		printError()
 		return
@@ -552,7 +553,7 @@ func initFirstPairOfOrders(
 	if buyQuantity*price < minNotional {
 		buyQuantity = round(minNotional/price, stepSizeExp)
 	}
-	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, buyQuantity, buyPrice, false)
+	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, buyQuantity, buyPrice, 0, false)
 	if err != nil {
 		printError()
 		return
@@ -1202,7 +1203,7 @@ func createNextPair_v3(
 		if positionVal >= -pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
-			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, false)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, 0, false)
 			if err != nil {
 				printError()
 				return
@@ -1221,7 +1222,7 @@ func createNextPair_v3(
 		if positionVal <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityDown*upPrice, minNotional)
-			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, false)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, 0, false)
 			if err != nil {
 				printError()
 				return
@@ -1541,12 +1542,12 @@ func createNextPair_v4(
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, 0, upClosePosition)
 			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
 			}
 		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
 		}
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v, ",
@@ -1567,12 +1568,12 @@ func createNextPair_v4(
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		if downClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, 0, downClosePosition)
 			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
 			}
 		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
 		}
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
@@ -1837,6 +1838,9 @@ func createNextPair_v5(
 	free float64,
 	countIn int,
 	pairProcessor *PairProcessor) (countOut int, err error) {
+	const (
+		callbackRate = 0.5
+	)
 	var (
 		upPrice      float64
 		downPrice    float64
@@ -1915,12 +1919,12 @@ func createNextPair_v5(
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callbackRate, upClosePosition)
 			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
 			}
 		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
 		}
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v, ",
@@ -1941,12 +1945,12 @@ func createNextPair_v5(
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
 		if downClosePosition {
 			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, downQuantity, downPrice, callbackRate, downClosePosition)
 			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
 			}
 		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, downClosePosition)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
 		}
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
