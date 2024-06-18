@@ -545,7 +545,7 @@ func initFirstPairOfOrders(
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v", pair.GetPair(), sellPrice, sellQuantity)
+	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v status %v", pair.GetPair(), sellPrice, sellQuantity, sellOrder.Status)
 	// Створюємо ордери на купівлю
 	buyPrice := round(price*(1-pair.GetSellDelta()), tickSizeExp)
 	buyQuantity := round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()/(2*buyPrice), stepSizeExp)
@@ -557,7 +557,7 @@ func initFirstPairOfOrders(
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v", pair.GetPair(), buyPrice, buyQuantity)
+	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v status %v", pair.GetPair(), buyPrice, buyQuantity, buyOrder.Status)
 	return
 }
 
@@ -1555,29 +1555,21 @@ func getCallBack(
 
 func streamStart(
 	client *futures.Client,
-	callBack func(*futures.WsUserDataEvent)) {
+	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan bool, err error) {
 	// Отримуємо ключ для прослуховування подій користувача
 	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
 		return
 	}
 	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
+	resetEvent = make(chan bool, 1)
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
 		resetEvent <- true
 	}
-	// Ініціалізуємо обробник подій
-	wsHandler := func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
-			callBack(event)
-		}
-	}
 	// Запускаємо стрім подій користувача
 	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
+	return
 }
 
 func RunFuturesGridTradingV4(
@@ -1616,16 +1608,25 @@ func RunFuturesGridTradingV4(
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
+	// Стартуємо обробку ордерів
+	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
+	maintainedOrders := btree.New(2)
+	errorCh, err := streamStart(client, getCallBack(config, client, pair, pairProcessor, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	if err != nil {
+		printError()
+		return err
+	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = initFirstPairOfOrders(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
-	// Стартуємо обробку ордерів
-	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
-	maintainedOrders := btree.New(2)
-	streamStart(client, getCallBack(config, client, pair, pairProcessor, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
-	<-quit
+	select {
+	case <-errorCh:
+		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case <-quit:
+		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
 		printError()
