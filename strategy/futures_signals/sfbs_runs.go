@@ -1401,6 +1401,9 @@ func createNextPair_v1(
 				downQuantity = round(minNotional/downPrice, stepSizeExp)
 			}
 		}
+		logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
+			pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
+		logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
 		return
 	}
 	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
@@ -1433,7 +1436,7 @@ func createNextPair_v1(
 			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, upClosePosition)
 		}
 		if err != nil {
-			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v",
+			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v, ",
 				pair.GetPair(), upPrice, upQuantity, minNotional/upPrice)
 			printError()
 			return
