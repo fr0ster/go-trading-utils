@@ -1185,7 +1185,7 @@ func getCallBack_v3(
 	}
 }
 
-func getQuantityPair_v34(
+func getQuantityPair_v345(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	free float64,
@@ -1234,7 +1234,7 @@ func createNextPair_v3(
 		correctedQuantityDown float64
 	)
 	// Визначаємо кількість для нових ордерів
-	correctedQuantityUp, correctedQuantityDown = getQuantityPair_v34(
+	correctedQuantityUp, correctedQuantityDown = getQuantityPair_v345(
 		config,
 		pair,
 		pair.GetCurrentPositionBalance(),
@@ -1563,7 +1563,7 @@ func createNextPair_v4(
 	upPrice, downPrice, countOut = GetPricePair(config, pair, event.OrderTradeUpdate, risk, currentPrice, tickSizeExp, 1, countIn)
 	// Визначаємо кількість для нових ордерів
 	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-		upQuantity, downQuantity = getQuantityPair_v34(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp)
+		upQuantity, downQuantity = getQuantityPair_v345(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp)
 	} else {
 		upQuantity = quantity
 		downQuantity = quantity
@@ -1771,71 +1771,6 @@ func getCallBack_v5(
 	}
 }
 
-func getQuantityPair_v5(
-	config *config_types.ConfigFile,
-	pair *pairs_types.Pairs,
-	free float64,
-	risk *futures.PositionRisk,
-	minNotional,
-	quantity,
-	upPrice,
-	downPrice float64,
-	stepSizeExp int) (upQuantity, downQuantity float64) {
-	var (
-		freeUp   float64
-		freeDown float64
-		divider  float64 = 1
-	)
-	if config.GetConfigurations().GetDynamicQuantity() {
-		if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-			divider = 2
-		}
-		// Визначаємо кількість для нових ордерів коли позиція від'ємна
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-				freeUp = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-			} else {
-				freeUp = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-			}
-			upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-			if upQuantity*upPrice < minNotional {
-				upQuantity = round(minNotional/upPrice, stepSizeExp)
-			}
-			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-			// Визначаємо кількість для нових ордерів коли позиція позитивна
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-				freeDown = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-			} else {
-				freeDown = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-			}
-			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-			if downQuantity*downPrice < minNotional {
-				downQuantity = round(minNotional/downPrice, stepSizeExp)
-			}
-			// Визначаємо кількість для нових ордерів коли позиція нульова
-		} else {
-			freeNew := free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-			upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-			if upQuantity*upPrice < minNotional {
-				upQuantity = round(minNotional/upPrice, stepSizeExp)
-			}
-			downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-			if downQuantity*downPrice < minNotional {
-				downQuantity = round(minNotional/downPrice, stepSizeExp)
-			}
-		}
-	} else {
-		upQuantity = quantity
-		downQuantity = quantity
-	}
-	logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
-		pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
-	logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
-	return
-}
-
 func createNextPair_v5(
 	event *futures.WsUserDataEvent,
 	config *config_types.ConfigFile,
@@ -1877,7 +1812,7 @@ func createNextPair_v5(
 		return
 	}
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantityPair_v5(config, pair, free, risk, minNotional, quantity, upPrice, downPrice, sizeSizeExp)
+	upQuantity, downQuantity = getQuantityPair_v345(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp)
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
