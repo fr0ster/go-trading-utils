@@ -1399,6 +1399,33 @@ func RunFuturesGridTradingV3(
 		printError()
 		return err
 	}
+	go func() {
+		for {
+			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond)
+			risk, err = pairProcessor.GetPositionRisk()
+			if err != nil {
+				printError()
+				pairProcessor.CancelAllOrders()
+				return
+			}
+			err = timeProcess(
+				config,
+				client,
+				pair,
+				minNotional,
+				quantity,
+				risk,
+				tickSizeExp,
+				stepSizeExp,
+				pairProcessor)
+			if err != nil {
+				pairProcessor.CancelAllOrders()
+				printError()
+				close(quit)
+				return
+			}
+		}
+	}()
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
@@ -1409,27 +1436,6 @@ func RunFuturesGridTradingV3(
 		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
-	case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
-		risk, err = pairProcessor.GetPositionRisk()
-		if err != nil {
-			printError()
-			pairProcessor.CancelAllOrders()
-			return
-		}
-		err = timeProcess(
-			config,
-			client,
-			pair,
-			minNotional,
-			quantity,
-			risk,
-			tickSizeExp,
-			stepSizeExp,
-			pairProcessor)
-		if err != nil {
-			pairProcessor.CancelAllOrders()
-			return err
-		}
 	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
