@@ -1148,7 +1148,12 @@ func getQuantityPair(
 		downQuantity = quantity
 	}
 	logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
-		pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
+		pair.GetPair(),
+		utils.ConvStrToFloat64(risk.PositionAmt),
+		free,
+		pair.GetLimitOnPosition(),
+		free*pair.GetLimitOnPosition(),
+		pair.GetCurrentPositionBalance())
 	logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
 	return
 }
@@ -1264,7 +1269,7 @@ func createNextPair_v3(
 	// Створюємо ордер на продаж
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		if positionVal >= -pair.GetCurrentPositionBalance() {
-			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
+			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), upQuantity, upPrice, upQuantity*upPrice, minNotional)
 			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, false)
 			if err != nil {
@@ -1284,7 +1289,7 @@ func createNextPair_v3(
 	// Створюємо ордер на купівлю
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
 		if positionVal <= pair.GetCurrentPositionBalance() {
-			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
+			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), downQuantity, downPrice, downQuantity*upPrice, minNotional)
 			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, false)
 			if err != nil {
