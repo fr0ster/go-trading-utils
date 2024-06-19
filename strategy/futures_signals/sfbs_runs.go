@@ -1631,7 +1631,7 @@ func RunFuturesGridTradingV4(
 	if err != nil {
 		return err
 	}
-	_, initPrice, _, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
+	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
 	if err != nil {
 		return err
 	}
