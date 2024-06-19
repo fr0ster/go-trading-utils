@@ -886,10 +886,10 @@ func RunFuturesGridTrading(
 		return err
 	}
 	select {
-	case <-errorCh:
-		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case err := <-errorCh:
+		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
-		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
@@ -897,7 +897,6 @@ func RunFuturesGridTrading(
 		return err
 	}
 	pairProcessor.CancelAllOrders()
-	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	return nil
 }
 
@@ -1047,10 +1046,10 @@ func RunFuturesGridTradingV2(
 		return err
 	}
 	select {
-	case <-errorCh:
-		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case err := <-errorCh:
+		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
-		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
@@ -1058,7 +1057,6 @@ func RunFuturesGridTradingV2(
 		return err
 	}
 	pairProcessor.CancelAllOrders()
-	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	return nil
 }
 
@@ -1402,10 +1400,10 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	select {
-	case <-errorCh:
-		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case err := <-errorCh:
+		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
-		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	case <-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond):
 		risk, err = pairProcessor.GetPositionRisk()
 		if err != nil {
@@ -1434,23 +1432,22 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	pairProcessor.CancelAllOrders()
-	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	return nil
 }
 
 func streamStart(
 	client *futures.Client,
-	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan bool, err error) {
+	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan error, err error) {
 	// Отримуємо ключ для прослуховування подій користувача
 	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
 		return
 	}
 	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent = make(chan bool, 1)
+	resetEvent = make(chan error, 1)
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
-		resetEvent <- true
+		resetEvent <- err
 	}
 	// Запускаємо стрім подій користувача
 	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
@@ -1696,10 +1693,10 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 	select {
-	case <-errorCh:
-		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case err := <-errorCh:
+		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
-		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
@@ -1707,7 +1704,6 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 	pairProcessor.CancelAllOrders()
-	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	return nil
 }
 
@@ -2031,10 +2027,10 @@ func RunFuturesGridTradingV5(
 		return err
 	}
 	select {
-	case <-errorCh:
-		fmt.Printf("Futures %s: Bot was stopped with error\n", pair.GetPair())
+	case err := <-errorCh:
+		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 	case <-quit:
-		fmt.Printf("Futures %s: Bot was stopped\n", pair.GetPair())
+		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
@@ -2042,7 +2038,6 @@ func RunFuturesGridTradingV5(
 		return err
 	}
 	pairProcessor.CancelAllOrders()
-	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	return nil
 }
 
