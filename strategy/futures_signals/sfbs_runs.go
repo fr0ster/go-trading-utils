@@ -757,6 +757,9 @@ func getCallBack_v1(
 		err          error
 	)
 	return func(event *futures.WsUserDataEvent) {
+		if grid == nil {
+			return
+		}
 		if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
@@ -830,6 +833,7 @@ func RunFuturesGridTrading(
 		quantity     float64
 		minNotional  float64
 		currentPrice float64
+		grid         *grid_types.Grid
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyType)
 	if err != nil {
@@ -853,15 +857,6 @@ func RunFuturesGridTrading(
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, minNotional, currentPrice, tickSizeExp, stepSizeExp, pairProcessor)
-	if err != nil {
-		return err
-	}
-	// Ініціалізація гріду
-	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
-	if err != nil {
-		return err
-	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
@@ -881,7 +876,12 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, minNotional, currentPrice, tickSizeExp, stepSizeExp, pairProcessor)
+	if err != nil {
+		return err
+	}
+	// Ініціалізація гріду
+	grid, err = initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	if err != nil {
 		return err
 	}
@@ -918,6 +918,9 @@ func getCallBack_v2(
 		err          error
 	)
 	return func(event *futures.WsUserDataEvent) {
+		if grid == nil {
+			return
+		}
 		if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			grid.Lock()
 			updateConfig(config, pair)
@@ -993,8 +996,8 @@ func RunFuturesGridTradingV2(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		quantity     float64
-		currentPrice float64
+		quantity float64
+		grid     *grid_types.Grid
 	)
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV2)
 	if err != nil {
@@ -1018,12 +1021,6 @@ func RunFuturesGridTradingV2(
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
-	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, minNotional, currentPrice, tickSizeExp, stepSizeExp, pairProcessor)
-	if err != nil {
-		return err
-	}
-	// Ініціалізація гріду
-	grid, err := initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	maintainedOrders := btree.New(2)
 	errorCh, err := streamStart(
 		client,
@@ -1041,10 +1038,12 @@ func RunFuturesGridTradingV2(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
+	sellOrder, buyOrder, err := initFirstPairOfOrders(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
 		return err
 	}
+	// Ініціалізація гріду
+	grid, err = initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	select {
 	case err := <-errorCh:
 		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
@@ -1391,11 +1390,6 @@ func RunFuturesGridTradingV3(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
-	}
-	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = initFirstPairOfOrders(pair, minNotional, initPrice, tickSizeExp, stepSizeExp, pairProcessor)
-	if err != nil {
-		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
