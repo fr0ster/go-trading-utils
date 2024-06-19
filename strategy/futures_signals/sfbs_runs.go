@@ -874,16 +874,18 @@ func RunFuturesGridTrading(
 	// Створюємо початкові ордери на продаж та купівлю
 	sellOrder, buyOrder, err := openPosition(pair, minNotional, currentPrice, tickSizeExp, stepSizeExp, pairProcessor)
 	if err != nil {
+		printError()
 		return err
 	}
 	// Ініціалізація гріду
 	grid, err = initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	if err != nil {
+		printError()
 		return err
 	}
 	select {
 	case err := <-errorCh:
-		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+		logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
@@ -1043,7 +1045,7 @@ func RunFuturesGridTradingV2(
 	grid, err = initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
 	select {
 	case err := <-errorCh:
-		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+		logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
@@ -1232,6 +1234,8 @@ func createNextPair_v3(
 	var (
 		correctedQuantityUp   float64
 		correctedQuantityDown float64
+		createdOrderUp        bool = false
+		createdOrderDown      bool = false
 	)
 	// Визначаємо кількість для нових ордерів
 	correctedQuantityUp, correctedQuantityDown = getQuantityPair_v345(
@@ -1256,6 +1260,7 @@ func createNextPair_v3(
 				printError()
 				return
 			}
+			createdOrderUp = true
 			logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, correctedQuantityUp)
 		} else {
 			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
@@ -1275,6 +1280,7 @@ func createNextPair_v3(
 				printError()
 				return
 			}
+			createdOrderDown = true
 			logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, correctedQuantityDown)
 		} else {
 			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
@@ -1283,6 +1289,11 @@ func createNextPair_v3(
 	} else {
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
+	}
+	if !createdOrderUp && !createdOrderDown {
+		logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
+		printError()
+		return fmt.Errorf("orders were not created")
 	}
 	return
 }
@@ -1395,7 +1406,6 @@ func RunFuturesGridTradingV3(
 			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond)
 			risk, _ = pairProcessor.GetPositionRisk()
 			if err != nil {
-				logrus.Errorf("Futures %s: Could not get position risk with error %v", pair.GetPair(), err)
 				continue // Спробуємо ще раз через ObserverTimeOutMillisecond
 			}
 			err = timeProcess(
@@ -1410,7 +1420,7 @@ func RunFuturesGridTradingV3(
 				pairProcessor)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
-				logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+				logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 				close(quit)
 				return
 			}
@@ -1423,7 +1433,7 @@ func RunFuturesGridTradingV3(
 	}
 	select {
 	case err := <-errorCh:
-		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+		logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
@@ -1675,7 +1685,7 @@ func RunFuturesGridTradingV4(
 	}
 	select {
 	case err := <-errorCh:
-		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+		logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
@@ -1948,7 +1958,7 @@ func RunFuturesGridTradingV5(
 	}
 	select {
 	case err := <-errorCh:
-		logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
+		logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 	case <-quit:
 		logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
 	}
