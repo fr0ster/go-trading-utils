@@ -498,7 +498,7 @@ func initVars(
 	// Отримання середньої ціни
 	price = round(pair.GetMiddlePrice(), tickSizeExp)
 	if price <= 0 {
-		price, _ = GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+		price, _ = GetCurrentPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = round(price, tickSizeExp)
 	}
 	setQuantity := func(symbol *futures.Symbol) (quantity float64) {
@@ -559,7 +559,7 @@ func getCurrentPrice(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	tickSizeExp int) (currentPrice float64) {
-	val, _ := GetPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
+	val, _ := GetCurrentPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 	currentPrice = round(val, tickSizeExp)
 	return
 }
@@ -1062,102 +1062,34 @@ func RunFuturesGridTradingV2(
 	return nil
 }
 
-func getQuantity(
-	pair *pairs_types.Pairs,
-	risk *futures.PositionRisk,
-	currentPrice float64,
-	quantity float64,
-	minNotional float64,
-	stepSizeExp int,
-	positionLimit float64) (correctedQuantityUp, correctedQuantityDown, positionVal float64) {
-	positionVal = utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
-	minQuantity := round(minNotional/currentPrice, stepSizeExp)
-	// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
-	quantityCoefficient := (positionLimit - math.Abs(positionVal)) / positionLimit
-	if positionVal < 0 {
-		// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
-		if quantity > minQuantity {
-			correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-		} else {
-			correctedQuantityUp = minQuantity
-		}
-		// Але кількість на купівлю не змінюємо
-		if quantity > minQuantity {
-			correctedQuantityDown = quantity
-		} else {
-			correctedQuantityDown = minQuantity
-		}
-	} else if positionVal > 0 {
-		// Якщо позиція позитивна,кількість на продаж не змінюємо
-		if quantity > minQuantity {
-			correctedQuantityUp = quantity
-		} else {
-			correctedQuantityUp = minQuantity
-		}
-		// Але зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
-		if quantity > minQuantity {
-			correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
-		} else {
-			correctedQuantityDown = minQuantity
-		}
-	} else {
-		// Якщо позиція нульова, то кількість на продаж та купівлю однакова
-		correctedQuantityUp = quantity
-		correctedQuantityDown = quantity
-	}
-	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
-		pair.GetPair(),
-		positionLimit,
-		math.Abs(positionVal),
-		(positionLimit - math.Abs(positionVal)),
-		positionLimit,
-		quantityCoefficient)
-	return
-}
-
-func getPrice(
+func GetPricePair(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
 	currentPrice float64,
 	tickSizeExp int,
-	takeProfitMultiplier int,
+	multiplier int,
 	countIn int) (upPrice, downPrice float64, countOut int) {
-	delta := func(n int) float64 { return math.Pow(float64(n), 3) / 3000 }
+	delta := func(n int, limit float64) float64 {
+		if n > 5 {
+			return math.Pow(float64(n), 3) / 3000
+		} else {
+			return limit
+		}
+	}
 
 	if config.GetConfigurations().GetDynamicDelta() {
 		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-		entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
-		multiplier := 1
-		if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-			multiplier = takeProfitMultiplier
-		}
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			countOut = countIn + 1
-			if entryPrice > currentPrice {
-				upPrice = round(entryPrice*(1+delta(countOut)), tickSizeExp)
-			} else {
-				upPrice = round(currentPrice*(1+delta(countOut)), tickSizeExp)
-			}
-			if breakEvenPrice < currentPrice {
-				downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
-			} else {
-				downPrice = round(currentPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
-			}
+			upPrice = round(currentPrice*(1+delta(countOut, pair.GetSellDelta())), tickSizeExp)
+			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			countOut = countIn + 1
-			if breakEvenPrice > currentPrice {
-				upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
-			} else {
-				upPrice = round(currentPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
-			}
-			if entryPrice < currentPrice {
-				downPrice = round(entryPrice*(1-delta(countOut)), tickSizeExp)
-			} else {
-				downPrice = round(currentPrice*(1-delta(countOut)), tickSizeExp)
-			}
+			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
+			downPrice = round(currentPrice*(1-delta(countOut, pair.GetBuyDelta())), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція нульова
 		} else {
 			countOut = 1
@@ -1168,119 +1100,6 @@ func getPrice(
 		countOut = 1
 		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 		downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-	}
-	return
-}
-
-func createNextPair_v3(
-	config *config_types.ConfigFile,
-	pair *pairs_types.Pairs,
-	currentPrice float64,
-	quantity float64,
-	minNotional float64,
-	risk *futures.PositionRisk,
-	tickSizeExp int,
-	stepSizeExp int,
-	positionLimit float64,
-	pairProcessor *PairProcessor) (err error) {
-	var (
-		correctedQuantityUp   float64
-		correctedQuantityDown float64
-	)
-	// Визначаємо кількість для нових ордерів
-	correctedQuantityUp, correctedQuantityDown, positionVal := getQuantity(
-		pair,
-		risk,
-		currentPrice,
-		quantity,
-		minNotional,
-		stepSizeExp,
-		positionLimit)
-	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, _ := getPrice(config, pair, risk, currentPrice, tickSizeExp, 2, int(1))
-	// Створюємо ордер на продаж
-	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
-		if positionVal >= -pair.GetCurrentPositionBalance() {
-			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
-				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
-			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, 0, false)
-			if err != nil {
-				printError()
-				return
-			}
-			logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, correctedQuantityUp)
-		} else {
-			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
-				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		}
-	} else {
-		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
-			pair.GetPair(), upPrice, pair.GetUpBound())
-	}
-	// Створюємо ордер на купівлю
-	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
-		if positionVal <= pair.GetCurrentPositionBalance() {
-			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
-				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityDown*upPrice, minNotional)
-			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, 0, false)
-			if err != nil {
-				printError()
-				return
-			}
-			logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, correctedQuantityDown)
-		} else {
-			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
-				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
-		}
-	} else {
-		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
-			pair.GetPair(), downPrice, pair.GetLowBound())
-	}
-	return
-}
-
-func timeProcess(
-	config *config_types.ConfigFile,
-	client *futures.Client,
-	pair *pairs_types.Pairs,
-	minNotional float64,
-	quantity float64,
-	risk *futures.PositionRisk,
-	tickSizeExp int,
-	stepSizeExp int,
-	pairProcessor *PairProcessor) (err error) {
-	var (
-		free         float64
-		currentPrice float64
-	)
-	if config.GetConfigurations().GetBalancingOfMargin() ||
-		config.GetConfigurations().GetObservePriceLiquidation() ||
-		config.GetConfigurations().GetObservePositionLoss() {
-		risk, err = pairProcessor.GetPositionRisk()
-		if err != nil {
-			printError()
-			return
-		}
-		free, _ = pairProcessor.GetFreeBalance()
-		// Визначаємо поточну ціну
-		if val, err := GetPrice(client, pair.GetPair()); err == nil { // Отримання ціни по ринку для пари
-			currentPrice = round(val, tickSizeExp)
-		} else {
-			printError()
-			return err
-		}
-	}
-	// Балансування маржі як треба
-	free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-	// Обробка наближення ліквідаціі
-	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
-	if err != nil {
-		return err
-	}
-	// Обробка втрат по поточній позиції
-	err = positionLossObservation(config, pair, risk, minNotional, pairProcessor, currentPrice, tickSizeExp, stepSizeExp)
-	if err != nil {
-		return err
 	}
 	return
 }
@@ -1358,6 +1177,172 @@ func getCallBack_v3(
 			}
 		}
 	}
+}
+
+func getQuantityPair_v3(
+	pair *pairs_types.Pairs,
+	risk *futures.PositionRisk,
+	currentPrice float64,
+	quantity float64,
+	minNotional float64,
+	stepSizeExp int,
+	positionLimit float64) (correctedQuantityUp, correctedQuantityDown, positionVal float64) {
+	positionVal = utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
+	minQuantity := round(minNotional/currentPrice, stepSizeExp)
+	// Коефіцієнт кількості в одному ордері відносно поточного балансу та позиції
+	quantityCoefficient := (positionLimit - math.Abs(positionVal)) / positionLimit
+	if positionVal < 0 {
+		// Якщо позиція від'ємна, то зменшуємо кількість на новому ордері на продаж на коефіцієнт коррекції
+		if quantity > minQuantity {
+			correctedQuantityUp = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+		} else {
+			correctedQuantityUp = minQuantity
+		}
+		// Але кількість на купівлю не змінюємо
+		if quantity > minQuantity {
+			correctedQuantityDown = quantity
+		} else {
+			correctedQuantityDown = minQuantity
+		}
+	} else if positionVal > 0 {
+		// Якщо позиція позитивна,кількість на продаж не змінюємо
+		if quantity > minQuantity {
+			correctedQuantityUp = quantity
+		} else {
+			correctedQuantityUp = minQuantity
+		}
+		// Але зменшуємо кількість на новому ордері на купівлю на коефіцієнт коррекції
+		if quantity > minQuantity {
+			correctedQuantityDown = round((quantity-minQuantity)*quantityCoefficient, stepSizeExp) + minQuantity
+		} else {
+			correctedQuantityDown = minQuantity
+		}
+	} else {
+		// Якщо позиція нульова, то кількість на продаж та купівлю однакова
+		correctedQuantityUp = quantity
+		correctedQuantityDown = quantity
+	}
+	logrus.Debugf("Futures %s: (Position limit %v - math.Abs(positionVal) %v) %v / Position limit %v = QuantityCoefficient %v",
+		pair.GetPair(),
+		positionLimit,
+		math.Abs(positionVal),
+		(positionLimit - math.Abs(positionVal)),
+		positionLimit,
+		quantityCoefficient)
+	return
+}
+
+func createNextPair_v3(
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	currentPrice float64,
+	quantity float64,
+	minNotional float64,
+	risk *futures.PositionRisk,
+	tickSizeExp int,
+	stepSizeExp int,
+	positionLimit float64,
+	pairProcessor *PairProcessor) (err error) {
+	var (
+		correctedQuantityUp   float64
+		correctedQuantityDown float64
+	)
+	// Визначаємо кількість для нових ордерів
+	correctedQuantityUp, correctedQuantityDown, positionVal := getQuantityPair_v3(
+		pair,
+		risk,
+		currentPrice,
+		quantity,
+		minNotional,
+		stepSizeExp,
+		positionLimit)
+	// Визначаємо ціну для нових ордерів
+	upPrice, downPrice, _ := GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 2, int(1))
+	// Створюємо ордер на продаж
+	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
+		if positionVal >= -pair.GetCurrentPositionBalance() {
+			logrus.Debugf("Futures %s: Corrected Quantity Up %v * upPrice %v = %v, minNotional %v",
+				pair.GetPair(), correctedQuantityUp, upPrice, correctedQuantityUp*upPrice, minNotional)
+			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, correctedQuantityUp, upPrice, 0, false)
+			if err != nil {
+				printError()
+				return
+			}
+			logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, correctedQuantityUp)
+		} else {
+			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
+				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+		}
+	} else {
+		logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
+			pair.GetPair(), upPrice, pair.GetUpBound())
+	}
+	// Створюємо ордер на купівлю
+	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() {
+		if positionVal <= pair.GetCurrentPositionBalance() {
+			logrus.Debugf("Futures %s: Corrected Quantity Down %v * downPrice %v = %v, minNotional %v",
+				pair.GetPair(), correctedQuantityDown, downPrice, correctedQuantityDown*upPrice, minNotional)
+			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, correctedQuantityDown, downPrice, 0, false)
+			if err != nil {
+				printError()
+				return
+			}
+			logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, correctedQuantityDown)
+		} else {
+			logrus.Debugf("Futures %s: IsolatedMargin %v more than current position balance %v",
+				pair.GetPair(), risk.IsolatedMargin, pair.GetCurrentPositionBalance())
+		}
+	} else {
+		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
+			pair.GetPair(), downPrice, pair.GetLowBound())
+	}
+	return
+}
+
+func timeProcess(
+	config *config_types.ConfigFile,
+	client *futures.Client,
+	pair *pairs_types.Pairs,
+	minNotional float64,
+	quantity float64,
+	risk *futures.PositionRisk,
+	tickSizeExp int,
+	stepSizeExp int,
+	pairProcessor *PairProcessor) (err error) {
+	var (
+		free         float64
+		currentPrice float64
+	)
+	if config.GetConfigurations().GetBalancingOfMargin() ||
+		config.GetConfigurations().GetObservePriceLiquidation() ||
+		config.GetConfigurations().GetObservePositionLoss() {
+		risk, err = pairProcessor.GetPositionRisk()
+		if err != nil {
+			printError()
+			return
+		}
+		free, _ = pairProcessor.GetFreeBalance()
+		// Визначаємо поточну ціну
+		if val, err := GetCurrentPrice(client, pair.GetPair()); err == nil { // Отримання ціни по ринку для пари
+			currentPrice = round(val, tickSizeExp)
+		} else {
+			printError()
+			return err
+		}
+	}
+	// Балансування маржі як треба
+	free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+	// Обробка наближення ліквідаціі
+	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
+	if err != nil {
+		return err
+	}
+	// Обробка втрат по поточній позиції
+	err = positionLossObservation(config, pair, risk, minNotional, pairProcessor, currentPrice, tickSizeExp, stepSizeExp)
+	if err != nil {
+		return err
+	}
+	return
 }
 
 func RunFuturesGridTradingV3(
@@ -1517,12 +1502,15 @@ func getCallBack_v4(
 				if err != nil {
 					printError()
 					pairProcessor.CancelAllOrders()
+					close(quit)
 					return
 				}
 				// Визначаємо поточну ціну
 				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
 				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+				logrus.Debugf("Futures %s: Event OrderTradeUpdate: OriginalPrice %v, OriginalQty %v, LastFilledPrice %v, LastFilledQty %v",
+					pair.GetPair(), event.OrderTradeUpdate.OriginalPrice, event.OrderTradeUpdate.OriginalQty, event.OrderTradeUpdate.LastFilledPrice, event.OrderTradeUpdate.LastFilledQty)
 				// Балансування маржі як треба
 				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				pairProcessor.CancelAllOrders()
@@ -1543,10 +1531,44 @@ func getCallBack_v4(
 					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 					printError()
 					close(quit)
+					return
 				}
 			}
 		}
 	}
+}
+
+func getQuantityPair_v4(
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	free float64,
+	risk *futures.PositionRisk,
+	minNotional,
+	quantity,
+	upPrice float64,
+	stepSizeExp int) (upQuantity, downQuantity float64) {
+	var (
+		freeNew float64
+	)
+	if config.GetConfigurations().GetDynamicQuantity() {
+		if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
+			freeNew = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage())
+		} else {
+			freeNew = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage())
+		}
+		upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
+		if upQuantity*upPrice < minNotional {
+			upQuantity = round(minNotional/upPrice, stepSizeExp)
+		}
+		downQuantity = upQuantity
+	} else {
+		upQuantity = quantity
+		downQuantity = quantity
+	}
+	logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
+		pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
+	logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
+	return
 }
 
 func createNextPair_v4(
@@ -1562,106 +1584,31 @@ func createNextPair_v4(
 	countIn int,
 	pairProcessor *PairProcessor) (countOut int, err error) {
 	var (
-		upPrice      float64
-		downPrice    float64
-		upQuantity   float64
-		downQuantity float64
-		freeUp       float64
-		freeDown     float64
-		divider      float64 = 1
+		upPrice          float64
+		downPrice        float64
+		upQuantity       float64
+		downQuantity     float64
+		createdOrderUp   bool = false
+		createdOrderDown bool = false
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = getPrice(config, pair, risk, currentPrice, tickSizeExp, 2, countIn)
-	getQuantity := func(risk *futures.PositionRisk, minNotional, quantity, upPrice, downPrice float64, stepSizeExp int) (upQuantity, downQuantity float64) {
-		if config.GetConfigurations().GetDynamicQuantity() {
-			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				divider = 2
-			}
-			// Визначаємо кількість для нових ордерів коли позиція від'ємна
-			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-				if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-					freeUp = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-				} else {
-					freeUp = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				}
-				upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-				if upQuantity*upPrice < minNotional {
-					upQuantity = round(minNotional/upPrice, stepSizeExp)
-				}
-				downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-				// Визначаємо кількість для нових ордерів коли позиція позитивна
-			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-				upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-				if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-					freeDown = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-				} else {
-					freeDown = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				}
-				downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-				if downQuantity*downPrice < minNotional {
-					downQuantity = round(minNotional/downPrice, stepSizeExp)
-				}
-				// Визначаємо кількість для нових ордерів коли позиція нульова
-			} else {
-				freeNew := free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-				if upQuantity*upPrice < minNotional {
-					upQuantity = round(minNotional/upPrice, stepSizeExp)
-				}
-				downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-				if downQuantity*downPrice < minNotional {
-					downQuantity = round(minNotional/downPrice, stepSizeExp)
-				}
-			}
-		} else {
-			upQuantity = quantity
-			downQuantity = quantity
-		}
-		logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
-			pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
-		logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
-		return
-	}
-	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
-		// Визначаємо кількість для нових ордерів коли позиція від'ємна
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			up = false
-			down = true
-			// Визначаємо кількість для нових ордерів коли позиція позитивна
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			up = true
-			down = false
-			// Визначаємо кількість для нових ордерів коли позиція нульова
-		} else {
-			up = false
-			down = false
-		}
-		return
-	}
+	upPrice, downPrice, countOut = GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 2, countIn)
 	// Визначаємо кількість для нових ордерів
 	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-		upQuantity, downQuantity = getQuantity(risk, minNotional, quantity, upPrice, downPrice, sizeSizeExp)
+		upQuantity, downQuantity = getQuantityPair_v4(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp)
 	} else {
 		upQuantity = quantity
 		downQuantity = quantity
 	}
-	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
-		if upClosePosition {
-			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTakeProfitMarket, upQuantity, upPrice, 0, upClosePosition)
-			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
-			}
-		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, upClosePosition)
-		}
+		_, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, false)
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Sell order on price %v quantity %v minNotional/upPrice %v, ",
 				pair.GetPair(), upPrice, upQuantity, minNotional/upPrice)
 			printError()
 			return
 		}
+		createdOrderUp = true
 		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v", pair.GetPair(), upPrice, upQuantity)
 	} else {
 		if upQuantity <= 0 {
@@ -1673,21 +1620,14 @@ func createNextPair_v4(
 	}
 	// Створюємо ордер на купівлю
 	if pair.GetLowBound() != 0 && downPrice >= pair.GetLowBound() && downQuantity > 0 {
-		if downClosePosition {
-			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTakeProfitMarket, downQuantity, downPrice, 0, downClosePosition)
-			} else {
-				_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
-			}
-		} else {
-			_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, downClosePosition)
-		}
+		_, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, false)
 		if err != nil {
 			logrus.Errorf("Futures %s: Try to create Buy order on price %v quantity %v minNotional/upPrice %v",
 				pair.GetPair(), downPrice, downQuantity, minNotional/upPrice)
 			printError()
 			return
 		}
+		createdOrderDown = true
 		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pair.GetPair(), downPrice, downQuantity)
 	} else {
 		if downQuantity <= 0 {
@@ -1696,6 +1636,11 @@ func createNextPair_v4(
 			logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 				pair.GetPair(), downPrice, pair.GetLowBound())
 		}
+	}
+	if !createdOrderUp && !createdOrderDown {
+		logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
+		printError()
+		return 0, fmt.Errorf("orders were not created")
 	}
 	return
 }
@@ -1817,6 +1762,8 @@ func getCallBack_v5(
 				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
 				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
 					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+				logrus.Debugf("Futures %s: Event OrderTradeUpdate: OriginalPrice %v, OriginalQty %v, LastFilledPrice %v, LastFilledQty %v",
+					pair.GetPair(), event.OrderTradeUpdate.OriginalPrice, event.OrderTradeUpdate.OriginalQty, event.OrderTradeUpdate.LastFilledPrice, event.OrderTradeUpdate.LastFilledQty)
 				// Балансування маржі як треба
 				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				pairProcessor.CancelAllOrders()
@@ -1843,6 +1790,71 @@ func getCallBack_v5(
 	}
 }
 
+func getQuantityPair_v5(
+	config *config_types.ConfigFile,
+	pair *pairs_types.Pairs,
+	free float64,
+	risk *futures.PositionRisk,
+	minNotional,
+	quantity,
+	upPrice,
+	downPrice float64,
+	stepSizeExp int) (upQuantity, downQuantity float64) {
+	var (
+		freeUp   float64
+		freeDown float64
+		divider  float64 = 1
+	)
+	if config.GetConfigurations().GetDynamicQuantity() {
+		if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
+			divider = 2
+		}
+		// Визначаємо кількість для нових ордерів коли позиція від'ємна
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
+				freeUp = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
+			} else {
+				freeUp = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
+			}
+			upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
+			if upQuantity*upPrice < minNotional {
+				upQuantity = round(minNotional/upPrice, stepSizeExp)
+			}
+			downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
+			// Визначаємо кількість для нових ордерів коли позиція позитивна
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+			upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
+			if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
+				freeDown = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
+			} else {
+				freeDown = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
+			}
+			downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
+			if downQuantity*downPrice < minNotional {
+				downQuantity = round(minNotional/downPrice, stepSizeExp)
+			}
+			// Визначаємо кількість для нових ордерів коли позиція нульова
+		} else {
+			freeNew := free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
+			upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
+			if upQuantity*upPrice < minNotional {
+				upQuantity = round(minNotional/upPrice, stepSizeExp)
+			}
+			downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
+			if downQuantity*downPrice < minNotional {
+				downQuantity = round(minNotional/downPrice, stepSizeExp)
+			}
+		}
+	} else {
+		upQuantity = quantity
+		downQuantity = quantity
+	}
+	logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
+		pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
+	logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
+	return
+}
+
 func createNextPair_v5(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
@@ -1856,67 +1868,16 @@ func createNextPair_v5(
 	countIn int,
 	pairProcessor *PairProcessor) (countOut int, err error) {
 	var (
-		upPrice      float64
-		downPrice    float64
-		upQuantity   float64
-		downQuantity float64
-		freeUp       float64
-		freeDown     float64
-		divider      float64 = 1
-		callbackRate float64 = pair.GetCallbackRate()
+		upPrice          float64
+		downPrice        float64
+		upQuantity       float64
+		downQuantity     float64
+		callbackRate     float64 = pair.GetCallbackRate()
+		createdOrderUp   bool    = false
+		createdOrderDown bool    = false
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = getPrice(config, pair, risk, currentPrice, tickSizeExp, 1, countIn)
-	getQuantity := func(risk *futures.PositionRisk, minNotional, quantity, upPrice, downPrice float64, stepSizeExp int) (upQuantity, downQuantity float64) {
-		if config.GetConfigurations().GetDynamicQuantity() {
-			if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
-				divider = 2
-			}
-			// Визначаємо кількість для нових ордерів коли позиція від'ємна
-			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-				if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-					freeUp = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-				} else {
-					freeUp = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				}
-				upQuantity = round(freeUp*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-				if upQuantity*upPrice < minNotional {
-					upQuantity = round(minNotional/upPrice, stepSizeExp)
-				}
-				downQuantity = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-				// Визначаємо кількість для нових ордерів коли позиція позитивна
-			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-				upQuantity = utils.ConvStrToFloat64(risk.PositionAmt)
-				if free*pair.GetLimitOnPosition() > pair.GetCurrentPositionBalance() {
-					freeDown = pair.GetCurrentPositionBalance() * float64(pair.GetLeverage()) / divider
-				} else {
-					freeDown = free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				}
-				downQuantity = round(freeDown*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-				if downQuantity*downPrice < minNotional {
-					downQuantity = round(minNotional/downPrice, stepSizeExp)
-				}
-				// Визначаємо кількість для нових ордерів коли позиція нульова
-			} else {
-				freeNew := free * pair.GetLimitOnPosition() * float64(pair.GetLeverage()) / divider
-				upQuantity = round(freeNew*pair.GetLimitOnTransaction()/upPrice, stepSizeExp)
-				if upQuantity*upPrice < minNotional {
-					upQuantity = round(minNotional/upPrice, stepSizeExp)
-				}
-				downQuantity = round(freeNew*pair.GetLimitOnPosition()*pair.GetLimitOnTransaction()/downPrice, stepSizeExp)
-				if downQuantity*downPrice < minNotional {
-					downQuantity = round(minNotional/downPrice, stepSizeExp)
-				}
-			}
-		} else {
-			upQuantity = quantity
-			downQuantity = quantity
-		}
-		logrus.Debugf("Futures %s: PositionAmt %v, Free %v * LimitOnPosition %v = %v, CurrentPositionBalance %v",
-			pair.GetPair(), utils.ConvStrToFloat64(risk.PositionAmt), free, pair.GetLimitOnPosition(), free*pair.GetLimitOnPosition(), pair.GetCurrentPositionBalance())
-		logrus.Debugf("Futures %s: UpQuantity %v, DownQuantity %v", pair.GetPair(), upQuantity, downQuantity)
-		return
-	}
+	upPrice, downPrice, countOut = GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 1, countIn)
 	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
@@ -1934,7 +1895,7 @@ func createNextPair_v5(
 		return
 	}
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantity(risk, minNotional, quantity, upPrice, downPrice, sizeSizeExp)
+	upQuantity, downQuantity = getQuantityPair_v5(config, pair, free, risk, minNotional, quantity, upPrice, downPrice, sizeSizeExp)
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
@@ -2010,6 +1971,11 @@ func createNextPair_v5(
 			logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 				pair.GetPair(), downPrice, pair.GetLowBound())
 		}
+	}
+	if !createdOrderUp && !createdOrderDown {
+		logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
+		printError()
+		return 0, fmt.Errorf("orders were not created")
 	}
 	return
 }

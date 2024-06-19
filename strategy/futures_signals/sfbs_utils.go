@@ -42,7 +42,7 @@ func LimitRead(degree int, symbols []string, client *futures.Client) (
 	return
 }
 
-func GetPrice(client *futures.Client, symbol string) (float64, error) {
+func GetCurrentPrice(client *futures.Client, symbol string) (float64, error) {
 	price, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
@@ -165,7 +165,7 @@ func PairInit(
 
 	if pair.GetBuyQuantity() == 0 && pair.GetSellQuantity() == 0 {
 		pair.SetBuyQuantity(targetFree)
-		price, err := GetPrice(client, pair.GetPair())
+		price, err := GetCurrentPrice(client, pair.GetPair())
 		if err != nil {
 			return err
 		}
