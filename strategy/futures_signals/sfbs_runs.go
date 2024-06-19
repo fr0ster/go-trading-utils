@@ -1158,7 +1158,8 @@ func getCallBack_v3(
 				if err != nil {
 					printError()
 					pairProcessor.CancelAllOrders()
-					printError()
+					close(quit)
+					return
 				}
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
