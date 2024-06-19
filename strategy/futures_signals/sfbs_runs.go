@@ -655,7 +655,7 @@ func liquidationObservation(
 	return
 }
 
-func positionLossObservation(
+func reOpenPosition(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
@@ -1290,10 +1290,12 @@ func createNextPair_v3(
 		logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
 			pair.GetPair(), downPrice, pair.GetLowBound())
 	}
-	if !createdOrderUp && !createdOrderDown {
-		logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
-		printError()
-		return fmt.Errorf("orders were not created")
+	if !config.GetConfigurations().GetObservePositionLoss() {
+		if !createdOrderUp && !createdOrderDown {
+			logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
+			printError()
+			return fmt.Errorf("orders were not created")
+		}
 	}
 	return
 }
@@ -1338,7 +1340,7 @@ func timeProcess(
 		return err
 	}
 	// Обробка втрат по поточній позиції
-	err = positionLossObservation(config, pair, risk, minNotional, pairProcessor, currentPrice, tickSizeExp, stepSizeExp)
+	err = reOpenPosition(config, pair, risk, minNotional, pairProcessor, currentPrice, tickSizeExp, stepSizeExp)
 	if err != nil {
 		return err
 	}
