@@ -926,6 +926,7 @@ func getCallBack_v2(
 			if !ok {
 				printError()
 				logrus.Errorf("we didn't work with order on price level %v before: %v", currentPrice, event.OrderTradeUpdate.ID)
+				return
 			}
 			orderId := order.GetOrderId()
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
@@ -1143,6 +1144,7 @@ func getCallBack_v3(
 				if err != nil {
 					printError()
 					pairProcessor.CancelAllOrders()
+					close(quit)
 					return
 				}
 				logrus.Debugf("Futures %s: Risks EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
@@ -1176,6 +1178,7 @@ func getCallBack_v3(
 					pairProcessor.CancelAllOrders()
 					printError()
 					close(quit)
+					return
 				}
 			}
 		}
@@ -1755,6 +1758,7 @@ func getCallBack_v5(
 				if err != nil {
 					printError()
 					pairProcessor.CancelAllOrders()
+					close(quit)
 					return
 				}
 				// Визначаємо поточну ціну
@@ -1784,6 +1788,7 @@ func getCallBack_v5(
 					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 					printError()
 					close(quit)
+					return
 				}
 			}
 		}
