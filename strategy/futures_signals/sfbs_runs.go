@@ -1112,6 +1112,7 @@ func getCallBack_v3(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	pairProcessor *PairProcessor,
+	quantity float64,
 	tickSizeExp int,
 	stepSizeExp int,
 	minNotional float64,
@@ -1119,7 +1120,6 @@ func getCallBack_v3(
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
 		currentPrice float64
-		quantity     float64
 		free         float64
 		risk         *futures.PositionRisk
 		err          error
@@ -1374,7 +1374,17 @@ func RunFuturesGridTradingV3(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	errorCh, err := streamStart(client, getCallBack_v3(config, client, pair, pairProcessor, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	errorCh, err := streamStart(client, getCallBack_v3(
+		config,
+		client,
+		pair,
+		pairProcessor,
+		quantity,
+		tickSizeExp,
+		stepSizeExp,
+		minNotional,
+		quit,
+		maintainedOrders))
 	if err != nil {
 		printError()
 		return err
@@ -1643,7 +1653,18 @@ func RunFuturesGridTradingV4(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	errorCh, err := streamStart(client, getCallBack_v4(config, client, pair, pairProcessor, quantity, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	errorCh, err := streamStart(
+		client,
+		getCallBack_v4(config,
+			client,
+			pair,
+			pairProcessor,
+			quantity,
+			tickSizeExp,
+			stepSizeExp,
+			minNotional,
+			quit,
+			maintainedOrders))
 	if err != nil {
 		printError()
 		return err
