@@ -1068,8 +1068,9 @@ func GetPricePair(
 	multiplier int,
 	countIn int) (upPrice, downPrice float64, countOut int) {
 	delta := func(n int, limit float64) float64 {
-		if n > 5 {
-			return math.Pow(float64(n), 3) / 3000
+		delta := math.Pow(float64(n), 3) / 3000
+		if n > 5 && delta > limit {
+			return delta
 		} else {
 			return limit
 		}
@@ -1077,6 +1078,7 @@ func GetPricePair(
 
 	if config.GetConfigurations().GetDynamicDelta() {
 		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+		lastFilledPrice := utils.ConvStrToFloat64(orderTradeUpdate.LastFilledPrice)
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			if orderTradeUpdate.Side == futures.SideTypeSell {
@@ -1084,7 +1086,7 @@ func GetPricePair(
 			} else {
 				countOut = 1
 			}
-			upPrice = round(currentPrice*(1+delta(countOut, pair.GetSellDelta())), tickSizeExp)
+			upPrice = round(math.Max(lastFilledPrice, currentPrice)*(1+delta(countOut, pair.GetSellDelta())), tickSizeExp)
 			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
@@ -1094,7 +1096,7 @@ func GetPricePair(
 				countOut = 1
 			}
 			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
-			downPrice = round(currentPrice*(1-delta(countOut, pair.GetBuyDelta())), tickSizeExp)
+			downPrice = round(math.Min(lastFilledPrice, currentPrice)*(1-delta(countOut, pair.GetBuyDelta())), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція нульова
 		} else {
 			countOut = 1
@@ -1145,6 +1147,7 @@ func getCallBack_v3(
 				risk, err = pairProcessor.GetPositionRisk()
 				if err != nil {
 					printError()
+					logrus.Errorf("Futures %s: Error get position risk %v", pair.GetPair(), err)
 					pairProcessor.CancelAllOrders()
 					close(quit)
 					return
@@ -1319,8 +1322,6 @@ func timeProcess(
 		config.GetConfigurations().GetObservePositionLoss() {
 		risk, err = pairProcessor.GetPositionRisk()
 		if err != nil {
-			printError()
-			logrus.Errorf("Futures %s: Could not get position risk with error %v", pair.GetPair(), err)
 			return nil // Повертаємо nil, щоб продовжити роботу
 		}
 		free, _ = pairProcessor.GetFreeBalance()
@@ -1337,11 +1338,13 @@ func timeProcess(
 	// Обробка наближення ліквідаціі
 	err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
 	if err != nil {
+		printError()
 		return err
 	}
 	// Обробка втрат по поточній позиції
 	err = reOpenPosition(config, pair, risk, minNotional, pairProcessor, currentPrice, tickSizeExp, stepSizeExp)
 	if err != nil {
+		printError()
 		return err
 	}
 	return
@@ -1422,6 +1425,7 @@ func RunFuturesGridTradingV3(
 				pairProcessor)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
+				printError()
 				logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
 				close(quit)
 				return
