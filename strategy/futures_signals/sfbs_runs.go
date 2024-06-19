@@ -1307,7 +1307,8 @@ func timeProcess(
 		risk, err = pairProcessor.GetPositionRisk()
 		if err != nil {
 			printError()
-			return
+			logrus.Errorf("Futures %s: Could not get position risk with error %v", pair.GetPair(), err)
+			return nil // Повертаємо nil, щоб продовжити роботу
 		}
 		free, _ = pairProcessor.GetFreeBalance()
 		// Визначаємо поточну ціну
@@ -1411,7 +1412,7 @@ func RunFuturesGridTradingV3(
 				pairProcessor)
 			if err != nil {
 				pairProcessor.CancelAllOrders()
-				printError()
+				logrus.Errorf("Futures %s: Bot was stopped with error %v\n", pair.GetPair(), err)
 				close(quit)
 				return
 			}
