@@ -1393,12 +1393,10 @@ func RunFuturesGridTradingV3(
 	go func() {
 		for {
 			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond)
-			risk, err = pairProcessor.GetPositionRisk()
+			risk, _ = pairProcessor.GetPositionRisk()
 			if err != nil {
-				printError()
-				pairProcessor.CancelAllOrders()
-				close(quit)
-				return
+				logrus.Errorf("Futures %s: Could not get position risk with error %v", pair.GetPair(), err)
+				continue // Спробуємо ще раз через ObserverTimeOutMillisecond
 			}
 			err = timeProcess(
 				config,
