@@ -1063,6 +1063,7 @@ func RunFuturesGridTradingV2(
 func GetPricePair(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
+	orderTradeUpdate futures.WsOrderTradeUpdate,
 	risk *futures.PositionRisk,
 	currentPrice float64,
 	tickSizeExp int,
@@ -1080,12 +1081,20 @@ func GetPricePair(
 		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			countOut = countIn + 1
+			if orderTradeUpdate.Side == futures.SideTypeSell {
+				countOut = countIn + 1
+			} else {
+				countOut = 1
+			}
 			upPrice = round(currentPrice*(1+delta(countOut, pair.GetSellDelta())), tickSizeExp)
 			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			countOut = countIn + 1
+			if orderTradeUpdate.Side == futures.SideTypeBuy {
+				countOut = countIn + 1
+			} else {
+				countOut = 1
+			}
 			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
 			downPrice = round(currentPrice*(1-delta(countOut, pair.GetBuyDelta())), tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція нульова
@@ -1157,6 +1166,7 @@ func getCallBack_v3(
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 				err = createNextPair_v3(
+					event,
 					config,
 					pair,
 					currentPrice,
@@ -1231,6 +1241,7 @@ func getQuantityPair_v3(
 }
 
 func createNextPair_v3(
+	event *futures.WsUserDataEvent,
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	currentPrice float64,
@@ -1255,7 +1266,7 @@ func createNextPair_v3(
 		stepSizeExp,
 		positionLimit)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, _ := GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 2, int(1))
+	upPrice, downPrice, _ := GetPricePair(config, pair, event.OrderTradeUpdate, risk, currentPrice, tickSizeExp, 1, int(1))
 	// Створюємо ордер на продаж
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
 		if positionVal >= -pair.GetCurrentPositionBalance() {
@@ -1513,6 +1524,7 @@ func getCallBack_v4(
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 				count, err = createNextPair_v4(
+					event,
 					config,
 					pair,
 					risk,
@@ -1569,6 +1581,7 @@ func getQuantityPair_v4(
 }
 
 func createNextPair_v4(
+	event *futures.WsUserDataEvent,
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
@@ -1589,7 +1602,7 @@ func createNextPair_v4(
 		createdOrderDown bool = false
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 2, countIn)
+	upPrice, downPrice, countOut = GetPricePair(config, pair, event.OrderTradeUpdate, risk, currentPrice, tickSizeExp, 1, countIn)
 	// Визначаємо кількість для нових ордерів
 	if config.GetConfigurations().GetClosePositionByTakeProfitMarketOrder() {
 		upQuantity, downQuantity = getQuantityPair_v4(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp)
@@ -1765,6 +1778,7 @@ func getCallBack_v5(
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 				count, err = createNextPair_v5(
+					event,
 					config,
 					pair,
 					risk,
@@ -1852,6 +1866,7 @@ func getQuantityPair_v5(
 }
 
 func createNextPair_v5(
+	event *futures.WsUserDataEvent,
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
@@ -1873,7 +1888,7 @@ func createNextPair_v5(
 		createdOrderDown bool    = false
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = GetPricePair(config, pair, risk, currentPrice, tickSizeExp, 1, countIn)
+	upPrice, downPrice, countOut = GetPricePair(config, pair, event.OrderTradeUpdate, risk, currentPrice, tickSizeExp, 1, countIn)
 	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
