@@ -510,7 +510,7 @@ func initVars(
 		printError()
 		return
 	}
-	if isDynamicDelta {
+	if isDynamicDelta && risk != nil && utils.ConvStrToFloat64(risk.BreakEvenPrice) != 0 {
 		priceUp = round(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), price)*(1+pair.GetSellDelta()), tickSizeExp)
 		priceDown = round(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price)*(1-pair.GetBuyDelta()), tickSizeExp)
 	} else {
