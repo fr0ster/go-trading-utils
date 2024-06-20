@@ -1056,46 +1056,25 @@ func GetPricePair(
 	lastExecutedSide futures.SideType,
 	risk *futures.PositionRisk,
 	currentPrice float64,
-	tickSizeExp int,
-	multiplier int,
-	countIn int) (upPrice, downPrice float64, countOut int) {
-	delta := func(n int, limit float64) float64 {
-		delta := math.Pow(float64(n), 3) / 3000
-		if n > 5 && delta > limit {
-			return delta
-		} else {
-			return limit
-		}
-	}
-
+	tickSizeExp int) (upPrice, downPrice float64) {
 	if config.GetConfigurations().GetDynamicDelta() {
 		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			if lastExecutedSide == futures.SideTypeSell {
-				countOut = countIn + 1
-			} else {
-				countOut = 1
-			}
-			upPrice = round(math.Max(lastFilledPrice, currentPrice)*(1+delta(countOut, pair.GetSellDelta())), tickSizeExp)
-			downPrice = round(breakEvenPrice*(1-pair.GetBuyDelta()*float64(multiplier)), tickSizeExp)
+			delta := lastFilledPrice - math.Min(breakEvenPrice, currentPrice)*(1-pair.GetBuyDelta())
+			upPrice = round(math.Max(lastFilledPrice, currentPrice)+delta, tickSizeExp)
+			downPrice = round(math.Min(breakEvenPrice, currentPrice)-delta, tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			if lastExecutedSide == futures.SideTypeBuy {
-				countOut = countIn + 1
-			} else {
-				countOut = 1
-			}
-			upPrice = round(breakEvenPrice*(1+pair.GetSellDelta()*float64(multiplier)), tickSizeExp)
-			downPrice = round(math.Min(lastFilledPrice, currentPrice)*(1-delta(countOut, pair.GetBuyDelta())), tickSizeExp)
+			delta := math.Max(breakEvenPrice, currentPrice)*(1+pair.GetSellDelta()) - lastFilledPrice
+			upPrice = round(math.Max(lastFilledPrice, currentPrice)+delta, tickSizeExp)
+			downPrice = round(math.Min(breakEvenPrice, currentPrice)-delta, tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція нульова
 		} else {
-			countOut = 1
 			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 			downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 		}
 	} else {
-		countOut = 1
 		upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
 		downPrice = round(currentPrice*(1-pair.GetBuyDelta()), tickSizeExp)
 	}
@@ -1171,82 +1150,78 @@ func getCallBack_v3(
 	minNotional float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
-	var (
-		count int
-	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			updateConfig(config, pair)
 			// Знаходимо у гріді на якому був виконаний ордер
-			// if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
-			// 	maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
-			if event.OrderTradeUpdate.Type == futures.OrderTypeLimit {
-				logrus.Debugf("Futures %s: Limited Order filled %v on price %v with quantity %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
-			} else if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
-				logrus.Debugf("Futures %s: Take Profit Order filled %v on price %v with quantity %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
-			} else if event.OrderTradeUpdate.Type == futures.OrderTypeTrailingStopMarket {
-				logrus.Debugf("Futures %s: Trailing Stop Order filled %v on price %v with quantity %v side %v status %s",
-					pair.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.LastFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
-			}
-			free, _ := pairProcessor.GetFreeBalance()
-			pair.SetCurrentBalance(free)
-			config.Save()
-			risk, err := pairProcessor.GetPositionRisk()
-			if err != nil {
-				printError()
+			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+				if event.OrderTradeUpdate.Type == futures.OrderTypeLimit {
+					logrus.Debugf("Futures %s: Limited Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				} else if event.OrderTradeUpdate.Type == futures.OrderTypeTakeProfitMarket {
+					logrus.Debugf("Futures %s: Take Profit Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				} else if event.OrderTradeUpdate.Type == futures.OrderTypeTrailingStopMarket {
+					logrus.Debugf("Futures %s: Trailing Stop Order filled %v on price %v with quantity %v side %v status %s",
+						pair.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.OriginalPrice,
+						event.OrderTradeUpdate.LastFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+				}
+				free, _ := pairProcessor.GetFreeBalance()
+				pair.SetCurrentBalance(free)
+				config.Save()
+				risk, err := pairProcessor.GetPositionRisk()
+				if err != nil {
+					printError()
+					pairProcessor.CancelAllOrders()
+					close(quit)
+					return
+				}
+				// Визначаємо поточну ціну
+				currentPrice := getCurrentPrice(client, pair, tickSizeExp)
+				logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
+					pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
+				logrus.Debugf("Futures %s: Event OrderTradeUpdate: OriginalPrice %v, OriginalQty %v, LastFilledPrice %v, LastFilledQty %v",
+					pair.GetPair(), event.OrderTradeUpdate.OriginalPrice, event.OrderTradeUpdate.OriginalQty, event.OrderTradeUpdate.LastFilledPrice, event.OrderTradeUpdate.LastFilledQty)
+				// Балансування маржі як треба
+				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				pairProcessor.CancelAllOrders()
-				close(quit)
-				return
+				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
+				err = createNextPair_v3(
+					config,
+					pair,
+					risk,
+					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
+					event.OrderTradeUpdate.Side,
+					minNotional,
+					quantity,
+					currentPrice,
+					tickSizeExp,
+					stepSizeExp,
+					free,
+					pairProcessor)
+				if err != nil {
+					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
+					printError()
+					close(quit)
+					return
+				}
 			}
-			// Визначаємо поточну ціну
-			currentPrice := getCurrentPrice(client, pair, tickSizeExp)
-			logrus.Debugf("Futures %s: Risks PositionAmt %v EntryPrice %v, BreakEvenPrice %v, Current Price %v, UnRealizedProfit %v",
-				pair.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, currentPrice, risk.UnRealizedProfit)
-			logrus.Debugf("Futures %s: Event OrderTradeUpdate: OriginalPrice %v, OriginalQty %v, LastFilledPrice %v, LastFilledQty %v",
-				pair.GetPair(), event.OrderTradeUpdate.OriginalPrice, event.OrderTradeUpdate.OriginalQty, event.OrderTradeUpdate.LastFilledPrice, event.OrderTradeUpdate.LastFilledQty)
-			// Балансування маржі як треба
-			free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
-			pairProcessor.CancelAllOrders()
-			logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-			count, err = createNextPair_v3(
-				config,
-				pair,
-				risk,
-				utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
-				event.OrderTradeUpdate.Side,
-				minNotional,
-				quantity,
-				currentPrice,
-				tickSizeExp,
-				stepSizeExp,
-				free,
-				count,
-				pairProcessor)
-			if err != nil {
-				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
-				printError()
-				close(quit)
-				return
-			}
-			// }
 		}
 	}
 }
@@ -1263,8 +1238,7 @@ func createNextPair_v3(
 	tickSizeExp int,
 	sizeSizeExp int,
 	free float64,
-	countIn int,
-	pairProcessor *PairProcessor) (countOut int, err error) {
+	pairProcessor *PairProcessor) (err error) {
 	var (
 		upPrice          float64
 		downPrice        float64
@@ -1276,12 +1250,12 @@ func createNextPair_v3(
 		buyOrder         *futures.CreateOrderResponse
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = GetPricePair(
+	upPrice, downPrice = GetPricePair(
 		config,
 		pair,
 		lastFilledPrice,
 		lastExecutedSide,
-		risk, currentPrice, tickSizeExp, 1, countIn)
+		risk, currentPrice, tickSizeExp)
 	// Визначаємо кількість для нових ордерів
 	upQuantity, downQuantity = getQuantityPair(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp, false)
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
@@ -1312,7 +1286,6 @@ func createNextPair_v3(
 					tickSizeExp,
 					sizeSizeExp,
 					free,
-					countOut,
 					pairProcessor)
 			}
 			createdOrderUp = true
@@ -1351,7 +1324,6 @@ func createNextPair_v3(
 					tickSizeExp,
 					sizeSizeExp,
 					free,
-					countOut,
 					pairProcessor)
 			}
 			createdOrderDown = true
@@ -1367,7 +1339,7 @@ func createNextPair_v3(
 		if !createdOrderUp && !createdOrderDown {
 			logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
 			printError()
-			return 0, fmt.Errorf("orders were not created")
+			return fmt.Errorf("orders were not created")
 		}
 	}
 	return
@@ -1552,9 +1524,6 @@ func getCallBack_v4(
 	minNotional float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
-	var (
-		count int
-	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
@@ -1599,7 +1568,7 @@ func getCallBack_v4(
 				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
-				count, err = createNextPair_v4(
+				err = createNextPair_v4(
 					config,
 					pair,
 					risk,
@@ -1611,7 +1580,6 @@ func getCallBack_v4(
 					tickSizeExp,
 					stepSizeExp,
 					free,
-					count,
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
@@ -1636,8 +1604,7 @@ func createNextPair_v4(
 	tickSizeExp int,
 	sizeSizeExp int,
 	free float64,
-	countIn int,
-	pairProcessor *PairProcessor) (countOut int, err error) {
+	pairProcessor *PairProcessor) (err error) {
 	var (
 		upPrice          float64
 		downPrice        float64
@@ -1650,16 +1617,14 @@ func createNextPair_v4(
 		buyOrder         *futures.CreateOrderResponse
 	)
 	// Визначаємо ціну для нових ордерів
-	upPrice, downPrice, countOut = GetPricePair(
+	upPrice, downPrice = GetPricePair(
 		config,
 		pair,
 		lastFilledPrice,
 		lastExecutedSide,
 		risk,
 		currentPrice,
-		tickSizeExp,
-		1,
-		countIn)
+		tickSizeExp)
 	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
 		// Визначаємо кількість для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
@@ -1714,7 +1679,6 @@ func createNextPair_v4(
 				tickSizeExp,
 				sizeSizeExp,
 				free,
-				countOut,
 				pairProcessor)
 		}
 		createdOrderUp = true
@@ -1762,7 +1726,6 @@ func createNextPair_v4(
 				tickSizeExp,
 				sizeSizeExp,
 				free,
-				countOut,
 				pairProcessor)
 		}
 		createdOrderDown = true
@@ -1778,7 +1741,7 @@ func createNextPair_v4(
 	if !createdOrderUp && !createdOrderDown {
 		logrus.Debugf("Futures %s: Orders was not created", pair.GetPair())
 		printError()
-		return 0, fmt.Errorf("orders were not created")
+		return fmt.Errorf("orders were not created")
 	}
 	return
 }
