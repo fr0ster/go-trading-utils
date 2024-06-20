@@ -573,14 +573,16 @@ func openPosition(
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v status %v", pair.GetPair(), priceUp, quantity, sellOrder.Status)
+	logrus.Debugf("Futures %s: Set Sell order type %v on price %v with quantity %v status %v",
+		pair.GetPair(), orderTypeUp, priceUp, quantity, sellOrder.Status)
 	// Створюємо ордери на купівлю
 	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, orderTypeDown, quantity, priceDown, callBackRate, false)
 	if err != nil {
 		printError()
 		return
 	}
-	logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v status %v", pair.GetPair(), priceDown, quantity, buyOrder.Status)
+	logrus.Debugf("Futures %s: Set Buy order type %v on price %v with quantity %v status %v",
+		pair.GetPair(), orderTypeDown, priceDown, quantity, buyOrder.Status)
 	return
 }
 
@@ -1510,58 +1512,58 @@ func RunFuturesGridTradingV3(
 		printError()
 		return err
 	}
-	if config.GetConfigurations().GetObservePosition() {
-		go func() {
-			var (
-				sellOrder *futures.CreateOrderResponse
-				buyOrder  *futures.CreateOrderResponse
-			)
-			for {
-				<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond)
-				_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
-					config.GetConfigurations().GetDynamicDelta(),
-					client,
-					pair,
-					pairProcessor)
-				if err != nil {
-					logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
-				}
-				// Дивимося, чи є відкриті ордера
-				openOrders, _ := pairProcessor.GetOpenOrders()
-				if len(openOrders) == 0 { // Якщо немає відкритих ордерів то відкриваємо нові
-					logrus.Debugf("Futures %s: We have no open orders", pair.GetPair())
-					_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
-					if err != nil {
-						err = fmt.Errorf("futures %s: could not open position %v", pair.GetPair(), err)
-						printError()
-						return
-					}
-				} else if len(openOrders) == 1 { // Якщо є один відкритий ордер то відкриваємо другий
-					logrus.Debugf("Futures %s: We have one open order but we need two", pair.GetPair())
-					order := openOrders[0]
-					if order.Side == futures.SideTypeBuy {
-						// Створюємо ордери на продаж
-						priceUp := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
-						sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, quantity, priceUp, 0, false)
-						if err != nil {
-							printError()
-							return
-						}
-						logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v status %v", pair.GetPair(), priceUp, quantity, sellOrder.Status)
-					} else if order.Side == futures.SideTypeSell {
-						// Створюємо ордери на продаж
-						priceDown := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
-						buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, quantity, priceDown, 0, false)
-						if err != nil {
-							printError()
-							return
-						}
-						logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v status %v", pair.GetPair(), priceDown, quantity, buyOrder.Status)
-					}
-				}
-			}
-		}()
-	}
+	// if config.GetConfigurations().GetObservePosition() {
+	// 	go func() {
+	// 		var (
+	// 			sellOrder *futures.CreateOrderResponse
+	// 			buyOrder  *futures.CreateOrderResponse
+	// 		)
+	// 		for {
+	// 			<-time.After(time.Duration(config.GetConfigurations().GetObserverTimeOutMillisecond()) * time.Millisecond)
+	// 			_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
+	// 				config.GetConfigurations().GetDynamicDelta(),
+	// 				client,
+	// 				pair,
+	// 				pairProcessor)
+	// 			if err != nil {
+	// 				logrus.Errorf("Futures %s: Bot was stopped with error %v", pair.GetPair(), err)
+	// 			}
+	// 			// Дивимося, чи є відкриті ордера
+	// 			openOrders, _ := pairProcessor.GetOpenOrders()
+	// 			if len(openOrders) == 0 { // Якщо немає відкритих ордерів то відкриваємо нові
+	// 				logrus.Debugf("Futures %s: We have no open orders", pair.GetPair())
+	// 				_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
+	// 				if err != nil {
+	// 					err = fmt.Errorf("futures %s: could not open position %v", pair.GetPair(), err)
+	// 					printError()
+	// 					return
+	// 				}
+	// 			} else if len(openOrders) == 1 { // Якщо є один відкритий ордер то відкриваємо другий
+	// 				logrus.Debugf("Futures %s: We have one open order but we need two", pair.GetPair())
+	// 				order := openOrders[0]
+	// 				if order.Side == futures.SideTypeBuy {
+	// 					// Створюємо ордери на продаж
+	// 					priceUp := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
+	// 					sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, quantity, priceUp, 0, false)
+	// 					if err != nil {
+	// 						printError()
+	// 						return
+	// 					}
+	// 					logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v status %v", pair.GetPair(), priceUp, quantity, sellOrder.Status)
+	// 				} else if order.Side == futures.SideTypeSell {
+	// 					// Створюємо ордери на продаж
+	// 					priceDown := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
+	// 					buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, quantity, priceDown, 0, false)
+	// 					if err != nil {
+	// 						printError()
+	// 						return
+	// 					}
+	// 					logrus.Debugf("Futures %s: Set Buy order on price %v with quantity %v status %v", pair.GetPair(), priceDown, quantity, buyOrder.Status)
+	// 				}
+	// 			}
+	// 		}
+	// 	}()
+	// }
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pair.GetCallbackRate(), pairProcessor)
 	if err != nil {
