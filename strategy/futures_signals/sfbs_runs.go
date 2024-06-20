@@ -541,6 +541,7 @@ func openPosition(
 	quantity float64,
 	priceUp float64,
 	priceDown float64,
+	callBackRate float64,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
@@ -548,14 +549,14 @@ func openPosition(
 		return
 	}
 	// Створюємо ордери на продаж
-	sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, orderTypeUp, quantity, priceUp, 0, false)
+	sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, orderTypeUp, quantity, priceUp, callBackRate, false)
 	if err != nil {
 		printError()
 		return
 	}
 	logrus.Debugf("Futures %s: Set Sell order on price %v with quantity %v status %v", pair.GetPair(), priceUp, quantity, sellOrder.Status)
 	// Створюємо ордери на купівлю
-	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, orderTypeDown, quantity, priceDown, 0, false)
+	buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, orderTypeDown, quantity, priceDown, callBackRate, false)
 	if err != nil {
 		printError()
 		return
@@ -887,7 +888,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	sellOrder, buyOrder, err := openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, pairProcessor)
+	sellOrder, buyOrder, err := openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
 	if err != nil {
 		printError()
 		return err
@@ -1053,7 +1054,7 @@ func RunFuturesGridTradingV2(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	sellOrder, buyOrder, err := openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, pairProcessor)
+	sellOrder, buyOrder, err := openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1506,7 +1507,7 @@ func RunFuturesGridTradingV3(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 0 { // Якщо немає відкритих ордерів то відкриваємо нові
 					logrus.Debugf("Futures %s: We have no open orders", pair.GetPair())
-					_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, pairProcessor)
+					_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
 					if err != nil {
 						err = fmt.Errorf("futures %s: could not open position %v", pair.GetPair(), err)
 						printError()
@@ -1539,7 +1540,7 @@ func RunFuturesGridTradingV3(
 		}()
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, pairProcessor)
+	_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1863,7 +1864,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pairProcessor)
+	_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pair.GetCallbackRate(), pairProcessor)
 	if err != nil {
 		return err
 	}
