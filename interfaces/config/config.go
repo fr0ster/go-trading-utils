@@ -55,9 +55,6 @@ type (
 		GetDeltaStepPercent() float64
 		SetDeltaStepPercent(float64)
 
-		GetClosePositionByTakeProfitMarketOrder() bool
-		SetClosePositionByTakeProfitMarketOrder(bool)
-
 		GetDynamicDelta() bool
 		SetDynamicDelta(bool)
 

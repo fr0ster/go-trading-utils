@@ -16,24 +16,23 @@ import (
 
 type (
 	Configs struct {
-		Connection                           *connection_types.Connection `json:"connection"`
-		LogLevel                             logrus.Level                 `json:"log_level"`
-		ReloadConfig                         bool                         `json:"reload_config"`
-		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
-		ClosePositionOnRestart               bool                         `json:"close_position_on_restart"`
-		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
-		PercentsToStopSettingNewOrder        float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOutMillisecond           int                          `json:"observer_timeout_millisecond"`
-		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
-		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
-		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
-		DeltaStepPercent                     float64                      `json:"delta_step_percent"`
-		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
-		DynamicDelta                         bool                         `json:"dynamic_delta"`
-		DynamicQuantity                      bool                         `json:"dynamic_quantity"`
-		Pairs                                *btree.BTree
+		Connection                    *connection_types.Connection `json:"connection"`
+		LogLevel                      logrus.Level                 `json:"log_level"`
+		ReloadConfig                  bool                         `json:"reload_config"`
+		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss           bool                         `json:"observe_position_loss"`
+		ClosePositionOnRestart        bool                         `json:"close_position_on_restart"`
+		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
+		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice           bool                         `json:"using_break_even_price"`
+		BuyDeltaLoss                  float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss                 float64                      `json:"sell_delta_loss"`
+		DeltaStepPercent              float64                      `json:"delta_step_percent"`
+		DynamicDelta                  bool                         `json:"dynamic_delta"`
+		DynamicQuantity               bool                         `json:"dynamic_quantity"`
+		Pairs                         *btree.BTree
 	}
 )
 
@@ -146,14 +145,6 @@ func (cf *Configs) SetDeltaStepPercent(delta float64) {
 	cf.DeltaStepPercent = delta
 }
 
-func (cf *Configs) GetClosePositionByTakeProfitMarketOrder() bool {
-	return cf.ClosePositionByTakeProfitMarketOrder
-}
-
-func (cf *Configs) SetClosePositionByTakeProfitMarketOrder(close bool) {
-	cf.ClosePositionByTakeProfitMarketOrder = close
-}
-
 func (cf *Configs) GetDynamicDelta() bool {
 	return cf.DynamicDelta
 }
@@ -230,43 +221,41 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		return true
 	})
 	return json.MarshalIndent(&struct {
-		Connection                           *connection_types.Connection `json:"connection"`
-		LogLevel                             string                       `json:"log_level"`
-		ReloadConfig                         bool                         `json:"reload_config"`
-		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
-		RestartClosedPosition                bool                         `json:"close_position_on_restart"`
-		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation                float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition            float64                      `json:"percent_to_decrease_position"`
-		ObserverTimeOut                      int                          `json:"observer_timeout_millisecond"`
-		UsingBreakEvenPrice                  bool                         `json:"using_break_even_price"`
-		BuyDeltaLoss                         float64                      `json:"buy_delta_loss"`
-		SellDeltaLoss                        float64                      `json:"sell_delta_loss"`
-		DeltaStepPerMille                    float64                      `json:"delta_step_percent"`
-		ClosePositionByTakeProfitMarketOrder bool                         `json:"close_position_by_take_profit_market_order"`
-		DynamicDelta                         bool                         `json:"dynamic_delta"`
-		DynamicQuantity                      bool                         `json:"dynamic_quantity"`
-		Pairs                                []*pairs_types.Pairs         `json:"pairs"`
+		Connection                *connection_types.Connection `json:"connection"`
+		LogLevel                  string                       `json:"log_level"`
+		ReloadConfig              bool                         `json:"reload_config"`
+		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
+		ObservePositionLoss       bool                         `json:"observe_position_loss"`
+		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
+		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
+		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
+		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
+		UsingBreakEvenPrice       bool                         `json:"using_break_even_price"`
+		BuyDeltaLoss              float64                      `json:"buy_delta_loss"`
+		SellDeltaLoss             float64                      `json:"sell_delta_loss"`
+		DeltaStepPerMille         float64                      `json:"delta_step_percent"`
+		DynamicDelta              bool                         `json:"dynamic_delta"`
+		DynamicQuantity           bool                         `json:"dynamic_quantity"`
+		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
-		Connection:                           c.Connection,
-		LogLevel:                             c.LogLevel.String(),
-		ReloadConfig:                         c.ReloadConfig,
-		ObservePriceLiquidation:              c.ObservePriceLiquidation,
-		ObservePositionLoss:                  c.ObservePositionLoss,
-		RestartClosedPosition:                c.ClosePositionOnRestart,
-		BalancingOfMargin:                    c.BalancingOfMargin,
-		PercentsToLiquidation:                c.PercentsToStopSettingNewOrder,
-		PercentToDecreasePosition:            c.PercentToDecreasePosition,
-		ObserverTimeOut:                      c.ObserverTimeOutMillisecond,
-		UsingBreakEvenPrice:                  c.UsingBreakEvenPrice,
-		BuyDeltaLoss:                         c.BuyDeltaLoss,
-		SellDeltaLoss:                        c.SellDeltaLoss,
-		DeltaStepPerMille:                    c.DeltaStepPercent,
-		ClosePositionByTakeProfitMarketOrder: c.ClosePositionByTakeProfitMarketOrder,
-		DynamicDelta:                         c.DynamicDelta,
-		DynamicQuantity:                      c.DynamicQuantity,
-		Pairs:                                pairs,
+		Connection:                c.Connection,
+		LogLevel:                  c.LogLevel.String(),
+		ReloadConfig:              c.ReloadConfig,
+		ObservePriceLiquidation:   c.ObservePriceLiquidation,
+		ObservePositionLoss:       c.ObservePositionLoss,
+		RestartClosedPosition:     c.ClosePositionOnRestart,
+		BalancingOfMargin:         c.BalancingOfMargin,
+		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
+		PercentToDecreasePosition: c.PercentToDecreasePosition,
+		ObserverTimeOut:           c.ObserverTimeOutMillisecond,
+		UsingBreakEvenPrice:       c.UsingBreakEvenPrice,
+		BuyDeltaLoss:              c.BuyDeltaLoss,
+		SellDeltaLoss:             c.SellDeltaLoss,
+		DeltaStepPerMille:         c.DeltaStepPercent,
+		DynamicDelta:              c.DynamicDelta,
+		DynamicQuantity:           c.DynamicQuantity,
+		Pairs:                     pairs,
 	}, "", "  ")
 }
 
@@ -319,7 +308,6 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	c.BuyDeltaLoss = temp.BuyDeltaLoss
 	c.SellDeltaLoss = temp.SellDeltaLoss
 	c.DeltaStepPercent = temp.DeltaStepPercent
-	c.ClosePositionByTakeProfitMarketOrder = temp.ClosePositionByTakeProfitMarketOrder
 	c.DynamicDelta = temp.DynamicDelta
 	c.DynamicQuantity = temp.DynamicQuantity
 	if c.Pairs == nil || c.Pairs.Len() == 0 {
@@ -333,22 +321,21 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 
 func NewConfig(connection *connection_types.Connection) *Configs {
 	return &Configs{
-		Connection:                           connection,
-		LogLevel:                             logrus.InfoLevel,
-		ReloadConfig:                         false,
-		ObservePriceLiquidation:              false,
-		ObservePositionLoss:                  false,
-		ClosePositionOnRestart:               false,
-		PercentsToStopSettingNewOrder:        0.05, // 5%
-		PercentToDecreasePosition:            0.03, // 3%
-		ObserverTimeOutMillisecond:           1000,
-		UsingBreakEvenPrice:                  false,
-		BuyDeltaLoss:                         0.015, // 1.5%
-		SellDeltaLoss:                        0.015, // 1.5%
-		DeltaStepPercent:                     0.001, // 0.1%
-		ClosePositionByTakeProfitMarketOrder: false,
-		DynamicDelta:                         false,
-		DynamicQuantity:                      false,
-		Pairs:                                btree.New(2),
+		Connection:                    connection,
+		LogLevel:                      logrus.InfoLevel,
+		ReloadConfig:                  false,
+		ObservePriceLiquidation:       false,
+		ObservePositionLoss:           false,
+		ClosePositionOnRestart:        false,
+		PercentsToStopSettingNewOrder: 0.05, // 5%
+		PercentToDecreasePosition:     0.03, // 3%
+		ObserverTimeOutMillisecond:    1000,
+		UsingBreakEvenPrice:           false,
+		BuyDeltaLoss:                  0.015, // 1.5%
+		SellDeltaLoss:                 0.015, // 1.5%
+		DeltaStepPercent:              0.001, // 0.1%
+		DynamicDelta:                  false,
+		DynamicQuantity:               false,
+		Pairs:                         btree.New(2),
 	}
 }
