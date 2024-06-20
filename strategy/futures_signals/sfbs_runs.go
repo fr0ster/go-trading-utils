@@ -878,8 +878,9 @@ func RunFuturesGridTrading(
 		printError()
 		return err
 	}
+	grid.Debug("Futures Grid", "", pair.GetPair())
 	<-quit
-	logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
+	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
 		printError()
@@ -1036,8 +1037,9 @@ func RunFuturesGridTradingV2(
 	}
 	// Ініціалізація гріду
 	grid, err = initGrid(pair, initPrice, quantity, tickSizeExp, sellOrder, buyOrder)
+	grid.Debug("Futures Grid", "", pair.GetPair())
 	<-quit
-	logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
+	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
 		printError()
@@ -1502,7 +1504,7 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	<-quit
-	logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
+	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
 		printError()
@@ -1831,7 +1833,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 	<-quit
-	logrus.Infof("Futures %s: Bot was stopped\n", pair.GetPair())
+	logrus.Infof("Futures %s: Bot was stopped", pair.GetPair())
 	err = loadConfig(pair, config, pairProcessor)
 	if err != nil {
 		printError()
