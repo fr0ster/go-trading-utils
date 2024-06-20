@@ -1062,13 +1062,13 @@ func GetPricePair(
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			delta := lastFilledPrice - math.Min(breakEvenPrice, currentPrice)*(1-pair.GetBuyDelta())
-			upPrice = round(math.Max(lastFilledPrice, currentPrice)+delta, tickSizeExp)
-			downPrice = round(math.Min(breakEvenPrice, currentPrice)-delta, tickSizeExp)
+			upPrice = round(lastFilledPrice+delta, tickSizeExp)
+			downPrice = round(lastFilledPrice-delta, tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			delta := math.Max(breakEvenPrice, currentPrice)*(1+pair.GetSellDelta()) - lastFilledPrice
-			upPrice = round(math.Max(lastFilledPrice, currentPrice)+delta, tickSizeExp)
-			downPrice = round(math.Min(breakEvenPrice, currentPrice)-delta, tickSizeExp)
+			upPrice = round(lastFilledPrice+delta, tickSizeExp)
+			downPrice = round(lastFilledPrice-delta, tickSizeExp)
 			// Визначаємо ціну для нових ордерів коли позиція нульова
 		} else {
 			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
