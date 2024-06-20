@@ -1503,6 +1503,7 @@ func RunFuturesGridTradingV3(
 				// Дивимося, чи є відкриті ордера
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 0 { // Якщо немає відкритих ордерів то відкриваємо нові
+					logrus.Debugf("Futures %s: We have no open orders", pair.GetPair())
 					_, _, err = openPosition(pair, quantity, initPriceUp, initPriceDown, pairProcessor)
 					if err != nil {
 						err = fmt.Errorf("futures %s: could not open position %v", pair.GetPair(), err)
@@ -1510,6 +1511,7 @@ func RunFuturesGridTradingV3(
 						return
 					}
 				} else if len(openOrders) == 1 { // Якщо є один відкритий ордер то відкриваємо другий
+					logrus.Debugf("Futures %s: We have one open order but we need two", pair.GetPair())
 					order := openOrders[0]
 					if order.Side == futures.SideTypeBuy {
 						// Створюємо ордери на продаж
