@@ -472,11 +472,14 @@ func getSymbol(
 }
 
 func initVars(
+	isDynamicDelta bool,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	pairProcessor *PairProcessor) (
 	symbol *futures.Symbol,
-	price,
+	price float64,
+	priceUp,
+	priceDown,
 	quantity float64,
 	minNotional float64,
 	tickSizeExp,
@@ -500,6 +503,19 @@ func initVars(
 	if price <= 0 {
 		price, _ = GetCurrentPrice(client, pair.GetPair()) // Отримання ціни по ринку для пари
 		price = round(price, tickSizeExp)
+	}
+	// Отримання ціни по відкритій позиції
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		return
+	}
+	if isDynamicDelta {
+		priceUp = round(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), price)*(1+pair.GetSellDelta()), tickSizeExp)
+		priceDown = round(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price)*(1-pair.GetBuyDelta()), tickSizeExp)
+	} else {
+		priceUp = round(price*(1+pair.GetSellDelta()), tickSizeExp)
+		priceDown = round(price*(1-pair.GetBuyDelta()), tickSizeExp)
 	}
 	setQuantity := func(symbol *futures.Symbol) (quantity float64) {
 		quantity = round(pair.GetCurrentPositionBalance()*pair.GetLimitOnTransaction()*float64(pair.GetLeverage())/price, stepSizeExp)
@@ -837,7 +853,11 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, minNotional, tickSizeExp, _, err := initVars(client, pair, pairProcessor)
+	symbol, initPrice, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err := initVars(
+		config.GetConfigurations().GetDynamicDelta(),
+		client,
+		pair,
+		pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -865,9 +885,7 @@ func RunFuturesGridTrading(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	priceUp := round(initPrice*(1+pair.GetSellDelta()), tickSizeExp)
-	priceDown := round(initPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-	sellOrder, buyOrder, err := openPosition(pair, quantity, priceUp, priceDown, pairProcessor)
+	sellOrder, buyOrder, err := openPosition(pair, quantity, initPriceUp, initPriceDown, pairProcessor)
 	if err != nil {
 		printError()
 		return err
@@ -1003,7 +1021,11 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	symbol, initPrice, quantity, minNotional, tickSizeExp, _, err := initVars(client, pair, pairProcessor)
+	symbol, initPrice, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err := initVars(
+		config.GetConfigurations().GetDynamicDelta(),
+		client,
+		pair,
+		pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1029,9 +1051,7 @@ func RunFuturesGridTradingV2(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	priceUp := round(initPrice*(1+pair.GetSellDelta()), tickSizeExp)
-	priceDown := round(initPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-	sellOrder, buyOrder, err := openPosition(pair, quantity, priceUp, priceDown, pairProcessor)
+	sellOrder, buyOrder, err := openPosition(pair, quantity, initPriceUp, initPriceDown, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1050,25 +1070,35 @@ func RunFuturesGridTradingV2(
 }
 
 func GetPricePair(
-	config *config_types.ConfigFile,
+	isDynamicDelta bool,
 	pair *pairs_types.Pairs,
 	lastFilledPrice float64,
 	lastExecutedSide futures.SideType,
 	risk *futures.PositionRisk,
 	currentPrice float64,
 	tickSizeExp int) (upPrice, downPrice float64) {
-	if config.GetConfigurations().GetDynamicDelta() {
+	if isDynamicDelta {
 		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		// Визначаємо ціну для нових ордерів коли позиція від'ємна
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			delta := lastFilledPrice - math.Min(breakEvenPrice, currentPrice)*(1-pair.GetBuyDelta())
-			upPrice = round(lastFilledPrice+delta, tickSizeExp)
-			downPrice = round(lastFilledPrice-delta, tickSizeExp)
+			if lastExecutedSide == futures.SideTypeSell {
+				delta := currentPrice - lastFilledPrice
+				upPrice = round(math.Max(lastFilledPrice, currentPrice)*(1+pair.GetSellDelta())+delta, tickSizeExp)
+				downPrice = round(math.Min(breakEvenPrice, currentPrice)*(1-pair.GetBuyDelta()), tickSizeExp)
+			} else if lastExecutedSide == futures.SideTypeBuy {
+				upPrice = round(math.Max(lastFilledPrice, currentPrice)*(1+pair.GetSellDelta()), tickSizeExp)
+				downPrice = round(math.Min(breakEvenPrice, currentPrice)*(1-pair.GetBuyDelta()), tickSizeExp)
+			}
 			// Визначаємо ціну для нових ордерів коли позиція позитивна
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			delta := math.Max(breakEvenPrice, currentPrice)*(1+pair.GetSellDelta()) - lastFilledPrice
-			upPrice = round(lastFilledPrice+delta, tickSizeExp)
-			downPrice = round(lastFilledPrice-delta, tickSizeExp)
+			if lastExecutedSide == futures.SideTypeSell {
+				upPrice = round(math.Max(breakEvenPrice, currentPrice)*(1+pair.GetSellDelta()), tickSizeExp)
+				downPrice = round(math.Min(lastFilledPrice, currentPrice)*(1-pair.GetBuyDelta()), tickSizeExp)
+			} else if lastExecutedSide == futures.SideTypeBuy {
+				upPrice = round(math.Max(breakEvenPrice, currentPrice)*(1+pair.GetSellDelta()), tickSizeExp)
+				delta := currentPrice - lastFilledPrice
+				downPrice = round(math.Min(lastFilledPrice, currentPrice)*(1-pair.GetBuyDelta())-delta, tickSizeExp)
+			}
 			// Визначаємо ціну для нових ордерів коли позиція нульова
 		} else {
 			upPrice = round(currentPrice*(1+pair.GetSellDelta()), tickSizeExp)
@@ -1251,7 +1281,7 @@ func createNextPair_v3(
 	)
 	// Визначаємо ціну для нових ордерів
 	upPrice, downPrice = GetPricePair(
-		config,
+		config.GetConfigurations().GetDynamicDelta(),
 		pair,
 		lastFilledPrice,
 		lastExecutedSide,
@@ -1402,7 +1432,8 @@ func RunFuturesGridTradingV3(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		initPrice     float64
+		initPriceUp   float64
+		initPriceDown float64
 		quantity      float64
 		minNotional   float64
 		tickSizeExp   int
@@ -1423,7 +1454,11 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
+	_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
+		config.GetConfigurations().GetDynamicDelta(),
+		client,
+		pair,
+		pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1477,9 +1512,7 @@ func RunFuturesGridTradingV3(
 		}()
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	priceUp := round(initPrice*(1+pair.GetSellDelta()), tickSizeExp)
-	priceDown := round(initPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-	_, _, err = openPosition(pair, quantity, priceUp, priceDown, pairProcessor)
+	_, _, err = openPosition(pair, quantity, initPriceUp, initPriceDown, pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1618,7 +1651,7 @@ func createNextPair_v4(
 	)
 	// Визначаємо ціну для нових ордерів
 	upPrice, downPrice = GetPricePair(
-		config,
+		config.GetConfigurations().GetDynamicDelta(),
 		pair,
 		lastFilledPrice,
 		lastExecutedSide,
@@ -1759,7 +1792,8 @@ func RunFuturesGridTradingV4(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		initPrice     float64
+		initPriceUp   float64
+		initPriceDown float64
 		quantity      float64
 		minNotional   float64
 		tickSizeExp   int
@@ -1779,7 +1813,12 @@ func RunFuturesGridTradingV4(
 	if err != nil {
 		return err
 	}
-	_, initPrice, quantity, minNotional, tickSizeExp, stepSizeExp, err = initVars(client, pair, pairProcessor)
+
+	_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
+		config.GetConfigurations().GetDynamicDelta(),
+		client,
+		pair,
+		pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1797,9 +1836,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	priceUp := round(initPrice*(1+pair.GetSellDelta()), tickSizeExp)
-	priceDown := round(initPrice*(1-pair.GetBuyDelta()), tickSizeExp)
-	_, _, err = openPosition(pair, quantity, priceUp, priceDown, pairProcessor)
+	_, _, err = openPosition(pair, quantity, initPriceUp, initPriceDown, pairProcessor)
 	if err != nil {
 		return err
 	}
