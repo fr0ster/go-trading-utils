@@ -1827,7 +1827,7 @@ func RunFuturesGridTradingV4(
 		stepSizeExp   int
 		pairProcessor *PairProcessor
 	)
-	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV5)
+	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
 		return err
 	}
