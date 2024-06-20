@@ -1525,7 +1525,7 @@ func RunFuturesGridTradingV3(
 					} else if order.Side == futures.SideTypeSell {
 						// Створюємо ордери на продаж
 						priceDown := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
-						buyOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, priceDown, 0, false)
+						buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, priceDown, 0, false)
 						if err != nil {
 							printError()
 							return
