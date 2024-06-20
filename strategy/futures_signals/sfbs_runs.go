@@ -135,6 +135,25 @@ func createOrder(
 	return
 }
 
+func streamStart(
+	client *futures.Client,
+	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan error, err error) {
+	// Отримуємо ключ для прослуховування подій користувача
+	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return
+	}
+	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+	resetEvent = make(chan error, 1)
+	// Ініціалізуємо обробник помилок
+	wsErrorHandler := func(err error) {
+		resetEvent <- err
+	}
+	// Запускаємо стрім подій користувача
+	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+	return
+}
+
 // Округлення ціни до StepSize знаків після коми
 func getStepSizeExp(symbol *futures.Symbol) int {
 	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
@@ -1239,6 +1258,7 @@ func getCallBack_v3(
 					config,
 					pair,
 					risk,
+					pair.GetCallbackRate(),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
 					event.OrderTradeUpdate.Side,
 					minNotional,
@@ -1263,6 +1283,7 @@ func createNextPair_v3(
 	config *config_types.ConfigFile,
 	pair *pairs_types.Pairs,
 	risk *futures.PositionRisk,
+	callBackRate float64,
 	lastFilledPrice float64,
 	lastExecutedSide futures.SideType,
 	minNotional float64,
@@ -1297,7 +1318,7 @@ func createNextPair_v3(
 		if positionVal >= -pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, minNotional %v",
 				pair.GetPair(), upQuantity, upPrice, upQuantity*upPrice, minNotional)
-			sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, upQuantity, upPrice, 0, false)
+			sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate, false)
 			if err != nil {
 				printError()
 				return
@@ -1311,6 +1332,7 @@ func createNextPair_v3(
 					config,
 					pair,
 					risk,
+					callBackRate,
 					upPrice,
 					futures.SideTypeSell,
 					minNotional,
@@ -1335,7 +1357,7 @@ func createNextPair_v3(
 		if positionVal <= pair.GetCurrentPositionBalance() {
 			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v",
 				pair.GetPair(), downQuantity, downPrice, downQuantity*upPrice, minNotional)
-			buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, downQuantity, downPrice, 0, false)
+			buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, downQuantity, downPrice, callBackRate, false)
 			if err != nil {
 				printError()
 				return
@@ -1349,6 +1371,7 @@ func createNextPair_v3(
 					config,
 					pair,
 					risk,
+					callBackRate,
 					upPrice,
 					futures.SideTypeSell,
 					minNotional,
@@ -1540,7 +1563,7 @@ func RunFuturesGridTradingV3(
 		}()
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
+	_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pair.GetCallbackRate(), pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1553,25 +1576,6 @@ func RunFuturesGridTradingV3(
 	}
 	pairProcessor.CancelAllOrders()
 	return nil
-}
-
-func streamStart(
-	client *futures.Client,
-	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan error, err error) {
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent = make(chan error, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- err
-	}
-	// Запускаємо стрім подій користувача
-	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	return
 }
 
 func getCallBack_v4(
