@@ -1530,7 +1530,7 @@ func RunFuturesGridTradingV3(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 0 { // Якщо немає відкритих ордерів то відкриваємо нові
 					logrus.Debugf("Futures %s: We have no open orders", pair.GetPair())
-					_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeLimit, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
+					_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, 0, pairProcessor)
 					if err != nil {
 						err = fmt.Errorf("futures %s: could not open position %v", pair.GetPair(), err)
 						printError()
@@ -1542,7 +1542,7 @@ func RunFuturesGridTradingV3(
 					if order.Side == futures.SideTypeBuy {
 						// Створюємо ордери на продаж
 						priceUp := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
-						sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeLimit, quantity, priceUp, 0, false)
+						sellOrder, err = createOrder(pairProcessor, futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, quantity, priceUp, 0, false)
 						if err != nil {
 							printError()
 							return
@@ -1551,7 +1551,7 @@ func RunFuturesGridTradingV3(
 					} else if order.Side == futures.SideTypeSell {
 						// Створюємо ордери на продаж
 						priceDown := round(utils.ConvStrToFloat64(order.Price)*(1+pair.GetSellDelta()), tickSizeExp)
-						buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeLimit, quantity, priceDown, 0, false)
+						buyOrder, err = createOrder(pairProcessor, futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, quantity, priceDown, 0, false)
 						if err != nil {
 							printError()
 							return
@@ -1563,7 +1563,7 @@ func RunFuturesGridTradingV3(
 		}()
 	}
 	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = openPosition(pair, futures.OrderTypeLimit, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pair.GetCallbackRate(), pairProcessor)
+	_, _, err = openPosition(pair, futures.OrderTypeTrailingStopMarket, futures.OrderTypeTrailingStopMarket, quantity, initPriceUp, initPriceDown, pair.GetCallbackRate(), pairProcessor)
 	if err != nil {
 		return err
 	}
