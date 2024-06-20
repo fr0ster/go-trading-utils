@@ -20,7 +20,7 @@ type (
 		LogLevel                      logrus.Level                 `json:"log_level"`
 		ReloadConfig                  bool                         `json:"reload_config"`
 		ObservePriceLiquidation       bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss           bool                         `json:"observe_position_loss"`
+		ObservePosition               bool                         `json:"observe_position"`
 		ClosePositionOnRestart        bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
 		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
@@ -65,12 +65,12 @@ func (cf *Configs) SetObservePriceLiquidation(observe bool) {
 	cf.ObservePriceLiquidation = observe
 }
 
-func (cf *Configs) GetObservePositionLoss() bool {
-	return cf.ObservePositionLoss
+func (cf *Configs) GetObservePosition() bool {
+	return cf.ObservePosition
 }
 
-func (cf *Configs) SetObservePositionLoss(observe bool) {
-	cf.ObservePositionLoss = observe
+func (cf *Configs) SetObservePosition(observe bool) {
+	cf.ObservePosition = observe
 }
 
 func (cf *Configs) GetClosePositionOnRestart() bool {
@@ -225,7 +225,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		LogLevel                  string                       `json:"log_level"`
 		ReloadConfig              bool                         `json:"reload_config"`
 		ObservePriceLiquidation   bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss       bool                         `json:"observe_position_loss"`
+		ObservePosition           bool                         `json:"observe_position"`
 		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
@@ -243,7 +243,7 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		LogLevel:                  c.LogLevel.String(),
 		ReloadConfig:              c.ReloadConfig,
 		ObservePriceLiquidation:   c.ObservePriceLiquidation,
-		ObservePositionLoss:       c.ObservePositionLoss,
+		ObservePosition:           c.ObservePosition,
 		RestartClosedPosition:     c.ClosePositionOnRestart,
 		BalancingOfMargin:         c.BalancingOfMargin,
 		PercentsToLiquidation:     c.PercentsToStopSettingNewOrder,
@@ -265,7 +265,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		LogLevel                             string                       `json:"log_level"`
 		ReloadConfig                         bool                         `json:"reload_config"`
 		ObservePriceLiquidation              bool                         `json:"observe_price_liquidation"`
-		ObservePositionLoss                  bool                         `json:"observe_position_loss"`
+		ObservePosition                      bool                         `json:"observe_position"`
 		RestartClosedPosition                bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin                    bool                         `json:"balancing_of_margin"`
 		PercentsToLiquidation                float64                      `json:"percents_to_stop_setting_new_order"`
@@ -298,7 +298,7 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 	}
 	c.ReloadConfig = temp.ReloadConfig
 	c.ObservePriceLiquidation = temp.ObservePriceLiquidation
-	c.ObservePositionLoss = temp.ObservePositionLoss
+	c.ObservePosition = temp.ObservePosition
 	c.ClosePositionOnRestart = temp.RestartClosedPosition
 	c.BalancingOfMargin = temp.BalancingOfMargin
 	c.PercentsToStopSettingNewOrder = temp.PercentsToLiquidation
@@ -325,7 +325,7 @@ func NewConfig(connection *connection_types.Connection) *Configs {
 		LogLevel:                      logrus.InfoLevel,
 		ReloadConfig:                  false,
 		ObservePriceLiquidation:       false,
-		ObservePositionLoss:           false,
+		ObservePosition:               false,
 		ClosePositionOnRestart:        false,
 		PercentsToStopSettingNewOrder: 0.05, // 5%
 		PercentToDecreasePosition:     0.03, // 3%

@@ -28,8 +28,8 @@ type (
 
 		GetObservePriceLiquidation() bool
 		SetObservePriceLiquidation(bool)
-		GetObservePositionLoss() bool
-		SetObservePositionLoss(bool)
+		GetObservePosition() bool
+		SetObservePosition(bool)
 		GetClosePositionOnRestart() bool
 		SetClosePositionOnRestart(bool)
 
