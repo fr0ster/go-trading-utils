@@ -85,6 +85,7 @@ func RunFuturesTrading(
 	debug bool,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
+	futures.WebsocketKeepalive = true
 	if pair.GetAccountType() != pairs_types.USDTFutureType {
 		return fmt.Errorf("pair %v has wrong account type %v", pair.GetPair(), pair.GetAccountType())
 	}
@@ -838,12 +839,13 @@ func RunFuturesGridTrading(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
-	defer wg.Done()
 	var (
 		quantity    float64
 		minNotional float64
 		grid        *grid_types.Grid
 	)
+	defer wg.Done()
+	futures.WebsocketKeepalive = true
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyType)
 	if err != nil {
 		return err
@@ -1006,11 +1008,12 @@ func RunFuturesGridTradingV2(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
-	defer wg.Done()
 	var (
 		quantity float64
 		grid     *grid_types.Grid
 	)
+	defer wg.Done()
+	futures.WebsocketKeepalive = true
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV2)
 	if err != nil {
 		return err
@@ -1436,7 +1439,6 @@ func RunFuturesGridTradingV3(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
-	defer wg.Done()
 	var (
 		initPriceUp   float64
 		initPriceDown float64
@@ -1446,6 +1448,8 @@ func RunFuturesGridTradingV3(
 		stepSizeExp   int
 		pairProcessor *PairProcessor
 	)
+	defer wg.Done()
+	futures.WebsocketKeepalive = true
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV3)
 	if err != nil {
 		return err
@@ -1803,7 +1807,6 @@ func RunFuturesGridTradingV4(
 	pair *pairs_types.Pairs,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
-	defer wg.Done()
 	var (
 		initPriceUp   float64
 		initPriceDown float64
@@ -1813,6 +1816,8 @@ func RunFuturesGridTradingV4(
 		stepSizeExp   int
 		pairProcessor *PairProcessor
 	)
+	defer wg.Done()
+	futures.WebsocketKeepalive = true
 	err = checkRun(pair, pairs_types.USDTFutureType, pairs_types.GridStrategyTypeV4)
 	if err != nil {
 		return err
