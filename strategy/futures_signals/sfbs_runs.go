@@ -1314,6 +1314,7 @@ func createNextPair_v3(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
@@ -1356,6 +1357,7 @@ func createNextPair_v3(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Buy order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
@@ -1740,6 +1742,7 @@ func createNextPair_v4(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
@@ -1748,6 +1751,7 @@ func createNextPair_v4(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
@@ -1788,6 +1792,7 @@ func createNextPair_v4(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Buy order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
@@ -1796,6 +1801,7 @@ func createNextPair_v4(
 			if err != nil {
 				logrus.Errorf("Futures %s: Could not create Buy order: side %v, type %v, quantity %v, price %v, callbackRate %v",
 					pair.GetPair(), futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
+				logrus.Errorf("Futures %s: %v", pair.GetPair(), err)
 				printError()
 				return
 			}
