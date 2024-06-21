@@ -1306,8 +1306,8 @@ func createNextPair_v3(
 				printError()
 				return
 			}
-			logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v status %v",
-				pair.GetPair(), upPrice, upQuantity, sellOrder.Status)
+			logrus.Debugf("Futures %s: Create Sell order type %v on price %v quantity %v status %v",
+				pair.GetPair(), sellOrder.Type, upPrice, upQuantity, sellOrder.Status)
 			if sellOrder.Status == futures.OrderStatusTypeFilled {
 				pairProcessor.CancelAllOrders()
 				risk, _ = pairProcessor.GetPositionRisk()
@@ -1345,8 +1345,8 @@ func createNextPair_v3(
 				printError()
 				return
 			}
-			logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v status %v",
-				pair.GetPair(), downPrice, downQuantity, buyOrder.Status)
+			logrus.Debugf("Futures %s: Create Buy order type %v on price %v quantity %v status %v",
+				pair.GetPair(), buyOrder.Type, downPrice, downQuantity, buyOrder.Status)
 			if buyOrder.Status == futures.OrderStatusTypeFilled {
 				pairProcessor.CancelAllOrders()
 				risk, _ = pairProcessor.GetPositionRisk()
@@ -1712,8 +1712,8 @@ func createNextPair_v4(
 				return
 			}
 		}
-		logrus.Debugf("Futures %s: Create Sell order on price %v quantity %v status %v",
-			pair.GetPair(), upPrice, upQuantity, sellOrder.Status)
+		logrus.Debugf("Futures %s: Create Sell order type %v on price %v quantity %v status %v",
+			pair.GetPair(), sellOrder.Type, upPrice, upQuantity, sellOrder.Status)
 		if sellOrder.Status == futures.OrderStatusTypeFilled {
 			pairProcessor.CancelAllOrders()
 			risk, _ = pairProcessor.GetPositionRisk()
@@ -1759,8 +1759,8 @@ func createNextPair_v4(
 				return
 			}
 		}
-		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v status %v",
-			pair.GetPair(), downPrice, downQuantity, buyOrder.Status)
+		logrus.Debugf("Futures %s: Create Buy order type %v on price %v quantity %v status %v",
+			pair.GetPair(), buyOrder.Type, downPrice, downQuantity, buyOrder.Status)
 		if buyOrder.Status == futures.OrderStatusTypeFilled {
 			pairProcessor.CancelAllOrders()
 			risk, _ = pairProcessor.GetPositionRisk()
