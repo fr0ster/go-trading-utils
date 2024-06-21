@@ -1,7 +1,6 @@
 package futures_signals
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"runtime"
@@ -132,25 +131,6 @@ func createOrder(
 		price,                      // price
 		price,                      // stopPrice
 		callbackRate)               // callbackRate
-	return
-}
-
-func streamStart(
-	client *futures.Client,
-	wsHandler func(*futures.WsUserDataEvent)) (resetEvent chan error, err error) {
-	// Отримуємо ключ для прослуховування подій користувача
-	listenKey, err := client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
-	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent = make(chan error, 1)
-	// Ініціалізуємо обробник помилок
-	wsErrorHandler := func(err error) {
-		resetEvent <- err
-	}
-	// Запускаємо стрім подій користувача
-	_, _, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 	return
 }
 
@@ -893,8 +873,7 @@ func RunFuturesGridTrading(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	_, err = streamStart(
-		client,
+	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v1(
 			config,
 			symbol,
@@ -1059,8 +1038,7 @@ func RunFuturesGridTradingV2(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	maintainedOrders := btree.New(2)
-	_, err = streamStart(
-		client,
+	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v2(
 			config,
 			symbol,
@@ -1497,17 +1475,18 @@ func RunFuturesGridTradingV3(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	_, err = streamStart(client, getCallBack_v3(
-		config,
-		client,
-		pair,
-		pairProcessor,
-		quantity,
-		tickSizeExp,
-		stepSizeExp,
-		minNotional,
-		quit,
-		maintainedOrders))
+	_, err = pairProcessor.UserDataEventStart(
+		getCallBack_v3(
+			config,
+			client,
+			pair,
+			pairProcessor,
+			quantity,
+			tickSizeExp,
+			stepSizeExp,
+			minNotional,
+			quit,
+			maintainedOrders))
 	if err != nil {
 		printError()
 		return err
@@ -1864,7 +1843,18 @@ func RunFuturesGridTradingV4(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
-	_, err = streamStart(client, getCallBack_v4(config, client, pair, pairProcessor, quantity, tickSizeExp, stepSizeExp, minNotional, quit, maintainedOrders))
+	_, err = pairProcessor.UserDataEventStart(
+		getCallBack_v4(
+			config,
+			client,
+			pair,
+			pairProcessor,
+			quantity,
+			tickSizeExp,
+			stepSizeExp,
+			minNotional,
+			quit,
+			maintainedOrders))
 	if err != nil {
 		printError()
 		return err

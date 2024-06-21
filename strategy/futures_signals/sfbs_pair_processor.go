@@ -458,7 +458,8 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) UserDataEventStart(eventOut chan *futures.WsUserDataEvent, callBack func(event *futures.WsUserDataEvent), eventType ...futures.UserDataEventType) {
+func (pp *PairProcessor) UserDataEventStart(
+	callBack func(event *futures.WsUserDataEvent), eventType ...futures.UserDataEventType) (resetEvent chan error, err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -469,10 +470,10 @@ func (pp *PairProcessor) UserDataEventStart(eventOut chan *futures.WsUserDataEve
 		return
 	}
 	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
-	resetEvent := make(chan bool, 1)
+	resetEvent = make(chan error, 1)
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
-		resetEvent <- true
+		resetEvent <- err
 	}
 	// Ініціалізуємо обробник подій
 	eventMap := make(map[futures.UserDataEventType]bool)
@@ -528,6 +529,7 @@ func (pp *PairProcessor) UserDataEventStart(eventOut chan *futures.WsUserDataEve
 			}
 		}
 	}()
+	return
 }
 
 func NewPairProcessor(
