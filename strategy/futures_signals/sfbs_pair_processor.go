@@ -539,6 +539,79 @@ func (pp *PairProcessor) UserDataEventStart(
 	return
 }
 
+func (pp *PairProcessor) recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision float64, n int) (
+	position, quantity float64, err error) {
+	totalValueMid, totalQuantity, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
+	if low >= high {
+		return high, totalQuantity, nil
+	}
+	if totalValueMid-budget > precision {
+		position = pp.roundQuantity(low - 0.001)
+		quantity = totalQuantity
+		return
+	} else {
+		return pp.recTotalValue(low+0.001, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision, n)
+	}
+}
+
+func (pp *PairProcessor) roundPrice(price float64) float64 {
+	return utils.RoundToDecimalPlace(price, 1)
+}
+
+func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
+	return utils.RoundToDecimalPlace(quantity, 3)
+}
+func (pp *PairProcessor) steps(begin, end, delta float64) int {
+	var test func(float64, float64) bool
+	n := 1
+	if begin < end {
+		test = func(s, e float64) bool { return s < e }
+	} else {
+		test = func(s, e float64) bool { return s > e }
+	}
+	for sum := begin; test(sum, end); sum = sum * (math.Pow(1+delta, float64(2))) {
+		n++
+	}
+	return n - 1
+}
+
+func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n int) (value, quantity, lastPrice, lastQuantity float64) {
+	lastPrice = P1 * math.Pow((1+deltaPrice), float64(1))
+	lastQuantity = Q1
+	value += lastPrice * lastQuantity
+	quantity += lastQuantity
+	for i := 1; i < n; i++ {
+		lastPrice = pp.roundPrice(lastPrice * math.Pow((1+deltaPrice), float64(2)))
+		lastQuantity = pp.roundQuantity(lastQuantity * math.Pow((1+deltaQuantity), float64(2)))
+		value += lastPrice * lastQuantity
+		quantity += lastQuantity
+	}
+	return
+}
+
+func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent float64) (
+	quantityUp, quantityDown float64, err error) {
+	calculateInitialPosition := func(buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
+		value float64,
+		err error) {
+		budget := pp.pair.GetCurrentPositionBalance()
+		symbol, _ := pp.GetSymbol().GetFuturesSymbol()
+		minValue := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+		n := pp.steps(buyPrice, endPrice, priceDeltaPercent)
+		low := pp.roundQuantity(minValue / buyPrice)
+		high := pp.roundQuantity(budget / buyPrice)
+		initValue, _, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
+		if initValue > budget*float64(pp.GetLeverage()) {
+			return 0, fmt.Errorf("can't calculate initial position, we need more money: %v", initValue/float64(pp.GetLeverage()))
+		}
+		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, minValue, n)
+		return
+	}
+	quantityUp, _ = calculateInitialPosition(buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), quantityDeltaPercent)
+	quantityDown, _ = calculateInitialPosition(buyPrice, pp.pair.GetLowBound(), pp.pair.GetBuyDelta(), quantityDeltaPercent)
+	return
+}
+
 func NewPairProcessor(
 	config *config_types.ConfigFile,
 	client *futures.Client,

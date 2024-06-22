@@ -30,10 +30,12 @@ func getTestData() *btree.BTree {
 		UnRealizedProfitLowBound: 0.1,
 		UnRealizedProfitUpBound:  0.9,
 		BuyDelta:                 0.01,
+		BuyDeltaQuantity:         0.1,
 		BuyQuantity:              0.3,
 		BuyValue:                 200.0,
 		BuyCommission:            0.001,
 		SellDelta:                0.05,
+		SellDeltaQuantity:        0.1,
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
@@ -62,10 +64,12 @@ func getTestData() *btree.BTree {
 		UnRealizedProfitLowBound: 0.1,
 		UnRealizedProfitUpBound:  0.9,
 		BuyDelta:                 0.01,
+		BuyDeltaQuantity:         0.1,
 		BuyQuantity:              0.3,
 		BuyValue:                 200.0,
 		BuyCommission:            0.001,
 		SellDelta:                0.05,
+		SellDeltaQuantity:        0.1,
 		SellQuantity:             0.2,
 		SellValue:                200.0,
 		SellCommission:           0.001,
@@ -142,6 +146,12 @@ func assertPair(
 
 	// Test GetSellDelta
 	assert.Equal(t, 0.05, pair.GetSellDelta())
+
+	// Test GetBuyDeltaQuantity
+	assert.Equal(t, 0.1, pair.GetBuyDeltaQuantity())
+
+	// Test GetSellDeltaQuantity
+	assert.Equal(t, 0.1, pair.GetSellDeltaQuantity())
 
 	// Test GetBuyQuantity
 	assert.Equal(t, 0.3, pair.GetBuyQuantity())

@@ -71,6 +71,11 @@ type (
 		SetBuyData(float64, float64, float64)
 		SetSellData(float64, float64, float64)
 
+		GetBuyDeltaQuantity() float64
+		GetSellDeltaQuantity() float64
+		SetBuyDeltaQuantity(float64)
+		SetSellDeltaQuantity(float64)
+
 		GetCallbackRate() float64
 		SetCallbackRate(float64)
 

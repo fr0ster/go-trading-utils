@@ -90,14 +90,16 @@ const (
 	UpBound_1  = 80000.0 // Верхня межа
 	LowBound_1 = 40000.0 // Нижня межа
 
-	BuyDelta_1       = 0.01  // Дельта для купівлі
-	SellDelta_1      = 0.01  // Дельта для продажу
-	BuyQuantity_1    = 1.0   // Кількість для купівлі, суммарно по позиції
-	BuyCommission_1  = 0.001 // Комісія за купівлю
-	SellQuantity_1   = 1.0   // Кількість для продажу, суммарно по позиції
-	BuyValue_1       = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_1      = 100.0 // Вартість для продажу, суммарно по позиції
-	SellCommission_1 = 0.001 // Комісія за продаж
+	BuyDelta_1          = 0.01  // Дельта для купівлі
+	BuyDeltaQuantity_1  = 0.1   // Дельта для кількості
+	SellDelta_1         = 0.01  // Дельта для продажу
+	SellDeltaQuantity_1 = -0.1  // Дельта для кількості
+	BuyQuantity_1       = 1.0   // Кількість для купівлі, суммарно по позиції
+	BuyCommission_1     = 0.001 // Комісія за купівлю
+	SellQuantity_1      = 1.0   // Кількість для продажу, суммарно по позиції
+	BuyValue_1          = 100.0 // Вартість для купівлі, суммарно по позиції
+	SellValue_1         = 100.0 // Вартість для продажу, суммарно по позиції
+	SellCommission_1    = 0.001 // Комісія за продаж
 
 	CallbackRate_1 = 0.1 // CallbackRate 0.1%
 
@@ -138,14 +140,16 @@ const (
 	UpBound_2  = 14.0 // Верхня межа
 	LowBound_2 = 4.0  // Нижня межа
 
-	BuyDelta_2       = 0.01   // Дельта для купівлі
-	SellDelta_2      = 0.01   // Дельта для продажу
-	BuyQuantity_2    = 1.0    // Кількість для купівлі, суммарно по позиції
-	BuyCommission_2  = 0.0002 // Комісія за купівлю
-	SellQuantity_2   = 1.0    // Кількість для продажу, суммарно по позиції
-	BuyValue_2       = 100.0  // Вартість для купівлі, суммарно по позиції
-	SellValue_2      = 100.0  // Вартість для продажу, суммарно по позиції
-	SellCommission_2 = 0.0002 // Комісія за продаж
+	BuyDelta_2          = 0.01   // Дельта для купівлі
+	BuyDeltaQuantity_2  = 0.1    // Дельта для кількості
+	SellDelta_2         = 0.01   // Дельта для продажу
+	SellDeltaQuantity_2 = -0.1   // Дельта для кількості
+	BuyQuantity_2       = 1.0    // Кількість для купівлі, суммарно по позиції
+	BuyCommission_2     = 0.0002 // Комісія за купівлю
+	SellQuantity_2      = 1.0    // Кількість для продажу, суммарно по позиції
+	BuyValue_2          = 100.0  // Вартість для купівлі, суммарно по позиції
+	SellValue_2         = 100.0  // Вартість для продажу, суммарно по позиції
+	SellCommission_2    = 0.0002 // Комісія за продаж
 
 	CallbackRate_2 = 0.5 // CallbackRate 0.5%
 )
@@ -216,10 +220,12 @@ var (
 		UpBound:                  UpBound_1,
 		LowBound:                 LowBound_1,
 		BuyDelta:                 BuyDelta_1,
+		BuyDeltaQuantity:         BuyDeltaQuantity_1,
 		BuyQuantity:              BuyQuantity_1,
 		BuyValue:                 BuyValue_1,
 		BuyCommission:            BuyCommission_1,
 		SellDelta:                SellDelta_1,
+		SellDeltaQuantity:        SellDeltaQuantity_1,
 		SellQuantity:             SellQuantity_1,
 		SellValue:                SellValue_1,
 		SellCommission:           SellCommission_1,
@@ -247,10 +253,12 @@ var (
 		UpBound:                  UpBound_2,
 		LowBound:                 LowBound_2,
 		BuyDelta:                 BuyDelta_2,
+		BuyDeltaQuantity:         BuyDeltaQuantity_2,
 		BuyQuantity:              BuyQuantity_2,
 		BuyValue:                 BuyValue_2,
 		BuyCommission:            BuyCommission_2,
 		SellDelta:                SellDelta_2,
+		SellDeltaQuantity:        SellDeltaQuantity_2,
 		SellQuantity:             SellQuantity_2,
 		SellValue:                SellValue_2,
 		SellCommission:           SellCommission_2,
@@ -308,10 +316,12 @@ func getTestData() []byte {
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_1, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_1, 'f', -1, 64)).String() + `,
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_1, 'f', -1, 64)).String() + `,
+					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(BuyDeltaQuantity_1, 'f', -1, 64)).String() + `,
 					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
 					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
 					"buy_commission": ` + json.Number(strconv.FormatFloat(BuyCommission_1, 'f', -1, 64)).String() + `,
 					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
+					"sell_delta_quantity": ` + json.Number(strconv.FormatFloat(SellDeltaQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_1, 'f', -1, 64)).String() + `,
@@ -342,10 +352,12 @@ func getTestData() []byte {
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_2, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_2, 'f', -1, 64)).String() + `,
 					"buy_delta": ` + json.Number(strconv.FormatFloat(BuyDelta_2, 'f', -1, 64)).String() + `,
+					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(BuyDeltaQuantity_2, 'f', -1, 64)).String() + `,
 					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
 					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
 					"buy_commission": ` + json.Number(strconv.FormatFloat(BuyCommission_2, 'f', -1, 64)).String() + `,
 					"sell_delta": ` + json.Number(strconv.FormatFloat(SellDelta_1, 'f', -1, 64)).String() + `,
+					"sell_delta_quantity": ` + json.Number(strconv.FormatFloat(SellDeltaQuantity_1, 'f', -1, 64)).String() + `,
 					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
 					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
 					"sell_commission": ` + json.Number(strconv.FormatFloat(SellCommission_2, 'f', -1, 64)).String() + `,
@@ -413,11 +425,13 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
 
 	assert.Equal(t, (checkingDate)[0].GetBuyDelta(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyDelta())
+	assert.Equal(t, (checkingDate)[0].GetBuyDeltaQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyDeltaQuantity())
 	assert.Equal(t, (checkingDate)[0].GetBuyQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyQuantity())
 	assert.Equal(t, (checkingDate)[0].GetBuyValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyValue())
 	assert.Equal(t, (checkingDate)[0].GetBuyCommission(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyCommission())
 
 	assert.Equal(t, (checkingDate)[0].GetSellDelta(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellDelta())
+	assert.Equal(t, (checkingDate)[0].GetSellDeltaQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellDeltaQuantity())
 	assert.Equal(t, (checkingDate)[0].GetSellQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellQuantity())
 	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
 
@@ -454,11 +468,13 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())
 
 	assert.Equal(t, (checkingDate)[1].GetBuyDelta(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyDelta())
+	assert.Equal(t, (checkingDate)[1].GetBuyDeltaQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyDeltaQuantity())
 	assert.Equal(t, (checkingDate)[1].GetBuyQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyQuantity())
 	assert.Equal(t, (checkingDate)[1].GetBuyValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyValue())
 	assert.Equal(t, (checkingDate)[1].GetBuyCommission(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyCommission())
 
 	assert.Equal(t, (checkingDate)[1].GetSellDelta(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellDelta())
+	assert.Equal(t, (checkingDate)[1].GetSellDeltaQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellDeltaQuantity())
 	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellQuantity())
 	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
 

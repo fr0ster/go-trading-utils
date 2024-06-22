@@ -100,14 +100,16 @@ type (
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
 
-		BuyDelta       float64 `json:"buy_delta"`       // Дельта для купівлі
-		BuyQuantity    float64 `json:"buy_quantity"`    // Кількість для купівлі, суммарно по позиції
-		BuyValue       float64 `json:"buy_value"`       // Вартість для купівлі, суммарно по позиції
-		BuyCommission  float64 `json:"buy_commission"`  // Комісія за купівлю
-		SellDelta      float64 `json:"sell_delta"`      // Дельта для продажу, суммарно по позиції
-		SellQuantity   float64 `json:"sell_quantity"`   // Кількість для продажу, суммарно по позиції
-		SellValue      float64 `json:"sell_value"`      // Вартість для продажу, суммарно по позиції
-		SellCommission float64 `json:"sell_commission"` // Комісія за продаж
+		BuyDelta          float64 `json:"buy_delta"`           // Дельта для купівлі
+		BuyDeltaQuantity  float64 `json:"buy_delta_quantity"`  // Кількість для купівлі
+		BuyQuantity       float64 `json:"buy_quantity"`        // Кількість для купівлі, суммарно по позиції
+		BuyValue          float64 `json:"buy_value"`           // Вартість для купівлі, суммарно по позиції
+		BuyCommission     float64 `json:"buy_commission"`      // Комісія за купівлю
+		SellDelta         float64 `json:"sell_delta"`          // Дельта для продажу, суммарно по позиції
+		SellDeltaQuantity float64 `json:"sell_delta_quantity"` // Кількість для продажу
+		SellQuantity      float64 `json:"sell_quantity"`       // Кількість для продажу, суммарно по позиції
+		SellValue         float64 `json:"sell_value"`          // Вартість для продажу, суммарно по позиції
+		SellCommission    float64 `json:"sell_commission"`     // Комісія за продаж
 
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 
@@ -269,6 +271,14 @@ func (pr *Pairs) GetSellDelta() float64 {
 	return pr.SellDelta
 }
 
+func (pr *Pairs) GetBuyDeltaQuantity() float64 {
+	return pr.BuyDeltaQuantity
+}
+
+func (pr *Pairs) GetSellDeltaQuantity() float64 {
+	return pr.SellDeltaQuantity
+}
+
 func (pr *Pairs) GetBuyQuantity() float64 {
 	return pr.BuyQuantity
 }
@@ -315,6 +325,14 @@ func (pr *Pairs) SetBuyDelta(val float64) {
 
 func (pr *Pairs) SetSellDelta(val float64) {
 	pr.SellDelta = val
+}
+
+func (pr *Pairs) SetBuyDeltaQuantity(quantity float64) {
+	pr.BuyDeltaQuantity = quantity
+}
+
+func (pr *Pairs) SetSellDeltaQuantity(quantity float64) {
+	pr.SellDeltaQuantity = quantity
 }
 
 func (pr *Pairs) SetBuyQuantity(quantity float64) {
@@ -435,10 +453,12 @@ func New(
 		UnRealizedProfitLowBound: 0.1,  // 10%
 		UnRealizedProfitUpBound:  1,    // 100%
 		BuyDelta:                 0.01, // 1%
+		BuyDeltaQuantity:         0.1,  // 10%
 		BuyQuantity:              0.0,
 		BuyValue:                 0.0,
 		BuyCommission:            0.0,
 		SellDelta:                0.05, // 5%
+		SellDeltaQuantity:        0.1,  // 10%
 		SellQuantity:             0.0,
 		SellValue:                0.0,
 		SellCommission:           0.0,
