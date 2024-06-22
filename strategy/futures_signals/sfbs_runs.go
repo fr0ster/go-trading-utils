@@ -872,6 +872,14 @@ func RunFuturesGridTrading(
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		err = pairProcessor.CheckPosition(initPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			close(quit)
+			return
+		}
+	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
@@ -1039,6 +1047,14 @@ func RunFuturesGridTradingV2(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		err = pairProcessor.CheckPosition(initPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			close(quit)
+			return
+		}
 	}
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
@@ -1457,6 +1473,7 @@ func RunFuturesGridTradingV3(
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
+		initPrice     float64
 		initPriceUp   float64
 		initPriceDown float64
 		quantity      float64
@@ -1480,7 +1497,7 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
+	_, initPrice, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
 		config.GetConfigurations().GetDynamicDelta(),
 		client,
 		pair,
@@ -1492,6 +1509,14 @@ func RunFuturesGridTradingV3(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		err = pairProcessor.CheckPosition(initPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			close(quit)
+			return
+		}
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
@@ -1856,6 +1881,7 @@ func RunFuturesGridTradingV4(
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
+		initPrice     float64
 		initPriceUp   float64
 		initPriceDown float64
 		quantity      float64
@@ -1880,7 +1906,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 
-	_, _, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
+	_, initPrice, initPriceUp, initPriceDown, quantity, minNotional, tickSizeExp, _, err = initVars(
 		config.GetConfigurations().GetDynamicDelta(),
 		client,
 		pair,
@@ -1892,6 +1918,14 @@ func RunFuturesGridTradingV4(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
+	}
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		err = pairProcessor.CheckPosition(initPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			close(quit)
+			return
+		}
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
