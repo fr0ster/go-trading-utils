@@ -840,9 +840,11 @@ func RunFuturesGridTrading(
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
-		quantity    float64
-		minNotional float64
-		grid        *grid_types.Grid
+		quantity     float64
+		quantityUp   float64
+		quantityDown float64
+		minNotional  float64
+		grid         *grid_types.Grid
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -873,12 +875,13 @@ func RunFuturesGridTrading(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
 			return
 		}
+		quantity = math.Min(quantityUp, quantityDown)
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
@@ -1017,8 +1020,10 @@ func RunFuturesGridTradingV2(
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
-		quantity float64
-		grid     *grid_types.Grid
+		quantity     float64
+		quantityUp   float64
+		quantityDown float64
+		grid         *grid_types.Grid
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -1049,12 +1054,13 @@ func RunFuturesGridTradingV2(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
 			return
 		}
+		quantity = math.Min(quantityUp, quantityDown)
 	}
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
@@ -1477,6 +1483,8 @@ func RunFuturesGridTradingV3(
 		initPriceUp   float64
 		initPriceDown float64
 		quantity      float64
+		quantityUp    float64
+		quantityDown  float64
 		minNotional   float64
 		tickSizeExp   int
 		stepSizeExp   int
@@ -1511,12 +1519,13 @@ func RunFuturesGridTradingV3(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
 			return
 		}
+		quantity = math.Min(quantityUp, quantityDown)
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
@@ -1885,6 +1894,8 @@ func RunFuturesGridTradingV4(
 		initPriceUp   float64
 		initPriceDown float64
 		quantity      float64
+		quantityUp    float64
+		quantityDown  float64
 		minNotional   float64
 		tickSizeExp   int
 		stepSizeExp   int
@@ -1920,12 +1931,13 @@ func RunFuturesGridTradingV4(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
 			return
 		}
+		quantity = math.Min(quantityUp, quantityDown)
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())

@@ -549,11 +549,11 @@ func (pp *PairProcessor) recTotalValue(low, high, budget, buyPrice, endPrice, pr
 		return high, totalQuantity, nil
 	}
 	if totalValueMid-budget > precision {
-		position = pp.roundQuantity(low - 0.001)
+		position = pp.roundQuantity(low - pp.stepSizeDelta)
 		quantity = totalQuantity
 		return
 	} else {
-		return pp.recTotalValue(low+0.001, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision, n)
+		return pp.recTotalValue(low+pp.stepSizeDelta, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision, n)
 	}
 }
 
@@ -627,18 +627,19 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	return
 }
 
-func (pp *PairProcessor) CheckPosition(price float64) error {
-	quantityUp, quantityDown, err := pp.CalculateInitialPosition(price)
+func (pp *PairProcessor) CheckPosition(price float64) (
+	quantityUp, quantityDown float64, err error) {
+	quantityUp, quantityDown, err = pp.CalculateInitialPosition(price)
 	if err != nil {
-		return err
+		return
 	}
 	if quantityUp*price < pp.notional {
-		return fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
+		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
 	}
 	if quantityDown*price < pp.notional {
-		return fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
+		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
 	}
-	return nil
+	return
 
 }
 
