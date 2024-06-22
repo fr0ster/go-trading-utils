@@ -27,6 +27,7 @@ type (
 		client       *futures.Client
 		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
+		symbol       *futures.Symbol
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -592,8 +593,7 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent float64) (
 	quantityUp, quantityDown float64, err error) {
 	budget := pp.pair.GetCurrentPositionBalance()
-	symbol, _ := pp.GetSymbol().GetFuturesSymbol()
-	minValue := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+	minValue := utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	low := pp.roundQuantity(minValue / buyPrice)
 	high := pp.roundQuantity(budget / buyPrice)
 	calculateInitialPosition := func(budget, minValue, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
@@ -650,6 +650,12 @@ func NewPairProcessor(
 		pp.minuteRawRequestLimit,
 		err =
 		LimitRead(pp.degree, []string{pp.pair.GetPair()}, client)
+	if err != nil {
+		return
+	}
+
+	// Буферизуємо інформацію про символ
+	pp.symbol, err = pp.GetSymbol().GetFuturesSymbol()
 	if err != nil {
 		return
 	}
