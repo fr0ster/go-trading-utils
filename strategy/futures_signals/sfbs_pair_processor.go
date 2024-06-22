@@ -615,7 +615,7 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 		buyPrice,
 		pp.pair.GetUpBound(),
 		pp.pair.GetSellDelta(),
-		-pp.pair.GetSellDeltaQuantity())
+		pp.pair.GetSellDeltaQuantity())
 	quantityDown, _ = calculateInitialPosition(
 		budget,
 		low,
