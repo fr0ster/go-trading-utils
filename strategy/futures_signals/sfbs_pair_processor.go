@@ -631,8 +631,11 @@ func (pp *PairProcessor) CheckPosition(price float64) error {
 	if err != nil {
 		return err
 	}
-	if quantityUp*price < pp.notional || quantityDown*price < pp.notional {
-		return fmt.Errorf("we need more money for position: %v", pp.notional)
+	if quantityUp*price < pp.notional {
+		return fmt.Errorf("we need more money for position: %v but can buy only for %v", pp.notional, quantityUp*price)
+	}
+	if quantityDown*price < pp.notional {
+		return fmt.Errorf("we need more money for position: %v but can buy only for %v", pp.notional, quantityDown*price)
 	}
 	return nil
 
