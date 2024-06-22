@@ -691,7 +691,7 @@ func NewPairProcessor(
 		return
 	}
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
-	pp.stepSizeDelta = math.Pow(10, -utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize))
+	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
