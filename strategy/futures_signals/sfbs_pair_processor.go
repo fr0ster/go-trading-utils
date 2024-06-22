@@ -590,7 +590,7 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 	return
 }
 
-func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent float64) (
+func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	quantityUp, quantityDown float64, err error) {
 	budget := pp.pair.GetCurrentPositionBalance()
 	minValue := utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
@@ -607,8 +607,24 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent
 		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, minValue, n)
 		return
 	}
-	quantityUp, _ = calculateInitialPosition(budget, minValue, low, high, buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), -quantityDeltaPercent)
-	quantityDown, _ = calculateInitialPosition(budget, minValue, low, high, buyPrice, pp.pair.GetLowBound(), -pp.pair.GetBuyDelta(), quantityDeltaPercent)
+	quantityUp, _ = calculateInitialPosition(
+		budget,
+		minValue,
+		low,
+		high,
+		buyPrice,
+		pp.pair.GetUpBound(),
+		pp.pair.GetSellDelta(),
+		-pp.pair.GetSellDeltaQuantity())
+	quantityDown, _ = calculateInitialPosition(
+		budget,
+		minValue,
+		low,
+		high,
+		buyPrice,
+		pp.pair.GetLowBound(),
+		-pp.pair.GetBuyDelta(),
+		pp.pair.GetBuyDeltaQuantity())
 	return
 }
 
