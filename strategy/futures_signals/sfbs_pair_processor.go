@@ -591,15 +591,15 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 
 func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent float64) (
 	quantityUp, quantityDown float64, err error) {
-	calculateInitialPosition := func(buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
+	budget := pp.pair.GetCurrentPositionBalance()
+	symbol, _ := pp.GetSymbol().GetFuturesSymbol()
+	minValue := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+	low := pp.roundQuantity(minValue / buyPrice)
+	high := pp.roundQuantity(budget / buyPrice)
+	calculateInitialPosition := func(budget, minValue, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
 		value float64,
 		err error) {
-		budget := pp.pair.GetCurrentPositionBalance()
-		symbol, _ := pp.GetSymbol().GetFuturesSymbol()
-		minValue := utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
 		n := pp.steps(buyPrice, endPrice, priceDeltaPercent)
-		low := pp.roundQuantity(minValue / buyPrice)
-		high := pp.roundQuantity(budget / buyPrice)
 		initValue, _, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
 		if initValue > budget*float64(pp.GetLeverage()) {
 			return 0, fmt.Errorf("can't calculate initial position, we need more money: %v", initValue/float64(pp.GetLeverage()))
@@ -607,8 +607,8 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent
 		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, minValue, n)
 		return
 	}
-	quantityUp, _ = calculateInitialPosition(buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), -quantityDeltaPercent)
-	quantityDown, _ = calculateInitialPosition(buyPrice, pp.pair.GetLowBound(), -pp.pair.GetBuyDelta(), quantityDeltaPercent)
+	quantityUp, _ = calculateInitialPosition(budget, minValue, low, high, buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), -quantityDeltaPercent)
+	quantityDown, _ = calculateInitialPosition(budget, minValue, low, high, buyPrice, pp.pair.GetLowBound(), -pp.pair.GetBuyDelta(), quantityDeltaPercent)
 	return
 }
 
