@@ -1325,7 +1325,15 @@ func createNextPair_v3(
 		lastExecutedSide,
 		risk, currentPrice, tickSizeExp)
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantityPair(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp, false)
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		upQuantity, downQuantity, err = pairProcessor.CheckPosition(currentPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			return
+		}
+	} else {
+		upQuantity, downQuantity = getQuantityPair(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp, false)
+	}
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pair.GetLeverage())
 	// Створюємо ордер на продаж
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() {
@@ -1768,7 +1776,15 @@ func createNextPair_v4(
 		return
 	}
 	// Визначаємо кількість для нових ордерів
-	upQuantity, downQuantity = getQuantityPair(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp, true)
+	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
+		upQuantity, downQuantity, err = pairProcessor.CheckPosition(currentPrice)
+		if err != nil {
+			logrus.Errorf("Can't check position: %v", err)
+			return
+		}
+	} else {
+		upQuantity, downQuantity = getQuantityPair(config, pair, free, risk, minNotional, quantity, upPrice, sizeSizeExp, false)
+	}
 	upClosePosition, downClosePosition := getClosePosition(risk)
 	if pair.GetUpBound() != 0 && upPrice <= pair.GetUpBound() && upQuantity > 0 {
 		if upClosePosition {
