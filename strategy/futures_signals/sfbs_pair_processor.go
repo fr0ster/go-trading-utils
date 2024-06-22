@@ -28,6 +28,7 @@ type (
 		pair         *pairs_types.Pairs
 		exchangeInfo *exchange_types.ExchangeInfo
 		symbol       *futures.Symbol
+		notional     float64
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -593,10 +594,9 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	quantityUp, quantityDown float64, err error) {
 	budget := pp.pair.GetCurrentPositionBalance()
-	minValue := utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
-	low := pp.roundQuantity(minValue / buyPrice)
+	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(budget / buyPrice)
-	calculateInitialPosition := func(budget, minValue, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
+	calculateInitialPosition := func(budget, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
 		value float64,
 		err error) {
 		n := pp.steps(buyPrice, endPrice, priceDeltaPercent)
@@ -604,12 +604,11 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 		if initValue > budget*float64(pp.GetLeverage()) {
 			return 0, fmt.Errorf("can't calculate initial position, we need more money: %v", initValue/float64(pp.GetLeverage()))
 		}
-		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, minValue, n)
+		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, 100, n)
 		return
 	}
 	quantityUp, _ = calculateInitialPosition(
 		budget,
-		minValue,
 		low,
 		high,
 		buyPrice,
@@ -618,7 +617,6 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 		-pp.pair.GetSellDeltaQuantity())
 	quantityDown, _ = calculateInitialPosition(
 		budget,
-		minValue,
 		low,
 		high,
 		buyPrice,
@@ -626,6 +624,18 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 		-pp.pair.GetBuyDelta(),
 		pp.pair.GetBuyDeltaQuantity())
 	return
+}
+
+func (pp *PairProcessor) CheckPosition(buyPrice float64) error {
+	quantityUp, quantityDown, err := pp.CalculateInitialPosition(buyPrice)
+	if err != nil {
+		return err
+	}
+	if quantityUp < 0 || quantityDown < 0 {
+		return fmt.Errorf("can't calculate initial position")
+	}
+	return nil
+
 }
 
 func NewPairProcessor(
@@ -675,6 +685,7 @@ func NewPairProcessor(
 	if err != nil {
 		return
 	}
+	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
