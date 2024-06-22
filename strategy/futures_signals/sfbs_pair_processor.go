@@ -607,7 +607,7 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice, quantityDeltaPercent
 		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, minValue, n)
 		return
 	}
-	quantityUp, _ = calculateInitialPosition(buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), quantityDeltaPercent)
+	quantityUp, _ = calculateInitialPosition(buyPrice, pp.pair.GetUpBound(), pp.pair.GetSellDelta(), -quantityDeltaPercent)
 	quantityDown, _ = calculateInitialPosition(buyPrice, pp.pair.GetLowBound(), pp.pair.GetBuyDelta(), quantityDeltaPercent)
 	return
 }
