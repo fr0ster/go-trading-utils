@@ -593,7 +593,7 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 
 func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	quantityUp, quantityDown float64, err error) {
-	budget := pp.pair.GetCurrentPositionBalance()
+	budget := pp.pair.GetCurrentPositionBalance() * float64(pp.pair.GetLeverage())
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(budget / buyPrice)
 	calculateInitialPosition := func(budget, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
@@ -626,13 +626,13 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	return
 }
 
-func (pp *PairProcessor) CheckPosition(buyPrice float64) error {
-	quantityUp, quantityDown, err := pp.CalculateInitialPosition(buyPrice)
+func (pp *PairProcessor) CheckPosition(price float64) error {
+	quantityUp, quantityDown, err := pp.CalculateInitialPosition(price)
 	if err != nil {
 		return err
 	}
-	if quantityUp < 0 || quantityDown < 0 {
-		return fmt.Errorf("can't calculate initial position")
+	if quantityUp*price < pp.notional || quantityDown*price < pp.notional {
+		return fmt.Errorf("we need more money for position: %v", pp.notional)
 	}
 	return nil
 
