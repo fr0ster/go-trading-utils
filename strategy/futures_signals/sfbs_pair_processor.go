@@ -24,11 +24,12 @@ import (
 
 type (
 	PairProcessor struct {
-		client       *futures.Client
-		pair         *pairs_types.Pairs
-		exchangeInfo *exchange_types.ExchangeInfo
-		symbol       *futures.Symbol
-		notional     float64
+		client        *futures.Client
+		pair          *pairs_types.Pairs
+		exchangeInfo  *exchange_types.ExchangeInfo
+		symbol        *futures.Symbol
+		notional      float64
+		stepSizeDelta float64
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -593,7 +594,7 @@ func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n
 
 func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 	quantityUp, quantityDown float64, err error) {
-	budget := pp.pair.GetCurrentPositionBalance()
+	budget := pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage())
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(budget / buyPrice)
 	calculateInitialPosition := func(budget, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
@@ -601,7 +602,7 @@ func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
 		err error) {
 		n := pp.steps(buyPrice, endPrice, priceDeltaPercent)
 		initValue, _, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
-		if initValue > budget*float64(pp.GetLeverage()) {
+		if initValue > budget {
 			return 0, fmt.Errorf("can't calculate initial position, we need more money: %v", initValue/float64(pp.GetLeverage()))
 		}
 		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, 100, n)
@@ -689,6 +690,7 @@ func NewPairProcessor(
 		return
 	}
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
+	pp.stepSizeDelta = math.Pow(10, -utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize))
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
