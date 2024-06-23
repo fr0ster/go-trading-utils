@@ -584,7 +584,7 @@ func (pp *PairProcessor) GetQuantityDelta(quantity float64, n int) float64 {
 	return pp.roundQuantity(quantity * (math.Pow(1+pp.pair.GetSellDeltaQuantity(), float64(n))))
 }
 
-func (pp *PairProcessor) totalValue(
+func (pp *PairProcessor) TotalValue(
 	P1 float64,
 	Q1 float64,
 	P2 float64,
@@ -661,7 +661,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
 	for testQ := high; testQ >= low; testQ -= 0.001 {
-		value, _, _, quantity, n, err = pp.totalValue(
+		value, _, _, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
 			endPrice,
