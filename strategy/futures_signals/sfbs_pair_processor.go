@@ -660,12 +660,12 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
-	for testQ := high; testQ >= low; testQ -= 0.001 {
+	for testQ := high; testQ >= low; testQ -= pp.stepSizeDelta {
 		value, _, _, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
 			endPrice,
-			pp.pair.GetCurrentPositionBalance(),
+			pp.pair.GetCurrentPositionBalance()*float64(pp.pair.GetLeverage()),
 			minN,
 			test,
 			nextPrice,
@@ -673,7 +673,6 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		if err == nil && n >= minN {
 			break
 		}
-		testQ -= 0.001
 	}
 	return
 }
