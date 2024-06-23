@@ -629,10 +629,7 @@ func (pp *PairProcessor) totalValue(
 }
 
 func (pp *PairProcessor) CalculateInitialPosition(
-	budget float64,
 	minN int,
-	leverage,
-	minValue,
 	buyPrice,
 	endPrice,
 	priceDeltaPercent,
@@ -643,7 +640,14 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		nextQuantity nextQuantityFunc
 	)
 	logrus.Debugf("Calculate initial position: budget %v, minN %v, leverage %v, minValue %v, buyPrice %v, endPrice %v, priceDeltaPercent %v, quantityDeltaPercent %v",
-		budget, minN, leverage, minValue, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent)
+		pp.pair.GetCurrentPositionBalance(),
+		minN,
+		pp.GetLeverage(),
+		pp.notional,
+		buyPrice,
+		endPrice,
+		priceDeltaPercent,
+		quantityDeltaPercent)
 	if buyPrice < endPrice {
 		test = func(s, e float64) bool { return s < e }
 		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1+priceDeltaPercent, float64(2))) }
@@ -654,14 +658,14 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	nextQuantity = func(s float64, n int) float64 {
 		return pp.roundQuantity(s * (math.Pow(1+quantityDeltaPercent, float64(2))))
 	}
-	low := pp.roundQuantity(minValue / buyPrice)
-	high := pp.roundQuantity(budget * leverage / buyPrice)
+	low := pp.roundQuantity(pp.notional / buyPrice)
+	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
 	for testQ := high; testQ >= low; testQ -= 0.001 {
 		value, _, _, quantity, n, err = pp.totalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
 			endPrice,
-			budget,
+			pp.pair.GetCurrentPositionBalance(),
 			minN,
 			test,
 			nextPrice,
@@ -678,11 +682,17 @@ func (pp *PairProcessor) CheckPosition(
 	minN int,
 	price float64) (
 	quantityUp, quantityDown float64, err error) {
-	_, quantityDown, _, err = pp.CalculateInitialPosition(
-		pp.pair.GetCurrentPositionBalance(),
+	_, quantityUp, _, err = pp.CalculateInitialPosition(
 		minN,
-		float64(pp.pair.GetLeverage()),
-		pp.notional,
+		price,
+		pp.pair.GetLowBound(),
+		pp.pair.GetSellDelta(),
+		pp.pair.GetBuyDelta())
+	if err != nil {
+		return
+	}
+	_, quantityDown, _, err = pp.CalculateInitialPosition(
+		minN,
 		price,
 		pp.pair.GetLowBound(),
 		pp.pair.GetSellDelta(),
