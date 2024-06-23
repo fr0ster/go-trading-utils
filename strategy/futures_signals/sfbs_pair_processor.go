@@ -23,7 +23,10 @@ import (
 )
 
 type (
-	PairProcessor struct {
+	nextPriceFunc    func(float64, int) float64
+	nextQuantityFunc func(float64, int) float64
+	testFunc         func(float64, float64) bool
+	PairProcessor    struct {
 		client        *futures.Client
 		pair          *pairs_types.Pairs
 		exchangeInfo  *exchange_types.ExchangeInfo
@@ -542,29 +545,24 @@ func (pp *PairProcessor) UserDataEventStart(
 	return
 }
 
-func (pp *PairProcessor) recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision float64, n int) (
-	position, quantity float64, err error) {
-	totalValueMid, totalQuantity, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
-	if low >= high {
-		return high, totalQuantity, nil
-	}
-	if totalValueMid-budget > precision {
-		position = pp.roundQuantity(low - pp.stepSizeDelta)
-		quantity = totalQuantity
-		return
-	} else {
-		return pp.recTotalValue(low+pp.stepSizeDelta, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, precision, n)
-	}
+// Округлення ціни до StepSize знаків після коми
+func (pp *PairProcessor) getStepSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
+}
+
+// Округлення ціни до TickSize знаків після коми
+func (pp *PairProcessor) getTickSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
 }
 
 func (pp *PairProcessor) roundPrice(price float64) float64 {
-	return utils.RoundToDecimalPlace(price, 1)
+	return utils.RoundToDecimalPlace(price, pp.getTickSizeExp())
 }
 
 func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
-	return utils.RoundToDecimalPlace(quantity, 3)
+	return utils.RoundToDecimalPlace(quantity, pp.getStepSizeExp())
 }
-func (pp *PairProcessor) steps(begin, end, delta float64) int {
+func (pp *PairProcessor) Steps(begin, end float64, next func(b float64, n int) float64) int {
 	var test func(float64, float64) bool
 	n := 1
 	if begin < end {
@@ -572,64 +570,123 @@ func (pp *PairProcessor) steps(begin, end, delta float64) int {
 	} else {
 		test = func(s, e float64) bool { return s > e }
 	}
-	for sum := begin; test(sum, end); sum = sum * (math.Pow(1+delta, float64(2))) {
+	for sum := begin; test(sum, end); sum = next(sum, n) {
 		n++
 	}
 	return n - 1
 }
 
-func (pp *PairProcessor) totalValue(P1, Q1, deltaPrice, deltaQuantity float64, n int) (value, quantity, lastPrice, lastQuantity float64) {
-	lastPrice = P1 * math.Pow((1+deltaPrice), float64(1))
-	lastQuantity = Q1
-	value += lastPrice * lastQuantity
-	quantity += lastQuantity
-	for i := 1; i < n; i++ {
-		lastPrice = pp.roundPrice(lastPrice * math.Pow((1+deltaPrice), float64(2)))
-		lastQuantity = pp.roundQuantity(lastQuantity * math.Pow((1+deltaQuantity), float64(2)))
-		value += lastPrice * lastQuantity
+func (pp *PairProcessor) GetPriceDelta(price float64, n int) float64 {
+	return pp.roundPrice(price * (math.Pow(1+pp.pair.GetSellDelta(), float64(n))))
+}
+
+func (pp *PairProcessor) GetQuantityDelta(quantity float64, n int) float64 {
+	return pp.roundQuantity(quantity * (math.Pow(1+pp.pair.GetSellDeltaQuantity(), float64(n))))
+}
+
+func (pp *PairProcessor) totalValue(
+	P1 float64,
+	Q1 float64,
+	P2 float64,
+	limit float64,
+	minSteps int,
+	test testFunc,
+	nextPriceFunc nextPriceFunc,
+	nextQuantityFunc nextQuantityFunc) (
+	value,
+	quantity,
+	lastPrice,
+	startQuantity float64,
+	n int,
+	err error) {
+	n = 1
+	lastPrice = pp.roundPrice(nextPriceFunc(P1, n))
+	if P1 == P2 || lastPrice == P2 {
+		return P1 * Q1, Q1, P1, Q1, 1, fmt.Errorf("P1 %v == P2 %v, can't calculate", P1, P2)
+	}
+	if P1*Q1 >= limit || lastPrice*Q1 >= limit {
+		return P1 * Q1, Q1, P1, Q1, 1, fmt.Errorf("P1*Q1 %v >= limit %v, can't calculate", P1*Q1, limit)
+	}
+	lastQuantity := Q1
+	for {
 		quantity += lastQuantity
-	}
-	return
-}
-
-func (pp *PairProcessor) CalculateInitialPosition(buyPrice float64) (
-	quantityUp, quantityDown float64, err error) {
-	budget := pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage())
-	low := pp.roundQuantity(pp.notional / buyPrice)
-	high := pp.roundQuantity(budget / buyPrice)
-	calculateInitialPosition := func(budget, low, high, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent float64) (
-		value float64,
-		err error) {
-		n := pp.steps(buyPrice, endPrice, priceDeltaPercent)
-		initValue, _, _, _ := pp.totalValue(buyPrice, low, priceDeltaPercent, quantityDeltaPercent, n)
-		if initValue > budget {
-			return 0, fmt.Errorf("can't calculate initial position, we need more money: %v", initValue/float64(pp.GetLeverage()))
+		value += lastPrice * lastQuantity
+		nextQuantity := pp.roundQuantity(nextQuantityFunc(lastQuantity, n))
+		nextPrice := pp.roundPrice(nextPriceFunc(lastPrice, n))
+		if test(nextPrice, P2) && value+nextPrice*nextQuantity < limit {
+			lastQuantity = nextQuantity
+			lastPrice = nextPrice
+			n++
+			continue
+		} else {
+			break
 		}
-		value, _, err = pp.recTotalValue(low, high, budget, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent, 100, n)
-		return
 	}
-	quantityUp, _ = calculateInitialPosition(
-		budget,
-		low,
-		high,
-		buyPrice,
-		pp.pair.GetUpBound(),
-		pp.pair.GetSellDelta(),
-		pp.pair.GetSellDeltaQuantity())
-	quantityDown, _ = calculateInitialPosition(
-		budget,
-		low,
-		high,
-		buyPrice,
-		pp.pair.GetLowBound(),
-		-pp.pair.GetBuyDelta(),
-		pp.pair.GetBuyDeltaQuantity())
+	if n < minSteps {
+		return value, pp.roundQuantity(quantity), lastPrice, pp.roundQuantity(Q1), n, fmt.Errorf("n == 0, can't calculate")
+	}
+	return value, pp.roundQuantity(quantity), lastPrice, pp.roundQuantity(Q1), n, nil
+}
+
+func (pp *PairProcessor) CalculateInitialPosition(
+	budget float64,
+	minN int,
+	leverage,
+	minValue,
+	buyPrice,
+	endPrice,
+	priceDeltaPercent,
+	quantityDeltaPercent float64) (value, quantity float64, n int, err error) {
+	var (
+		test         testFunc
+		nextPrice    nextPriceFunc
+		nextQuantity nextQuantityFunc
+	)
+	logrus.Debugf("Calculate initial position: budget %v, minN %v, leverage %v, minValue %v, buyPrice %v, endPrice %v, priceDeltaPercent %v, quantityDeltaPercent %v",
+		budget, minN, leverage, minValue, buyPrice, endPrice, priceDeltaPercent, quantityDeltaPercent)
+	if buyPrice < endPrice {
+		test = func(s, e float64) bool { return s < e }
+		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1+priceDeltaPercent, float64(2))) }
+	} else {
+		test = func(s, e float64) bool { return s > e }
+		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1-priceDeltaPercent, float64(2))) }
+	}
+	nextQuantity = func(s float64, n int) float64 {
+		return pp.roundQuantity(s * (math.Pow(1+quantityDeltaPercent, float64(2))))
+	}
+	low := pp.roundQuantity(minValue / buyPrice)
+	high := pp.roundQuantity(budget * leverage / buyPrice)
+	for testQ := high; testQ >= low; testQ -= 0.001 {
+		value, _, _, quantity, n, err = pp.totalValue(
+			buyPrice,
+			pp.roundQuantity(testQ),
+			endPrice,
+			budget,
+			minN,
+			test,
+			nextPrice,
+			nextQuantity)
+		if err == nil && n >= minN {
+			break
+		}
+		testQ -= 0.001
+	}
 	return
 }
 
-func (pp *PairProcessor) CheckPosition(price float64) (
+func (pp *PairProcessor) CheckPosition(
+	minN int,
+	price float64) (
 	quantityUp, quantityDown float64, err error) {
-	quantityUp, quantityDown, err = pp.CalculateInitialPosition(price)
+	_, quantityDown, _, err = pp.CalculateInitialPosition(
+		pp.pair.GetCurrentPositionBalance(),
+		minN,
+		float64(pp.pair.GetLeverage()),
+		pp.notional,
+		price,
+		pp.pair.GetLowBound(),
+		pp.pair.GetSellDelta(),
+		pp.pair.GetBuyDelta())
 	if err != nil {
 		return
 	}

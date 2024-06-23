@@ -428,7 +428,7 @@ func initRun(
 	return
 }
 
-func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
+func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs, free float64) {
 	if config.GetConfigurations().GetReloadConfig() {
 		temp := config_types.NewConfigFile(config.GetFileName())
 		temp.Load()
@@ -444,6 +444,8 @@ func updateConfig(config *config_types.ConfigFile, pair *pairs_types.Pairs) {
 		pair.SetBuyDelta(t_pair.GetBuyDelta())
 		pair.SetUpBound(t_pair.GetUpBound())
 		pair.SetLowBound(t_pair.GetLowBound())
+
+		pair.SetCurrentBalance(free)
 
 		config.GetConfigurations().SetLogLevel(temp.GetConfigurations().GetLogLevel())
 		config.GetConfigurations().SetReloadConfig(temp.GetConfigurations().GetReloadConfig())
@@ -775,7 +777,6 @@ func getCallBack_v1(
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
 				grid.Lock()
-				updateConfig(config, pair)
 				logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
 					pair.GetPair(),
 					event.OrderTradeUpdate.ID,
@@ -801,6 +802,7 @@ func getCallBack_v1(
 					}
 					// Балансування маржі як треба
 					free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+					updateConfig(config, pair, free)
 					// Обробка наближення ліквідаціі
 					err = liquidationObservation(config, pair, risk, pairProcessor, currentPrice, free, currentPrice, quantity)
 					if err != nil {
@@ -875,7 +877,7 @@ func RunFuturesGridTrading(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(10, initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
@@ -947,7 +949,6 @@ func getCallBack_v2(
 		}
 		if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			grid.Lock()
-			updateConfig(config, pair)
 			// Знаходимо у гріді на якому був виконаний ордер
 			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
@@ -968,6 +969,7 @@ func getCallBack_v2(
 					event.OrderTradeUpdate.Status)
 				locked, _ = pairProcessor.GetLockedBalance()
 				free, _ = pairProcessor.GetFreeBalance()
+				updateConfig(config, pair, free)
 				pair.SetCurrentBalance(free)
 				config.Save()
 				risk, err = pairProcessor.GetPositionRisk()
@@ -1054,7 +1056,7 @@ func RunFuturesGridTradingV2(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(10, initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
@@ -1208,7 +1210,6 @@ func getCallBack_v3(
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-			updateConfig(config, pair)
 			// Знаходимо у гріді на якому був виконаний ордер
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
@@ -1258,6 +1259,7 @@ func getCallBack_v3(
 				}
 				// Балансування маржі як треба
 				free, _ = marginBalancing(config, pair, risk, pairProcessor, free, tickSizeExp)
+				updateConfig(config, pair, free)
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pair.GetPair())
 				// // Визначаємо поточну ціну
@@ -1326,7 +1328,7 @@ func createNextPair_v3(
 		risk, currentPrice, tickSizeExp)
 	// Визначаємо кількість для нових ордерів
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		upQuantity, downQuantity, err = pairProcessor.CheckPosition(currentPrice)
+		upQuantity, downQuantity, err = pairProcessor.CheckPosition(10, currentPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			return
@@ -1527,7 +1529,7 @@ func RunFuturesGridTradingV3(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(10, initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
@@ -1636,7 +1638,6 @@ func getCallBack_v4(
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-			updateConfig(config, pair)
 			// Знаходимо у гріді на якому був виконаний ордер
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
 				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
@@ -1675,6 +1676,7 @@ func getCallBack_v4(
 						event.OrderTradeUpdate.Status)
 				}
 				free, _ := pairProcessor.GetFreeBalance()
+				updateConfig(config, pair, free)
 				pair.SetCurrentBalance(free)
 				config.Save()
 				risk, err := pairProcessor.GetPositionRisk()
@@ -1777,7 +1779,7 @@ func createNextPair_v4(
 	}
 	// Визначаємо кількість для нових ордерів
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		upQuantity, downQuantity, err = pairProcessor.CheckPosition(currentPrice)
+		upQuantity, downQuantity, err = pairProcessor.CheckPosition(10, currentPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			return
@@ -1947,7 +1949,7 @@ func RunFuturesGridTradingV4(
 			minNotional, pair.GetCurrentPositionBalance(), pair.GetLimitOnTransaction())
 	}
 	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		quantityUp, quantityDown, err = pairProcessor.CheckPosition(initPrice)
+		quantityUp, quantityDown, err = pairProcessor.CheckPosition(10, initPrice)
 		if err != nil {
 			logrus.Errorf("Can't check position: %v", err)
 			close(quit)
