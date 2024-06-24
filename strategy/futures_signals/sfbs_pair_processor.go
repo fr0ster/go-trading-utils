@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
@@ -18,6 +19,7 @@ import (
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
@@ -26,13 +28,16 @@ type (
 	nextPriceFunc    func(float64, int) float64
 	nextQuantityFunc func(float64, int) float64
 	testFunc         func(float64, float64) bool
-	PairProcessor    struct {
+
+	PairProcessor struct {
 		client        *futures.Client
 		pair          *pairs_types.Pairs
 		exchangeInfo  *exchange_types.ExchangeInfo
 		symbol        *futures.Symbol
 		notional      float64
 		stepSizeDelta float64
+		up            *btree.BTree
+		down          *btree.BTree
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -592,7 +597,8 @@ func (pp *PairProcessor) TotalValue(
 	minSteps int,
 	test testFunc,
 	nextPriceFunc nextPriceFunc,
-	nextQuantityFunc nextQuantityFunc) (
+	nextQuantityFunc nextQuantityFunc,
+	buffer ...*btree.BTree) (
 	value,
 	quantity,
 	lastPrice,
@@ -608,6 +614,10 @@ func (pp *PairProcessor) TotalValue(
 		return P1 * Q1, Q1, P1, Q1, 1, fmt.Errorf("P1*Q1 %v >= limit %v, can't calculate", P1*Q1, limit)
 	}
 	lastQuantity := Q1
+	if buffer != nil {
+		buffer[0].Clear(true)
+		buffer[0].ReplaceOrInsert(&pair_price_types.PairPrice{Price: lastPrice, Quantity: lastQuantity})
+	}
 	for {
 		quantity += lastQuantity
 		value += lastPrice * lastQuantity
@@ -617,6 +627,9 @@ func (pp *PairProcessor) TotalValue(
 			lastQuantity = nextQuantity
 			lastPrice = nextPrice
 			n++
+			if buffer != nil {
+				buffer[0].ReplaceOrInsert(&pair_price_types.PairPrice{Price: lastPrice, Quantity: lastQuantity})
+			}
 			continue
 		} else {
 			break
@@ -648,12 +661,17 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		endPrice,
 		priceDeltaPercent,
 		quantityDeltaPercent)
+	var (
+		tree *btree.BTree
+	)
 	if buyPrice < endPrice {
 		test = func(s, e float64) bool { return s < e }
 		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1+priceDeltaPercent, float64(2))) }
+		tree = pp.up
 	} else {
 		test = func(s, e float64) bool { return s > e }
 		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1-priceDeltaPercent, float64(2))) }
+		tree = pp.down
 	}
 	nextQuantity = func(s float64, n int) float64 {
 		return pp.roundQuantity(s * (math.Pow(1+quantityDeltaPercent, float64(2))))
@@ -669,7 +687,8 @@ func (pp *PairProcessor) CalculateInitialPosition(
 			minN,
 			test,
 			nextPrice,
-			nextQuantity)
+			nextQuantity,
+			tree)
 		if err == nil && n >= minN {
 			break
 		}
@@ -677,7 +696,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	return
 }
 
-func (pp *PairProcessor) CheckPosition(
+func (pp *PairProcessor) InitPositionGrid(
 	minN int,
 	price float64) (
 	quantityUp, quantityDown float64, err error) {
@@ -722,9 +741,14 @@ func NewPairProcessor(
 		return
 	}
 	pp = &PairProcessor{
-		client:       client,
-		pair:         pair,
-		exchangeInfo: exchangeInfo,
+		client:        client,
+		pair:          pair,
+		exchangeInfo:  exchangeInfo,
+		symbol:        nil,
+		notional:      0,
+		stepSizeDelta: 0,
+		up:            btree.New(2),
+		down:          btree.New(2),
 
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},
