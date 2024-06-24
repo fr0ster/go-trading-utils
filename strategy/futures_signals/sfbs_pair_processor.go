@@ -662,7 +662,8 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		priceDeltaPercent,
 		quantityDeltaPercent)
 	var (
-		tree *btree.BTree
+		tree  *btree.BTree
+		testQ float64
 	)
 	if buyPrice < endPrice {
 		test = func(s, e float64) bool { return s < e }
@@ -678,7 +679,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
-	for testQ := high; testQ >= low; testQ -= pp.stepSizeDelta {
+	for testQ = high; testQ >= low; testQ -= pp.stepSizeDelta {
 		value, _, price, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
@@ -693,6 +694,8 @@ func (pp *PairProcessor) CalculateInitialPosition(
 			break
 		}
 	}
+	logrus.Debugf("Calculate initial position: value %v, price %v, quantity %v, n %v, err %v",
+		value, price, quantity, n, err)
 	return
 }
 
