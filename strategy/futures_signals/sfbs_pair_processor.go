@@ -699,7 +699,10 @@ func (pp *PairProcessor) CalculateInitialPosition(
 func (pp *PairProcessor) InitPositionGrid(
 	minN int,
 	price float64) (
-	quantityUp, quantityDown float64, err error) {
+	priceUp,
+	quantityUp,
+	priceDown,
+	quantityDown float64, err error) {
 	_, quantityUp, _, err = pp.CalculateInitialPosition(
 		minN,
 		price,
@@ -724,8 +727,42 @@ func (pp *PairProcessor) InitPositionGrid(
 	if quantityDown*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
 	}
+	if val := pp.up.Min(); val != nil {
+		priceUp = val.(*pair_price_types.PairPrice).Price
+		pp.up.Delete(val)
+	} else {
+		err = fmt.Errorf("can't get price up")
+	}
+	if val := pp.down.Max(); val != nil {
+		priceDown = val.(*pair_price_types.PairPrice).Price
+		pp.down.Delete(val)
+	} else {
+		err = fmt.Errorf("can't get price down")
+	}
 	return
 
+}
+
+func (pp *PairProcessor) NextUp(currentPrice, currentQuantity float64) (price, quantity float64, err error) {
+	if val := pp.up.Min(); val != nil {
+		pair := val.(*pair_price_types.PairPrice)
+		pp.up.Delete(val)
+		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: currentQuantity})
+		return pair.Price, pair.Quantity, nil
+	} else {
+		return 0, 0, fmt.Errorf("can't get next up price")
+	}
+}
+
+func (pp *PairProcessor) NextDown(currentPrice, currentQuantity float64) (price, quantity float64, err error) {
+	if val := pp.down.Max(); val != nil {
+		pair := val.(*pair_price_types.PairPrice)
+		pp.down.Delete(val)
+		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: currentQuantity})
+		return pair.Price, pair.Quantity, nil
+	} else {
+		return 0, 0, fmt.Errorf("can't get next down price")
+	}
 }
 
 func NewPairProcessor(
