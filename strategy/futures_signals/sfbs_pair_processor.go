@@ -710,7 +710,7 @@ func (pp *PairProcessor) InitPositionGrid(
 		minN,
 		price,
 		pp.pair.GetUpBound(),
-		pp.pair.GetSellDeltaQuantity(),
+		pp.pair.GetSellDelta(),
 		pp.pair.GetBuyDeltaQuantity())
 	if err != nil {
 		return
@@ -719,7 +719,7 @@ func (pp *PairProcessor) InitPositionGrid(
 		minN,
 		price,
 		pp.pair.GetLowBound(),
-		pp.pair.GetSellDeltaQuantity(),
+		pp.pair.GetSellDelta(),
 		pp.pair.GetBuyDeltaQuantity())
 	if err != nil {
 		return
