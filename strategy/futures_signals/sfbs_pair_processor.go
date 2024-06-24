@@ -102,10 +102,15 @@ func (pp *PairProcessor) createOrder(
 	price float64,
 	stopPrice float64,
 	callbackRate float64,
-	times int) (
+	times int,
+	oldErr ...error) (
 	order *futures.CreateOrderResponse, err error) {
 	if times == 0 {
-		err = fmt.Errorf("can't create order")
+		if len(oldErr) == 0 {
+			err = fmt.Errorf("can't create order")
+		} else {
+			err = oldErr[0]
+		}
 		return
 	}
 	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
@@ -164,18 +169,20 @@ func (pp *PairProcessor) createOrder(
 	}
 	order, err = service.Do(context.Background())
 	if err != nil {
+		logrus.Errorf("Can't create order: %v", err)
 		apiError, _ := utils.ParseAPIError(err)
 		if apiError == nil {
 			return
-		}
-		if apiError.Code == -1007 {
+		} else if apiError.Code == -1007 {
 			time.Sleep(1 * time.Second)
 			orders, err := pp.GetOpenOrders()
 			if err != nil {
 				return nil, err
 			}
 			for _, order := range orders {
-				if order.Symbol == pp.GetPair().GetPair() && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+				if order.Symbol == pp.GetPair().GetPair() &&
+					order.Side == sideType &&
+					order.Price == utils.ConvFloat64ToStr(price, priceRound) {
 					return &futures.CreateOrderResponse{
 						Symbol:                  order.Symbol,
 						OrderID:                 order.OrderID,
@@ -209,13 +216,13 @@ func (pp *PairProcessor) createOrder(
 			// На наступних кодах помилок можна спробувати ще раз
 		} else if apiError.Code == -1008 || apiError.Code == -5028 {
 			time.Sleep(3 * time.Second)
-			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1)
+			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
 		} else if apiError.Code == -2021 {
 			time.Sleep(3 * time.Second)
 			if sideType == futures.SideTypeSell {
-				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1)
+				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
 			} else if sideType == futures.SideTypeBuy {
-				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1)
+				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
 			}
 		}
 	}
