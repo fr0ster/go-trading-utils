@@ -652,15 +652,6 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		nextPrice    nextPriceFunc
 		nextQuantity nextQuantityFunc
 	)
-	logrus.Debugf("Calculate initial position: budget %v, minN %v, leverage %v, minValue %v, buyPrice %v, endPrice %v, priceDeltaPercent %v, quantityDeltaPercent %v",
-		pp.pair.GetCurrentPositionBalance(),
-		minN,
-		pp.GetLeverage(),
-		pp.notional,
-		buyPrice,
-		endPrice,
-		priceDeltaPercent,
-		quantityDeltaPercent)
 	var (
 		tree  *btree.BTree
 		testQ float64
@@ -694,8 +685,6 @@ func (pp *PairProcessor) CalculateInitialPosition(
 			break
 		}
 	}
-	logrus.Debugf("Calculate initial position: value %v, price %v, quantity %v, n %v, err %v",
-		value, price, quantity, n, err)
 	return
 }
 
