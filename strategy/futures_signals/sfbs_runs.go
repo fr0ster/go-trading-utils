@@ -1278,7 +1278,7 @@ func getCallBack_v3(
 					pair,
 					pair.GetCallbackRate(),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledQty),
+					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					event.OrderTradeUpdate.Side,
 					minNotional,
 					getCurrentPrice(client, pair, tickSizeExp),
@@ -1525,7 +1525,7 @@ func createNextPair_v3(
 	pair *pairs_types.Pairs,
 	callBackRate float64,
 	LastExecutedPrice float64,
-	LastFilledQty float64,
+	AccumulatedFilledQty float64,
 	LastExecutedSide futures.SideType,
 	minNotional float64,
 	currentPrice float64,
@@ -1547,7 +1547,7 @@ func createNextPair_v3(
 			if LastExecutedSide == futures.SideTypeSell {
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
-				upPrice, upQuantity, err = pairProcessor.NextUp(LastExecutedPrice, LastFilledQty)
+				upPrice, upQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
 					return
@@ -1559,7 +1559,7 @@ func createNextPair_v3(
 					futures.OrderTypeTrailingStopMarket,
 					futures.OrderTypeTrailingStopMarket,
 					upQuantity,
-					LastFilledQty,
+					AccumulatedFilledQty,
 					upPrice,
 					utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
 					callBackRate,
@@ -1569,7 +1569,7 @@ func createNextPair_v3(
 			} else if LastExecutedSide == futures.SideTypeBuy {
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
-				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, LastFilledQty)
+				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
 					return
@@ -1581,7 +1581,7 @@ func createNextPair_v3(
 					futures.OrderTypeTrailingStopMarket,
 					futures.OrderTypeTrailingStopMarket,
 					upQuantity,
-					LastFilledQty,
+					AccumulatedFilledQty,
 					upPrice,
 					utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
 					callBackRate,
@@ -1597,9 +1597,9 @@ func createNextPair_v3(
 				pair.GetPair(), upQuantity, upPrice, upQuantity*upPrice, minNotional, sellOrder.Status)
 			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v, status %v",
 				pair.GetPair(),
-				LastFilledQty,
+				AccumulatedFilledQty,
 				utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
-				LastFilledQty*utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
+				AccumulatedFilledQty*utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
 				minNotional,
 				buyOrder.Status)
 		} else {
@@ -1608,7 +1608,7 @@ func createNextPair_v3(
 				pairProcessor,
 				futures.SideTypeBuy,
 				futures.OrderTypeTrailingStopMarket,
-				LastFilledQty,
+				AccumulatedFilledQty,
 				utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
 				callBackRate,
 				false)
@@ -1617,7 +1617,7 @@ func createNextPair_v3(
 					pair.GetPair(),
 					futures.SideTypeSell,
 					futures.OrderTypeTrailingStopMarket,
-					LastFilledQty,
+					AccumulatedFilledQty,
 					utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1-pair.GetBuyDelta()),
 					callBackRate,
 					buyOrder.Status)
@@ -1632,7 +1632,7 @@ func createNextPair_v3(
 			if LastExecutedSide == futures.SideTypeBuy {
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
-				downPrice, downQuantity, err = pairProcessor.NextDown(LastExecutedPrice, LastFilledQty)
+				downPrice, downQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
 					return
@@ -1643,7 +1643,7 @@ func createNextPair_v3(
 					pair,
 					futures.OrderTypeTrailingStopMarket,
 					futures.OrderTypeTrailingStopMarket,
-					LastFilledQty,
+					AccumulatedFilledQty,
 					downQuantity,
 					utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1+pair.GetSellDelta()),
 					downPrice,
@@ -1654,7 +1654,7 @@ func createNextPair_v3(
 			} else if LastExecutedSide == futures.SideTypeSell {
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
-				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, LastFilledQty)
+				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
 					return
@@ -1665,7 +1665,7 @@ func createNextPair_v3(
 					pair,
 					futures.OrderTypeTrailingStopMarket,
 					futures.OrderTypeTrailingStopMarket,
-					LastFilledQty,
+					AccumulatedFilledQty,
 					downQuantity,
 					utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1+pair.GetSellDelta()),
 					downPrice,
@@ -1679,9 +1679,9 @@ func createNextPair_v3(
 			}
 			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, minNotional %v, status %v",
 				pair.GetPair(),
-				LastFilledQty,
+				AccumulatedFilledQty,
 				utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1+pair.GetSellDelta()),
-				LastFilledQty*utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1+pair.GetSellDelta()),
+				AccumulatedFilledQty*utils.ConvStrToFloat64(risk.BreakEvenPrice)*(1+pair.GetSellDelta()),
 				minNotional,
 				sellOrder.Status)
 			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v, status %v",
