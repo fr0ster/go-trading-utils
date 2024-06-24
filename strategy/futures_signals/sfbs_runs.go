@@ -1797,6 +1797,19 @@ func RunFuturesGridTradingV3(
 		close(quit)
 		return
 	}
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		close(quit)
+		return err
+	}
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		initPriceDown = utils.ConvStrToFloat64(risk.BreakEvenPrice) * (1 - pair.GetBuyDelta())
+		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt) * -1
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		initPriceUp = utils.ConvStrToFloat64(risk.BreakEvenPrice) * (1 + pair.GetSellDelta())
+		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
+	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pair.GetPair())
 	maintainedOrders := btree.New(2)
