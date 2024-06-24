@@ -646,7 +646,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	buyPrice,
 	endPrice,
 	priceDeltaPercent,
-	quantityDeltaPercent float64) (value, quantity float64, n int, err error) {
+	quantityDeltaPercent float64) (value, price, quantity float64, n int, err error) {
 	var (
 		test         testFunc
 		nextPrice    nextPriceFunc
@@ -679,7 +679,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
 	for testQ := high; testQ >= low; testQ -= pp.stepSizeDelta {
-		value, _, _, quantity, n, err = pp.TotalValue(
+		value, _, price, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
 			endPrice,
@@ -703,7 +703,7 @@ func (pp *PairProcessor) InitPositionGrid(
 	quantityUp,
 	priceDown,
 	quantityDown float64, err error) {
-	_, quantityUp, _, err = pp.CalculateInitialPosition(
+	_, priceUp, quantityUp, _, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.pair.GetUpBound(),
@@ -712,7 +712,7 @@ func (pp *PairProcessor) InitPositionGrid(
 	if err != nil {
 		return
 	}
-	_, quantityDown, _, err = pp.CalculateInitialPosition(
+	_, priceDown, quantityDown, _, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.pair.GetLowBound(),
