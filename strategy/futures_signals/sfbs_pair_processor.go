@@ -699,7 +699,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	// 	nextPrice,
 	// 	nextQuantity,
 	// 	tree)
-	for testQ := high; testQ >= low; testQ -= 0.001 {
+	for testQ := high; testQ >= low; testQ -= pp.stepSizeDelta {
 		value, _, _, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
