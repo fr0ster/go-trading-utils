@@ -14,10 +14,7 @@ import (
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
-
-	pairs_interfaces "github.com/fr0ster/go-trading-utils/interfaces/pairs"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -25,7 +22,6 @@ import (
 type (
 	PairKlinesObserver struct {
 		client       *binance.Client
-		pair         *pairs_types.Pairs
 		degree       int
 		limit        int
 		interval     string
@@ -58,15 +54,15 @@ func (pp *PairKlinesObserver) GetStream() chan *binance.WsKlineEvent {
 func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 	if pp.klineEvent == nil {
 		if pp.data == nil {
-			logrus.Debugf("Spot, Create kline data for %v", pp.pair.GetPair())
-			pp.data = kline_types.New(degree, pp.interval, pp.pair.GetPair())
+			logrus.Debugf("Spot, Create kline data for %v", pp.symbol.Symbol)
+			pp.data = kline_types.New(degree, pp.interval, pp.symbol.Symbol)
 		}
 
 		ticker := time.NewTicker(pp.timeOut)
 		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення klines
 		pp.klineEvent = make(chan *binance.WsKlineEvent, 1)
-		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+		logrus.Debugf("Spot, Start stream for %v Klines", pp.symbol.Symbol)
 		wsHandler := func(event *binance.WsKlineEvent) {
 			lastResponse = time.Now()
 			pp.klineEvent <- event
@@ -76,17 +72,17 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 			resetEvent <- true
 		}
 		var stopC chan struct{}
-		_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+		_, stopC, _ = binance.WsKlineServe(pp.symbol.Symbol, pp.interval, wsHandler, wsErrorHandler)
 		go func() {
 			for {
 				select {
 				case <-resetEvent:
 					stopC <- struct{}{}
-					_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+					_, stopC, _ = binance.WsKlineServe(pp.symbol.Symbol, pp.interval, wsHandler, wsErrorHandler)
 				case <-ticker.C:
 					if time.Since(lastResponse) > pp.timeOut {
 						stopC <- struct{}{}
-						_, stopC, _ = binance.WsKlineServe(pp.pair.GetPair(), pp.interval, wsHandler, wsErrorHandler)
+						_, stopC, _ = binance.WsKlineServe(pp.symbol.Symbol, pp.interval, wsHandler, wsErrorHandler)
 					}
 				}
 			}
@@ -98,22 +94,22 @@ func (pp *PairKlinesObserver) StartStream() chan *binance.WsKlineEvent {
 
 func eventProcess(pp *PairKlinesObserver, current_price, last_close float64, filled bool) (float64, error) {
 	if last_close == 0 {
-		logrus.Debugf("Spot, Initialization for %s, last price - %f, filled is %v", pp.pair.GetPair(), current_price, filled)
+		logrus.Debugf("Spot, Initialization for %s, last price - %f, filled is %v", pp.symbol.Symbol, current_price, filled)
 		last_close = current_price
 	} else {
 		delta := (current_price - last_close) * 100 / last_close
 		if filled {
 			logrus.Debugf("Spot for %s, kline is filled, Current price - %f, last price - %f, delta - %f%%",
-				pp.pair.GetPair(), current_price, last_close, delta)
+				pp.symbol.Symbol, current_price, last_close, delta)
 		} else {
 			logrus.Debugf("Spot for %s, kline is not filled, Current price - %f, last price - %f, delta - %f%%",
-				pp.pair.GetPair(), current_price, last_close, delta)
+				pp.symbol.Symbol, current_price, last_close, delta)
 		}
 		if delta > pp.deltaUp*100 || delta < -pp.deltaDown*100 {
 			if filled {
-				logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+				logrus.Debugf("Spot, kline is filled, Price for %s is changed on %f%%", pp.symbol.Symbol, delta)
 			} else {
-				logrus.Debugf("Spot, kline is not filled, Price for %s is changed on %f%%", pp.pair.GetPair(), delta)
+				logrus.Debugf("Spot, kline is not filled, Price for %s is changed on %f%%", pp.symbol.Symbol, delta)
 			}
 			pp.priceChanges <- &pair_price_types.PairDelta{Price: current_price, Percent: delta}
 			if delta > 0 {
@@ -196,29 +192,6 @@ func (pp *PairKlinesObserver) GetMaxQuantity(price float64) float64 {
 	return utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MaxNotional) / price
 }
 
-func (pp *PairKlinesObserver) GetBuyAndSellQuantity(
-	pair pairs_interfaces.Pairs,
-	baseBalance float64,
-	targetBalance float64,
-	buyCommission float64,
-	sellCommission float64,
-	ask float64,
-	bid float64) (
-	sellQuantity float64, // Кількість торгової валюти для продажу
-	buyQuantity float64, // Кількість торгової валюти для купівлі
-	err error) { // Кількість торгової валюти для продажу
-	sellQuantity,
-		// Кількість торгової валюти для купівлі
-		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
-	if sellQuantity < pp.GetMinQuantity(bid) || buyQuantity < pp.GetMinQuantity(ask) {
-		sellQuantity = 0
-	}
-	if buyQuantity < pp.GetMinQuantity(ask) || buyQuantity > pp.GetMaxQuantity(ask) {
-		buyQuantity = 0
-	}
-	return
-}
-
 func (pp *PairKlinesObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
@@ -229,7 +202,7 @@ func (pp *PairKlinesObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairKlinesObserver(
 	client *binance.Client,
-	pair *pairs_types.Pairs,
+	symbol string,
 	degree int,
 	limit int,
 	interval string,
@@ -239,7 +212,6 @@ func NewPairKlinesObserver(
 	isFilledOnly bool) (pp *PairKlinesObserver, err error) {
 	pp = &PairKlinesObserver{
 		client:       client,
-		pair:         pair,
 		account:      nil,
 		data:         nil,
 		filledEvent:  nil,
@@ -256,21 +228,21 @@ func NewPairKlinesObserver(
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
 	}
-	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
-	if err != nil {
-		return
-	}
 	pp.exchangeInfo = exchange_info.New()
 	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
 	}
-	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: symbol}); symbol != nil {
 		pp.symbol, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
 		if err != nil {
 			logrus.Errorf(errorMsg, err)
 			return
 		}
+	}
+	pp.account, err = spot_account.New(pp.client, []string{pp.symbol.QuoteAsset, pp.symbol.BaseAsset})
+	if err != nil {
+		return
 	}
 
 	return

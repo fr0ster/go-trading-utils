@@ -15,7 +15,6 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -24,7 +23,6 @@ import (
 type (
 	PairDepthsObserver struct {
 		client       *binance.Client
-		pair         *pairs_types.Pairs
 		degree       int
 		limit        int
 		account      *spot_account.Account
@@ -35,8 +33,6 @@ type (
 		stop         chan struct{}
 		deltaUp      float64
 		deltaDown    float64
-		buyEvent     chan *pair_price_types.PairPrice
-		sellEvent    chan *pair_price_types.PairPrice
 		askUp        chan *pair_price_types.AskBid
 		askDown      chan *pair_price_types.AskBid
 		bidUp        chan *pair_price_types.AskBid
@@ -58,13 +54,13 @@ func (pp *PairDepthsObserver) GetStream() chan *binance.WsDepthEvent {
 func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 	if pp.depthsEvent == nil {
 		if pp.data == nil {
-			pp.data = depth_types.New(degree, pp.pair.GetPair())
+			pp.data = depth_types.New(degree, pp.symbol.Symbol)
 		}
 
 		ticker := time.NewTicker(pp.timeOut)
 		lastResponse := time.Now()
 		// Запускаємо потік для отримання оновлення depths
-		logrus.Debugf("Spot, Start stream for %v Klines", pp.pair.GetPair())
+		logrus.Debugf("Spot, Start stream for %v Klines", pp.symbol.Symbol)
 		pp.depthsEvent = make(chan *binance.WsDepthEvent, 1)
 		wsHandler := func(event *binance.WsDepthEvent) {
 			lastResponse = time.Now()
@@ -75,17 +71,17 @@ func (pp *PairDepthsObserver) StartStream() chan *binance.WsDepthEvent {
 			resetEvent <- true
 		}
 		var stopC chan struct{}
-		_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+		_, stopC, _ = binance.WsDepthServe100Ms(pp.symbol.Symbol, wsHandler, wsErrorHandler)
 		go func() {
 			for {
 				select {
 				case <-resetEvent:
 					stopC <- struct{}{}
-					_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+					_, stopC, _ = binance.WsDepthServe100Ms(pp.symbol.Symbol, wsHandler, wsErrorHandler)
 				case <-ticker.C:
 					if time.Since(lastResponse) > pp.timeOut {
 						stopC <- struct{}{}
-						_, stopC, _ = binance.WsDepthServe100Ms(pp.pair.GetPair(), wsHandler, wsErrorHandler)
+						_, stopC, _ = binance.WsDepthServe100Ms(pp.symbol.Symbol, wsHandler, wsErrorHandler)
 					}
 				}
 			}
@@ -106,124 +102,6 @@ func (pp *PairDepthsObserver) GetAskBid() (bid float64, ask float64, err error) 
 		err = fmt.Errorf("can't get max bid")
 	}
 	bid = maxBid.(*pair_price_types.PairPrice).Price
-	return
-}
-
-func (pp *PairDepthsObserver) StartBuyOrSellSignal() (
-	buyEvent chan *pair_price_types.PairPrice,
-	sellEvent chan *pair_price_types.PairPrice) {
-	if pp.depthsEvent == nil {
-		pp.StartStream()
-	}
-	if pp.buyEvent == nil && pp.sellEvent == nil {
-		pp.buyEvent = make(chan *pair_price_types.PairPrice, 1)
-		pp.sellEvent = make(chan *pair_price_types.PairPrice, 1)
-		buyEvent = pp.buyEvent
-		sellEvent = pp.sellEvent
-		go func() {
-			for {
-				if pp.pair.GetMiddlePrice() == 0 {
-					continue
-				}
-				select {
-				case <-pp.stop:
-					return
-				case <-pp.event: // Чекаємо на спрацювання тригера на зміну bookTicker
-					// Кількість базової валюти
-					baseBalance, err := GetBaseBalance(pp.account, pp.pair)
-					if err != nil {
-						logrus.Warnf("Can't get data for analysis: %v", err)
-						continue
-					}
-					pp.pair.SetCurrentBalance(baseBalance)
-					// Кількість торгової валюти
-					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
-					if err != nil {
-						logrus.Errorf("Can't get %s balance: %v", pp.pair.GetTargetSymbol(), err)
-						close(pp.stop)
-						return
-					}
-					commission := GetCommission(pp.account)
-					minAsk := pp.data.GetAsks().Min()
-					maxBid := pp.data.GetBids().Max()
-					// Ціна купівлі
-					ask := minAsk.(*pair_price_types.PairPrice).Price
-					// Ціна продажу
-					bid := maxBid.(*pair_price_types.PairPrice).Price
-					// Верхня межа ціни купівлі
-					boundAsk, err := GetAskBound(pp.pair)
-					if err != nil {
-						logrus.Errorf("Can't get data for analysis: %v", err)
-						close(pp.stop)
-						return
-					}
-					// Нижня межа ціни продажу
-					boundBid, err := GetBidBound(pp.pair)
-					if err != nil {
-						logrus.Errorf("Can't get data for analysis: %v", err)
-						close(pp.stop)
-						return
-					}
-					logrus.Debugf("Spot, Ask is %f, boundAsk is %f, bid is %f, boundBid is %f", ask, boundAsk, bid, boundBid)
-					// Кількість торгової валюти для продажу
-					sellQuantity,
-						// Кількість торгової валюти для купівлі
-						buyQuantity, err := pp.GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, commission, commission, ask, bid)
-					if err != nil {
-						logrus.Errorf("Can't get data for analysis: %v", err)
-						close(pp.stop)
-						return
-					}
-
-					if buyQuantity == 0 && sellQuantity == 0 {
-						logrus.Errorf("We don't have any %s for buy and don't have any %s for sell",
-							pp.pair.GetBaseSymbol(), pp.pair.GetTargetSymbol())
-						close(pp.stop)
-						return
-					}
-					// Середня ціна купівли цільової валюти більша за верхню межу ціни купівли
-					if ask <= boundAsk &&
-						targetBalance*ask < pp.pair.GetLimitInputIntoPosition()*baseBalance &&
-						targetBalance*ask < pp.pair.GetLimitOutputOfPosition()*baseBalance {
-						logrus.Debugf("Middle price %f, Ask %f is lower than high bound price %f, BUY!!!", pp.pair.GetMiddlePrice(), ask, boundAsk)
-						buyEvent <- &pair_price_types.PairPrice{
-							Price:    ask,
-							Quantity: buyQuantity}
-						// Середня ціна купівли цільової валюти менша або дорівнює нижній межі ціни продажу
-					} else if bid >= boundBid && sellQuantity < targetBalance {
-						logrus.Debugf("Middle price %f, Bid %f is higher than low bound price %f, SELL!!!", pp.pair.GetMiddlePrice(), bid, boundBid)
-						sellEvent <- &pair_price_types.PairPrice{
-							Price:    boundBid,
-							Quantity: sellQuantity}
-					} else {
-						if ask <= boundAsk &&
-							(targetBalance*ask > pp.pair.GetLimitInputIntoPosition()*baseBalance ||
-								targetBalance*ask > pp.pair.GetLimitOutputOfPosition()*baseBalance) {
-							logrus.Debugf("We can't buy %s, because we have more than %f %s",
-								pp.pair.GetTargetSymbol(),
-								pp.pair.GetLimitInputIntoPosition()*baseBalance,
-								pp.pair.GetBaseSymbol())
-						} else if bid >= boundBid && sellQuantity >= targetBalance {
-							logrus.Debugf("We can't sell %s, because we haven't %s enough for sell, we need %f %s but have %f %s only",
-								pp.pair.GetTargetSymbol(),
-								pp.pair.GetTargetSymbol(),
-								sellQuantity,
-								pp.pair.GetTargetSymbol(),
-								targetBalance,
-								pp.pair.GetTargetSymbol())
-						} else if bid < boundBid && ask > boundAsk { // Чекаємо на зміну ціни
-							logrus.Debugf("Middle price is %f, bound Bid price %f, bound Ask price %f",
-								pp.pair.GetMiddlePrice(), boundBid, boundAsk)
-							logrus.Debugf("Wait for buy or sell signal")
-							logrus.Debugf("Now ask is %f, bid is %f", ask, bid)
-							logrus.Debugf("Waiting for ask decrease to %f or bid increase to %f", boundAsk, boundBid)
-						}
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-	}
 	return
 }
 
@@ -316,29 +194,6 @@ func (pp *PairDepthsObserver) GetMaxQuantity(price float64) float64 {
 	return utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MaxNotional) / price
 }
 
-func (pp *PairDepthsObserver) GetBuyAndSellQuantity(
-	pair *pairs_types.Pairs,
-	baseBalance float64,
-	targetBalance float64,
-	buyCommission float64,
-	sellCommission float64,
-	ask float64,
-	bid float64) (
-	sellQuantity float64, // Кількість торгової валюти для продажу
-	buyQuantity float64, // Кількість торгової валюти для купівлі
-	err error) { // Кількість торгової валюти для продажу
-	sellQuantity,
-		// Кількість торгової валюти для купівлі
-		buyQuantity, err = GetBuyAndSellQuantity(pp.pair, baseBalance, targetBalance, buyCommission, sellCommission, ask, bid)
-	if sellQuantity < pp.GetMinQuantity(bid) || sellQuantity > pp.GetMaxQuantity(bid) {
-		sellQuantity = 0
-	}
-	if buyQuantity < pp.GetMinQuantity(ask) || buyQuantity > pp.GetMaxQuantity(ask) {
-		buyQuantity = 0
-	}
-	return
-}
-
 func (pp *PairDepthsObserver) SetSleepingTime(sleepingTime time.Duration) {
 	pp.sleepingTime = sleepingTime
 }
@@ -349,7 +204,7 @@ func (pp *PairDepthsObserver) SetTimeOut(timeOut time.Duration) {
 
 func NewPairDepthsObserver(
 	client *binance.Client,
-	pair *pairs_types.Pairs,
+	symbol string,
 	degree int,
 	limit int,
 	deltaUp float64,
@@ -357,7 +212,6 @@ func NewPairDepthsObserver(
 	stop chan struct{}) (pp *PairDepthsObserver, err error) {
 	pp = &PairDepthsObserver{
 		client:       client,
-		pair:         pair,
 		account:      nil,
 		data:         nil,
 		depthsEvent:  nil,
@@ -374,21 +228,21 @@ func NewPairDepthsObserver(
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
 	}
-	pp.account, err = spot_account.New(pp.client, []string{pair.GetBaseSymbol(), pair.GetTargetSymbol()})
-	if err != nil {
-		return
-	}
 	pp.exchangeInfo = exchange_info.New()
 	err = spot_exchange_info.Init(pp.exchangeInfo, degree, client)
 	if err != nil {
 		return
 	}
-	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.pair.GetPair()}); symbol != nil {
+	if symbol := pp.exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: symbol}); symbol != nil {
 		pp.symbol, err = symbol.(*symbol_info.SpotSymbol).GetSpotSymbol()
 		if err != nil {
 			logrus.Errorf(errorMsg, err)
 			return
 		}
+	}
+	pp.account, err = spot_account.New(pp.client, []string{pp.symbol.QuoteAsset, pp.symbol.BaseAsset})
+	if err != nil {
+		return
 	}
 
 	return

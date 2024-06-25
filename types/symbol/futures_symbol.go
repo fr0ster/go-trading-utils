@@ -49,17 +49,3 @@ func (s *FuturesSymbol) GetFuturesSymbol() (*futures.Symbol, error) {
 	}
 	return &outSymbol, nil
 }
-
-// func NewFuturesSymbol(symbol interface{}) *FuturesSymbols {
-// 	val, _ := Binance2FuturesSymbol(symbol)
-// 	return val
-// }
-
-// func Binance2FuturesSymbol(binanceSymbol interface{}) (*FuturesSymbols, error) {
-// 	var symbol FuturesSymbols
-// 	err := copier.Copy(&symbol, binanceSymbol)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &symbol, nil
-// }

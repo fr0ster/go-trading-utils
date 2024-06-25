@@ -9,50 +9,37 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
-	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
-	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
+	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 
-	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
 type (
+	nextPriceFunc    func(float64, int) float64
+	nextQuantityFunc func(float64, int) float64
+	testFunc         func(float64, float64) bool
+	Functions        struct {
+		NextPriceUp      nextPriceFunc
+		NextPriceDown    nextPriceFunc
+		NextQuantityUp   nextQuantityFunc
+		NextQuantityDown nextQuantityFunc
+		TestUp           testFunc
+		TestDown         testFunc
+	}
 	PairProcessor struct {
-		config       *config_types.ConfigFile
-		client       *binance.Client
-		pair         *pairs_types.Pairs
-		exchangeInfo *exchange_types.ExchangeInfo
-		account      *spot_account.Account
-
-		buyEvent            chan *pair_price_types.PairPrice
-		buyProcessRun       bool
-		stopBuy             chan bool
-		startBuyOrderEvent  chan *binance.CreateOrderResponse
-		sellEvent           chan *pair_price_types.PairPrice
-		sellProcessRun      bool
-		startSellOrderEvent chan *binance.CreateOrderResponse
-		stopSell            chan bool
-
-		startProcessBuyTakeProfitOrderEvent  chan *binance.CreateOrderResponse
-		buyTakeProfitProcessRun              bool
-		stopBuyTakeProfitProcess             chan bool
-		startProcessSellTakeProfitOrderEvent chan *binance.CreateOrderResponse
-		sellTakeProfitProcessRun             bool
-		stopSellTakeProfitProcess            chan bool
-
-		orderExecuted                  chan bool
-		stopOrderExecutionGuardProcess chan bool
-		orderExecutionGuardProcessRun  bool
-
-		userDataEvent    chan *binance.WsUserDataEvent
-		orderStatusEvent chan *binance.WsUserDataEvent
+		client        *binance.Client
+		exchangeInfo  *exchange_types.ExchangeInfo
+		symbol        *futures.Symbol
+		baseSymbol    string
+		targetSymbol  string
+		notional      float64
+		stepSizeDelta float64
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits
@@ -61,46 +48,29 @@ type (
 
 		stop chan struct{}
 
-		pairInfo     *symbol_types.SpotSymbol
-		orderTypes   map[string]bool
-		degree       int
-		debug        bool
-		sleepingTime time.Duration
-		timeOut      time.Duration
+		pairInfo           *symbol_types.SpotSymbol
+		orderTypes         map[string]bool
+		degree             int
+		debug              bool
+		sleepingTime       time.Duration
+		timeOut            time.Duration
+		limitOnPosition    float64
+		limitOnTransaction float64
+		UpBound            float64
+		LowBound           float64
+		callbackRate       float64
+
+		deltaPrice    float64
+		deltaQuantity float64
+
+		testUp           testFunc
+		testDown         testFunc
+		nextPriceUp      nextPriceFunc
+		nextPriceDown    nextPriceFunc
+		nextQuantityUp   nextQuantityFunc
+		nextQuantityDown nextQuantityFunc
 	}
 )
-
-func (pp *PairProcessor) GetBaseBalance() (
-	baseBalance float64, // Кількість базової валюти
-	err error) {
-	baseBalance, err = func() (
-		baseBalance float64,
-		err error) {
-		baseBalance, err = pp.account.GetFreeAsset(pp.pair.GetBaseSymbol())
-		return
-	}()
-
-	if err != nil {
-		return 0, err
-	}
-	return
-}
-
-func (pp *PairProcessor) GetTargetBalance() (
-	targetBalance float64, // Кількість торгової валюти
-	err error) {
-	targetBalance, err = func() (
-		targetBalance float64,
-		err error) {
-		targetBalance, err = pp.account.GetFreeAsset(pp.pair.GetTargetSymbol())
-		return
-	}()
-
-	if err != nil {
-		return 0, err
-	}
-	return
-}
 
 //  1. LIMIT_MAKER are LIMIT orders that will be rejected if they would immediately match and trade as a taker.
 //  2. STOP_LOSS and TAKE_PROFIT will execute a MARKET order when the stopPrice is reached.
@@ -148,7 +118,7 @@ func (pp *PairProcessor) createOrder(
 		return
 	}
 	if _, ok := pp.orderTypes[string(orderType)]; !ok && len(pp.orderTypes) != 0 {
-		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pair.GetPair())
+		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pairInfo.Symbol)
 		return
 	}
 	var (
@@ -158,7 +128,7 @@ func (pp *PairProcessor) createOrder(
 	service :=
 		pp.client.NewCreateOrderService().
 			NewOrderRespType(binance.NewOrderRespTypeRESULT).
-			Symbol(string(binance.SymbolType(pp.pair.GetPair()))).
+			Symbol(string(binance.SymbolType(pp.pairInfo.Symbol))).
 			Type(orderType).
 			Side(sideType)
 	// Additional mandatory parameters based on type:
@@ -226,7 +196,7 @@ func (pp *PairProcessor) createOrder(
 				return nil, err
 			}
 			for _, order := range orders {
-				if order.Symbol == pp.GetPair().GetPair() && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+				if order.Symbol == pp.pairInfo.Symbol && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
 					return &binance.CreateOrderResponse{
 						Symbol:                   order.Symbol,
 						OrderID:                  order.OrderID,
@@ -271,413 +241,79 @@ func (pp *PairProcessor) CreateOrder(
 	return pp.createOrder(orderType, sideType, timeInForce, quantity, quantityQty, price, stopPrice, trailingDelta, 3)
 }
 
-func (pp *PairProcessor) ProcessBuyOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
-	if !pp.buyProcessRun {
-		if pp.buyEvent == nil {
-			pp.buyEvent = triggerEvent
+func (pp *PairProcessor) UserDataEventStart(
+	callBack func(event *binance.WsUserDataEvent),
+	eventType ...binance.UserDataEventType) (resetEvent chan error, err error) {
+	// Ініціалізуємо стріми для відмірювання часу
+	ticker := time.NewTicker(pp.timeOut)
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
+	// Отримуємо ключ для прослуховування подій користувача
+	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
+	if err != nil {
+		return
+	}
+	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
+	resetEvent = make(chan error, 1)
+	// Ініціалізуємо обробник помилок
+	wsErrorHandler := func(err error) {
+		resetEvent <- err
+	}
+	// Ініціалізуємо обробник подій
+	eventMap := make(map[binance.UserDataEventType]bool)
+	for _, event := range eventType {
+		eventMap[event] = true
+	}
+	wsHandler := func(event *binance.WsUserDataEvent) {
+		if len(eventType) == 0 || eventMap[event.Event] {
+			callBack(event)
 		}
-		if pp.startBuyOrderEvent == nil {
-			pp.startBuyOrderEvent = make(chan *binance.CreateOrderResponse)
-		}
-		nextTriggerEvent = pp.startBuyOrderEvent
-		go func() {
-			var order *binance.CreateOrderResponse
-			for {
-				select {
-				case <-pp.stopBuy:
-					return
-				case <-pp.stop:
-					return
-				case params := <-pp.buyEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if params.Price == 0 || params.Quantity == 0 {
-						continue
-					}
-					baseBalance, err := GetBaseBalance(pp.account, pp.pair)
-					if err != nil {
-						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						close(pp.stop)
-						return
-					}
-					if baseBalance < params.Quantity*params.Price {
-						logrus.Warnf("We don't buy, we need %v of %s for buy %v of %s",
-							baseBalance, pp.pair.GetTargetSymbol(), params.Quantity*params.Price, pp.pair.GetTargetSymbol())
-						continue
-					}
-					if !pp.debug {
-						order, err = pp.CreateOrder(
-							binance.OrderTypeMarket,
-							binance.SideTypeBuy,
-							binance.TimeInForceTypeGTC,
-							params.Quantity,
-							0,
-							params.Price,
-							0,
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == binance.OrderStatusTypeNew {
-							nextTriggerEvent <- order
-						} else {
-							for _, fill := range order.Fills {
-								fillPrice := utils.ConvStrToFloat64(fill.Price)
-								fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-								pp.pair.CalcMiddlePrice()
-							}
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.buyProcessRun = true
-	} else {
-		nextTriggerEvent = pp.startBuyOrderEvent
 	}
-	return
-}
-
-func (pp *PairProcessor) ProcessSellOrder(triggerEvent chan *pair_price_types.PairPrice) (nextTriggerEvent chan *binance.CreateOrderResponse, err error) {
-	if !pp.sellProcessRun {
-		if pp.sellEvent == nil {
-			pp.sellEvent = triggerEvent
-		}
-		if pp.startSellOrderEvent == nil {
-			pp.startSellOrderEvent = make(chan *binance.CreateOrderResponse)
-		}
-		nextTriggerEvent = pp.startSellOrderEvent
-		go func() {
-			var order *binance.CreateOrderResponse
-			for {
-				select {
-				case <-pp.stopSell:
-					return
-				case <-pp.stop:
-					close(pp.stop)
-					return
-				case params := <-pp.sellEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if params.Price == 0 || params.Quantity == 0 {
-						continue
-					}
-					targetBalance, err := GetTargetBalance(pp.account, pp.pair)
-					if err != nil {
-						logrus.Errorf("Can't get %s asset: %v", pp.pair.GetBaseSymbol(), err)
-						close(pp.stop)
-						return
-					}
-					if targetBalance < params.Price*params.Quantity {
-						logrus.Warnf("We don't have enough %s to sell %s lots of %s",
-							pp.pair.GetPair(), pp.pair.GetBaseSymbol(), pp.pair.GetBaseSymbol())
-						continue
-					}
-					if !pp.debug {
-						order, err = pp.CreateOrder(
-							binance.OrderTypeMarket,
-							binance.SideTypeBuy,
-							binance.TimeInForceTypeGTC,
-							params.Quantity,
-							0,
-							params.Price,
-							0,
-							0)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == binance.OrderStatusTypeNew {
-							nextTriggerEvent <- order
-						} else {
-							for _, fill := range order.Fills {
-								fillPrice := utils.ConvStrToFloat64(fill.Price)
-								fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-								pp.pair.CalcMiddlePrice()
-							}
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.sellProcessRun = true
-	} else {
-		nextTriggerEvent = pp.startSellOrderEvent
+	// Запускаємо стрім подій користувача
+	var stopC chan struct{}
+	_, stopC, err = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+	if err != nil {
+		return
 	}
-	return
-}
-
-func (pp *PairProcessor) StopBuySignal() {
-	if pp.buyProcessRun {
-		pp.buyProcessRun = false
-		pp.stopBuy <- true
-	}
-}
-
-func (pp *PairProcessor) StopSellSignal() {
-	if pp.sellProcessRun {
-		pp.sellProcessRun = false
-		pp.stopSell <- true
-	}
-}
-
-func (pp *PairProcessor) ProcessBuyTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	if !pp.buyTakeProfitProcessRun {
-		if pp.startProcessBuyTakeProfitOrderEvent == nil {
-			pp.startProcessBuyTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		}
-		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
-		go func() {
-			for {
-				select {
-				case <-pp.stopBuyTakeProfitProcess:
-					return
-				case <-pp.stop:
-					close(pp.stop)
-					return
-				case params := <-pp.buyEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							binance.OrderTypeTakeProfit,
-							binance.SideTypeBuy,
-							binance.TimeInForceTypeGTC,
-							params.Quantity,
-							0, // We don't use quoteOrderQty
-							params.Price,
-							0, // We don't use stopPrice
-							trailingDelta)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), binance.SideTypeBuy, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == binance.OrderStatusTypeNew {
-							orderExecutionGuard := pp.OrderExecutionGuard(order)
-							<-orderExecutionGuard
-							nextTriggerEvent <- order
-						} else {
-							for _, fill := range order.Fills {
-								fillPrice := utils.ConvStrToFloat64(fill.Price)
-								fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-								pp.pair.CalcMiddlePrice()
-							}
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.buyTakeProfitProcessRun = true
-	} else {
-		nextTriggerEvent = pp.startProcessBuyTakeProfitOrderEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) ProcessSellTakeProfitOrder(trailingDelta int) (nextTriggerEvent chan *binance.CreateOrderResponse) {
-	if !pp.sellTakeProfitProcessRun {
-		if pp.startProcessSellTakeProfitOrderEvent == nil {
-			pp.startProcessSellTakeProfitOrderEvent = make(chan *binance.CreateOrderResponse)
-		}
-		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
-		go func() {
-			for {
-				select {
-				case <-pp.stopSellTakeProfitProcess:
-					return
-				case <-pp.stop:
-					close(pp.stop)
-					return
-				case params := <-pp.sellEvent:
-					if pp.minuteOrderLimit.Limit == 0 || pp.dayOrderLimit.Limit == 0 || pp.minuteRawRequestLimit.Limit == 0 {
-						logrus.Warn("Order limits has been out!!!, waiting for update...")
-						continue
-					}
-					if !pp.debug {
-						order, err := pp.CreateOrder(
-							binance.OrderTypeTakeProfit,
-							binance.SideTypeBuy,
-							binance.TimeInForceTypeGTC,
-							params.Quantity,
-							0, // We don't use quoteOrderQty
-							params.Price,
-							0, // We don't use stopPrice
-							trailingDelta)
-						if err != nil {
-							logrus.Errorf("Can't create order: %v", err)
-							logrus.Errorf("Order params: %v", params)
-							logrus.Errorf("Symbol: %s, Side: %s, Quantity: %f, Price: %f",
-								pp.pair.GetPair(), binance.SideTypeSell, params.Quantity, params.Price)
-							close(pp.stop)
-							return
-						}
-						pp.minuteOrderLimit.Limit++
-						pp.dayOrderLimit.Limit++
-						if order.Status == binance.OrderStatusTypeNew {
-							orderExecutionGuard := pp.OrderExecutionGuard(order)
-							<-orderExecutionGuard
-							nextTriggerEvent <- order
-						} else {
-							for _, fill := range order.Fills {
-								fillPrice := utils.ConvStrToFloat64(fill.Price)
-								fillQuantity := utils.ConvStrToFloat64(fill.Quantity)
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() + fillQuantity)
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() + fillQuantity*fillPrice)
-								pp.pair.CalcMiddlePrice()
-							}
-							pp.config.Save()
-						}
-					} else {
-						pp.pair.SetBuyQuantity(params.Quantity)
-						pp.pair.SetBuyValue(params.Quantity * params.Price)
-						pp.pair.CalcMiddlePrice()
-						pp.config.Save()
-					}
-				}
-				time.Sleep(pp.sleepingTime)
-			}
-		}()
-		pp.sellTakeProfitProcessRun = true
-	} else {
-		nextTriggerEvent = pp.startProcessSellTakeProfitOrderEvent
-	}
-	return
-}
-
-func (pp *PairProcessor) StopBuyTakeProfitSignal() {
-	if pp.buyTakeProfitProcessRun {
-		pp.buyTakeProfitProcessRun = false
-		pp.stopBuyTakeProfitProcess <- true
-	}
-}
-
-func (pp *PairProcessor) StopSellTakeProfitSignal() {
-	if pp.sellTakeProfitProcessRun {
-		pp.sellTakeProfitProcessRun = false
-		pp.stopSellTakeProfitProcess <- true
-	}
-}
-
-func (pp *PairProcessor) ProcessAfterBuyOrder(triggerEvent chan *binance.CreateOrderResponse) {
+	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
 			select {
-			case <-pp.stopBuy:
-				pp.stopBuy <- true
-				return
-			case <-pp.stopSell:
-				pp.stopSell <- true
-				return
-			case <-pp.stop:
-				close(pp.stop)
-				return
-			case order := <-triggerEvent:
-				if order != nil {
-					for {
-						orderEvent := <-pp.orderStatusEvent
-						logrus.Debug("Order status changed")
-						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-								pp.pair.SetBuyQuantity(pp.pair.GetBuyQuantity() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-								pp.pair.SetBuyValue(pp.pair.GetBuyValue() - utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-								pp.pair.CalcMiddlePrice()
-								pp.config.Save()
-								break
-							}
-						}
+			case <-resetEvent:
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
+				if err != nil {
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
 					}
+				}
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				// Запускаємо стрім подій користувача
+				_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
+			case <-ticker.C:
+				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
+				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
+				if err != nil {
+					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
+					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
+					if err != nil {
+						return
+					}
+				}
+				// Перевіряємо чи не вийшли за ліміт часу відповіді
+				if time.Since(lastResponse) > pp.timeOut {
+					// Зупиняємо стрім подій користувача
+					stopC <- struct{}{}
+					// Запускаємо стрім подій користувача
+					_, stopC, _ = binance.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 				}
 			}
 		}
 	}()
-}
-
-func (pp *PairProcessor) ProcessAfterSellOrder(triggerEvent chan *binance.CreateOrderResponse) {
-	go func() {
-		for {
-			select {
-			case <-pp.stopBuy:
-				pp.stopBuy <- true
-				return
-			case <-pp.stopSell:
-				pp.stopSell <- true
-				return
-			case <-pp.stop:
-				close(pp.stop)
-				return
-			case order := <-triggerEvent:
-				if order != nil {
-					for {
-						orderEvent := <-pp.orderStatusEvent
-						logrus.Debug("Order status changed")
-						if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-							if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-								orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-								pp.pair.SetSellQuantity(pp.pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-								pp.pair.SetSellValue(pp.pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-								pp.pair.CalcMiddlePrice()
-								pp.config.Save()
-								break
-							}
-						}
-					}
-				}
-			}
-		}
-	}()
+	return
 }
 
 func (pp *PairProcessor) LimitUpdaterStream() {
@@ -688,55 +324,13 @@ func (pp *PairProcessor) LimitUpdaterStream() {
 				pp.updateTime,
 					pp.minuteOrderLimit,
 					pp.dayOrderLimit,
-					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
+					pp.minuteRawRequestLimit = LimitRead(pp.degree, []string{pp.pairInfo.Symbol}, pp.client)
 			case <-pp.stop:
 				close(pp.stop)
 				return
 			}
 		}
 	}()
-}
-
-func (pp *PairProcessor) OrderExecutionGuard(order *binance.CreateOrderResponse) chan bool {
-	if !pp.orderExecutionGuardProcessRun {
-		if pp.orderExecuted == nil {
-			pp.orderExecuted = make(chan bool, 1)
-		}
-		go func() {
-			for {
-				select {
-				case <-pp.stopOrderExecutionGuardProcess:
-					return
-				case <-pp.stop:
-					close(pp.stop)
-					return
-				case orderEvent := <-pp.orderStatusEvent:
-					logrus.Debug("Order status changed")
-					if orderEvent.OrderUpdate.Id == order.OrderID || orderEvent.OrderUpdate.ClientOrderId == order.ClientOrderID {
-						if orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypeFilled) ||
-							orderEvent.OrderUpdate.Status == string(binance.OrderStatusTypePartiallyFilled) {
-							pp.pair.SetSellQuantity(pp.pair.GetSellQuantity() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume))
-							pp.pair.SetSellValue(pp.pair.GetSellValue() + utils.ConvStrToFloat64(orderEvent.OrderUpdate.Volume)*utils.ConvStrToFloat64(orderEvent.OrderUpdate.Price))
-							pp.pair.CalcMiddlePrice()
-							pp.pair.SetStage(pairs_types.PositionClosedStage)
-							pp.config.Save()
-							pp.orderExecuted <- true
-							return
-						}
-					}
-				}
-			}
-		}()
-		pp.orderExecutionGuardProcessRun = true
-	}
-	return pp.orderExecuted
-}
-
-func (pp *PairProcessor) StopOrderExecutionGuard() {
-	if pp.orderExecutionGuardProcessRun {
-		pp.orderExecutionGuardProcessRun = false
-		pp.stopOrderExecutionGuardProcess <- true
-	}
 }
 
 func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
@@ -753,82 +347,192 @@ func (pp *PairProcessor) CheckOrderType(orderType binance.OrderType) bool {
 }
 
 func (pp *PairProcessor) GetOpenOrders() (orders []*binance.Order, err error) {
-	return pp.client.NewListOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewListOpenOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetAllOrders() (orders []*binance.Order, err error) {
-	return pp.client.NewListOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewListOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetOrder(orderID int64) (order *binance.Order, err error) {
-	return pp.client.NewGetOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+	return pp.client.NewGetOrderService().Symbol(pp.pairInfo.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelOrder(orderID int64) (order *binance.CancelOrderResponse, err error) {
-	return pp.client.NewCancelOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+	return pp.client.NewCancelOrderService().Symbol(pp.pairInfo.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelAllOrders() (orders *binance.CancelOpenOrdersResponse, err error) {
-	return pp.client.NewCancelOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewCancelOpenOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
 
-func (pp *PairProcessor) GetUserDataEvent() chan *binance.WsUserDataEvent {
-	return pp.userDataEvent
+func (pp *PairProcessor) GetSymbol() *symbol_types.SpotSymbol {
+	return pp.pairInfo
 }
 
-func (pp *PairProcessor) GetOrderStatusEvent() chan *binance.WsUserDataEvent {
-	return pp.orderStatusEvent
+func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
+	price, err := pp.client.NewListPricesService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func (pp *PairProcessor) GetPair() *pairs_types.Pairs {
-	return pp.pair
+func (pp *PairProcessor) GetPair() string {
+	return pp.pairInfo.Symbol
 }
 
-func (pp *PairProcessor) Debug(fl string) {
+func (pp *PairProcessor) GetAccount() (account *binance.Account, err error) {
+	return pp.client.NewGetAccountService().Do(context.Background())
+}
+
+func (pp *PairProcessor) GetBaseAsset() (asset *binance.Balance, err error) {
+	account, err := pp.GetAccount()
+	if err != nil {
+		return
+	}
+	for _, asset := range account.Balances {
+		if asset.Asset == pp.baseSymbol {
+			return &asset, nil
+		}
+	}
+	return nil, fmt.Errorf("can't find asset %s", pp.baseSymbol)
+}
+
+func (pp *PairProcessor) GetTargetAsset() (asset *binance.Balance, err error) {
+	account, err := pp.GetAccount()
+	if err != nil {
+		return
+	}
+	for _, asset := range account.Balances {
+		if asset.Asset == pp.targetSymbol {
+			return &asset, nil
+		}
+	}
+	return nil, fmt.Errorf("can't find asset %s", pp.targetSymbol)
+}
+
+func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
+	asset, err := pp.GetTargetAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetFreeBalance() (balance float64) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return 0
+	}
+	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
+	if balance > pp.limitOnPosition {
+		balance = pp.limitOnPosition
+	}
+	return
+}
+
+func (pp *PairProcessor) GetLimitOnTransaction() (limit float64) {
+	return pp.limitOnTransaction * pp.GetFreeBalance()
+}
+
+func (pp *PairProcessor) GetUpBound() float64 {
+	return pp.UpBound
+}
+
+func (pp *PairProcessor) GetLowBound() float64 {
+	return pp.LowBound
+}
+
+func (pp *PairProcessor) GetCallbackRate() float64 {
+	return pp.callbackRate
+}
+
+func (pp *PairProcessor) SetCallbackRate(callbackRate float64) {
+	pp.callbackRate = callbackRate
+}
+
+func (pp *PairProcessor) GetDeltaPrice() float64 {
+	return pp.deltaPrice
+}
+
+func (pp *PairProcessor) SetDeltaPrice(deltaPrice float64) {
+	pp.deltaPrice = deltaPrice
+}
+
+func (pp *PairProcessor) GetDeltaQuantity() float64 {
+	return pp.deltaQuantity
+}
+
+func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
+	asset, err := pp.GetBaseAsset()
+	if err != nil {
+		return
+	}
+	balance = utils.ConvStrToFloat64(asset.Locked) // Convert string to float64
+	return
+}
+
+// Округлення ціни до StepSize знаків після коми
+func (pp *PairProcessor) getStepSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
+}
+
+// Округлення ціни до TickSize знаків після коми
+func (pp *PairProcessor) getTickSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
+}
+
+func (pp *PairProcessor) roundPrice(price float64) float64 {
+	return utils.RoundToDecimalPlace(price, pp.getTickSizeExp())
+}
+
+func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
+	return utils.RoundToDecimalPlace(quantity, pp.getStepSizeExp())
+}
+
+func (pp *PairProcessor) Debug(fl, id string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		orders, _ := pp.GetOpenOrders()
-		logrus.Debugf("%s: Open orders for %s", fl, pp.pair.GetPair())
+		logrus.Debugf("%s %s %s:", fl, id, pp.symbol.Symbol)
 		for _, order := range orders {
-			logrus.Debugf(" Order %v on price %v OrderSide %v", order.OrderID, order.Price, order.Side)
+			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}
 	}
 }
 
 func NewPairProcessor(
-	config *config_types.ConfigFile,
 	client *binance.Client,
-	pair *pairs_types.Pairs,
-	exchangeInfo *exchange_types.ExchangeInfo,
-	account *spot_account.Account,
-	userDataEvent chan *binance.WsUserDataEvent,
+	symbol string,
+	limitOnPosition float64,
+	limitOnTransaction float64,
+	UpBound float64,
+	LowBound float64,
+	deltaPrice float64,
+	deltaQuantity float64,
+	leverage int,
+	callbackRate float64,
 	stop chan struct{},
-	debug bool) (pp *PairProcessor, err error) {
+	debug bool,
+	functions ...Functions) (pp *PairProcessor, err error) {
+	exchangeInfo := exchange_types.New()
+	err = spot_exchange_info.Init(exchangeInfo, 3, client)
+	if err != nil {
+		return
+	}
 	pp = &PairProcessor{
-		config:       config,
 		client:       client,
-		pair:         pair,
 		exchangeInfo: exchangeInfo,
-		account:      account,
-
-		buyEvent:            nil,
-		buyProcessRun:       false,
-		stopBuy:             nil,
-		startBuyOrderEvent:  nil,
-		sellEvent:           nil,
-		sellProcessRun:      false,
-		startSellOrderEvent: nil,
-		stopSell:            nil,
-
-		buyTakeProfitProcessRun:  false,
-		sellTakeProfitProcessRun: false,
-
-		orderExecuted:                  nil,
-		stopOrderExecutionGuardProcess: nil,
-		orderExecutionGuardProcessRun:  false,
-
-		orderStatusEvent: nil,
-
-		userDataEvent: userDataEvent,
 
 		updateTime:            0,
 		minuteOrderLimit:      &exchange_types.RateLimits{},
@@ -850,11 +554,11 @@ func NewPairProcessor(
 		pp.minuteOrderLimit,
 		pp.dayOrderLimit,
 		pp.minuteRawRequestLimit =
-		LimitRead(degree, []string{pp.pair.GetPair()}, client)
+		LimitRead(degree, []string{symbol}, client)
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.SpotSymbol{Symbol: pair.GetPair()}).(*symbol_types.SpotSymbol)
+		&symbol_types.SpotSymbol{Symbol: symbol}).(*symbol_types.SpotSymbol)
 
 	// Ініціалізуємо типи ордерів які можна використовувати для пари
 	pp.orderTypes = make(map[string]bool, 0)
@@ -862,12 +566,39 @@ func NewPairProcessor(
 		pp.orderTypes[orderType] = true
 	}
 
-	// Ініціалізуємо стріми для оновлення лімітів на ордери та запити
-	pp.LimitUpdaterStream()
+	// Буферизуємо інформацію про символ
+	pp.symbol, err = pp.GetSymbol().GetFuturesSymbol()
+	if err != nil {
+		return
+	}
+	pp.baseSymbol = pp.symbol.QuoteAsset
+	pp.targetSymbol = pp.symbol.BaseAsset
+	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
+	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
 
-	// Визначаємо статуси ордерів які нас цікавлять ...
-	// ... запускаємо стрім для відслідковування зміни статусу ордерів які нас цікавлять
-	pp.orderStatusEvent = spot_handlers.GetChangingOfOrdersGuard(pp.userDataEvent, binance.OrderStatusTypeFilled, binance.OrderStatusTypePartiallyFilled)
+	if functions != nil {
+		pp.testUp = functions[0].TestUp
+		pp.testDown = functions[0].TestDown
+		pp.nextPriceUp = functions[0].NextPriceUp
+		pp.nextPriceDown = functions[0].NextPriceDown
+		pp.nextQuantityUp = functions[0].NextQuantityUp
+		pp.nextQuantityDown = functions[0].NextQuantityDown
+	} else {
+		pp.testUp = func(s, e float64) bool { return s < e }
+		pp.testDown = func(s, e float64) bool { return s > e }
+		pp.nextPriceUp = func(s float64, n int) float64 {
+			return pp.roundPrice(s * math.Pow(1+deltaPrice, float64(2)))
+		}
+		pp.nextPriceDown = func(s float64, n int) float64 {
+			return pp.roundPrice(s * math.Pow(1-deltaPrice, float64(2)))
+		}
+		pp.nextQuantityUp = func(s float64, n int) float64 {
+			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
+		}
+		pp.nextQuantityDown = func(s float64, n int) float64 {
+			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
+		}
+	}
 
 	return
 }

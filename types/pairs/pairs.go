@@ -1,14 +1,9 @@
 package pairs
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/adshao/go-binance/v2"
-
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
-
-	"github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/google/btree"
 )
@@ -66,18 +61,13 @@ type (
 		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
 		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
 
-		Pair         string `json:"symbol"`        // Пара
-		TargetSymbol string `json:"target_symbol"` // Цільовий токен
-		BaseSymbol   string `json:"base_symbol"`   // Базовий токен
+		Pair string `json:"symbol"` // Пара
+		// TargetSymbol string `json:"target_symbol"` // Цільовий токен
+		// BaseSymbol   string `json:"base_symbol"`   // Базовий токен
 
 		// Для USDT_FUTURE/COIN_FUTURE
 		MarginType MarginType `json:"margin_type"` // Тип маржі
 		Leverage   int        `json:"leverage"`    // Маржинальне плече
-
-		InitialBalance float64 `json:"initial_balance"` // Початковий баланс
-		CurrentBalance float64 `json:"current_balance"` // Поточний баланс
-
-		MiddlePrice float64 `json:"middle_price"` // Середня ціна купівлі по позиції
 
 		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
 		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
@@ -100,20 +90,14 @@ type (
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
 
-		BuyDelta          float64 `json:"buy_delta"`           // Дельта для купівлі
-		BuyDeltaQuantity  float64 `json:"buy_delta_quantity"`  // Кількість для купівлі
-		BuyQuantity       float64 `json:"buy_quantity"`        // Кількість для купівлі, суммарно по позиції
-		BuyValue          float64 `json:"buy_value"`           // Вартість для купівлі, суммарно по позиції
-		BuyCommission     float64 `json:"buy_commission"`      // Комісія за купівлю
-		SellDelta         float64 `json:"sell_delta"`          // Дельта для продажу, суммарно по позиції
-		SellDeltaQuantity float64 `json:"sell_delta_quantity"` // Кількість для продажу
-		SellQuantity      float64 `json:"sell_quantity"`       // Кількість для продажу, суммарно по позиції
-		SellValue         float64 `json:"sell_value"`          // Вартість для продажу, суммарно по позиції
-		SellCommission    float64 `json:"sell_commission"`     // Комісія за продаж
+		DeltaPrice    float64 `json:"delta_price"`    // Дельта для купівлі/продажу
+		DeltaQuantity float64 `json:"delta_quantity"` // Кількість для купівлі/продажу
+		BuyQuantity   float64 `json:"buy_quantity"`   // Кількість для купівлі, суммарно по позиції
+		BuyValue      float64 `json:"buy_value"`      // Вартість для купівлі, суммарно по позиції
+		SellQuantity  float64 `json:"sell_quantity"`  // Кількість для продажу, суммарно по позиції
+		SellValue     float64 `json:"sell_value"`     // Вартість для продажу, суммарно по позиції
 
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
-
-		Commission map[string]float64 `json:"commission"` // Комісія
 	}
 )
 
@@ -139,36 +123,6 @@ func (pr *Pairs) Equals(item btree.Item) bool {
 		pr.StrategyType == other.StrategyType &&
 		pr.StageType == other.StageType &&
 		pr.Pair == other.Pair
-}
-
-// GetInitialBalance implements Pairs.
-func (pr *Pairs) GetInitialBalance() float64 {
-	return pr.InitialBalance
-}
-
-// SetInitialBalance implements Pairs.
-func (pr *Pairs) SetInitialBalance(balance float64) {
-	pr.InitialBalance = balance
-}
-
-// GetCurrentBalance implements Pairs.
-func (pr *Pairs) GetCurrentBalance() float64 {
-	return pr.CurrentBalance
-}
-
-// SetCurrentBalance implements Pairs.
-func (pr *Pairs) SetCurrentBalance(balance float64) {
-	pr.CurrentBalance = balance
-}
-
-// GetInitialPositionBalance implements Pairs.
-func (pr *Pairs) GetInitialPositionBalance() float64 {
-	return pr.InitialBalance * pr.LimitOnPosition
-}
-
-// GetCurrentPositionBalance implements Pairs.
-func (pr *Pairs) GetCurrentPositionBalance() float64 {
-	return pr.CurrentBalance * pr.LimitOnPosition
 }
 
 // Get AccountType implements Pairs.
@@ -199,16 +153,6 @@ func (pr *Pairs) SetStage(stage StageType) {
 // GetSymbol implements Pairs.
 func (pr *Pairs) GetPair() string {
 	return pr.Pair
-}
-
-// GetTargetSymbol implements config.Configuration.
-func (pr *Pairs) GetTargetSymbol() string {
-	return pr.TargetSymbol
-}
-
-// GetBaseSymbol implements config.Configuration.
-func (pr *Pairs) GetBaseSymbol() string {
-	return pr.BaseSymbol
 }
 
 // GetMarginType implements Pairs.
@@ -263,20 +207,12 @@ func (pr *Pairs) GetLowBound() float64 {
 	return pr.LowBound
 }
 
-func (pr *Pairs) GetBuyDelta() float64 {
-	return pr.BuyDelta
+func (pr *Pairs) GetDeltaPrice() float64 {
+	return pr.DeltaPrice
 }
 
-func (pr *Pairs) GetSellDelta() float64 {
-	return pr.SellDelta
-}
-
-func (pr *Pairs) GetBuyDeltaQuantity() float64 {
-	return pr.BuyDeltaQuantity
-}
-
-func (pr *Pairs) GetSellDeltaQuantity() float64 {
-	return pr.SellDeltaQuantity
+func (pr *Pairs) GetDeltaQuantity() float64 {
+	return pr.DeltaQuantity
 }
 
 func (pr *Pairs) GetBuyQuantity() float64 {
@@ -319,20 +255,12 @@ func (pr *Pairs) SetLowBound(val float64) {
 	pr.LowBound = val
 }
 
-func (pr *Pairs) SetBuyDelta(val float64) {
-	pr.BuyDelta = val
+func (pr *Pairs) SetDeltaPrice(val float64) {
+	pr.DeltaPrice = val
 }
 
-func (pr *Pairs) SetSellDelta(val float64) {
-	pr.SellDelta = val
-}
-
-func (pr *Pairs) SetBuyDeltaQuantity(quantity float64) {
-	pr.BuyDeltaQuantity = quantity
-}
-
-func (pr *Pairs) SetSellDeltaQuantity(quantity float64) {
-	pr.SellDeltaQuantity = quantity
+func (pr *Pairs) SetDeltaQuantity(quantity float64) {
+	pr.DeltaQuantity = quantity
 }
 
 func (pr *Pairs) SetBuyQuantity(quantity float64) {
@@ -351,44 +279,14 @@ func (pr *Pairs) SetSellValue(value float64) {
 	pr.SellValue = value
 }
 
-func (pr *Pairs) GetBuyCommission() float64 {
-	return pr.BuyCommission
-}
-
-func (pr *Pairs) SetBuyCommission(commission float64) {
-	pr.BuyCommission = commission
-}
-
-func (pr *Pairs) GetSellCommission() float64 {
-	return pr.SellCommission
-}
-
-func (pr *Pairs) SetSellCommission(commission float64) {
-	pr.SellCommission = commission
-}
-
-func (pr *Pairs) SetBuyData(quantity, value, commission float64) {
+func (pr *Pairs) SetBuyData(quantity, value float64) {
 	pr.BuyQuantity = quantity
 	pr.BuyValue = value
-	pr.BuyCommission = commission
 }
 
-func (pr *Pairs) SetSellData(quantity, value, commission float64) {
+func (pr *Pairs) SetSellData(quantity, value float64) {
 	pr.SellQuantity = quantity
 	pr.SellValue = value
-	pr.SellCommission = commission
-}
-
-func (pr *Pairs) AddCommission(commission *binance.Fill) {
-	pr.Commission[commission.CommissionAsset] += float64(utils.ConvStrToFloat64(commission.Commission))
-}
-
-func (pr *Pairs) GetCommission() Commission {
-	return pr.Commission
-}
-
-func (pr *Pairs) SetCommission(commission Commission) {
-	pr.Commission = commission
 }
 
 func (pr *Pairs) GetCallbackRate() float64 {
@@ -399,21 +297,12 @@ func (pr *Pairs) SetCallbackRate(rate float64) {
 	pr.CallbackRate = rate
 }
 
-func (pr *Pairs) CalcMiddlePrice() error {
+func (pr *Pairs) GetMiddlePrice() float64 {
 	if pr.BuyQuantity == pr.SellQuantity {
-		return fmt.Errorf("BuyQuantity: %f and SellQuantity %f, can't calculate middle price", pr.BuyQuantity, pr.SellQuantity)
+		return 0
 	}
 
-	pr.MiddlePrice = (pr.BuyValue - pr.SellValue) / (pr.BuyQuantity - pr.SellQuantity)
-	return nil
-}
-
-func (pr *Pairs) GetMiddlePrice() float64 {
-	return pr.MiddlePrice
-}
-
-func (pr *Pairs) SetMiddlePrice(price float64) {
-	pr.MiddlePrice = price
+	return (pr.BuyValue - pr.SellValue) / (pr.BuyQuantity - pr.SellQuantity)
 }
 
 func (pr *Pairs) GetProfit(currentPrice float64) float64 {
@@ -421,7 +310,7 @@ func (pr *Pairs) GetProfit(currentPrice float64) float64 {
 }
 
 func (pr *Pairs) CheckingPair() bool {
-	return pr.MiddlePrice != 0 &&
+	return pr.GetMiddlePrice() != 0 &&
 		pr.LimitInputIntoPosition != 0 &&
 		pr.LimitOutputOfPosition != 0 &&
 		pr.LimitInputIntoPosition < pr.LimitOutputOfPosition &&
@@ -438,31 +327,22 @@ func New(
 	baseSymbol string,
 ) *Pairs {
 	return &Pairs{
-		InitialBalance:           0.0,
-		CurrentBalance:           0.0,
 		AccountType:              accountType,
 		StrategyType:             strategyType,
 		StageType:                stageType,
 		Pair:                     pair,
-		TargetSymbol:             targetSymbol,
-		BaseSymbol:               baseSymbol,
 		LimitInputIntoPosition:   0.1,  // 10%
 		LimitOutputOfPosition:    0.5,  // 50%
 		LimitOnPosition:          1.0,  // 100%
 		LimitOnTransaction:       0.01, // 1%
 		UnRealizedProfitLowBound: 0.1,  // 10%
 		UnRealizedProfitUpBound:  1,    // 100%
-		BuyDelta:                 0.01, // 1%
-		BuyDeltaQuantity:         0.1,  // 10%
+		DeltaPrice:               0.01, // 1%
+		DeltaQuantity:            0.1,  // 10%
 		BuyQuantity:              0.0,
 		BuyValue:                 0.0,
-		BuyCommission:            0.0,
-		SellDelta:                0.05, // 5%
-		SellDeltaQuantity:        0.1,  // 10%
 		SellQuantity:             0.0,
 		SellValue:                0.0,
-		SellCommission:           0.0,
 		CallbackRate:             0.1, // 0.1%
-		Commission:               Commission{},
 	}
 }

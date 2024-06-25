@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
-	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -39,9 +37,10 @@ type (
 
 	PairProcessor struct {
 		client        *futures.Client
-		pair          *pairs_types.Pairs
 		exchangeInfo  *exchange_types.ExchangeInfo
 		symbol        *futures.Symbol
+		baseSymbol    string
+		targetSymbol  string
 		notional      float64
 		stepSizeDelta float64
 		up            *btree.BTree
@@ -54,11 +53,20 @@ type (
 
 		stop chan struct{}
 
-		pairInfo     *symbol_types.FuturesSymbol
-		orderTypes   map[futures.OrderType]bool
-		degree       int
-		sleepingTime time.Duration
-		timeOut      time.Duration
+		pairInfo           *symbol_types.FuturesSymbol
+		orderTypes         map[futures.OrderType]bool
+		degree             int
+		sleepingTime       time.Duration
+		timeOut            time.Duration
+		limitOnPosition    float64
+		limitOnTransaction float64
+		UpBound            float64
+		LowBound           float64
+		leverage           int
+		callbackRate       float64
+
+		deltaPrice    float64
+		deltaQuantity float64
 
 		testUp           testFunc
 		testDown         testFunc
@@ -127,23 +135,23 @@ func (pp *PairProcessor) createOrder(
 		}
 		return
 	}
-	symbol, err := (*pp.pairInfo).GetFuturesSymbol()
+	pp.symbol, err = (*pp.pairInfo).GetFuturesSymbol()
 	if err != nil {
 		log.Printf(errorMsg, err)
 		return
 	}
 	if _, ok := pp.orderTypes[orderType]; !ok && len(pp.orderTypes) != 0 {
-		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pair.GetPair())
+		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.symbol.Symbol)
 		return
 	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))
+		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))
 	)
 	service :=
 		pp.client.NewCreateOrderService().
 			NewOrderResponseType(futures.NewOrderRespTypeRESULT).
-			Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
+			Symbol(string(futures.SymbolType(pp.symbol.Symbol))).
 			Type(orderType).
 			Side(sideType)
 	// Additional mandatory parameters based on type:
@@ -194,7 +202,7 @@ func (pp *PairProcessor) createOrder(
 				return nil, err
 			}
 			for _, order := range orders {
-				if order.Symbol == pp.GetPair().GetPair() &&
+				if order.Symbol == pp.symbol.Symbol &&
 					order.Side == sideType &&
 					order.Price == utils.ConvFloat64ToStr(price, priceRound) {
 					return &futures.CreateOrderResponse{
@@ -255,92 +263,25 @@ func (pp *PairProcessor) CreateOrder(
 	return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, 3)
 }
 
-func (pp *PairProcessor) ClosePosition(side futures.SideType, price float64, exp int) (res *futures.CreateOrderResponse, err error) {
-	return pp.client.NewCreateOrderService().
-		Symbol(string(futures.SymbolType(pp.pair.GetPair()))).
-		Type(futures.OrderTypeMarket).
-		Side(side).
-		Price(utils.ConvFloat64ToStr(price, exp)).
-		StopPrice(utils.ConvFloat64ToStr(price, exp)).
-		ClosePosition(true).
-		Do(context.Background())
-}
-
-func (pp *PairProcessor) LimitUpdaterStream() {
-	var err error
-	go func() {
-		for {
-			select {
-			case <-time.After(pp.updateTime):
-				pp.updateTime,
-					pp.minuteOrderLimit,
-					pp.dayOrderLimit,
-					pp.minuteRawRequestLimit,
-					err = LimitRead(pp.degree, []string{pp.pair.GetPair()}, pp.client)
-				if err != nil {
-					logrus.Errorf("Can't update limits: %v", err)
-					close(pp.stop)
-					return
-				}
-			case <-pp.stop:
-				return
-			}
-		}
-	}()
-
-	// Перевіряємо чи не вийшли за ліміти на запити та ордери
-	go func() {
-		for {
-			select {
-			case <-pp.stop:
-				return
-			default:
-			}
-			time.Sleep(pp.updateTime)
-		}
-	}()
-}
-
-func (pp *PairProcessor) SetSleepingTime(sleepingTime time.Duration) {
-	pp.sleepingTime = sleepingTime
-}
-
-func (pp *PairProcessor) SetTimeOut(timeOut time.Duration) {
-	pp.timeOut = timeOut
-}
-
-func (pp *PairProcessor) CheckOrderType(orderType futures.OrderType) bool {
-	_, ok := pp.orderTypes[orderType]
-	return ok
-}
-
 func (pp *PairProcessor) GetOpenOrders() (orders []*futures.Order, err error) {
-	return pp.client.NewListOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewListOpenOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetAllOrders() (orders []*futures.Order, err error) {
-	return pp.client.NewListOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewListOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetOrder(orderID int64) (order *futures.Order, err error) {
-	return pp.client.NewGetOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+	return pp.client.NewGetOrderService().Symbol(pp.symbol.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelOrder(orderID int64) (order *futures.CancelOrderResponse, err error) {
-	return pp.client.NewCancelOrderService().Symbol(pp.pair.GetPair()).OrderID(orderID).Do(context.Background())
+	return pp.client.NewCancelOrderService().Symbol(pp.symbol.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelAllOrders() (err error) {
-	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.pair.GetPair()).Do(context.Background())
+	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
 }
-
-// func (pp *PairProcessor) GetUserDataEvent() chan *futures.WsUserDataEvent {
-// 	return pp.userDataEvent
-// }
-
-// func (pp *PairProcessor) GetOrderStatusEvent() chan *futures.WsUserDataEvent {
-// 	return pp.orderStatusEvent
-// }
 
 func (pp *PairProcessor) getPositionRisk(times int) (risks []*futures.PositionRisk, err error) {
 	if times == 0 {
@@ -362,20 +303,43 @@ func (pp *PairProcessor) GetPositionRisk() (risks *futures.PositionRisk, err err
 	if err != nil {
 		return nil, err
 	} else if len(risk) == 0 {
-		return nil, fmt.Errorf("can't get position risk for symbol %s", pp.pair.GetPair())
+		return nil, fmt.Errorf("can't get position risk for symbol %s", pp.symbol.Symbol)
 	} else {
 		return risk[0], nil
 	}
 }
 
-func (pp *PairProcessor) GetLeverage() int {
+func (pp *PairProcessor) GetLiquidationDistance(price float64) (distance float64) {
 	risk, _ := pp.GetPositionRisk()
-	leverage, _ := strconv.Atoi(risk.Leverage) // Convert string to int
-	return leverage
+	return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+}
+
+func (pp *PairProcessor) GetLeverage() int {
+	return pp.leverage
 }
 
 func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage, err error) {
-	return pp.client.NewChangeLeverageService().Symbol(pp.pair.GetPair()).Leverage(leverage).Do(context.Background())
+	return pp.client.NewChangeLeverageService().Symbol(pp.symbol.Symbol).Leverage(leverage).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetCallbackRate() float64 {
+	return pp.callbackRate
+}
+
+func (pp *PairProcessor) SetCallbackRate(callbackRate float64) {
+	pp.callbackRate = callbackRate
+}
+
+func (pp *PairProcessor) GetDeltaPrice() float64 {
+	return pp.deltaPrice
+}
+
+func (pp *PairProcessor) SetDeltaPrice(deltaPrice float64) {
+	pp.deltaPrice = deltaPrice
+}
+
+func (pp *PairProcessor) GetDeltaQuantity() float64 {
+	return pp.deltaQuantity
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"
@@ -390,7 +354,7 @@ func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
 func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err error) {
 	return pp.client.
 		NewChangeMarginTypeService().
-		Symbol(pp.pair.GetPair()).
+		Symbol(pp.symbol.Symbol).
 		MarginType(futures.MarginType(marginType)).
 		Do(context.Background())
 }
@@ -406,23 +370,21 @@ func (pp *PairProcessor) GetPositionMargin() (margin float64) {
 
 func (pp *PairProcessor) SetPositionMargin(amountMargin float64, typeMargin int) (err error) {
 	return pp.client.NewUpdatePositionMarginService().
-		Symbol(pp.pair.GetPair()).Type(typeMargin).
+		Symbol(pp.symbol.Symbol).Type(typeMargin).
 		Amount(utils.ConvFloat64ToStrDefault(amountMargin)).Do(context.Background())
-}
-
-func (pp *PairProcessor) GetPair() *pairs_types.Pairs {
-	return pp.pair
 }
 
 func (pp *PairProcessor) GetSymbol() *symbol_types.FuturesSymbol {
 	// Ініціалізуємо інформацію про пару
-	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.FuturesSymbol{Symbol: pp.pair.GetPair()}).(*symbol_types.FuturesSymbol)
 	return pp.pairInfo
 }
 
 func (pp *PairProcessor) GetAccount() (account *futures.Account, err error) {
 	return pp.client.NewGetAccountService().Do(context.Background())
+}
+
+func (pp *PairProcessor) GetPair() string {
+	return pp.symbol.Symbol
 }
 
 func (pp *PairProcessor) GetBaseAsset() (asset *futures.AccountAsset, err error) {
@@ -431,11 +393,11 @@ func (pp *PairProcessor) GetBaseAsset() (asset *futures.AccountAsset, err error)
 		return
 	}
 	for _, asset := range account.Assets {
-		if asset.Asset == pp.pair.GetBaseSymbol() {
+		if asset.Asset == pp.baseSymbol {
 			return asset, nil
 		}
 	}
-	return nil, fmt.Errorf("can't find asset %s", pp.pair.GetBaseSymbol())
+	return nil, fmt.Errorf("can't find asset %s", pp.baseSymbol)
 }
 
 func (pp *PairProcessor) GetTargetAsset() (asset *futures.AccountAsset, err error) {
@@ -444,11 +406,11 @@ func (pp *PairProcessor) GetTargetAsset() (asset *futures.AccountAsset, err erro
 		return
 	}
 	for _, asset := range account.Assets {
-		if asset.Asset == pp.pair.GetTargetSymbol() {
+		if asset.Asset == pp.targetSymbol {
 			return asset, nil
 		}
 	}
-	return nil, fmt.Errorf("can't find asset %s", pp.pair.GetTargetSymbol())
+	return nil, fmt.Errorf("can't find asset %s", pp.targetSymbol)
 }
 
 func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
@@ -469,13 +431,28 @@ func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
 	return
 }
 
-func (pp *PairProcessor) GetFreeBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetFreeBalance() (balance float64) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
-		return
+		return 0
 	}
 	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	if balance > pp.limitOnPosition {
+		balance = pp.limitOnPosition
+	}
 	return
+}
+
+func (pp *PairProcessor) GetLimitOnTransaction() (limit float64) {
+	return pp.limitOnTransaction * pp.GetFreeBalance()
+}
+
+func (pp *PairProcessor) GetUpBound() float64 {
+	return pp.UpBound
+}
+
+func (pp *PairProcessor) GetLowBound() float64 {
+	return pp.LowBound
 }
 
 func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
@@ -490,7 +467,7 @@ func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
 func (pp *PairProcessor) Debug(fl, id string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		orders, _ := pp.GetOpenOrders()
-		logrus.Debugf("%s %s %s:", fl, id, pp.pair.GetPair())
+		logrus.Debugf("%s %s %s:", fl, id, pp.symbol.Symbol)
 		for _, order := range orders {
 			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}
@@ -588,6 +565,7 @@ func (pp *PairProcessor) roundPrice(price float64) float64 {
 func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
 	return utils.RoundToDecimalPlace(quantity, pp.getStepSizeExp())
 }
+
 func (pp *PairProcessor) Steps(begin, end float64, next func(b float64, n int) float64) int {
 	var test func(float64, float64) bool
 	n := 1
@@ -600,14 +578,6 @@ func (pp *PairProcessor) Steps(begin, end float64, next func(b float64, n int) f
 		n++
 	}
 	return n - 1
-}
-
-func (pp *PairProcessor) GetPriceDelta(price float64, n int) float64 {
-	return pp.roundPrice(price * (math.Pow(1+pp.pair.GetSellDelta(), float64(n))))
-}
-
-func (pp *PairProcessor) GetQuantityDelta(quantity float64, n int) float64 {
-	return pp.roundQuantity(quantity * (math.Pow(1+pp.pair.GetSellDeltaQuantity(), float64(n))))
 }
 
 func (pp *PairProcessor) TotalValue(
@@ -665,9 +635,7 @@ func (pp *PairProcessor) TotalValue(
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
-	endPrice,
-	priceDeltaPercent,
-	quantityDeltaPercent float64) (value, price, quantity float64, n int, err error) {
+	endPrice float64) (value, price, quantity float64, n int, err error) {
 	var (
 		test         testFunc
 		nextPrice    nextPriceFunc
@@ -689,13 +657,13 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		tree = pp.down
 	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
-	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
+	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
 	for testQ = high; testQ >= low; testQ -= pp.stepSizeDelta {
 		value, _, price, quantity, n, err = pp.TotalValue(
 			buyPrice,
 			pp.roundQuantity(testQ),
 			endPrice,
-			pp.pair.GetCurrentPositionBalance()*float64(pp.pair.GetLeverage()),
+			pp.GetFreeBalance()*float64(pp.GetLeverage()),
 			minN,
 			test,
 			nextPrice,
@@ -729,18 +697,14 @@ func (pp *PairProcessor) InitPositionGrid(
 	_, priceUp, quantityUp, _, err = pp.CalculateInitialPosition(
 		minN,
 		price,
-		pp.pair.GetUpBound(),
-		pp.pair.GetSellDelta(),
-		pp.pair.GetBuyDeltaQuantity())
+		pp.UpBound)
 	if err != nil {
 		return
 	}
 	_, priceDown, quantityDown, _, err = pp.CalculateInitialPosition(
 		minN,
 		price,
-		pp.pair.GetLowBound(),
-		pp.pair.GetSellDelta(),
-		pp.pair.GetBuyDeltaQuantity())
+		pp.LowBound)
 	if err != nil {
 		return
 	}
@@ -788,23 +752,57 @@ func (pp *PairProcessor) NextDown(currentPrice, currentQuantity float64) (price,
 	}
 }
 
+func (pp *PairProcessor) LimitRead() (
+	updateTime time.Duration,
+	minuteOrderLimit *exchange_types.RateLimits,
+	dayOrderLimit *exchange_types.RateLimits,
+	minuteRawRequestLimit *exchange_types.RateLimits,
+	err error) {
+	exchangeInfo := exchange_types.New()
+	futures_exchange_info.RestrictedInit(exchangeInfo, degree, []string{pp.symbol.Symbol}, pp.client)
+
+	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
+	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
+	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
+	if minuteRawRequestLimit == nil {
+		err = fmt.Errorf("minute raw request limit is not found")
+		return
+	}
+	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
+	return
+}
+
+func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
+	price, err := pp.client.NewListPricesService().Symbol(pp.symbol.Symbol).Do(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return utils.ConvStrToFloat64(price[0].Price), nil
+}
+
 func NewPairProcessor(
-	config *config_types.ConfigFile,
 	client *futures.Client,
-	pair *pairs_types.Pairs,
+	symbol string,
+	limitOnPosition float64,
+	limitOnTransaction float64,
+	UpBound float64,
+	LowBound float64,
+	deltaPrice float64,
+	deltaQuantity float64,
+	leverage int,
+	callbackRate float64,
 	stop chan struct{},
 	functions ...Functions) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
-
 	if err != nil {
 		return
 	}
 	pp = &PairProcessor{
 		client:        client,
-		pair:          pair,
 		exchangeInfo:  exchangeInfo,
 		symbol:        nil,
+		baseSymbol:    "",
 		notional:      0,
 		stepSizeDelta: 0,
 		up:            btree.New(2),
@@ -817,11 +815,20 @@ func NewPairProcessor(
 
 		stop: stop,
 
-		pairInfo:     nil,
-		orderTypes:   nil,
-		degree:       3,
-		sleepingTime: 1 * time.Second,
-		timeOut:      1 * time.Hour,
+		pairInfo:           nil,
+		orderTypes:         nil,
+		degree:             3,
+		sleepingTime:       1 * time.Second,
+		timeOut:            1 * time.Hour,
+		limitOnPosition:    limitOnPosition,
+		limitOnTransaction: limitOnTransaction,
+		UpBound:            UpBound,
+		LowBound:           LowBound,
+		leverage:           leverage,
+		callbackRate:       callbackRate,
+
+		deltaPrice:    deltaPrice,
+		deltaQuantity: deltaQuantity,
 
 		testUp:           nil,
 		testDown:         nil,
@@ -836,7 +843,7 @@ func NewPairProcessor(
 		pp.dayOrderLimit,
 		pp.minuteRawRequestLimit,
 		err =
-		LimitRead(pp.degree, []string{pp.pair.GetPair()}, client)
+		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
 	if err != nil {
 		return
 	}
@@ -852,17 +859,27 @@ func NewPairProcessor(
 		pp.testUp = func(s, e float64) bool { return s < e }
 		pp.testDown = func(s, e float64) bool { return s > e }
 		pp.nextPriceUp = func(s float64, n int) float64 {
-			return pp.roundPrice(s * math.Pow(1+pp.pair.GetSellDelta(), float64(2)))
+			return pp.roundPrice(s * math.Pow(1+deltaPrice, float64(2)))
 		}
 		pp.nextPriceDown = func(s float64, n int) float64 {
-			return pp.roundPrice(s * math.Pow(1-pp.pair.GetBuyDelta(), float64(2)))
+			return pp.roundPrice(s * math.Pow(1-deltaPrice, float64(2)))
 		}
 		pp.nextQuantityUp = func(s float64, n int) float64 {
-			return pp.roundQuantity(s * (math.Pow(1+pp.pair.GetSellDeltaQuantity(), float64(2))))
+			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
 		}
 		pp.nextQuantityDown = func(s float64, n int) float64 {
-			return pp.roundQuantity(s * (math.Pow(1+pp.pair.GetBuyDeltaQuantity(), float64(2))))
+			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
 		}
+	}
+
+	// Ініціалізуємо інформацію про пару
+	pp.pairInfo = pp.exchangeInfo.GetSymbol(
+		&symbol_types.FuturesSymbol{Symbol: symbol}).(*symbol_types.FuturesSymbol)
+
+	// Ініціалізуємо типи ордерів
+	pp.orderTypes = make(map[futures.OrderType]bool, 0)
+	for _, orderType := range pp.pairInfo.OrderType {
+		pp.orderTypes[orderType] = true
 	}
 
 	// Буферизуємо інформацію про символ
@@ -870,18 +887,10 @@ func NewPairProcessor(
 	if err != nil {
 		return
 	}
+	pp.baseSymbol = pp.symbol.QuoteAsset
+	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
-
-	// Ініціалізуємо інформацію про пару
-	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.FuturesSymbol{Symbol: pair.GetPair()}).(*symbol_types.FuturesSymbol)
-
-	// Ініціалізуємо типи ордерів
-	pp.orderTypes = make(map[futures.OrderType]bool, 0)
-	for _, orderType := range pp.pairInfo.OrderType {
-		pp.orderTypes[orderType] = true
-	}
 
 	return
 }

@@ -4,11 +4,9 @@ import "encoding/json"
 
 type (
 	Connection struct {
-		APIKey          string  `json:"api_key"`
-		APISecret       string  `json:"api_secret"`
-		UseTestNet      bool    `json:"use_test_net"`
-		CommissionMaker float64 `json:"commission_maker"`
-		CommissionTaker float64 `json:"commission_taker"`
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
 	}
 )
 
@@ -42,49 +40,23 @@ func (cf *Connection) SetUseTestNet(useTestNet bool) {
 	cf.UseTestNet = useTestNet
 }
 
-// Implement the GetCommissionMaker method
-func (cf *Connection) GetCommissionMaker() float64 {
-	return cf.CommissionMaker
-}
-
-// Implement the SetCommissionMaker method
-func (cf *Connection) SetCommissionMaker(commission float64) {
-	cf.CommissionMaker = commission
-}
-
-// Implement the GetCommissionTaker method
-func (cf *Connection) GetCommissionTaker() float64 {
-	return cf.CommissionTaker
-}
-
-// Implement the SetCommissionTaker method
-func (cf *Connection) SetCommissionTaker(commission float64) {
-	cf.CommissionTaker = commission
-}
-
 func (cf *Connection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		APIKey          string  `json:"api_key"`
-		APISecret       string  `json:"api_secret"`
-		UseTestNet      bool    `json:"use_test_net"`
-		CommissionMaker float64 `json:"commission_maker"`
-		CommissionTaker float64 `json:"commission_taker"`
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
 	}{
-		APIKey:          cf.APIKey,
-		APISecret:       cf.APISecret,
-		UseTestNet:      cf.UseTestNet,
-		CommissionMaker: cf.CommissionMaker,
-		CommissionTaker: cf.CommissionTaker,
+		APIKey:     cf.APIKey,
+		APISecret:  cf.APISecret,
+		UseTestNet: cf.UseTestNet,
 	})
 }
 
 func (cf *Connection) UnmarshalJSON(data []byte) error {
 	temp := &struct {
-		APIKey          string  `json:"api_key"`
-		APISecret       string  `json:"api_secret"`
-		UseTestNet      bool    `json:"use_test_net"`
-		CommissionMaker float64 `json:"commission_maker"`
-		CommissionTaker float64 `json:"commission_taker"`
+		APIKey     string `json:"api_key"`
+		APISecret  string `json:"api_secret"`
+		UseTestNet bool   `json:"use_test_net"`
 	}{}
 	if err := json.Unmarshal(data, temp); err != nil {
 		return err
@@ -92,8 +64,6 @@ func (cf *Connection) UnmarshalJSON(data []byte) error {
 	cf.APIKey = temp.APIKey
 	cf.APISecret = temp.APISecret
 	cf.UseTestNet = temp.UseTestNet
-	cf.CommissionMaker = temp.CommissionMaker
-	cf.CommissionTaker = temp.CommissionTaker
 	return nil
 }
 
@@ -101,14 +71,10 @@ func NewConnection(
 	apiKey string,
 	apiSecret string,
 	useTestNet bool,
-	commissionMaker float64,
-	commissionTaker float64,
 ) *Connection {
 	return &Connection{
-		APIKey:          apiKey,
-		APISecret:       apiSecret,
-		UseTestNet:      useTestNet,
-		CommissionMaker: commissionMaker,
-		CommissionTaker: commissionTaker,
+		APIKey:     apiKey,
+		APISecret:  apiSecret,
+		UseTestNet: useTestNet,
 	}
 }

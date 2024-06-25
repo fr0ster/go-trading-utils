@@ -6,14 +6,6 @@ import (
 
 type (
 	Pairs interface {
-		GetInitialBalance() float64
-		SetInitialBalance(float64)
-		GetCurrentBalance() float64
-		SetCurrentBalance(float64)
-
-		GetInitialPositionBalance() float64
-		SetInitialPositionBalance(float64)
-
 		GetAccountType() pairs_types.AccountType
 
 		GetStrategy() pairs_types.StrategyType
@@ -22,9 +14,6 @@ type (
 		SetStage(pairs_types.StageType)
 
 		GetPair() string
-
-		GetTargetSymbol() string
-		GetBaseSymbol() string
 
 		GetMarginType() pairs_types.MarginType
 		SetMarginType(pairs_types.MarginType)
@@ -45,8 +34,8 @@ type (
 
 		GetDeltaStep() float64
 
-		GetBuyDelta() float64
-		GetSellDelta() float64
+		GetDeltaPrice() float64
+		SetDeltaPrice(float64)
 
 		GetBuyQuantity() float64
 		GetSellQuantity() float64
@@ -62,26 +51,16 @@ type (
 		SetBuyValue(float64)
 		SetSellValue(float64)
 
-		GetBuyCommission() float64
-		SetBuyCommission(float64)
-
-		GetSellCommission() float64
-		SetSellCommission(float64)
-
 		SetBuyData(float64, float64, float64)
 		SetSellData(float64, float64, float64)
 
-		GetBuyDeltaQuantity() float64
-		GetSellDeltaQuantity() float64
-		SetBuyDeltaQuantity(float64)
-		SetSellDeltaQuantity(float64)
+		GetDeltaQuantity() float64
+		SetDeltaQuantity(float64)
 
 		GetCallbackRate() float64
 		SetCallbackRate(float64)
 
-		CalcMiddlePrice() error
 		GetMiddlePrice() float64
-		SetMiddlePrice(float64)
 
 		GetProfit(float64) float64
 

@@ -284,11 +284,9 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	c.Connection = &connection_types.Connection{
-		APIKey:          temp.Connection.APIKey,
-		APISecret:       temp.Connection.APISecret,
-		UseTestNet:      temp.Connection.UseTestNet,
-		CommissionMaker: temp.Connection.CommissionMaker,
-		CommissionTaker: temp.Connection.CommissionTaker,
+		APIKey:     temp.Connection.APIKey,
+		APISecret:  temp.Connection.APISecret,
+		UseTestNet: temp.Connection.UseTestNet,
 	}
 	// Parse the string log level to a logrus.Level
 	var err error

@@ -49,17 +49,3 @@ func (s *SpotSymbol) GetFuturesSymbol() (*futures.Symbol, error) {
 	}
 	return &outSymbol, nil
 }
-
-// func NewSpotSymbol(symbol interface{}) *SpotSymbol {
-// 	val, _ := Binance2SpotSymbol(symbol)
-// 	return val
-// }
-
-// func Binance2SpotSymbol(binanceSymbol interface{}) (*SpotSymbol, error) {
-// 	var symbol SpotSymbol
-// 	err := copier.Copy(&symbol, binanceSymbol)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return &symbol, nil
-// }

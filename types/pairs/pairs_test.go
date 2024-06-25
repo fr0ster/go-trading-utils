@@ -16,68 +16,42 @@ func getTestData() *btree.BTree {
 		StrategyType:             pairs_types.HoldingStrategyType,
 		StageType:                pairs_types.InputIntoPositionStage,
 		Pair:                     "BTCUSDT",
-		TargetSymbol:             "BTC",
-		BaseSymbol:               "USDT",
 		MarginType:               pairs_types.CrossMarginType,
 		Leverage:                 20,
-		InitialBalance:           1000.0,
-		CurrentBalance:           1000.0,
-		MiddlePrice:              50000.0,
 		LimitInputIntoPosition:   0.5,
 		LimitOutputOfPosition:    0.8,
 		LimitOnPosition:          0.9,
 		LimitOnTransaction:       0.1,
 		UnRealizedProfitLowBound: 0.1,
 		UnRealizedProfitUpBound:  0.9,
-		BuyDelta:                 0.01,
-		BuyDeltaQuantity:         0.1,
+		DeltaPrice:               0.01,
+		DeltaQuantity:            0.1,
 		BuyQuantity:              0.3,
-		BuyValue:                 200.0,
-		BuyCommission:            0.001,
-		SellDelta:                0.05,
-		SellDeltaQuantity:        0.1,
+		BuyValue:                 300.0,
 		SellQuantity:             0.2,
 		SellValue:                200.0,
-		SellCommission:           0.001,
 		CallbackRate:             0.1, // CallbackRate 0.1%
-		Commission: map[string]float64{
-			"BTC": 0.001,
-			"ETH": 0.002,
-		},
 	})
 	res.ReplaceOrInsert(&pairs_types.Pairs{
 		AccountType:              pairs_types.USDTFutureType,
 		StrategyType:             pairs_types.ScalpingStrategyType,
 		StageType:                pairs_types.WorkInPositionStage,
 		Pair:                     "BTCUSDT",
-		TargetSymbol:             "BTC",
-		BaseSymbol:               "USDT",
 		MarginType:               pairs_types.CrossMarginType,
 		Leverage:                 20,
-		InitialBalance:           1000.0,
-		CurrentBalance:           1000.0,
-		MiddlePrice:              50000.0,
 		LimitInputIntoPosition:   0.5,
 		LimitOutputOfPosition:    0.8,
 		LimitOnPosition:          0.9,
 		LimitOnTransaction:       0.1,
 		UnRealizedProfitLowBound: 0.1,
 		UnRealizedProfitUpBound:  0.9,
-		BuyDelta:                 0.01,
-		BuyDeltaQuantity:         0.1,
+		DeltaPrice:               0.01,
+		DeltaQuantity:            0.1,
 		BuyQuantity:              0.3,
-		BuyValue:                 200.0,
-		BuyCommission:            0.001,
-		SellDelta:                0.05,
-		SellDeltaQuantity:        0.1,
+		BuyValue:                 300.0,
 		SellQuantity:             0.2,
 		SellValue:                200.0,
-		SellCommission:           0.001,
 		CallbackRate:             0.1, // CallbackRate 0.1%
-		Commission: map[string]float64{
-			"BTC": 0.001,
-			"ETH": 0.002,
-		},
 	})
 	return res
 }
@@ -88,18 +62,6 @@ func assertPair(
 	accountType pairs_types.AccountType,
 	strategyType pairs_types.StrategyType,
 	stageType pairs_types.StageType) {
-	// Test GetInitialBalance
-	assert.Equal(t, 1000.0, pair.GetInitialBalance())
-
-	// Test GetInitialPositionBalance
-	assert.Equal(t, 900.0, pair.GetInitialPositionBalance())
-
-	// Test SetInitialBalance
-	pair.SetInitialBalance(2000.0)
-	assert.Equal(t, 2000.0, pair.GetInitialBalance())
-
-	// Test GetInitialPositionBalance
-	assert.Equal(t, 1800.0, pair.GetInitialPositionBalance())
 
 	// Test GetAccountType
 	assert.Equal(t, accountType, pair.GetAccountType())
@@ -116,12 +78,6 @@ func assertPair(
 
 	// Test GetPair
 	assert.Equal(t, "BTCUSDT", pair.GetPair())
-
-	// Test GetTargetSymbol
-	assert.Equal(t, "BTC", pair.GetTargetSymbol())
-
-	// Test GetBaseSymbol
-	assert.Equal(t, "USDT", pair.GetBaseSymbol())
 
 	// Test GetMarginType
 	assert.Equal(t, pairs_types.CrossMarginType, pair.GetMarginType())
@@ -141,17 +97,11 @@ func assertPair(
 	// Test GetLimitOnTransaction
 	assert.Equal(t, 0.1, pair.GetLimitOnTransaction())
 
-	// Test GetBuyDelta
-	assert.Equal(t, 0.01, pair.GetBuyDelta())
+	// Test GetDeltaPrice
+	assert.Equal(t, 0.01, pair.GetDeltaPrice())
 
-	// Test GetSellDelta
-	assert.Equal(t, 0.05, pair.GetSellDelta())
-
-	// Test GetBuyDeltaQuantity
-	assert.Equal(t, 0.1, pair.GetBuyDeltaQuantity())
-
-	// Test GetSellDeltaQuantity
-	assert.Equal(t, 0.1, pair.GetSellDeltaQuantity())
+	// Test GetDeltaQuantity
+	assert.Equal(t, 0.1, pair.GetDeltaQuantity())
 
 	// Test GetBuyQuantity
 	assert.Equal(t, 0.3, pair.GetBuyQuantity())
@@ -160,10 +110,7 @@ func assertPair(
 	assert.Equal(t, 0.2, pair.GetSellQuantity())
 
 	// Test GetBuyValue
-	assert.Equal(t, 200.0, pair.GetBuyValue())
-
-	// Test GetBuyCommission
-	assert.Equal(t, 0.001, pair.GetBuyCommission())
+	assert.Equal(t, 300.0, pair.GetBuyValue())
 
 	// Test GetSellValue
 	assert.Equal(t, 200.0, pair.GetSellValue())
@@ -171,27 +118,12 @@ func assertPair(
 	// Test GetCallbackRate
 	assert.Equal(t, 0.1, pair.GetCallbackRate())
 
-	// Test GetCommission
-	assert.Equal(t, pairs_types.Commission{"BTC": 0.001, "ETH": 0.002}, pair.GetCommission())
-
-	// Test SetCommission
-	pair.SetCommission(pairs_types.Commission{"BTC": 0.0015, "ETH": 0.0025})
-	assert.Equal(t, pairs_types.Commission{"BTC": 0.0015, "ETH": 0.0025}, pair.GetCommission())
-
-	// Test CalcMiddlePrice
-	err := pair.CalcMiddlePrice()
-	assert.NoError(t, err)
-
 	// Test GetMiddlePrice
-	assert.Equal(t, 0.0, pair.GetMiddlePrice())
-
-	// Test SetMiddlePrice
-	pair.SetMiddlePrice(50000.0)
-	assert.Equal(t, 50000.0, pair.GetMiddlePrice())
+	assert.Equal(t, 1000.0, math.Round(pair.GetMiddlePrice()))
 
 	// Test GetProfit
 	profit := pair.GetProfit(60000.0)
-	assert.Equal(t, 1000.0, math.Round(profit))
+	assert.Equal(t, 5900.0, math.Round(profit))
 
 	// Test CheckingPair
 	result := pair.CheckingPair()
