@@ -711,6 +711,9 @@ func (pp *PairProcessor) CalculateInitialPosition(
 			Price:    nextPrice(lastPairPrice.Price, 1),
 			Quantity: nextQuantity(lastPairPrice.Quantity, 1),
 		}
+		if lastPairPrice.Price > endPrice*1.5 {
+			break
+		}
 		tree.ReplaceOrInsert(lastPairPrice)
 	}
 	return
