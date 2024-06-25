@@ -10,8 +10,17 @@ import (
 
 type ExchangeInfo exchange_types.ExchangeInfo
 
-func Init(val *exchange_types.ExchangeInfo, degree int, client *binance.Client) error {
-	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
+func Init(val *exchange_types.ExchangeInfo, degree int, client *binance.Client, symbol ...string) (err error) {
+	var (
+		exchangeInfo *binance.ExchangeInfo
+	)
+	if len(symbol) == 0 {
+		exchangeInfo, err = client.NewExchangeInfoService().Do(context.Background())
+	} else if len(symbol) == 1 {
+		exchangeInfo, err = client.NewExchangeInfoService().Symbol(symbol[0]).Do(context.Background())
+	} else {
+		exchangeInfo, err = client.NewExchangeInfoService().Symbols(symbol...).Do(context.Background())
+	}
 	if err != nil {
 		return err
 	}

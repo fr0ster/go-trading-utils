@@ -526,7 +526,7 @@ func NewPairProcessor(
 	debug bool,
 	functions ...Functions) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
-	err = spot_exchange_info.Init(exchangeInfo, 3, client)
+	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
 	if err != nil {
 		return
 	}
@@ -548,14 +548,6 @@ func NewPairProcessor(
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
 	}
-
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit =
-		LimitRead(degree, []string{symbol}, client)
-
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
 		&symbol_types.SpotSymbol{Symbol: symbol}).(*symbol_types.SpotSymbol)
@@ -575,6 +567,13 @@ func NewPairProcessor(
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+
+	// Перевіряємо ліміти на ордери та запити
+	pp.updateTime,
+		pp.minuteOrderLimit,
+		pp.dayOrderLimit,
+		pp.minuteRawRequestLimit =
+		LimitRead(degree, []string{pp.symbol.Symbol}, client)
 
 	if functions != nil {
 		pp.testUp = functions[0].TestUp

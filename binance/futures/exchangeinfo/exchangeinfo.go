@@ -8,8 +8,11 @@ import (
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
 )
 
-func Init(val *exchange_types.ExchangeInfo, degree int, client *futures.Client) error {
-	exchangeInfo, err := client.NewExchangeInfoService().Do(context.Background())
+func Init(val *exchange_types.ExchangeInfo, degree int, client *futures.Client) (err error) {
+	var (
+		exchangeInfo *futures.ExchangeInfo
+	)
+	exchangeInfo, err = client.NewExchangeInfoService().Do(context.Background())
 	if err != nil {
 		return err
 	}

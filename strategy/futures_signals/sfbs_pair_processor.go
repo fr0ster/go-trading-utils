@@ -837,16 +837,6 @@ func NewPairProcessor(
 		nextQuantityUp:   nil,
 		nextQuantityDown: nil,
 	}
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit,
-		err =
-		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
-	if err != nil {
-		return
-	}
 
 	if functions != nil {
 		pp.testUp = functions[0].TestUp
@@ -891,6 +881,16 @@ func NewPairProcessor(
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+	// Перевіряємо ліміти на ордери та запити
+	pp.updateTime,
+		pp.minuteOrderLimit,
+		pp.dayOrderLimit,
+		pp.minuteRawRequestLimit,
+		err =
+		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
+	if err != nil {
+		return
+	}
 
 	return
 }
