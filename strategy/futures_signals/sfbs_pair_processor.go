@@ -658,7 +658,7 @@ func (pp *PairProcessor) InitPositionGrid(
 	priceUp = price * (1 + pp.GetDeltaPrice())
 	valueUp, quantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		minN,
-		priceUp,
+		price,
 		pp.UpBound)
 	if err != nil {
 		return
@@ -677,7 +677,7 @@ func (pp *PairProcessor) InitPositionGrid(
 	priceDown = price * (1 - pp.GetDeltaPrice())
 	valueDown, quantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		minN,
-		priceDown,
+		price,
 		pp.LowBound)
 	if err != nil {
 		return
