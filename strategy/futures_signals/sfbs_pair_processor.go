@@ -707,11 +707,11 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 	lastPairPrice := tree.Max().(*pair_price_types.PairPrice)
 	for i := tree.Len(); i < 100; i++ {
-		newPairPrice := &pair_price_types.PairPrice{
+		lastPairPrice = &pair_price_types.PairPrice{
 			Price:    nextPrice(lastPairPrice.Price, 1),
 			Quantity: nextQuantity(lastPairPrice.Quantity, 1),
 		}
-		tree.ReplaceOrInsert(newPairPrice)
+		tree.ReplaceOrInsert(lastPairPrice)
 	}
 	return
 }
