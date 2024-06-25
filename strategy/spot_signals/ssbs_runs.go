@@ -106,7 +106,7 @@ func initVars(
 		val := pairProcessor.GetSymbol()
 		if val == nil {
 			printError()
-			return nil, fmt.Errorf("spot %s: Symbol not found", val.Symbol)
+			return nil, fmt.Errorf("spot %s: Symbol not found", pairProcessor.GetPair())
 		}
 		return val.GetSpotSymbol()
 	}()
@@ -132,10 +132,8 @@ func initVars(
 }
 
 func openPosition(
-	// pair *pairs_types.Pairs,
 	price float64,
 	quantity float64,
-	tickSizeExp int,
 	pairProcessor *PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
 	var (
 		targetBalance float64
@@ -153,7 +151,7 @@ func openPosition(
 			return
 		}
 		logrus.Debugf("Spot %s: Set Sell order on price %v with quantity %v",
-			pairProcessor.GetPair(), pairProcessor.nextPriceUp(price, 0))
+			pairProcessor.GetPair(), pairProcessor.nextPriceUp(price, 0), quantity)
 	} else {
 		logrus.Debugf("Spot %s: Target balance %v >= quantity %v",
 			pairProcessor.GetPair(), targetBalance, quantity)
@@ -163,7 +161,8 @@ func openPosition(
 		printError()
 		return
 	}
-	logrus.Debugf("Spot %s: Set Buy order on price %v with quantity %v", pairProcessor.GetPair(), pairProcessor.nextPriceDown(price, 0))
+	logrus.Debugf("Spot %s: Set Buy order on price %v with quantity %v",
+		pairProcessor.GetPair(), pairProcessor.nextPriceDown(price, 0), quantity)
 	return
 }
 
@@ -191,55 +190,8 @@ func roundPrice(val float64, symbol *binance.Symbol) float64 {
 	return utils.RoundToDecimalPlace(val, exp)
 }
 
-func createNextPair(
-	pair *pairs_types.Pairs,
-	pairProcessor *PairProcessor,
-	currentPrice float64,
-	quantity float64,
-	limit float64,
-	tickSizeExp int) (err error) {
-	// Створюємо ордер на продаж
-	upPrice := pairProcessor.nextPriceUp(currentPrice, 0)
-	if pairProcessor.GetUpBound() != 0 && upPrice <= pairProcessor.GetUpBound() {
-		if limit >= quantity {
-			_, err = createOrderInGrid(pairProcessor, binance.SideTypeSell, quantity, upPrice)
-			if err != nil {
-				printError()
-				return err
-			}
-			logrus.Debugf("Spots %s: Create Sell order on price %v", pair.GetPair(), upPrice)
-		} else {
-			logrus.Debugf("Spots %s: Limit %v >= quantity %v or upPrice %v > current position balance %v",
-				pair.GetPair(), limit, quantity, upPrice, pairProcessor.GetFreeBalance())
-		}
-	} else {
-		logrus.Debugf("Spots %s: upPrice %v <= upBound %v",
-			pair.GetPair(), upPrice, pair.GetUpBound())
-	}
-	// Створюємо ордер на купівлю
-	downPrice := pairProcessor.nextPriceDown(currentPrice, 0)
-	if pairProcessor.GetLowBound() != 0 && downPrice >= pairProcessor.GetLowBound() {
-		if (limit + quantity*downPrice) <= pairProcessor.GetFreeBalance() {
-			_, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, downPrice)
-			if err != nil {
-				printError()
-				return err
-			}
-			logrus.Debugf("Spots %s: Create Buy order on price %v", pair.GetPair(), downPrice)
-		} else {
-			logrus.Debugf("Spots %s: Limit %v + quantity %v * downPrice %v <= current position balance %v",
-				pair.GetPair(), limit, quantity, downPrice, pairProcessor.GetFreeBalance())
-		}
-	} else {
-		logrus.Debugf("Spots %s: downPrice %v >= lowBound %v",
-			pair.GetPair(), downPrice, pair.GetLowBound())
-	}
-	return nil
-}
-
 func getCallBack_v1(
 	pairProcessor *PairProcessor,
-	tickSizeExp int,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*binance.WsUserDataEvent) {
 	var (
@@ -255,6 +207,7 @@ func getCallBack_v1(
 				event.OrderUpdate.Side,
 				event.OrderUpdate.Status)
 
+			close(quit)
 		}
 	}
 }
@@ -295,28 +248,29 @@ func RunSpotGridTrading(
 		printError()
 		return
 	}
-	_, initPrice, quantity, tickSizeExp, _, err := initVars(pairProcessor)
+	_, initPrice, quantity, _, _, err := initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
-	for {
-		<-stopEvent
-		pairProcessor.CancelAllOrders()
-		logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
-		return nil
-	}
+	go func() {
+		for {
+			<-stopEvent
+			pairProcessor.CancelAllOrders()
+			logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
+			return
+		}
+	}()
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v1(
 			pairProcessor,
-			tickSizeExp,
 			stopEvent,
 			maintainedOrders))
 	if err != nil {
 		printError()
 		return err
 	}
-	_, _, err = openPosition(initPrice, quantity, tickSizeExp, pairProcessor)
+	_, _, err = openPosition(initPrice, quantity, pairProcessor)
 	if err != nil {
 		return err
 	}

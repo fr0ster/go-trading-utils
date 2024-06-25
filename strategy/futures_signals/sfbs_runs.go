@@ -79,17 +79,105 @@ func RunScalpingHolding(
 }
 
 func getCallBackTrading(
-	config *config_types.ConfigFile,
-	client *futures.Client,
 	pairProcessor *PairProcessor,
-	tickSizeExp int,
-	minNotional float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
+	var (
+		sideUp    futures.SideType
+		typeUp    futures.OrderType
+		priceUp   float64
+		sideDown  futures.SideType
+		typeDown  futures.OrderType
+		priceDown float64
+	)
 	return func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
-			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-			logrus.Debugf("Futures %s: Order %v filled", pairProcessor.GetPair(), event.OrderTradeUpdate.ID)
+		if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
+			if event.OrderTradeUpdate.Type == futures.OrderTypeStop &&
+				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				// Знаходимо у гріді на якому був виконаний ордер
+				if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
+					maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
+					risk, _ := pairProcessor.GetPositionRisk()
+					logrus.Debugf("Futures %s: Order filled %v type %v on price %v/activation price %v with quantity %v side %v status %s",
+						pairProcessor.GetPair(),
+						event.OrderTradeUpdate.ID,
+						event.OrderTradeUpdate.Type,
+						event.OrderTradeUpdate.LastFilledPrice,
+						event.OrderTradeUpdate.ActivationPrice,
+						event.OrderTradeUpdate.AccumulatedFilledQty,
+						event.OrderTradeUpdate.Side,
+						event.OrderTradeUpdate.Status)
+					if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
+						// Відкрили позицію купівлею, закриваємо її продажем TrailingStopMarket
+						sideUp = futures.SideTypeBuy
+						typeUp = futures.OrderTypeTrailingStopMarket
+						priceUp = pairProcessor.nextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice), 0)
+						sideDown = futures.SideTypeSell
+						typeDown = futures.OrderTypeStopMarket
+						priceDown = pairProcessor.nextPriceDown(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice), 0)
+					} else if event.OrderTradeUpdate.Side == futures.SideTypeSell {
+						// Відкрили позицію продажею, закриваємо її купівлею TrailingStopMarket
+						sideUp = futures.SideTypeSell
+						typeUp = futures.OrderTypeStopMarket
+						priceUp = pairProcessor.nextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice), 0)
+						sideDown = futures.SideTypeBuy
+						typeDown = futures.OrderTypeTrailingStopMarket
+						priceDown = pairProcessor.nextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice), 0)
+					}
+					sellOrder, buyOrder, err := openPosition(
+						sideUp,
+						typeUp,
+						sideDown,
+						typeDown,
+						utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
+						utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
+						priceUp,
+						priceDown,
+						pairProcessor)
+					if err != nil {
+						logrus.Errorf("Can't open position: %v", err)
+						printError()
+						close(quit)
+						return
+					}
+					logrus.Debugf("Futures %s: Open position order %v side %v type %v on price %v quantity %v status %v",
+						pairProcessor.GetPair(),
+						sellOrder.OrderID,
+						sellOrder.Side,
+						sellOrder.Type,
+						sellOrder.Price,
+						sellOrder.OrigQuantity,
+						sellOrder.Status)
+					logrus.Debugf("Futures %s: Open position order %v side %v type %v on price %v quantity %v status %v",
+						pairProcessor.GetPair(),
+						buyOrder.OrderID,
+						buyOrder.Side,
+						buyOrder.Type,
+						buyOrder.Price,
+						buyOrder.OrigQuantity,
+						buyOrder.Status)
+				}
+			} else if (event.OrderTradeUpdate.Type == futures.OrderTypeTrailingStopMarket ||
+				event.OrderTradeUpdate.Type == futures.OrderTypeStopMarket) &&
+				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+				// Створюємо початкові ордери на продаж та купівлю
+				_, _, err := openPosition(
+					futures.SideTypeSell,
+					futures.OrderTypeStop,
+					futures.SideTypeBuy,
+					futures.OrderTypeStop,
+					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
+					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
+					pairProcessor.nextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice), 0),
+					pairProcessor.nextPriceDown(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice), 0),
+					pairProcessor)
+				if err != nil {
+					logrus.Errorf("Can't open position: %v", err)
+					printError()
+					close(quit)
+					return
+				}
+			}
 		}
 	}
 }
@@ -120,7 +208,6 @@ func RunFuturesTrading(
 		quantityUp    float64
 		quantityDown  float64
 		minNotional   float64
-		tickSizeExp   int
 		pairProcessor *PairProcessor
 	)
 	defer wg.Done()
@@ -142,7 +229,7 @@ func RunFuturesTrading(
 	if err != nil {
 		return err
 	}
-	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, initPrice, _, _, minNotional, _, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -175,11 +262,7 @@ func RunFuturesTrading(
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBackTrading(
-			config,
-			client,
 			pairProcessor,
-			tickSizeExp,
-			minNotional,
 			quit,
 			maintainedOrders))
 	if err != nil {
@@ -189,9 +272,9 @@ func RunFuturesTrading(
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
 		futures.SideTypeSell,
-		futures.OrderTypeTrailingStopMarket,
+		futures.OrderTypeStop,
 		futures.SideTypeBuy,
-		futures.OrderTypeTrailingStopMarket,
+		futures.OrderTypeStop,
 		quantityUp,
 		quantityDown,
 		initPriceUp,
