@@ -92,10 +92,12 @@ type (
 
 		DeltaPrice    float64 `json:"delta_price"`    // Дельта для купівлі/продажу
 		DeltaQuantity float64 `json:"delta_quantity"` // Кількість для купівлі/продажу
-		BuyQuantity   float64 `json:"buy_quantity"`   // Кількість для купівлі, суммарно по позиції
-		BuyValue      float64 `json:"buy_value"`      // Вартість для купівлі, суммарно по позиції
-		SellQuantity  float64 `json:"sell_quantity"`  // Кількість для продажу, суммарно по позиції
-		SellValue     float64 `json:"sell_value"`     // Вартість для продажу, суммарно по позиції
+		IsArithmetic  bool    `json:"is_arithmetic"`  // Арифметична прогресія
+
+		BuyQuantity  float64 `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
+		BuyValue     float64 `json:"buy_value"`     // Вартість для купівлі, суммарно по позиції
+		SellQuantity float64 `json:"sell_quantity"` // Кількість для продажу, суммарно по позиції
+		SellValue    float64 `json:"sell_value"`    // Вартість для продажу, суммарно по позиції
 
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 	}
@@ -215,6 +217,10 @@ func (pr *Pairs) GetDeltaQuantity() float64 {
 	return pr.DeltaQuantity
 }
 
+func (pr *Pairs) GetIsArithmetic() bool {
+	return pr.IsArithmetic
+}
+
 func (pr *Pairs) GetBuyQuantity() float64 {
 	return pr.BuyQuantity
 }
@@ -261,6 +267,10 @@ func (pr *Pairs) SetDeltaPrice(val float64) {
 
 func (pr *Pairs) SetDeltaQuantity(quantity float64) {
 	pr.DeltaQuantity = quantity
+}
+
+func (pr *Pairs) SetIsArithmetic(val bool) {
+	pr.IsArithmetic = val
 }
 
 func (pr *Pairs) SetBuyQuantity(quantity float64) {
@@ -339,6 +349,7 @@ func New(
 		UnRealizedProfitUpBound:  1,    // 100%
 		DeltaPrice:               0.01, // 1%
 		DeltaQuantity:            0.1,  // 10%
+		IsArithmetic:             true,
 		BuyQuantity:              0.0,
 		BuyValue:                 0.0,
 		SellQuantity:             0.0,

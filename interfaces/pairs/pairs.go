@@ -32,13 +32,14 @@ type (
 		GetUpBound() float64
 		GetLowBound() float64
 
-		GetDeltaStep() float64
-
 		GetDeltaPrice() float64
 		SetDeltaPrice(float64)
 
 		GetBuyQuantity() float64
 		GetSellQuantity() float64
+
+		GetIsArithmetic() bool
+		SetIsArithmetic(bool)
 
 		GetBuyValue() float64
 		GetSellValue() float64

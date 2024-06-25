@@ -23,18 +23,6 @@ import (
 )
 
 type (
-	nextPriceFunc    func(float64, int) float64
-	nextQuantityFunc func(float64, int) float64
-	testFunc         func(float64, float64) bool
-	Functions        struct {
-		NextPriceUp      nextPriceFunc
-		NextPriceDown    nextPriceFunc
-		NextQuantityUp   nextQuantityFunc
-		NextQuantityDown nextQuantityFunc
-		TestUp           testFunc
-		TestDown         testFunc
-	}
-
 	PairProcessor struct {
 		client        *futures.Client
 		exchangeInfo  *exchange_types.ExchangeInfo
@@ -68,12 +56,7 @@ type (
 		deltaPrice    float64
 		deltaQuantity float64
 
-		testUp           testFunc
-		testDown         testFunc
-		nextPriceUp      nextPriceFunc
-		nextPriceDown    nextPriceFunc
-		nextQuantityUp   nextQuantityFunc
-		nextQuantityDown nextQuantityFunc
+		isArithmetic bool
 	}
 )
 
@@ -583,53 +566,19 @@ func (pp *PairProcessor) Steps(begin, end float64, next func(b float64, n int) f
 func (pp *PairProcessor) TotalValue(
 	P1 float64,
 	Q1 float64,
-	P2 float64,
-	limit float64,
-	minSteps int,
-	test testFunc,
-	nextPriceFunc nextPriceFunc,
-	nextQuantityFunc nextQuantityFunc,
-	buffer ...*btree.BTree) (
-	value,
-	quantity,
-	lastPrice,
-	startQuantity float64,
-	n int,
-	err error) {
-	n = 1
-	lastPrice = pp.roundPrice(nextPriceFunc(P1, n))
-	if P1 == P2 || lastPrice == P2 {
-		return P1 * Q1, Q1, P1, Q1, 1, fmt.Errorf("P1 %v == P2 %v, can't calculate", P1, P2)
+	P2 float64) (
+	value float64,
+	n int) {
+	if pp.isArithmetic {
+		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+0.1), P2)
+		Q2 := pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+0.1), n))
+		value = utils.ArithmeticProgressionSum(P1*Q1, P1*Q2, n)
+	} else {
+		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+0.1), P2)
+		Q2 := pp.roundQuantity(utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+0.1), n))
+		value = utils.GeometricProgressionSum(P1*Q1, P1*Q2, n)
 	}
-	if P1*Q1 >= limit || lastPrice*Q1 >= limit {
-		return P1 * Q1, Q1, P1, Q1, 1, fmt.Errorf("P1*Q1 %v >= limit %v, can't calculate", P1*Q1, limit)
-	}
-	lastQuantity := Q1
-	if buffer != nil {
-		buffer[0].Clear(true)
-		buffer[0].ReplaceOrInsert(&pair_price_types.PairPrice{Price: lastPrice, Quantity: lastQuantity})
-	}
-	for {
-		quantity += lastQuantity
-		value += lastPrice * lastQuantity
-		nextQuantity := pp.roundQuantity(nextQuantityFunc(lastQuantity, n))
-		nextPrice := pp.roundPrice(nextPriceFunc(lastPrice, n))
-		if test(nextPrice, P2) && value+nextPrice*nextQuantity < limit {
-			lastQuantity = nextQuantity
-			lastPrice = nextPrice
-			n++
-			if buffer != nil {
-				buffer[0].ReplaceOrInsert(&pair_price_types.PairPrice{Price: lastPrice, Quantity: lastQuantity})
-			}
-			continue
-		} else {
-			break
-		}
-	}
-	if n < minSteps {
-		return value, pp.roundQuantity(quantity), lastPrice, pp.roundQuantity(Q1), n, fmt.Errorf("n == 0, can't calculate")
-	}
-	return value, pp.roundQuantity(quantity), lastPrice, pp.roundQuantity(Q1), n, nil
+	return
 }
 
 func (pp *PairProcessor) recSearch(
@@ -639,80 +588,49 @@ func (pp *PairProcessor) recSearch(
 	P2 float64,
 	limit float64,
 	minSteps int,
-	test testFunc,
-	nextPriceFunc nextPriceFunc,
-	nextQuantityFunc nextQuantityFunc,
 	buffer ...*btree.BTree) (
 	value,
-	quantity,
-	lastPrice,
 	startQuantity float64,
 	n int,
 	err error) {
 	if high-low <= pp.stepSizeDelta {
-		return pp.TotalValue(P1, low, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+		value, n = pp.TotalValue(P1, low, P2)
+		if value < limit && n >= minSteps {
+			return value, low, n, nil
+		} else {
+			err = fmt.Errorf("can't calculate initial position")
+			return
+		}
 	} else {
 		mid := pp.roundQuantity((low + high) / 2)
-		_, _, _, _, _, err := pp.TotalValue(P1, mid, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
-		if err == nil {
-			return pp.recSearch(P1, mid, high, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+		value, n := pp.TotalValue(P1, mid, P2)
+		if value < limit && n >= minSteps {
+			return pp.recSearch(P1, mid, high, P2, limit, minSteps, buffer...)
 		} else {
-			return pp.recSearch(P1, low, mid, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+			return pp.recSearch(P1, low, mid, P2, limit, minSteps, buffer...)
 		}
-
 	}
 }
 
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
-	endPrice float64) (value, price, quantity float64, n int, err error) {
-	var (
-		test         testFunc
-		nextPrice    nextPriceFunc
-		nextQuantity nextQuantityFunc
-	)
+	endPrice float64) (value, quantity float64, n int, err error) {
 	var (
 		tree *btree.BTree
 	)
-	if buyPrice < endPrice {
-		test = pp.testUp
-		nextPrice = pp.nextPriceUp
-		nextQuantity = pp.nextQuantityUp
-		tree = pp.up
-	} else {
-		test = pp.testDown
-		nextPrice = pp.nextPriceDown
-		nextQuantity = pp.nextQuantityDown
-		tree = pp.down
-	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
-	value, _, price, quantity, n, err = pp.recSearch(
+	value, quantity, n, err = pp.recSearch(
 		buyPrice,
 		low,
 		high,
 		endPrice,
 		pp.GetFreeBalance()*float64(pp.GetLeverage()),
 		minN,
-		test,
-		nextPrice,
-		nextQuantity,
 		tree)
-	if tree.Len() == 0 {
-		err = fmt.Errorf("can't calculate initial position")
+	if err != nil {
 		return
-	}
-	lastPairPrice := tree.Max().(*pair_price_types.PairPrice)
-	for i := tree.Len(); i < 100; i++ {
-		lastPairPrice = &pair_price_types.PairPrice{
-			Price:    nextPrice(lastPairPrice.Price, 1),
-			Quantity: nextQuantity(lastPairPrice.Quantity, 1),
-		}
-		if lastPairPrice.Price > endPrice*1.5 {
-			break
-		}
-		tree.ReplaceOrInsert(lastPairPrice)
 	}
 	return
 }
@@ -720,23 +638,52 @@ func (pp *PairProcessor) CalculateInitialPosition(
 func (pp *PairProcessor) InitPositionGrid(
 	minN int,
 	price float64) (
+	valueUp,
 	priceUp,
-	quantityUp,
+	quantityUp float64,
+	stepsUp int,
+	valueDown,
 	priceDown,
-	quantityDown float64, err error) {
-	_, priceUp, quantityUp, _, err = pp.CalculateInitialPosition(
+	quantityDown float64,
+	stepsDown int,
+	err error) {
+	priceUp = price * (1 + pp.GetDeltaPrice())
+	valueUp, quantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		minN,
-		price,
+		priceUp,
 		pp.UpBound)
 	if err != nil {
 		return
 	}
-	_, priceDown, quantityDown, _, err = pp.CalculateInitialPosition(
+	for i := 0; i < stepsUp; i++ {
+		if pp.isArithmetic {
+			priceN := utils.FindArithmeticProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindArithmeticProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else {
+			priceN := utils.FindGeometricProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindGeometricProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		}
+	}
+	priceDown = price * (1 - pp.GetDeltaPrice())
+	valueDown, quantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		minN,
-		price,
+		priceDown,
 		pp.LowBound)
 	if err != nil {
 		return
+	}
+	for i := 0; i < stepsUp; i++ {
+		if pp.isArithmetic {
+			priceN := utils.FindArithmeticProgressionNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindArithmeticProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else {
+			priceN := utils.FindGeometricProgressionNthTerm(priceUp, priceUp*(1-pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindGeometricProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		}
 	}
 	if quantityUp*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
@@ -744,20 +691,52 @@ func (pp *PairProcessor) InitPositionGrid(
 	if quantityDown*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
 	}
-	if val := pp.up.Min(); val != nil {
-		priceUp = val.(*pair_price_types.PairPrice).Price
-		pp.up.Delete(val)
-	} else {
-		err = fmt.Errorf("can't get price up")
-	}
-	if val := pp.down.Max(); val != nil {
-		priceDown = val.(*pair_price_types.PairPrice).Price
-		pp.down.Delete(val)
-	} else {
-		err = fmt.Errorf("can't get price down")
-	}
+	// if val := pp.up.Min(); val != nil {
+	// 	priceUp = val.(*pair_price_types.PairPrice).Price
+	// 	pp.up.Delete(val)
+	// } else {
+	// 	err = fmt.Errorf("can't get price up")
+	// }
+	// if val := pp.down.Max(); val != nil {
+	// 	priceDown = val.(*pair_price_types.PairPrice).Price
+	// 	pp.down.Delete(val)
+	// } else {
+	// 	err = fmt.Errorf("can't get price down")
+	// }
 	return
 
+}
+
+func (pp *PairProcessor) NextPriceUp(price float64) float64 {
+	if pp.isArithmetic {
+		return pp.roundPrice(utils.FindArithmeticProgressionNthTerm(price, price*(1+pp.GetDeltaPrice()), 1))
+	} else {
+		return pp.roundPrice(utils.FindGeometricProgressionNthTerm(price, price*(1+pp.GetDeltaPrice()), 1))
+	}
+}
+
+func (pp *PairProcessor) NextPriceDown(price float64) float64 {
+	if pp.isArithmetic {
+		return pp.roundPrice(utils.FindArithmeticProgressionNthTerm(price, price*(1-pp.GetDeltaPrice()), 1))
+	} else {
+		return pp.roundPrice(utils.FindGeometricProgressionNthTerm(price, price*(1-pp.GetDeltaPrice()), 1))
+	}
+}
+
+func (pp *PairProcessor) NextQuantityUp(quantity float64) float64 {
+	if pp.isArithmetic {
+		return pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1))
+	} else {
+		return pp.roundQuantity(utils.FindGeometricProgressionNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1))
+	}
+}
+
+func (pp *PairProcessor) NextQuantityDown(quantity float64) float64 {
+	if pp.isArithmetic {
+		return utils.FindArithmeticProgressionNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
+	} else {
+		return utils.FindGeometricProgressionNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
+	}
 }
 
 func (pp *PairProcessor) NextUp(currentPrice, currentQuantity float64) (price, quantity float64, err error) {
@@ -822,7 +801,7 @@ func NewPairProcessor(
 	leverage int,
 	callbackRate float64,
 	stop chan struct{},
-	functions ...Functions) (pp *PairProcessor, err error) {
+	isArithmetic bool) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
@@ -860,36 +839,7 @@ func NewPairProcessor(
 		deltaPrice:    deltaPrice,
 		deltaQuantity: deltaQuantity,
 
-		testUp:           nil,
-		testDown:         nil,
-		nextPriceUp:      nil,
-		nextPriceDown:    nil,
-		nextQuantityUp:   nil,
-		nextQuantityDown: nil,
-	}
-
-	if functions != nil {
-		pp.testUp = functions[0].TestUp
-		pp.testDown = functions[0].TestDown
-		pp.nextPriceUp = functions[0].NextPriceUp
-		pp.nextPriceDown = functions[0].NextPriceDown
-		pp.nextQuantityUp = functions[0].NextQuantityUp
-		pp.nextQuantityDown = functions[0].NextQuantityDown
-	} else {
-		pp.testUp = func(s, e float64) bool { return s < e }
-		pp.testDown = func(s, e float64) bool { return s > e }
-		pp.nextPriceUp = func(s float64, n int) float64 {
-			return pp.roundPrice(s * math.Pow(1+deltaPrice, float64(2)))
-		}
-		pp.nextPriceDown = func(s float64, n int) float64 {
-			return pp.roundPrice(s * math.Pow(1-deltaPrice, float64(2)))
-		}
-		pp.nextQuantityUp = func(s float64, n int) float64 {
-			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
-		}
-		pp.nextQuantityDown = func(s float64, n int) float64 {
-			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
-		}
+		isArithmetic: isArithmetic,
 	}
 
 	// Ініціалізуємо інформацію про пару
