@@ -569,13 +569,21 @@ func (pp *PairProcessor) TotalValue(
 	P2 float64) (
 	value float64,
 	n int) {
+	var (
+		deltaPrice float64
+	)
+	if P1 < P2 {
+		deltaPrice = pp.GetDeltaPrice()
+	} else {
+		deltaPrice = -pp.GetDeltaPrice()
+	}
 	if pp.isArithmetic {
-		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+0.1), P2)
-		Q2 := pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+0.1), n))
+		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+deltaPrice), P2)
+		Q2 := pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
 		value = utils.ArithmeticProgressionSum(P1*Q1, P1*Q2, n)
 	} else {
-		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+0.1), P2)
-		Q2 := pp.roundQuantity(utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+0.1), n))
+		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+deltaPrice), P2)
+		Q2 := pp.roundQuantity(utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
 		value = utils.GeometricProgressionSum(P1*Q1, P1*Q2, n)
 	}
 	return
@@ -691,18 +699,6 @@ func (pp *PairProcessor) InitPositionGrid(
 	if quantityDown*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
 	}
-	// if val := pp.up.Min(); val != nil {
-	// 	priceUp = val.(*pair_price_types.PairPrice).Price
-	// 	pp.up.Delete(val)
-	// } else {
-	// 	err = fmt.Errorf("can't get price up")
-	// }
-	// if val := pp.down.Max(); val != nil {
-	// 	priceDown = val.(*pair_price_types.PairPrice).Price
-	// 	pp.down.Delete(val)
-	// } else {
-	// 	err = fmt.Errorf("can't get price down")
-	// }
 	return
 
 }
