@@ -688,32 +688,17 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
-	// value, _, price, quantity, n, err = pp.recSearch(
-	// 	buyPrice,
-	// 	low,
-	// 	high,
-	// 	endPrice,
-	// 	pp.GetFreeBalance()*float64(pp.GetLeverage()),
-	// 	minN,
-	// 	test,
-	// 	nextPrice,
-	// 	nextQuantity,
-	// 	tree)
-	for testQ := high; testQ >= low; testQ -= pp.stepSizeDelta {
-		value, _, _, quantity, n, err = pp.TotalValue(
-			buyPrice,
-			pp.roundQuantity(testQ),
-			endPrice,
-			pp.GetFreeBalance()*float64(pp.GetLeverage()),
-			minN,
-			test,
-			nextPrice,
-			nextQuantity,
-			tree)
-		if err == nil && n >= minN {
-			break
-		}
-	}
+	value, _, price, quantity, n, err = pp.recSearch(
+		buyPrice,
+		low,
+		high,
+		endPrice,
+		pp.GetFreeBalance()*float64(pp.GetLeverage()),
+		minN,
+		test,
+		nextPrice,
+		nextQuantity,
+		tree)
 	if tree.Len() == 0 {
 		err = fmt.Errorf("can't calculate initial position")
 		return
