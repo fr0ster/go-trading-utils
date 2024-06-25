@@ -632,6 +632,37 @@ func (pp *PairProcessor) TotalValue(
 	return value, pp.roundQuantity(quantity), lastPrice, pp.roundQuantity(Q1), n, nil
 }
 
+func (pp *PairProcessor) recSearch(
+	P1 float64,
+	low float64,
+	high float64,
+	P2 float64,
+	limit float64,
+	minSteps int,
+	test testFunc,
+	nextPriceFunc nextPriceFunc,
+	nextQuantityFunc nextQuantityFunc,
+	buffer ...*btree.BTree) (
+	value,
+	quantity,
+	lastPrice,
+	startQuantity float64,
+	n int,
+	err error) {
+	if high-low <= pp.stepSizeDelta {
+		return pp.TotalValue(P1, low, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+	} else {
+		mid := (low + high) / 2
+		_, _, _, _, _, err := pp.TotalValue(P1, mid, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+		if err == nil {
+			return pp.recSearch(P1, mid, high, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+		} else {
+			return pp.recSearch(P1, low, mid, P2, limit, minSteps, test, nextPriceFunc, nextQuantityFunc, buffer...)
+		}
+
+	}
+}
+
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
@@ -672,6 +703,10 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		if err == nil && n >= minN {
 			break
 		}
+	}
+	if tree.Len() == 0 {
+		err = fmt.Errorf("can't calculate initial position")
+		return
 	}
 	lastPairPrice := tree.Max().(*pair_price_types.PairPrice)
 	for i := tree.Len(); i < 100; i++ {
