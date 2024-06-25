@@ -579,12 +579,12 @@ func (pp *PairProcessor) TotalValue(
 	}
 	if pp.isArithmetic {
 		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+deltaPrice), P2)
-		Q2 := pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
-		value = utils.ArithmeticProgressionSum(P1*Q1, P2*Q2, n)
+		delta := P1*(1+deltaPrice)*Q1*(1+pp.GetDeltaQuantity()) - P1*Q1
+		value = utils.ArithmeticProgressionSum(P1*Q1, delta, n)
 	} else {
-		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+deltaPrice), P2)
-		Q2 := pp.roundQuantity(utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
-		value = utils.GeometricProgressionSum(P1*Q1, P2*Q2, n)
+		n = utils.FindLengthOfGeometricProgression(P1, (1 + deltaPrice), P2)
+		delta := P1 * (1 + deltaPrice) * Q1 * (1 + pp.GetDeltaQuantity()) / P1 * Q1
+		value = utils.GeometricProgressionSum(P1*Q1, delta, n)
 	}
 	return
 }
