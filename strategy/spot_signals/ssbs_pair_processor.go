@@ -51,7 +51,6 @@ type (
 		pairInfo           *symbol_types.SpotSymbol
 		orderTypes         map[string]bool
 		degree             int
-		debug              bool
 		sleepingTime       time.Duration
 		timeOut            time.Duration
 		limitOnPosition    float64
@@ -520,10 +519,8 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
-	leverage int,
 	callbackRate float64,
 	stop chan struct{},
-	debug bool,
 	functions ...Functions) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
@@ -544,7 +541,6 @@ func NewPairProcessor(
 		pairInfo:     nil,
 		orderTypes:   map[string]bool{},
 		degree:       3,
-		debug:        debug,
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
 	}

@@ -240,10 +240,8 @@ func RunSpotGridTrading(
 		LowBound,
 		deltaPrice,
 		deltaQuantity,
-		leverage,
 		callbackRate,
-		stopEvent,
-		false)
+		stopEvent)
 	if err != nil {
 		printError()
 		return
