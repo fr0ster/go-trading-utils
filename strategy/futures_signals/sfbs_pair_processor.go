@@ -612,7 +612,7 @@ func (pp *PairProcessor) recSearch(
 	} else {
 		mid := pp.roundQuantity((low + high) / 2)
 		value, n := pp.TotalValue(P1, mid, P2)
-		if value < limit && n >= minSteps {
+		if value <= limit && n >= minSteps {
 			return pp.recSearch(P1, mid, high, P2, limit, minSteps, buffer...)
 		} else {
 			return pp.recSearch(P1, low, mid, P2, limit, minSteps, buffer...)
