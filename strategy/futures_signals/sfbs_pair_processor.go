@@ -28,6 +28,14 @@ type (
 	nextPriceFunc    func(float64, int) float64
 	nextQuantityFunc func(float64, int) float64
 	testFunc         func(float64, float64) bool
+	Functions        struct {
+		NextPriceUp      nextPriceFunc
+		NextPriceDown    nextPriceFunc
+		NextQuantityUp   nextQuantityFunc
+		NextQuantityDown nextQuantityFunc
+		TestUp           testFunc
+		TestDown         testFunc
+	}
 
 	PairProcessor struct {
 		client        *futures.Client
@@ -49,9 +57,15 @@ type (
 		pairInfo     *symbol_types.FuturesSymbol
 		orderTypes   map[futures.OrderType]bool
 		degree       int
-		debug        bool
 		sleepingTime time.Duration
 		timeOut      time.Duration
+
+		testUp           testFunc
+		testDown         testFunc
+		nextPriceUp      nextPriceFunc
+		nextPriceDown    nextPriceFunc
+		nextQuantityUp   nextQuantityFunc
+		nextQuantityDown nextQuantityFunc
 	}
 )
 
@@ -664,16 +678,15 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		testQ float64
 	)
 	if buyPrice < endPrice {
-		test = func(s, e float64) bool { return s < e }
-		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1+priceDeltaPercent, float64(2))) }
+		test = pp.testUp
+		nextPrice = pp.nextPriceUp
+		nextQuantity = pp.nextQuantityUp
 		tree = pp.up
 	} else {
-		test = func(s, e float64) bool { return s > e }
-		nextPrice = func(s float64, n int) float64 { return pp.roundPrice(s * math.Pow(1-priceDeltaPercent, float64(2))) }
+		test = pp.testDown
+		nextPrice = pp.nextPriceDown
+		nextQuantity = pp.nextQuantityDown
 		tree = pp.down
-	}
-	nextQuantity = func(s float64, n int) float64 {
-		return pp.roundQuantity(s * (math.Pow(1+quantityDeltaPercent, float64(2))))
 	}
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.pair.GetCurrentPositionBalance() * float64(pp.GetLeverage()) / buyPrice)
@@ -691,6 +704,14 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		if err == nil && n >= minN {
 			break
 		}
+	}
+	lastPairPrice := tree.Max().(*pair_price_types.PairPrice)
+	for i := tree.Len(); i < 100; i++ {
+		newPairPrice := &pair_price_types.PairPrice{
+			Price:    nextPrice(lastPairPrice.Price, 1),
+			Quantity: nextQuantity(lastPairPrice.Quantity, 1),
+		}
+		tree.ReplaceOrInsert(newPairPrice)
 	}
 	return
 }
@@ -769,7 +790,7 @@ func NewPairProcessor(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	stop chan struct{},
-	debug bool) (pp *PairProcessor, err error) {
+	functions ...Functions) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 
@@ -796,9 +817,15 @@ func NewPairProcessor(
 		pairInfo:     nil,
 		orderTypes:   nil,
 		degree:       3,
-		debug:        debug,
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
+
+		testUp:           nil,
+		testDown:         nil,
+		nextPriceUp:      nil,
+		nextPriceDown:    nil,
+		nextQuantityUp:   nil,
+		nextQuantityDown: nil,
 	}
 	// Перевіряємо ліміти на ордери та запити
 	pp.updateTime,
@@ -809,6 +836,30 @@ func NewPairProcessor(
 		LimitRead(pp.degree, []string{pp.pair.GetPair()}, client)
 	if err != nil {
 		return
+	}
+
+	if functions != nil {
+		pp.testUp = functions[0].TestUp
+		pp.testDown = functions[0].TestDown
+		pp.nextPriceUp = functions[0].NextPriceUp
+		pp.nextPriceDown = functions[0].NextPriceDown
+		pp.nextQuantityUp = functions[0].NextQuantityUp
+		pp.nextQuantityDown = functions[0].NextQuantityDown
+	} else {
+		pp.testUp = func(s, e float64) bool { return s < e }
+		pp.testDown = func(s, e float64) bool { return s > e }
+		pp.nextPriceUp = func(s float64, n int) float64 {
+			return pp.roundPrice(s * math.Pow(1+pp.pair.GetSellDelta(), float64(2)))
+		}
+		pp.nextPriceDown = func(s float64, n int) float64 {
+			return pp.roundPrice(s * math.Pow(1-pp.pair.GetBuyDelta(), float64(2)))
+		}
+		pp.nextQuantityUp = func(s float64, n int) float64 {
+			return pp.roundQuantity(s * (math.Pow(1+pp.pair.GetSellDeltaQuantity(), float64(2))))
+		}
+		pp.nextQuantityDown = func(s float64, n int) float64 {
+			return pp.roundQuantity(s * (math.Pow(1+pp.pair.GetBuyDeltaQuantity(), float64(2))))
+		}
 	}
 
 	// Буферизуємо інформацію про символ
