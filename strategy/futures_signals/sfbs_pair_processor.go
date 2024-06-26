@@ -568,6 +568,8 @@ func (pp *PairProcessor) TotalValue(
 	Q1 float64,
 	P2 float64) (
 	value float64,
+	firstQuantity float64,
+	lastQuantity float64,
 	n int) {
 	var (
 		deltaPrice float64
@@ -581,18 +583,22 @@ func (pp *PairProcessor) TotalValue(
 		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+deltaPrice), P2)
 		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity()) - 1)
 		value = utils.ArithmeticProgressionSum(P1*Q1, delta, n)
+		lastQuantity = utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
 	} else if pp.progression == pairs_types.GeometricProgression {
 		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+deltaPrice), P2)
 		delta := (1 + deltaPrice) * (1 + pp.GetDeltaQuantity())
 		value = utils.GeometricProgressionSum(P1*Q1, delta, n)
+		lastQuantity = utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
 	} else if pp.progression == pairs_types.CubicProgression {
 		n = utils.FindLengthOfCubicProgression(P1, P1*(1+deltaPrice), P2)
 		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity())*(1+pp.GetDeltaQuantity()) - 1)
 		value = utils.CubicProgressionSum(P1*Q1, delta, n)
+		lastQuantity = utils.FindCubicProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
 	} else {
 		logrus.Errorf("Progression type %v is not supported", pp.progression)
 		return
 	}
+	firstQuantity = Q1
 	return
 }
 
@@ -604,21 +610,22 @@ func (pp *PairProcessor) recSearch(
 	limit float64,
 	minSteps int,
 	buffer ...*btree.BTree) (
-	value,
+	value float64,
 	startQuantity float64,
+	lastQuantity float64,
 	n int,
 	err error) {
 	if high-low <= pp.stepSizeDelta {
-		value, n = pp.TotalValue(P1, low, P2)
+		value, startQuantity, lastQuantity, n = pp.TotalValue(P1, low, P2)
 		if value < limit && n >= minSteps {
-			return value, low, n, nil
+			return value, startQuantity, lastQuantity, n, nil
 		} else {
 			err = fmt.Errorf("can't calculate initial position")
 			return
 		}
 	} else {
 		mid := pp.roundQuantity((low + high) / 2)
-		value, n := pp.TotalValue(P1, mid, P2)
+		value, _, _, n = pp.TotalValue(P1, mid, P2)
 		if value <= limit && n >= minSteps {
 			return pp.recSearch(P1, mid, high, P2, limit, minSteps, buffer...)
 		} else {
@@ -630,13 +637,13 @@ func (pp *PairProcessor) recSearch(
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
-	endPrice float64) (value, quantity float64, n int, err error) {
+	endPrice float64) (value, firstQuantity, lastQuantity float64, n int, err error) {
 	var (
 		tree *btree.BTree
 	)
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
-	value, quantity, n, err = pp.recSearch(
+	value, firstQuantity, lastQuantity, n, err = pp.recSearch(
 		buyPrice,
 		low,
 		high,
@@ -654,16 +661,19 @@ func (pp *PairProcessor) InitPositionGrid(
 	minN int,
 	price float64) (
 	valueUp,
-	priceUp,
-	quantityUp float64,
+	startQuantityUp float64,
 	stepsUp int,
 	valueDown,
-	priceDown,
-	quantityDown float64,
+	startQuantityDown float64,
 	stepsDown int,
 	err error) {
-	priceUp = price * (1 + pp.GetDeltaPrice())
-	valueUp, quantityUp, stepsUp, err = pp.CalculateInitialPosition(
+	var (
+		priceUp      float64
+		quantityUp   float64
+		priceDown    float64
+		quantityDown float64
+	)
+	valueUp, startQuantityUp, quantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.UpBound)
@@ -688,8 +698,7 @@ func (pp *PairProcessor) InitPositionGrid(
 			return
 		}
 	}
-	priceDown = price * (1 - pp.GetDeltaPrice())
-	valueDown, quantityDown, stepsDown, err = pp.CalculateInitialPosition(
+	valueDown, startQuantityDown, quantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.LowBound)
@@ -824,6 +833,39 @@ func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
 		return 0, err
 	}
 	return utils.ConvStrToFloat64(price[0].Price), nil
+}
+
+func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDown, quantityDown float64, err error) {
+	var (
+		risk *futures.PositionRisk
+	)
+	if pp.up.Len() == 0 && pp.down.Len() == 0 {
+		err = fmt.Errorf("can't get prices")
+		return
+	}
+	risk, err = pp.GetPositionRisk()
+	if err != nil {
+		return
+	}
+	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+			priceDown = pp.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			quantityDown = pp.NextQuantityDown(utils.ConvStrToFloat64(risk.PositionAmt) * -1)
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+			priceUp = pp.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			quantityUp = pp.NextQuantityUp(utils.ConvStrToFloat64(risk.PositionAmt))
+		}
+	} else {
+		priceUp, quantityUp, _, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
+		if err != nil {
+			return
+		}
+		priceDown, quantityDown, _, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
+		if err != nil {
+			return
+		}
+	}
+	return
 }
 
 func NewPairProcessor(
