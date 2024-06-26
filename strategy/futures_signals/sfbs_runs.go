@@ -1124,7 +1124,6 @@ func RunFuturesGridTradingV2(
 
 func getCallBack_v3(
 	pairProcessor *PairProcessor,
-	minNotional float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	return func(event *futures.WsUserDataEvent) {
@@ -1157,7 +1156,7 @@ func getCallBack_v3(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					event.OrderTradeUpdate.Side,
-					minNotional,
+					// minNotional,
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
@@ -1174,7 +1173,7 @@ func createNextPair_v3(
 	LastExecutedPrice float64,
 	AccumulatedFilledQty float64,
 	LastExecutedSide futures.SideType,
-	minNotional float64,
+	// minNotional float64,
 	pairProcessor *PairProcessor) (err error) {
 	var (
 		risk         *futures.PositionRisk
@@ -1250,14 +1249,13 @@ func createNextPair_v3(
 				printError()
 				return
 			}
-			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, minNotional %v, status %v",
-				pairProcessor.GetPair(), upQuantity, upPrice, upQuantity*upPrice, minNotional, sellOrder.Status)
-			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v, status %v",
+			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, status %v",
+				pairProcessor.GetPair(), upQuantity, upPrice, upQuantity*upPrice, sellOrder.Status)
+			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, status %v",
 				pairProcessor.GetPair(),
 				AccumulatedFilledQty,
 				pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
 				AccumulatedFilledQty*pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				minNotional,
 				buyOrder.Status)
 		} else {
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
@@ -1336,19 +1334,17 @@ func createNextPair_v3(
 				printError()
 				return
 			}
-			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, minNotional %v, status %v",
+			logrus.Debugf("Futures %s: Sell Quantity Up %v * upPrice %v = %v, status %v",
 				pairProcessor.GetPair(),
 				AccumulatedFilledQty,
 				pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
 				AccumulatedFilledQty*pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				minNotional,
 				sellOrder.Status)
-			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, minNotional %v, status %v",
+			logrus.Debugf("Futures %s: Buy Quantity Down %v * downPrice %v = %v, status %v",
 				pairProcessor.GetPair(),
 				downQuantity,
 				downPrice,
 				downPrice*downQuantity,
-				minNotional,
 				buyOrder.Status)
 		} else {
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
@@ -1379,10 +1375,10 @@ func createNextPair_v3(
 		// Відкриваємо нову позицію
 		// Визначаємо ціну для нових ордерів
 		// Визначаємо кількість для нових ордерів
-		logrus.Debugf("Futures %s: Buy Quantity Up %v * upPrice %v = %v, minNotional %v",
-			pairProcessor.GetPair(), upQuantity, upPrice, upQuantity*upPrice, minNotional)
-		logrus.Debugf("Futures %s: Sell Quantity Down %v * downPrice %v = %v, minNotional %v",
-			pairProcessor.GetPair(), downQuantity, downPrice, downQuantity*downPrice, minNotional)
+		logrus.Debugf("Futures %s: Buy Quantity Up %v * upPrice %v = %v",
+			pairProcessor.GetPair(), upQuantity, upPrice, upQuantity*upPrice)
+		logrus.Debugf("Futures %s: Sell Quantity Down %v * downPrice %v = %v",
+			pairProcessor.GetPair(), downQuantity, downPrice, downQuantity*downPrice)
 		openPosition(
 			futures.SideTypeBuy,
 			futures.OrderTypeTrailingStopMarket,
@@ -1418,12 +1414,11 @@ func RunFuturesGridTradingV3(
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
-		free          float64
 		initPriceUp   float64
 		initPriceDown float64
 		quantityUp    float64
 		quantityDown  float64
-		minNotional   float64
+		// minNotional   float64
 		pairProcessor *PairProcessor
 	)
 	defer wg.Done()
@@ -1446,15 +1441,13 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	free = pairProcessor.GetFreeBalance()
-	_, _, initPriceUp, initPriceDown, minNotional, _, _, err = initVars(pairProcessor)
+	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
 		return err
 	}
-	if minNotional > free {
-		printError()
-		return fmt.Errorf("minNotional %v more than current position balance %v",
-			minNotional, free)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price)
+	if err != nil {
+		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -1462,7 +1455,6 @@ func RunFuturesGridTradingV3(
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v3(
 			pairProcessor,
-			minNotional,
 			quit,
 			maintainedOrders))
 	if err != nil {
@@ -1492,9 +1484,6 @@ func RunFuturesGridTradingV3(
 func getCallBack_v4(
 	pairProcessor *PairProcessor,
 	quantity float64,
-	// tickSizeExp int,
-	// stepSizeExp int,
-	minNotional float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	return func(event *futures.WsUserDataEvent) {
@@ -1535,7 +1524,6 @@ func getCallBack_v4(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					// event.OrderTradeUpdate.Side,
-					minNotional,
 					quantity,
 					pairProcessor)
 				if err != nil {
@@ -1553,7 +1541,6 @@ func createNextPair_v4(
 	LastExecutedPrice float64,
 	AccumulatedFilledQty float64,
 	// LastExecutedSide futures.SideType,
-	minNotional float64,
 	quantity float64,
 	pairProcessor *PairProcessor) (err error) {
 	var (
@@ -1638,7 +1625,6 @@ func createNextPair_v4(
 				upPrice,
 				upQuantity,
 				// sellOrder.Side,
-				minNotional,
 				quantity,
 				pairProcessor)
 		}
@@ -1696,7 +1682,6 @@ func createNextPair_v4(
 				upPrice,
 				upQuantity,
 				// buyOrder.Side,
-				minNotional,
 				quantity,
 				pairProcessor)
 		}
@@ -1745,9 +1730,7 @@ func RunFuturesGridTradingV4(
 		quantity      float64
 		quantityUp    float64
 		quantityDown  float64
-		minNotional   float64
-		// tickSizeExp   int
-		// stepSizeExp   int
+		// minNotional   float64
 		pairProcessor *PairProcessor
 	)
 	defer wg.Done()
@@ -1770,15 +1753,13 @@ func RunFuturesGridTradingV4(
 	if err != nil {
 		return err
 	}
-
-	_, _, initPriceUp, initPriceDown, minNotional, _, _, err = initVars(pairProcessor)
+	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
 		return err
 	}
-	if minNotional > pairProcessor.GetLimitOnTransaction() {
-		printError()
-		return fmt.Errorf("minNotional %v more than current position limitOnTransaction %v",
-			minNotional, pairProcessor.GetLimitOnTransaction())
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price)
+	if err != nil {
+		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -1787,7 +1768,6 @@ func RunFuturesGridTradingV4(
 		getCallBack_v4(
 			pairProcessor,
 			quantity,
-			minNotional,
 			quit,
 			maintainedOrders))
 	if err != nil {
