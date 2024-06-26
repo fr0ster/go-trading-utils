@@ -758,15 +758,15 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 	var (
 		risk *futures.PositionRisk
 	)
-	if pp.up.Len() == 0 && pp.down.Len() == 0 {
-		err = fmt.Errorf("can't get prices")
-		return
-	}
 	risk, err = pp.GetPositionRisk()
 	if err != nil {
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		if pp.up.Len() == 0 || pp.down.Len() == 0 {
+			err = fmt.Errorf("can't get prices")
+			return
+		}
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			quantityDown = pp.NextQuantityDown(utils.ConvStrToFloat64(risk.PositionAmt) * -1)
