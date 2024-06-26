@@ -26,7 +26,7 @@ func getTestData() *btree.BTree {
 		UnRealizedProfitUpBound:  0.9,
 		DeltaPrice:               0.01,
 		DeltaQuantity:            0.1,
-		IsArithmetic:             true,
+		Progression:              "GEOMETRIC",
 		BuyQuantity:              0.3,
 		BuyValue:                 300.0,
 		SellQuantity:             0.2,
@@ -48,7 +48,7 @@ func getTestData() *btree.BTree {
 		UnRealizedProfitUpBound:  0.9,
 		DeltaPrice:               0.01,
 		DeltaQuantity:            0.1,
-		IsArithmetic:             true,
+		Progression:              "GEOMETRIC",
 		BuyQuantity:              0.3,
 		BuyValue:                 300.0,
 		SellQuantity:             0.2,
@@ -105,8 +105,8 @@ func assertPair(
 	// Test GetDeltaQuantity
 	assert.Equal(t, 0.1, pair.GetDeltaQuantity())
 
-	// Test GetIsArithmetic
-	assert.True(t, pair.GetIsArithmetic())
+	// Test GetProgression
+	assert.Equal(t, "GEOMETRIC", pair.GetProgression())
 
 	// Test GetBuyQuantity
 	assert.Equal(t, 0.3, pair.GetBuyQuantity())

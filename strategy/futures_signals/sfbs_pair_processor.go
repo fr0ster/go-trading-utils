@@ -56,7 +56,7 @@ type (
 		deltaPrice    float64
 		deltaQuantity float64
 
-		isArithmetic bool
+		progression pairs_types.ProgressionType
 	}
 )
 
@@ -577,14 +577,21 @@ func (pp *PairProcessor) TotalValue(
 	} else {
 		deltaPrice = -pp.GetDeltaPrice()
 	}
-	if pp.isArithmetic {
+	if pp.progression == pairs_types.ArithmeticProgression {
 		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+deltaPrice), P2)
 		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity()) - 1)
 		value = utils.ArithmeticProgressionSum(P1*Q1, delta, n)
-	} else {
+	} else if pp.progression == pairs_types.GeometricProgression {
 		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+deltaPrice), P2)
 		delta := (1 + deltaPrice) * (1 + pp.GetDeltaQuantity())
 		value = utils.GeometricProgressionSum(P1*Q1, delta, n)
+	} else if pp.progression == pairs_types.CubicProgression {
+		n = utils.FindLengthOfCubicProgression(P1, P1*(1+deltaPrice), P2)
+		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity())*(1+pp.GetDeltaQuantity()) - 1)
+		value = utils.CubicProgressionSum(P1*Q1, delta, n)
+	} else {
+		logrus.Errorf("Progression type %v is not supported", pp.progression)
+		return
 	}
 	return
 }
@@ -664,14 +671,21 @@ func (pp *PairProcessor) InitPositionGrid(
 		return
 	}
 	for i := 0; i < stepsUp; i++ {
-		if pp.isArithmetic {
+		if pp.progression == pairs_types.ArithmeticProgression {
 			priceN := utils.FindArithmeticProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindArithmeticProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
 			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
-		} else {
+		} else if pp.progression == pairs_types.GeometricProgression {
 			priceN := utils.FindGeometricProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindGeometricProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
 			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else if pp.progression == pairs_types.CubicProgression {
+			priceN := utils.FindCubicProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindCubicProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else {
+			err = fmt.Errorf("progression type %v is not supported", pp.progression)
+			return
 		}
 	}
 	priceDown = price * (1 - pp.GetDeltaPrice())
@@ -683,14 +697,21 @@ func (pp *PairProcessor) InitPositionGrid(
 		return
 	}
 	for i := 0; i < stepsUp; i++ {
-		if pp.isArithmetic {
+		if pp.progression == pairs_types.ArithmeticProgression {
 			priceN := utils.FindArithmeticProgressionNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindArithmeticProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
 			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
-		} else {
+		} else if pp.progression == pairs_types.GeometricProgression {
 			priceN := utils.FindGeometricProgressionNthTerm(priceUp, priceUp*(1-pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindGeometricProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
 			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else if pp.progression == pairs_types.CubicProgression {
+			priceN := utils.FindCubicProgressionNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
+			quantityN := utils.FindCubicProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
+			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+		} else {
+			err = fmt.Errorf("progression type %v is not supported", pp.progression)
+			return
 		}
 	}
 	if quantityUp*price < pp.notional {
@@ -704,34 +725,54 @@ func (pp *PairProcessor) InitPositionGrid(
 }
 
 func (pp *PairProcessor) NextPriceUp(price float64) float64 {
-	if pp.isArithmetic {
+	if pp.progression == pairs_types.ArithmeticProgression {
 		return pp.roundPrice(utils.FindArithmeticProgressionNthTerm(price, price*(1+pp.GetDeltaPrice()), 1))
-	} else {
+	} else if pp.progression == pairs_types.GeometricProgression {
 		return pp.roundPrice(utils.FindGeometricProgressionNthTerm(price, price*(1+pp.GetDeltaPrice()), 1))
+	} else if pp.progression == pairs_types.CubicProgression {
+		return pp.roundPrice(utils.FindCubicProgressionNthTerm(price, price*(1+pp.GetDeltaPrice()), 1))
+	} else {
+		logrus.Errorf("Progression type %v is not supported", pp.progression)
+		return 0
 	}
 }
 
 func (pp *PairProcessor) NextPriceDown(price float64) float64 {
-	if pp.isArithmetic {
+	if pp.progression == pairs_types.ArithmeticProgression {
 		return pp.roundPrice(utils.FindArithmeticProgressionNthTerm(price, price*(1-pp.GetDeltaPrice()), 1))
-	} else {
+	} else if pp.progression == pairs_types.GeometricProgression {
 		return pp.roundPrice(utils.FindGeometricProgressionNthTerm(price, price*(1-pp.GetDeltaPrice()), 1))
+	} else if pp.progression == pairs_types.CubicProgression {
+		return pp.roundPrice(utils.FindCubicProgressionNthTerm(price, price*(1-pp.GetDeltaPrice()), 1))
+	} else {
+		logrus.Errorf("Progression type %v is not supported", pp.progression)
+		return 0
 	}
 }
 
 func (pp *PairProcessor) NextQuantityUp(quantity float64) float64 {
-	if pp.isArithmetic {
+	if pp.progression == pairs_types.ArithmeticProgression {
 		return pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1))
-	} else {
+	} else if pp.progression == pairs_types.GeometricProgression {
 		return pp.roundQuantity(utils.FindGeometricProgressionNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1))
+	} else if pp.progression == pairs_types.CubicProgression {
+		return pp.roundQuantity(utils.FindCubicProgressionNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1))
+	} else {
+		logrus.Errorf("Progression type %v is not supported", pp.progression)
+		return 0
 	}
 }
 
 func (pp *PairProcessor) NextQuantityDown(quantity float64) float64 {
-	if pp.isArithmetic {
+	if pp.progression == pairs_types.ArithmeticProgression {
 		return utils.FindArithmeticProgressionNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
-	} else {
+	} else if pp.progression == pairs_types.GeometricProgression {
 		return utils.FindGeometricProgressionNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
+	} else if pp.progression == pairs_types.CubicProgression {
+		return utils.FindCubicProgressionNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
+	} else {
+		logrus.Errorf("Progression type %v is not supported", pp.progression)
+		return 0
 	}
 }
 
@@ -797,7 +838,7 @@ func NewPairProcessor(
 	leverage int,
 	callbackRate float64,
 	stop chan struct{},
-	isArithmetic bool) (pp *PairProcessor, err error) {
+	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
@@ -835,7 +876,7 @@ func NewPairProcessor(
 		deltaPrice:    deltaPrice,
 		deltaQuantity: deltaQuantity,
 
-		isArithmetic: isArithmetic,
+		progression: progression,
 	}
 
 	// Ініціалізуємо інформацію про пару

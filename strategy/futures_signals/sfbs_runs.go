@@ -61,7 +61,7 @@ func RunScalpingHolding(
 	callbackRate float64,
 	percentToLiquidation float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	return RunFuturesGridTrading(
 		config,
@@ -78,7 +78,7 @@ func RunScalpingHolding(
 		callbackRate,
 		percentToLiquidation,
 		quit,
-		isArithmetic,
+		progression,
 		wg)
 }
 
@@ -202,7 +202,7 @@ func RunFuturesTrading(
 	leverage int,
 	callBackRate float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
 		initPrice     float64
@@ -229,7 +229,7 @@ func RunFuturesTrading(
 		leverage,
 		callBackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		return err
 	}
@@ -577,7 +577,7 @@ func initRun(
 	leverage int,
 	callbackRate float64,
 	quit chan struct{},
-	isArithmetic bool) (pairProcessor *PairProcessor, err error) {
+	progression pairs_types.ProgressionType) (pairProcessor *PairProcessor, err error) {
 	// Створюємо обробник пари
 	pairProcessor, err = NewPairProcessor(
 		client,
@@ -591,7 +591,7 @@ func initRun(
 		leverage,
 		callbackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		printError()
 		return
@@ -880,7 +880,7 @@ func RunFuturesGridTrading(
 	percentToLiquidation float64,
 	callbackRate float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
 		initPrice     float64
@@ -909,7 +909,7 @@ func RunFuturesGridTrading(
 		leverage,
 		callbackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		return err
 	}
@@ -1072,7 +1072,7 @@ func RunFuturesGridTradingV2(
 	callbackRate float64,
 	percentToLiquidation float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
 		initPrice     float64
@@ -1102,7 +1102,7 @@ func RunFuturesGridTradingV2(
 		leverage,
 		callbackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		return err
 	}
@@ -1453,7 +1453,7 @@ func RunFuturesGridTradingV3(
 	leverage int,
 	callbackRate float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
 		free          float64
@@ -1482,7 +1482,7 @@ func RunFuturesGridTradingV3(
 		leverage,
 		callbackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		return err
 	}
@@ -1807,7 +1807,7 @@ func RunFuturesGridTradingV4(
 	leverage int,
 	callbackRate float64,
 	quit chan struct{},
-	isArithmetic bool,
+	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
 		initPrice     float64
@@ -1837,7 +1837,7 @@ func RunFuturesGridTradingV4(
 		leverage,
 		callbackRate,
 		quit,
-		isArithmetic)
+		progression)
 	if err != nil {
 		return err
 	}
@@ -1932,7 +1932,7 @@ func Run(
 				pair.GetCallbackRate(),
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 			// Відпрацьовуємо Trading стратегію
@@ -1953,7 +1953,7 @@ func Run(
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 			// Відпрацьовуємо Grid стратегію
@@ -1973,7 +1973,7 @@ func Run(
 				pair.GetCallbackRate(),
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
@@ -1992,7 +1992,7 @@ func Run(
 				pair.GetCallbackRate(),
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV3 {
@@ -2010,7 +2010,7 @@ func Run(
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV4 {
@@ -2028,7 +2028,7 @@ func Run(
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
 				quit,
-				pair.GetIsArithmetic(),
+				pair.GetProgression(),
 				wg)
 
 			// } else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
