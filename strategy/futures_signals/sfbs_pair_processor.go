@@ -603,10 +603,12 @@ func (pp *PairProcessor) recSearch(
 
 	value, n = pp.CalcValueForQuantity(P1, high, P2)
 	if value < limit && n >= minSteps {
+		quantity = high
 		return
 	}
 	value, n = pp.CalcValueForQuantity(P1, low, P2)
 	if value < limit && n >= minSteps {
+		quantity = low
 		return
 	}
 
