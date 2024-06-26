@@ -906,7 +906,7 @@ func RunFuturesGridTrading(
 	if err != nil {
 		return err
 	}
-	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, initPrice, initPriceUp, initPriceDown, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -914,13 +914,6 @@ func RunFuturesGridTrading(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v * limitOnTransaction %v",
 			minNotional, pairProcessor.GetFreeBalance(), pairProcessor.GetLimitOnTransaction())
-	}
-
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(initPrice)
-	if err != nil {
-		printError()
-		close(quit)
-		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -1100,7 +1093,7 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, initPrice, initPriceUp, initPriceDown, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1108,13 +1101,6 @@ func RunFuturesGridTradingV2(
 		printError()
 		return fmt.Errorf("minNotional %v more than current limitOnTransaction %v",
 			minNotional, pairProcessor.GetLimitOnTransaction())
-	}
-
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(initPrice)
-	if err != nil {
-		printError()
-		close(quit)
-		return err
 	}
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
@@ -1452,8 +1438,8 @@ func RunFuturesGridTradingV3(
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
-		free          float64
-		initPrice     float64
+		free float64
+		// initPrice     float64
 		initPriceUp   float64
 		initPriceDown float64
 		quantityUp    float64
@@ -1483,7 +1469,7 @@ func RunFuturesGridTradingV3(
 		return err
 	}
 	free = pairProcessor.GetFreeBalance()
-	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, _, initPriceDown, quantityDown, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1491,12 +1477,6 @@ func RunFuturesGridTradingV3(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position balance %v",
 			minNotional, free)
-	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(initPrice)
-	if err != nil {
-		printError()
-		close(quit)
-		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -1792,7 +1772,6 @@ func RunFuturesGridTradingV4(
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
-		initPrice     float64
 		initPriceUp   float64
 		initPriceDown float64
 		quantity      float64
@@ -1824,7 +1803,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 
-	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, _, initPriceUp, initPriceDown, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1832,12 +1811,6 @@ func RunFuturesGridTradingV4(
 		printError()
 		return fmt.Errorf("minNotional %v more than current position limitOnTransaction %v",
 			minNotional, pairProcessor.GetLimitOnTransaction())
-	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(initPrice)
-	if err != nil {
-		printError()
-		close(quit)
-		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
