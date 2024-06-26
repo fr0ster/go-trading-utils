@@ -592,7 +592,7 @@ func (pp *PairProcessor) recSearch(
 	err error) {
 
 	for high-low > pp.stepSizeDelta {
-		mid := pp.roundQuantity((low + high) / 2)
+		mid := (low + high) / 2
 		value, n = pp.CalcValueForQuantity(P1, mid, P2)
 		if value <= limit && n >= minSteps {
 			low = mid
@@ -603,12 +603,12 @@ func (pp *PairProcessor) recSearch(
 
 	value, n = pp.CalcValueForQuantity(P1, high, P2)
 	if value < limit && n >= minSteps {
-		quantity = high
+		quantity = pp.roundQuantity(high)
 		return
 	}
 	value, n = pp.CalcValueForQuantity(P1, low, P2)
 	if value < limit && n >= minSteps {
-		quantity = low
+		quantity = pp.roundQuantity(low)
 		return
 	}
 
