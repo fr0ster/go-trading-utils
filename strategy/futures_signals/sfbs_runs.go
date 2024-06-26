@@ -1173,7 +1173,6 @@ func createNextPair_v3(
 	LastExecutedPrice float64,
 	AccumulatedFilledQty float64,
 	LastExecutedSide futures.SideType,
-	// minNotional float64,
 	pairProcessor *PairProcessor) (err error) {
 	var (
 		risk         *futures.PositionRisk
