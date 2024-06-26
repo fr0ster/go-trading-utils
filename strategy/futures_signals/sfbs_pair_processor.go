@@ -559,20 +559,6 @@ func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
 	return utils.RoundToDecimalPlace(quantity, pp.getStepSizeExp())
 }
 
-func (pp *PairProcessor) Steps(begin, end float64, next func(b float64, n int) float64) int {
-	var test func(float64, float64) bool
-	n := 1
-	if begin < end {
-		test = func(s, e float64) bool { return s < e }
-	} else {
-		test = func(s, e float64) bool { return s > e }
-	}
-	for sum := begin; test(sum, end); sum = next(sum, n) {
-		n++
-	}
-	return n - 1
-}
-
 func (pp *PairProcessor) CalcValueForQuantity(
 	P1 float64,
 	Q1 float64,
@@ -605,13 +591,17 @@ func (pp *PairProcessor) recSearch(
 	n int,
 	err error) {
 	if high-low <= pp.stepSizeDelta {
-		value, n = pp.CalcValueForQuantity(P1, low, P2)
+		value, n = pp.CalcValueForQuantity(P1, high, P2)
 		if value < limit && n >= minSteps {
-			quantity = high
 			return
 		} else {
-			err = fmt.Errorf("can't calculate initial position")
-			return
+			value, n = pp.CalcValueForQuantity(P1, low, P2)
+			if value < limit && n >= minSteps {
+				return
+			} else {
+				err = fmt.Errorf("can't calculate initial position")
+				return
+			}
 		}
 	} else {
 		mid := pp.roundQuantity((low + high) / 2)
