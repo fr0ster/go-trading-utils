@@ -24,6 +24,7 @@ import (
 
 type (
 	NthTermType                 func(firstTerm, commonRatio float64, termPosition int) float64
+	DeltaType                   func(firstTerm, secondTerm float64) float64
 	SumType                     func(firstTerm, commonRatio float64, numberOfTerms int) float64
 	FindNthTermType             func(firstTerm, secondTerm float64, termPosition int) float64
 	FindLengthOfProgressionType func(firstTerm, secondTerm, lastTerm float64) int
@@ -61,6 +62,7 @@ type (
 		deltaQuantity float64
 
 		progression             pairs_types.ProgressionType
+		GetDelta                DeltaType
 		NthTerm                 NthTermType
 		Sum                     SumType
 		FindNthTerm             FindNthTermType
@@ -586,7 +588,7 @@ func (pp *PairProcessor) CalcValueForQuantity(
 		deltaPrice = -pp.GetDeltaPrice()
 	}
 	n = pp.FindLengthOfProgression(P1, P1*(1+deltaPrice), P2)
-	delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity()) - 1)
+	delta := pp.GetDelta(P1*Q1, P1*(1+deltaPrice)*Q1*(1+pp.GetDeltaQuantity()))
 	value = pp.Sum(P1*Q1, delta, n)
 	return
 }
@@ -881,41 +883,49 @@ func NewPairProcessor(
 		pp.Sum = utils.ArithmeticProgressionSum
 		pp.FindNthTerm = utils.FindArithmeticProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfArithmeticProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return P1 - P1 }
 	} else if pp.progression == pairs_types.GeometricProgression {
 		pp.NthTerm = utils.FindGeometricProgressionNthTerm
 		pp.Sum = utils.GeometricProgressionSum
 		pp.FindNthTerm = utils.FindGeometricProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfGeometricProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return P2 / P1 }
 	} else if pp.progression == pairs_types.CubicProgression {
 		pp.NthTerm = utils.FindCubicProgressionNthTerm
 		pp.Sum = utils.CubicProgressionSum
 		pp.FindNthTerm = utils.FindCubicProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfCubicProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return math.Pow(P2/P1, 1.0/3) }
 	} else if pp.progression == pairs_types.CubicRootProgression {
 		pp.NthTerm = utils.FindCubicRootProgressionNthTerm
 		pp.Sum = utils.CubicRootProgressionSum
 		pp.FindNthTerm = utils.FindCubicRootProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfCubicRootProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return math.Cbrt(P2 / P1) }
 	} else if pp.progression == pairs_types.QuadraticProgression {
 		pp.NthTerm = utils.FindQuadraticProgressionNthTerm
 		pp.Sum = utils.QuadraticProgressionSum
 		pp.FindNthTerm = utils.FindQuadraticProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfQuadraticProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return (P2 - P1) / 1 }
 	} else if pp.progression == pairs_types.ExponentialProgression {
 		pp.NthTerm = utils.FindExponentialProgressionNthTerm
 		pp.Sum = utils.ExponentialProgressionSum
 		pp.FindNthTerm = utils.FindExponentialProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfExponentialProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return P2 / P1 }
 	} else if pp.progression == pairs_types.LogarithmicProgression {
 		pp.NthTerm = utils.FindLogarithmicProgressionNthTerm
 		pp.Sum = utils.LogarithmicProgressionSum
 		pp.FindNthTerm = utils.FindLogarithmicProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfLogarithmicProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return (P2 - P1) / math.Log(2) }
 	} else if pp.progression == pairs_types.HarmonicProgression {
 		pp.NthTerm = utils.FindHarmonicProgressionNthTerm
 		pp.Sum = utils.HarmonicProgressionSum
 		pp.FindNthTerm = utils.FindHarmonicProgressionNthTerm
 		pp.FindLengthOfProgression = utils.FindLengthOfHarmonicProgression
+		pp.GetDelta = func(P1, P2 float64) float64 { return 1/P2 - 1/P1 }
 	} else {
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
 		return
