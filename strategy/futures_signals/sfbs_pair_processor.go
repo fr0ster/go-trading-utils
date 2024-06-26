@@ -590,28 +590,28 @@ func (pp *PairProcessor) recSearch(
 	quantity float64,
 	n int,
 	err error) {
-	if high-low <= pp.stepSizeDelta {
-		value, n = pp.CalcValueForQuantity(P1, high, P2)
-		if value < limit && n >= minSteps {
-			return
-		} else {
-			value, n = pp.CalcValueForQuantity(P1, low, P2)
-			if value < limit && n >= minSteps {
-				return
-			} else {
-				err = fmt.Errorf("can't calculate initial position")
-				return
-			}
-		}
-	} else {
+
+	for high-low > pp.stepSizeDelta {
 		mid := pp.roundQuantity((low + high) / 2)
 		value, n = pp.CalcValueForQuantity(P1, mid, P2)
 		if value <= limit && n >= minSteps {
-			return pp.recSearch(P1, mid, high, P2, limit, minSteps)
+			low = mid
 		} else {
-			return pp.recSearch(P1, low, mid, P2, limit, minSteps)
+			high = mid
 		}
 	}
+
+	value, n = pp.CalcValueForQuantity(P1, high, P2)
+	if value < limit && n >= minSteps {
+		return
+	}
+	value, n = pp.CalcValueForQuantity(P1, low, P2)
+	if value < limit && n >= minSteps {
+		return
+	}
+
+	err = fmt.Errorf("can't calculate initial position")
+	return
 }
 
 func (pp *PairProcessor) CalculateInitialPosition(
