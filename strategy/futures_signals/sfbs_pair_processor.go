@@ -583,17 +583,17 @@ func (pp *PairProcessor) TotalValue(
 		n = utils.FindLengthOfArithmeticProgression(P1, P1*(1+deltaPrice), P2)
 		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity()) - 1)
 		value = utils.ArithmeticProgressionSum(P1*Q1, delta, n)
-		lastQuantity = utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
+		lastQuantity = pp.roundQuantity(utils.FindArithmeticProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
 	} else if pp.progression == pairs_types.GeometricProgression {
 		n = utils.FindLengthOfGeometricProgression(P1, P1*(1+deltaPrice), P2)
 		delta := (1 + deltaPrice) * (1 + pp.GetDeltaQuantity())
 		value = utils.GeometricProgressionSum(P1*Q1, delta, n)
-		lastQuantity = utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
+		lastQuantity = pp.roundQuantity(utils.FindGeometricProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
 	} else if pp.progression == pairs_types.CubicProgression {
 		n = utils.FindLengthOfCubicProgression(P1, P1*(1+deltaPrice), P2)
 		delta := P1 * Q1 * ((1+deltaPrice)*(1+pp.GetDeltaQuantity())*(1+pp.GetDeltaQuantity()) - 1)
 		value = utils.CubicProgressionSum(P1*Q1, delta, n)
-		lastQuantity = utils.FindCubicProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
+		lastQuantity = pp.roundQuantity(utils.FindCubicProgressionNthTerm(Q1, Q1*(1+pp.GetDeltaQuantity()), n))
 	} else {
 		logrus.Errorf("Progression type %v is not supported", pp.progression)
 		return
@@ -608,8 +608,7 @@ func (pp *PairProcessor) recSearch(
 	high float64,
 	P2 float64,
 	limit float64,
-	minSteps int,
-	buffer ...*btree.BTree) (
+	minSteps int) (
 	value float64,
 	startQuantity float64,
 	lastQuantity float64,
@@ -627,9 +626,9 @@ func (pp *PairProcessor) recSearch(
 		mid := pp.roundQuantity((low + high) / 2)
 		value, _, _, n = pp.TotalValue(P1, mid, P2)
 		if value <= limit && n >= minSteps {
-			return pp.recSearch(P1, mid, high, P2, limit, minSteps, buffer...)
+			return pp.recSearch(P1, mid, high, P2, limit, minSteps)
 		} else {
-			return pp.recSearch(P1, low, mid, P2, limit, minSteps, buffer...)
+			return pp.recSearch(P1, low, mid, P2, limit, minSteps)
 		}
 	}
 }
@@ -638,9 +637,6 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
 	endPrice float64) (value, firstQuantity, lastQuantity float64, n int, err error) {
-	var (
-		tree *btree.BTree
-	)
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
 	value, firstQuantity, lastQuantity, n, err = pp.recSearch(
@@ -649,8 +645,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		high,
 		endPrice,
 		pp.GetFreeBalance()*float64(pp.GetLeverage()),
-		minN,
-		tree)
+		minN)
 	if err != nil {
 		return
 	}
@@ -680,6 +675,8 @@ func (pp *PairProcessor) InitPositionGrid(
 	if err != nil {
 		return
 	}
+	priceUp = price
+	pp.up.Clear(false)
 	for i := 0; i < stepsUp; i++ {
 		if pp.progression == pairs_types.ArithmeticProgression {
 			priceN := utils.FindArithmeticProgressionNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1)
@@ -705,19 +702,21 @@ func (pp *PairProcessor) InitPositionGrid(
 	if err != nil {
 		return
 	}
+	priceDown = price
+	pp.down.Clear(false)
 	for i := 0; i < stepsUp; i++ {
 		if pp.progression == pairs_types.ArithmeticProgression {
 			priceN := utils.FindArithmeticProgressionNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindArithmeticProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
-			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+			pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
 		} else if pp.progression == pairs_types.GeometricProgression {
 			priceN := utils.FindGeometricProgressionNthTerm(priceUp, priceUp*(1-pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindGeometricProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
-			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+			pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
 		} else if pp.progression == pairs_types.CubicProgression {
 			priceN := utils.FindCubicProgressionNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
 			quantityN := utils.FindCubicProgressionNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1)
-			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
+			pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceN, Quantity: quantityN})
 		} else {
 			err = fmt.Errorf("progression type %v is not supported", pp.progression)
 			return
