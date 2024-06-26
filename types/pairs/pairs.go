@@ -48,15 +48,34 @@ const (
 	// Для USDT_FUTURE/COIN_FUTURE
 	CrossMarginType    MarginType = "CROSS"
 	IsolatedMarginType MarginType = "ISOLATED"
+
+	// Арифметична прогресія
+	ArithmeticProgression ProgressionType = "ARITHMETIC"
+	// Геометрична прогресія
+	GeometricProgression ProgressionType = "GEOMETRIC"
+	// Експоненціальна прогресія
+	ExponentialProgression ProgressionType = "EXPONENTIAL"
+	// Логарифмічна прогресія
+	LogarithmicProgression ProgressionType = "LOGARITHMIC"
+	// Квадратична прогресія
+	QuadraticProgression ProgressionType = "QUADRATIC"
+	// Кубічна прогресія
+	CubicProgression ProgressionType = "CUBIC"
+	// Квадратно-коренева прогресія
+	SquareRootProgression ProgressionType = "SQUARE_ROOT"
+	// Кубічно-коренева прогресія
+	CubicRootProgression ProgressionType = "CUBIC_ROOT"
+	// Гармонічна прогресія
+	HarmonicProgression ProgressionType = "HARMONIC"
 )
 
 type (
-	AccountType  string
-	StrategyType string
-	StageType    string
-	MarginType   string
-	Commission   map[string]float64
-	Pairs        struct {
+	AccountType     string
+	MarginType      string
+	ProgressionType string
+	StageType       string
+	StrategyType    string
+	Pairs           struct {
 		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
 		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
 		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії

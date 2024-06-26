@@ -23,9 +23,6 @@ type (
 		GetLogLevel() logrus.Level
 		SetLogLevel(level logrus.Level)
 
-		GetReloadConfig() bool
-		SetReloadConfig(bool)
-
 		GetObservePriceLiquidation() bool
 		SetObservePriceLiquidation(bool)
 		GetObservePosition() bool
@@ -43,23 +40,6 @@ type (
 
 		GetObserverTimeOutMillisecond() int
 		SetObserverTimeOutMillisecond(int)
-
-		GetUsingBreakEvenPrice() bool
-		SetUsingBreakEvenPrice(bool)
-
-		GetBuyDeltaLoss() float64
-		SetBuyDeltaLoss(float64)
-		GetSellDeltaLoss() float64
-		SetSellDeltaLoss(float64)
-
-		GetDeltaStepPercent() float64
-		SetDeltaStepPercent(float64)
-
-		GetDynamicDelta() bool
-		SetDynamicDelta(bool)
-
-		GetDynamicQuantity() bool
-		SetDynamicQuantity(bool)
 	}
 	ConfigurationFile interface {
 		GetFileName() string

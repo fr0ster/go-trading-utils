@@ -36,17 +36,7 @@ const (
 	ObserverTimeOutMillisecond = 1000 // Таймаут спостереження
 	UsingBreakEvenPrice        = true // Використання ціни без збитків для визначення цін ф'ючерсних ордерів
 
-	DynamicDelta    = true // Динамічна дельта та кількість
-	DynamicQuantity = true // Динамічна кількість
-
-	BuyDeltaLoss  = 0.01 // Дельта для рестарту
-	SellDeltaLoss = 0.01 // Дельта для рестарту
-
-	DeltaStopPercent = 0.01 // Відсоток росту дельти
-
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
-
-	ReloadConfig = true // Перезавантаження конфігурації
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
@@ -80,9 +70,9 @@ const (
 	DeltaPrice_1    = 0.01  // Дельта для купівлі
 	DeltaQuantity_1 = 0.1   // Дельта для кількості
 	BuyQuantity_1   = 1.0   // Кількість для купівлі, суммарно по позиції
-	SellQuantity_1  = 1.0   // Кількість для продажу, суммарно по позиції
+	SellQuantity_1  = 2.0   // Кількість для продажу, суммарно по позиції
 	BuyValue_1      = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_1     = 100.0 // Вартість для продажу, суммарно по позиції
+	SellValue_1     = 200.0 // Вартість для продажу, суммарно по позиції
 
 	CallbackRate_1 = 0.1 // CallbackRate 0.1%
 
@@ -141,7 +131,6 @@ var (
 			UseTestNet: SpotUseTestNet,
 		},
 		LogLevel:                      InfoLevel,
-		ReloadConfig:                  ReloadConfig,
 		ObservePriceLiquidation:       ObservePriceLiquidation,
 		ObservePosition:               ObservePosition,
 		ClosePositionOnRestart:        ClosePositionOnRestart,
@@ -149,12 +138,6 @@ var (
 		PercentsToStopSettingNewOrder: PercentsToLiquidation,
 		PercentToDecreasePosition:     PercentToDecreasePosition,
 		ObserverTimeOutMillisecond:    ObserverTimeOutMillisecond,
-		UsingBreakEvenPrice:           UsingBreakEvenPrice,
-		BuyDeltaLoss:                  BuyDeltaLoss,
-		SellDeltaLoss:                 SellDeltaLoss,
-		DeltaStepPercent:              DeltaStopPercent,
-		DynamicDelta:                  DynamicDelta,
-		DynamicQuantity:               DynamicQuantity,
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
@@ -211,10 +194,9 @@ func getTestData() []byte {
 			"connection": {
 				"api_key": "` + SpotAPIKey + `",
 				"api_secret": "` + SpotAPISecret + `",
-				"use_test_net": ` + strconv.FormatBool(SpotUseTestNet) + `,
+				"use_test_net": ` + strconv.FormatBool(SpotUseTestNet) + `
 			},
 			"log_level": "` + InfoLevel.String() + `",
-			"reload_config": ` + strconv.FormatBool(ReloadConfig) + `,
 			"observe_price_liquidation": ` + strconv.FormatBool(ObservePriceLiquidation) + `,
 			"observe_position": ` + strconv.FormatBool(ObservePosition) + `,
 			"close_position_on_restart": ` + strconv.FormatBool(ClosePositionOnRestart) + `,
@@ -223,11 +205,6 @@ func getTestData() []byte {
 			"percent_to_decrease_position": ` + json.Number(strconv.FormatFloat(PercentToDecreasePosition, 'f', -1, 64)).String() + `,
 			"observer_timeout_millisecond": ` + strconv.Itoa(ObserverTimeOutMillisecond) + `,
 			"using_break_even_price": ` + strconv.FormatBool(UsingBreakEvenPrice) + `,
-			"buy_delta_loss": ` + json.Number(strconv.FormatFloat(BuyDeltaLoss, 'f', -1, 64)).String() + `,
-			"sell_delta_loss": ` + json.Number(strconv.FormatFloat(SellDeltaLoss, 'f', -1, 64)).String() + `,
-			"delta_step_percent": ` + json.Number(strconv.FormatFloat(DeltaStopPercent, 'f', -1, 64)).String() + `,
-			"dynamic_delta": ` + strconv.FormatBool(DynamicDelta) + `,
-			"dynamic_quantity": ` + strconv.FormatBool(DynamicQuantity) + `,
 			"pairs": [
 				{
 					"account_type": "` + string(AccountType_1) + `",
@@ -289,7 +266,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, SpotAPISecret, config.GetConnection().GetSecretKey())
 	assert.Equal(t, SpotUseTestNet, config.GetConnection().GetUseTestNet())
 	assert.Equal(t, InfoLevel, config.GetLogLevel())
-	assert.Equal(t, ReloadConfig, config.GetReloadConfig())
 	assert.Equal(t, ObservePriceLiquidation, config.GetObservePriceLiquidation())
 	assert.Equal(t, ObservePosition, config.GetObservePosition())
 	assert.Equal(t, ClosePositionOnRestart, config.GetClosePositionOnRestart())
@@ -297,12 +273,6 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, PercentsToLiquidation, config.GetPercentsToStopSettingNewOrder())
 	assert.Equal(t, PercentToDecreasePosition, config.GetPercentToDecreasePosition())
 	assert.Equal(t, ObserverTimeOutMillisecond, config.GetObserverTimeOutMillisecond())
-	assert.Equal(t, UsingBreakEvenPrice, config.GetUsingBreakEvenPrice())
-	assert.Equal(t, BuyDeltaLoss, config.GetBuyDeltaLoss())
-	assert.Equal(t, SellDeltaLoss, config.GetSellDeltaLoss())
-	assert.Equal(t, DeltaStopPercent, config.GetDeltaStepPercent())
-	assert.Equal(t, DynamicDelta, config.GetDynamicDelta())
-	assert.Equal(t, DynamicQuantity, config.GetDynamicQuantity())
 
 	assert.Equal(t, (checkingDate)[0].GetAccountType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetAccountType())
 	assert.Equal(t, (checkingDate)[0].GetStrategy(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetStrategy())

@@ -59,6 +59,7 @@ func RunScalpingHolding(
 	marginType pairs_types.MarginType,
 	leverage int,
 	callbackRate float64,
+	percentToLiquidation float64,
 	quit chan struct{},
 	isArithmetic bool,
 	wg *sync.WaitGroup) (err error) {
@@ -75,6 +76,7 @@ func RunScalpingHolding(
 		marginType,
 		leverage,
 		callbackRate,
+		percentToLiquidation,
 		quit,
 		isArithmetic,
 		wg)
@@ -356,6 +358,7 @@ func processOrder(
 	quantity float64,
 	exp int,
 	locked float64,
+	percentsToLiquidation float64,
 	risk *futures.PositionRisk) (err error) {
 	var (
 		takerRecord *grid_types.Record
@@ -453,6 +456,7 @@ func processOrder(
 				quantity,
 				exp,
 				locked,
+				percentsToLiquidation,
 				risk)
 			if err != nil {
 				printError()
@@ -548,6 +552,7 @@ func processOrder(
 				quantity,
 				exp,
 				locked,
+				percentsToLiquidation,
 				risk)
 			if err != nil {
 				printError()
@@ -788,6 +793,7 @@ func getCallBack_v1(
 	pairProcessor *PairProcessor,
 	grid *grid_types.Grid,
 	tickSizeExp int,
+	percentToLiquidation float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
@@ -842,6 +848,7 @@ func getCallBack_v1(
 						quantity,
 						tickSizeExp,
 						locked,
+						percentToLiquidation,
 						risk)
 					if err != nil {
 						grid.Unlock()
@@ -870,6 +877,7 @@ func RunFuturesGridTrading(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	percentToLiquidation float64,
 	callbackRate float64,
 	quit chan struct{},
 	isArithmetic bool,
@@ -930,6 +938,7 @@ func RunFuturesGridTrading(
 			pairProcessor,
 			grid,
 			tickSizeExp,
+			percentToLiquidation,
 			quit,
 			maintainedOrders))
 	if err != nil {
@@ -970,6 +979,7 @@ func getCallBack_v2(
 	pairProcessor *PairProcessor,
 	grid *grid_types.Grid,
 	tickSizeExp int,
+	percentToLiquidation float64,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
@@ -1031,6 +1041,7 @@ func getCallBack_v2(
 					quantity,
 					tickSizeExp,
 					locked,
+					percentToLiquidation,
 					risk)
 				if err != nil {
 					grid.Unlock()
@@ -1059,6 +1070,7 @@ func RunFuturesGridTradingV2(
 	marginType pairs_types.MarginType,
 	leverage int,
 	callbackRate float64,
+	percentToLiquidation float64,
 	quit chan struct{},
 	isArithmetic bool,
 	wg *sync.WaitGroup) (err error) {
@@ -1117,6 +1129,7 @@ func RunFuturesGridTradingV2(
 			pairProcessor,
 			grid,
 			tickSizeExp,
+			percentToLiquidation,
 			quit,
 			maintainedOrders))
 	if err != nil {
@@ -1829,7 +1842,7 @@ func RunFuturesGridTradingV4(
 		return err
 	}
 
-	_, initPrice, initPriceUp, initPriceDown, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
+	_, initPrice, _, _, minNotional, tickSizeExp, _, err = initVars(pairProcessor)
 	if err != nil {
 		return err
 	}
@@ -1838,15 +1851,13 @@ func RunFuturesGridTradingV4(
 		return fmt.Errorf("minNotional %v more than current position limitOnTransaction %v",
 			minNotional, pairProcessor.GetLimitOnTransaction())
 	}
-	if config.GetConfigurations().GetDynamicDelta() || config.GetConfigurations().GetDynamicQuantity() {
-		_, initPriceUp, quantityUp, _, _, initPriceDown, quantityDown, _, err = pairProcessor.InitPositionGrid(10, initPrice)
-		if err != nil {
-			logrus.Errorf("Can't check position: %v", err)
-			close(quit)
-			return
-		}
-		quantity = math.Min(quantityUp, quantityDown)
+	_, initPriceUp, quantityUp, _, _, initPriceDown, quantityDown, _, err = pairProcessor.InitPositionGrid(10, initPrice)
+	if err != nil {
+		logrus.Errorf("Can't check position: %v", err)
+		close(quit)
+		return
 	}
+	quantity = math.Min(quantityUp, quantityDown)
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
@@ -1919,6 +1930,7 @@ func Run(
 				pair.GetMarginType(),
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
+				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
 				pair.GetIsArithmetic(),
 				wg)
@@ -1959,6 +1971,7 @@ func Run(
 				pair.GetMarginType(),
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
+				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
 				pair.GetIsArithmetic(),
 				wg)
@@ -1977,6 +1990,7 @@ func Run(
 				pair.GetMarginType(),
 				pair.GetLeverage(),
 				pair.GetCallbackRate(),
+				config.GetConfigurations().GetPercentsToStopSettingNewOrder(),
 				quit,
 				pair.GetIsArithmetic(),
 				wg)
