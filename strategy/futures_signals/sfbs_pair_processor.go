@@ -689,19 +689,19 @@ func (pp *PairProcessor) InitPositionGrid(
 }
 
 func (pp *PairProcessor) NextPriceUp(price float64) float64 {
-	return pp.FindNthTerm(price, price*(1+pp.GetDeltaPrice()), 1)
+	return price * (1 + pp.GetDeltaPrice())
 }
 
 func (pp *PairProcessor) NextPriceDown(price float64) float64 {
-	return pp.FindNthTerm(price, price*(1-pp.GetDeltaPrice()), 1)
+	return price * (1 - pp.GetDeltaPrice())
 }
 
 func (pp *PairProcessor) NextQuantityUp(quantity float64) float64 {
-	return pp.FindNthTerm(quantity, quantity*(1+pp.GetDeltaQuantity()), 1)
+	return quantity * (1 + pp.GetDeltaQuantity())
 }
 
 func (pp *PairProcessor) NextQuantityDown(quantity float64) float64 {
-	return pp.FindNthTerm(quantity, quantity*(1-pp.GetDeltaQuantity()), 1)
+	return quantity * (1 - pp.GetDeltaQuantity())
 }
 
 func (pp *PairProcessor) NextUp(currentPrice, currentQuantity float64) (price, quantity float64, err error) {
