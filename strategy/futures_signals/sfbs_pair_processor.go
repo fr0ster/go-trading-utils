@@ -779,12 +779,12 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 		if err != nil {
 			return
 		}
-		priceUp = pp.NextPriceUp(price)
+		priceUp = price * (1 + pp.GetDeltaPrice())
 		_, quantityDown, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
 		if err != nil {
 			return
 		}
-		priceDown = pp.NextPriceDown(price)
+		priceDown = price * (1 - pp.GetDeltaPrice())
 	}
 	return
 }
