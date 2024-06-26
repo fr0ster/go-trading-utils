@@ -655,10 +655,10 @@ func (pp *PairProcessor) InitPositionGrid(
 	if err != nil {
 		return
 	}
-	priceUp = pp.FindNthTerm(price, price*(1+pp.GetDeltaPrice()), 1)
+	priceUp = price * (1 + pp.GetDeltaPrice())
 	quantityUp = startQuantityUp
 	pp.up.Clear(false)
-	for i := 1; i < stepsUp; i++ {
+	for i := 2; i < stepsUp; i++ {
 		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: quantityUp})
 		priceUp = pp.roundPrice(pp.FindNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1))
 		quantityUp = pp.roundQuantity(pp.FindNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1))
@@ -670,10 +670,10 @@ func (pp *PairProcessor) InitPositionGrid(
 	if err != nil {
 		return
 	}
-	priceDown = pp.FindNthTerm(price, price*(1-pp.GetDeltaPrice()), 1)
+	priceDown = price * (1 - pp.GetDeltaPrice())
 	quantityDown = startQuantityDown
 	pp.down.Clear(false)
-	for i := 0; i < stepsUp; i++ {
+	for i := 2; i < stepsUp; i++ {
 		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: quantityDown})
 		priceDown = pp.FindNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
 		quantityDown = pp.FindNthTerm(quantityDown, quantityDown*(1+pp.GetDeltaQuantity()), i+1)
@@ -770,7 +770,7 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 				return
 			}
 			priceDown = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1-pp.GetDeltaPrice())))
-			quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
+			quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1+pp.GetDeltaPrice())))
 			quantityUp = pp.NextQuantityUp(utils.ConvStrToFloat64(risk.PositionAmt))
