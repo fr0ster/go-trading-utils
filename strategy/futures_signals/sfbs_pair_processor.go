@@ -775,14 +775,16 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 			quantityUp = pp.NextQuantityUp(utils.ConvStrToFloat64(risk.PositionAmt))
 		}
 	} else {
-		priceUp, quantityUp, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
+		_, quantityUp, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
 		if err != nil {
 			return
 		}
-		priceDown, quantityDown, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
+		priceUp = pp.NextPriceUp(price)
+		_, quantityDown, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
 		if err != nil {
 			return
 		}
+		priceDown = pp.NextPriceDown(price)
 	}
 	return
 }
