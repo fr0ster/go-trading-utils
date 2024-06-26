@@ -764,21 +764,21 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			priceDown = pp.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-			quantityDown = pp.NextQuantityDown(utils.ConvStrToFloat64(risk.PositionAmt) * -1)
+			priceUp = price * (1 + pp.GetDeltaPrice())
 			_, quantityUp, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
 			if err != nil {
 				return
 			}
-			priceUp = price * (1 + pp.GetDeltaPrice())
+			priceDown = pp.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			priceUp = pp.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			priceUp = utils.ConvStrToFloat64(risk.BreakEvenPrice)
 			quantityUp = pp.NextQuantityUp(utils.ConvStrToFloat64(risk.PositionAmt))
+			priceDown = price * (1 - pp.GetDeltaPrice())
 			_, quantityDown, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
 			if err != nil {
 				return
 			}
-			priceDown = price * (1 - pp.GetDeltaPrice())
 		}
 	} else {
 		_, quantityUp, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
