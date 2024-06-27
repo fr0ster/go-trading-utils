@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -56,6 +55,7 @@ type (
 		UpBound            float64
 		LowBound           float64
 		leverage           int
+		marginType         pairs_types.MarginType
 		callbackRate       float64
 
 		deltaPrice    float64
@@ -308,6 +308,10 @@ func (pp *PairProcessor) GetLiquidationDistance(price float64) (distance float64
 }
 
 func (pp *PairProcessor) GetLeverage() int {
+	if pp.leverage == 0 {
+		risk, _ := pp.GetPositionRisk()
+		pp.leverage = int(utils.ConvStrToFloat64(risk.Leverage))
+	}
 	return pp.leverage
 }
 
@@ -338,8 +342,11 @@ func (pp *PairProcessor) GetDeltaQuantity() float64 {
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
 func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
-	risk, _ := pp.GetPositionRisk()
-	return pairs_types.MarginType(strings.ToUpper(risk.MarginType))
+	if pp.marginType == "" {
+		risk, _ := pp.GetPositionRisk()
+		pp.marginType = pairs_types.MarginType(risk.MarginType)
+	}
+	return pp.marginType
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"
@@ -933,13 +940,11 @@ func NewPairProcessor(
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
 		return
 	}
-	err = pp.SetMarginType(marginType)
-	if err != nil {
-		return
+	if pp.GetMarginType() != marginType {
+		_ = pp.SetMarginType(marginType)
 	}
-	_, err = pp.SetLeverage(leverage)
-	if err != nil {
-		return
+	if pp.GetLeverage() != leverage {
+		_, _ = pp.SetLeverage(leverage)
 	}
 
 	return
