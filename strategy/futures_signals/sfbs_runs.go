@@ -1084,7 +1084,7 @@ func createNextPair_v3(
 	free := pairProcessor.GetFreeBalance()
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pairProcessor.GetLeverage())
-	if pairProcessor.up == nil || pairProcessor.down == nil {
+	if pairProcessor.up.Len() == 0 || pairProcessor.down.Len() == 0 {
 		_, _, _, _, _, _, err = pairProcessor.InitPositionGrid(pairProcessor.minSteps, LastExecutedPrice)
 		if err != nil {
 			err = fmt.Errorf("can't check position: %v", err)
