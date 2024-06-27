@@ -1121,7 +1121,7 @@ func createNextPair_v3(
 			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			sellType = shortPositionIncOrderType
 			downType = shortPositionDecOrderType
-			downQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
+			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		} else {
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
 			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
@@ -1129,7 +1129,7 @@ func createNextPair_v3(
 			sellType = shortPositionNewOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
 			downType = shortPositionNewOrderType
 			upQuantity = 0
-			downQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
+			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
 	} else if positionVal > 0 { // Маємо позицію long
 		if positionVal <= free {
@@ -1162,14 +1162,14 @@ func createNextPair_v3(
 			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			sellType = longPositionDecOrderType
 			downType = longPositionIncOrderType
-			upQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
+			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		} else {
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
 			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			sellType = longPositionDecOrderType
 			downType = longPositionDecOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
-			upQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
+			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 			downQuantity = 0
 		}
 	} else { // Немає позиції, відкриваємо нову
