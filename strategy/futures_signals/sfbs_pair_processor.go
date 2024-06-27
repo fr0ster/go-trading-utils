@@ -308,6 +308,10 @@ func (pp *PairProcessor) GetLiquidationDistance(price float64) (distance float64
 	return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 }
 
+func (pp *PairProcessor) GetNotional() float64 {
+	return pp.notional
+}
+
 func (pp *PairProcessor) GetLeverage() int {
 	if pp.leverage == 0 {
 		risk, _ := pp.GetPositionRisk()

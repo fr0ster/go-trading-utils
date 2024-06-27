@@ -244,6 +244,9 @@ func RunFuturesTrading(
 		printError()
 		return
 	}
+	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
+		return fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
+	}
 	risk, err := pairProcessor.GetPositionRisk()
 	if err != nil {
 		return
