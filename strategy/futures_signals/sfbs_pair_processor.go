@@ -779,17 +779,16 @@ func (pp *PairProcessor) GetPrices(price float64, quantityUp float64, quantityDo
 	}
 	priceUp = price * (1 + pp.GetDeltaPrice())
 	priceDown = price * (1 - pp.GetDeltaPrice())
+	quantityUpOut = quantityUp
+	quantityDownOut = quantityDown
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			priceDown = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1-pp.GetDeltaPrice())))
+			priceDown = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price))
 			quantityDownOut = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			priceUp = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1+pp.GetDeltaPrice())))
+			priceUp = pp.NextPriceUp(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), price))
 			quantityUpOut = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
 		}
-	} else {
-		quantityUpOut = quantityUp
-		quantityDownOut = quantityDown
 	}
 	return
 }
