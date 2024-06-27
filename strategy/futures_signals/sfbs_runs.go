@@ -231,8 +231,8 @@ func RunFuturesTrading(
 		leverage,
 		minSteps,
 		callBackRate,
-		quit,
-		progression)
+		progression,
+		quit)
 	if err != nil {
 		printError()
 		return
@@ -771,8 +771,8 @@ func RunFuturesGridTrading(
 		leverage,
 		minSteps,
 		callbackRate,
-		quit,
-		progression)
+		progression,
+		quit)
 	if err != nil {
 		printError()
 		return
@@ -950,8 +950,8 @@ func RunFuturesGridTradingV2(
 		leverage,
 		minSteps,
 		callbackRate,
-		quit,
-		progression)
+		progression,
+		quit)
 	if err != nil {
 		printError()
 		return
@@ -1254,8 +1254,8 @@ func RunFuturesGridTradingV3(
 		leverage,
 		minSteps,
 		callbackRate,
-		quit,
-		progression)
+		progression,
+		quit)
 	if err != nil {
 		printError()
 		return

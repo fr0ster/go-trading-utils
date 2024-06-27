@@ -797,8 +797,8 @@ func NewPairProcessor(
 	leverage int,
 	minSteps int,
 	callbackRate float64,
-	stop chan struct{},
-	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
+	progression pairs_types.ProgressionType,
+	stop chan struct{}) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
