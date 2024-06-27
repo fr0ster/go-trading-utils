@@ -806,6 +806,7 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
+	marginType pairs_types.MarginType,
 	leverage int,
 	callbackRate float64,
 	stop chan struct{},
@@ -930,6 +931,14 @@ func NewPairProcessor(
 		pp.GetDelta = func(P1, P2 float64) float64 { return 1/P2 - 1/P1 }
 	} else {
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
+		return
+	}
+	err = pp.SetMarginType(marginType)
+	if err != nil {
+		return
+	}
+	_, err = pp.SetLeverage(leverage)
+	if err != nil {
 		return
 	}
 
