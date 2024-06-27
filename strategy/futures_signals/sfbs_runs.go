@@ -1379,30 +1379,30 @@ func Run(
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
 			err = RunFuturesTrading(
-				client,                              // client
-				pair.GetPair(),                      // pair
-				degree,                              // degree
-				limit,                               // limit
-				pair.GetLimitOnPosition(),           // limitOnPosition
-				pair.GetLimitOnTransaction(),        // limitOnTransaction
-				pair.GetUpBound(),                   // upBound
-				pair.GetLowBound(),                  // lowBound
-				pair.GetDeltaPrice(),                // deltaPrice
-				pair.GetDeltaQuantity(),             // deltaQuantity
-				pair.GetMarginType(),                // marginType
-				pair.GetLeverage(),                  // leverage
-				pair.GetMinSteps(),                  // minSteps
-				pair.GetCallbackRate(),              // callbackRate
-				futures.SideTypeBuy,                 // upOrderSideOpen
-				futures.OrderTypeStop,               // upPositionNewOrderType
-				futures.SideTypeSell,                // downOrderSideOpen
-				futures.OrderTypeStop,               // downPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
-				futures.OrderTypeStop,               // shortPositionSLOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
-				futures.OrderTypeStop,               // longPositionSLOrderType
-				pair.GetProgression(),               // progression
-				quit,                                // quit
+				client,                       // client
+				pair.GetPair(),               // pair
+				degree,                       // degree
+				limit,                        // limit
+				pair.GetLimitOnPosition(),    // limitOnPosition
+				pair.GetLimitOnTransaction(), // limitOnTransaction
+				pair.GetUpBound(),            // upBound
+				pair.GetLowBound(),           // lowBound
+				pair.GetDeltaPrice(),         // deltaPrice
+				pair.GetDeltaQuantity(),      // deltaQuantity
+				pair.GetMarginType(),         // marginType
+				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
+				pair.GetCallbackRate(),       // callbackRate
+				futures.SideTypeBuy,          // upOrderSideOpen
+				futures.OrderTypeStop,        // upPositionNewOrderType
+				futures.SideTypeSell,         // downOrderSideOpen
+				futures.OrderTypeStop,        // downPositionNewOrderType
+				futures.OrderTypeTakeProfit,  // shortPositionTPOrderType
+				futures.OrderTypeStop,        // shortPositionSLOrderType
+				futures.OrderTypeTakeProfit,  // longPositionTPOrderType
+				futures.OrderTypeStop,        // longPositionSLOrderType
+				pair.GetProgression(),        // progression
+				quit,                         // quit
 				wg)
 
 			// Відпрацьовуємо Grid стратегію
