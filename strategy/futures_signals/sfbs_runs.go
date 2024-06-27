@@ -293,16 +293,16 @@ func RunFuturesTrading(
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBackTrading(
-			pairProcessor,                       // pairProcessor
-			futures.SideTypeBuy,                 // upOrderSideOpen
-			futures.OrderTypeTakeProfit,         // upPositionNewOrderType
-			futures.SideTypeSell,                // downOrderSideOpen
-			futures.OrderTypeLimit,              // downPositionNewOrderType
-			futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
-			futures.OrderTypeStop,               // shortPositionSLOrderType
-			futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
-			futures.OrderTypeStop,               // longPositionSLOrderType
-			quit))                               // quit
+			pairProcessor,            // pairProcessor
+			upOrderSideOpen,          // upOrderSideOpen
+			upPositionNewOrderType,   // upPositionNewOrderType
+			downOrderSideOpen,        // downOrderSideOpen
+			downPositionNewOrderType, // downPositionNewOrderType
+			shortPositionTPOrderType, // shortPositionTPOrderType
+			shortPositionSLOrderType, // shortPositionSLOrderType
+			longPositionTPOrderType,  // longPositionTPOrderType
+			longPositionSLOrderType,  // longPositionSLOrderType
+			quit))                    // quit
 	if err != nil {
 		printError()
 		return err
