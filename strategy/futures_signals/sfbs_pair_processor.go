@@ -372,6 +372,20 @@ func (pp *PairProcessor) GetSymbol() *symbol_types.FuturesSymbol {
 	return pp.pairInfo
 }
 
+func (pp *PairProcessor) GetFuturesSymbol() (*futures.Symbol, error) {
+	return pp.symbol, nil
+}
+
+// Округлення ціни до StepSize знаків після коми
+func (pp *PairProcessor) GetStepSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
+}
+
+// Округлення ціни до TickSize знаків після коми
+func (pp *PairProcessor) GetTickSizeExp() int {
+	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
+}
+
 func (pp *PairProcessor) GetAccount() (account *futures.Account, err error) {
 	return pp.client.NewGetAccountService().Do(context.Background())
 }
@@ -754,7 +768,8 @@ func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
 	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDown, quantityDown float64, err error) {
+func (pp *PairProcessor) GetPrices(price float64, quantityUp float64, quantityDown float64) (
+	priceUp, quantityUpOut, priceDown, quantityDownOut float64, err error) {
 	var (
 		risk *futures.PositionRisk
 	)
@@ -762,24 +777,19 @@ func (pp *PairProcessor) GetPrices(price float64) (priceUp, quantityUp, priceDow
 	if err != nil {
 		return
 	}
-	_, quantityUp, _, err = pp.CalculateInitialPosition(10, price, pp.GetUpBound())
-	if err != nil {
-		return
-	}
 	priceUp = price * (1 + pp.GetDeltaPrice())
-	_, quantityDown, _, err = pp.CalculateInitialPosition(10, price, pp.GetLowBound())
-	if err != nil {
-		return
-	}
 	priceDown = price * (1 - pp.GetDeltaPrice())
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1-pp.GetDeltaPrice())))
-			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
+			quantityDownOut = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceDown(math.Min(utils.ConvStrToFloat64(risk.BreakEvenPrice), price*(1+pp.GetDeltaPrice())))
-			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+			quantityUpOut = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
 		}
+	} else {
+		quantityUpOut = quantityUp
+		quantityDownOut = quantityDown
 	}
 	return
 }
