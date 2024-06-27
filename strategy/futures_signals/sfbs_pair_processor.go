@@ -233,14 +233,15 @@ func (pp *PairProcessor) createOrder(
 		} else if apiError.Code == -1008 || apiError.Code == -5028 {
 			time.Sleep(3 * time.Second)
 			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-		} else if apiError.Code == -2021 {
-			time.Sleep(3 * time.Second)
-			if sideType == futures.SideTypeSell {
-				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-			} else if sideType == futures.SideTypeBuy {
-				return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-			}
+			// } else if apiError.Code == -2021 {
+			// 	time.Sleep(3 * time.Second)
+			// 	if sideType == futures.SideTypeSell {
+			// 		return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
+			// 	} else if sideType == futures.SideTypeBuy {
+			// 		return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
+			// 	}
 		}
+		return
 	}
 	return
 }

@@ -1396,7 +1396,7 @@ func Run(
 				futures.SideTypeBuy,                 // upOrderSideOpen
 				futures.OrderTypeTakeProfit,         // upPositionNewOrderType
 				futures.SideTypeSell,                // downOrderSideOpen
-				futures.OrderTypeLimit,              // downPositionNewOrderType
+				futures.OrderTypeTakeProfit,         // downPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
 				futures.OrderTypeStop,               // shortPositionSLOrderType
 				futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
