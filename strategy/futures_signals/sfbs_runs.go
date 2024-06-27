@@ -1394,9 +1394,9 @@ func Run(
 				pair.GetMinSteps(),                  // minSteps
 				pair.GetCallbackRate(),              // callbackRate
 				futures.SideTypeBuy,                 // upOrderSideOpen
-				futures.OrderTypeTakeProfit,         // upPositionNewOrderType
+				futures.OrderTypeStop,               // upPositionNewOrderType
 				futures.SideTypeSell,                // downOrderSideOpen
-				futures.OrderTypeTakeProfit,         // downPositionNewOrderType
+				futures.OrderTypeStop,               // downPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
 				futures.OrderTypeStop,               // shortPositionSLOrderType
 				futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
