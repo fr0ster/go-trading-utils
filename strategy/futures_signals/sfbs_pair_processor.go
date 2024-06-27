@@ -611,7 +611,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	for high-low > pp.stepSizeDelta {
 		mid := pp.roundQuantity((low + high) / 2)
 		value, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
-		if value <= pp.limitOnPosition && n >= minN {
+		if value <= pp.limitOnPosition*float64(pp.leverage) && n >= minN {
 			low = mid
 		} else {
 			high = mid
@@ -619,12 +619,12 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 
 	value, n = pp.CalcValueForQuantity(buyPrice, high, endPrice)
-	if value < pp.limitOnPosition && n >= minN {
+	if value < pp.limitOnPosition*float64(pp.leverage) && n >= minN {
 		quantity = pp.roundQuantity(high)
 		return
 	}
 	value, n = pp.CalcValueForQuantity(buyPrice, low, endPrice)
-	if value < pp.limitOnPosition && n >= minN {
+	if value < pp.limitOnPosition*float64(pp.leverage) && n >= minN {
 		quantity = pp.roundQuantity(low)
 		return
 	}
