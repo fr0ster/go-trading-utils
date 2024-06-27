@@ -69,10 +69,7 @@ const (
 
 	DeltaPrice_1    = 0.01  // Дельта для купівлі
 	DeltaQuantity_1 = 0.1   // Дельта для кількості
-	BuyQuantity_1   = 1.0   // Кількість для купівлі, суммарно по позиції
-	SellQuantity_1  = 2.0   // Кількість для продажу, суммарно по позиції
-	BuyValue_1      = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_1     = 200.0 // Вартість для продажу, суммарно по позиції
+	Value_1         = 100.0 // Вартість для позиції
 
 	CallbackRate_1 = 0.1 // CallbackRate 0.1%
 
@@ -105,10 +102,7 @@ const (
 
 	Delta_Price_2   = 0.01  // Дельта для купівлі
 	DeltaQuantity_2 = 0.1   // Дельта для кількості
-	BuyQuantity_2   = 1.0   // Кількість для купівлі, суммарно по позиції
-	SellQuantity_2  = 1.0   // Кількість для продажу, суммарно по позиції
-	BuyValue_2      = 100.0 // Вартість для купівлі, суммарно по позиції
-	SellValue_2     = 100.0 // Вартість для продажу, суммарно по позиції
+	Value_2         = 100.0 // Вартість для позиції
 
 	CallbackRate_2 = 0.5 // CallbackRate 0.5%
 )
@@ -141,50 +135,36 @@ var (
 		Pairs:                         btree.New(2),
 	}
 	pair_1 = &pairs_types.Pairs{
-		AccountType:              AccountType_1,
-		StrategyType:             StrategyType_1,
-		StageType:                StageType_1,
-		Pair:                     Pair_1,
-		MarginType:               MarginType_1,
-		Leverage:                 Leverage_1,
-		LimitInputIntoPosition:   LimitInputIntoPosition_1,
-		LimitOutputOfPosition:    LimitOutputOfPosition_1,
-		LimitOnPosition:          LimitOnPosition_1,
-		LimitOnTransaction:       LimitOnTransaction_1,
-		UnRealizedProfitLowBound: UnRealizedProfitLowBound_1,
-		UnRealizedProfitUpBound:  UnRealizedProfitUpBound_1,
-		UpBound:                  UpBound_1,
-		LowBound:                 LowBound_1,
-		DeltaPrice:               DeltaPrice_1,
-		DeltaQuantity:            DeltaQuantity_1,
-		BuyQuantity:              BuyQuantity_1,
-		BuyValue:                 BuyValue_1,
-		SellQuantity:             SellQuantity_1,
-		SellValue:                SellValue_1,
-		CallbackRate:             CallbackRate_1,
+		AccountType:        AccountType_1,
+		StrategyType:       StrategyType_1,
+		StageType:          StageType_1,
+		Pair:               Pair_1,
+		MarginType:         MarginType_1,
+		Leverage:           Leverage_1,
+		LimitOnPosition:    LimitOnPosition_1,
+		LimitOnTransaction: LimitOnTransaction_1,
+		UpBound:            UpBound_1,
+		LowBound:           LowBound_1,
+		DeltaPrice:         DeltaPrice_1,
+		DeltaQuantity:      DeltaQuantity_1,
+		Value:              Value_1,
+		CallbackRate:       CallbackRate_1,
 	}
 	pair_2 = &pairs_types.Pairs{
-		AccountType:              AccountType_2,
-		StrategyType:             StrategyType_2,
-		StageType:                StageType_2,
-		Pair:                     Pair_2,
-		MarginType:               MarginType_2,
-		Leverage:                 Leverage_2,
-		LimitInputIntoPosition:   LimitInputIntoPosition_2,
-		LimitOutputOfPosition:    LimitOutputOfPosition_2,
-		LimitOnPosition:          LimitOnPosition_2,
-		LimitOnTransaction:       LimitOnTransaction_2,
-		UnRealizedProfitLowBound: UnRealizedProfitLowBound_2,
-		UnRealizedProfitUpBound:  UnRealizedProfitUpBound_2,
-		UpBound:                  UpBound_2,
-		LowBound:                 LowBound_2,
-		DeltaPrice:               Delta_Price_2,
-		DeltaQuantity:            DeltaQuantity_2,
-		BuyQuantity:              BuyQuantity_2,
-		BuyValue:                 BuyValue_2,
-		SellQuantity:             SellQuantity_2,
-		SellValue:                SellValue_2,
-		CallbackRate:             CallbackRate_2,
+		AccountType:        AccountType_2,
+		StrategyType:       StrategyType_2,
+		StageType:          StageType_2,
+		Pair:               Pair_2,
+		MarginType:         MarginType_2,
+		Leverage:           Leverage_2,
+		LimitOnPosition:    LimitOnPosition_2,
+		LimitOnTransaction: LimitOnTransaction_2,
+		UpBound:            UpBound_2,
+		LowBound:           LowBound_2,
+		DeltaPrice:         Delta_Price_2,
+		DeltaQuantity:      DeltaQuantity_2,
+		Value:              Value_2,
+		CallbackRate:       CallbackRate_2,
 	}
 )
 
@@ -225,10 +205,7 @@ func getTestData() []byte {
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_1, 'f', -1, 64)).String() + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(DeltaPrice_1, 'f', -1, 64)).String() + `,
 					"delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_1, 'f', -1, 64)).String() + `,
-					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_1, 'f', -1, 64)).String() + `,
-					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_1, 'f', -1, 64)).String() + `,
-					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_1, 'f', -1, 64)).String() + `,
-					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_1, 'f', -1, 64)).String() + `,
+					"value": ` + json.Number(strconv.FormatFloat(Value_1, 'f', -1, 64)).String() + `,
 					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_1, 'f', -1, 64)).String() + `
 				},
 				{
@@ -248,10 +225,7 @@ func getTestData() []byte {
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_2, 'f', -1, 64)).String() + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(Delta_Price_2, 'f', -1, 64)).String() + `,
 					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_2, 'f', -1, 64)).String() + `,
-					"buy_quantity": ` + json.Number(strconv.FormatFloat(BuyQuantity_2, 'f', -1, 64)).String() + `,
-					"buy_value": ` + json.Number(strconv.FormatFloat(BuyValue_2, 'f', -1, 64)).String() + `,
-					"sell_quantity": ` + json.Number(strconv.FormatFloat(SellQuantity_2, 'f', -1, 64)).String() + `,
-					"sell_value": ` + json.Number(strconv.FormatFloat(SellValue_2, 'f', -1, 64)).String() + `,
+					"value": ` + json.Number(strconv.FormatFloat(Value_2, 'f', -1, 64)).String() + `,
 					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_2, 'f', -1, 64)).String() + `
 				}
 			]
@@ -282,23 +256,13 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[0].GetMarginType(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMarginType())
 	assert.Equal(t, (checkingDate)[0].GetLeverage(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLeverage())
 
-	assert.Equal(t, (checkingDate)[0].GetMiddlePrice(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMiddlePrice())
-	assert.Equal(t, (checkingDate)[0].GetLimitInputIntoPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitInputIntoPosition())
-	assert.Equal(t, (checkingDate)[0].GetLimitOutputOfPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOutputOfPosition())
 	assert.Equal(t, (checkingDate)[0].GetLimitOnPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[0].GetLimitOnTransaction(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnTransaction())
-
-	assert.Equal(t, (checkingDate)[0].GetUnRealizedProfitLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUnRealizedProfitLowBound())
-	assert.Equal(t, (checkingDate)[0].GetUnRealizedProfitUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUnRealizedProfitUpBound())
 
 	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpBound())
 	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
 
-	assert.Equal(t, (checkingDate)[0].GetBuyQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyQuantity())
-	assert.Equal(t, (checkingDate)[0].GetBuyValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetBuyValue())
-
-	assert.Equal(t, (checkingDate)[0].GetSellQuantity(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellQuantity())
-	assert.Equal(t, (checkingDate)[0].GetSellValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetSellValue())
+	assert.Equal(t, (checkingDate)[0].GetValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetValue())
 
 	assert.Equal(t, (checkingDate)[0].GetCallbackRate(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCallbackRate())
 
@@ -310,23 +274,13 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 	assert.Equal(t, (checkingDate)[1].GetMarginType(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMarginType())
 	assert.Equal(t, (checkingDate)[1].GetLeverage(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLeverage())
 
-	assert.Equal(t, (checkingDate)[1].GetMiddlePrice(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMiddlePrice())
-	assert.Equal(t, (checkingDate)[1].GetLimitInputIntoPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitInputIntoPosition())
-	assert.Equal(t, (checkingDate)[1].GetLimitOutputOfPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOutputOfPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOnPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOnTransaction(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnTransaction())
-
-	assert.Equal(t, (checkingDate)[1].GetUnRealizedProfitLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUnRealizedProfitLowBound())
-	assert.Equal(t, (checkingDate)[1].GetUnRealizedProfitUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUnRealizedProfitUpBound())
 
 	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpBound())
 	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())
 
-	assert.Equal(t, (checkingDate)[1].GetBuyQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyQuantity())
-	assert.Equal(t, (checkingDate)[1].GetBuyValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetBuyValue())
-
-	assert.Equal(t, (checkingDate)[1].GetSellQuantity(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellQuantity())
-	assert.Equal(t, (checkingDate)[1].GetSellValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetSellValue())
+	assert.Equal(t, (checkingDate)[1].GetValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetValue())
 
 	assert.Equal(t, (checkingDate)[1].GetCallbackRate(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCallbackRate())
 
@@ -415,28 +369,14 @@ func TestConfigFile_Change(t *testing.T) {
 func TestPairSetter(t *testing.T) {
 	pair := &pairs_types.Pairs{
 		Pair:            Pair_1,
-		BuyQuantity:     BuyQuantity_1,
-		BuyValue:        BuyValue_1,
 		LimitOnPosition: LimitOnPosition_1,
 	}
 
 	pair.SetStage(StageType_1)
-	pair.SetBuyQuantity(BuyQuantity_1)
-	pair.SetBuyValue(BuyValue_1)
-	pair.SetSellQuantity(SellQuantity_1)
-	pair.SetSellValue(SellValue_1)
+	pair.SetValue(Value_1)
 
 	assert.Equal(t, StageType_1, pair.GetStage())
-	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
-	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
-	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
-	assert.Equal(t, SellValue_1, pair.GetSellValue())
-
-	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
-	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
-
-	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
-	assert.Equal(t, SellValue_1, pair.GetSellValue())
+	assert.Equal(t, Value_1, pair.GetValue())
 }
 
 func TestPairGetter(t *testing.T) {
@@ -445,21 +385,11 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, StrategyType_1, pair.GetStrategy())
 	assert.Equal(t, StageType_1, pair.GetStage())
 	assert.Equal(t, Pair_1, pair.GetPair())
-	assert.Equal(t, LimitInputIntoPosition_1, pair.GetLimitInputIntoPosition())
-	assert.Equal(t, LimitOutputOfPosition_1, pair.GetLimitOutputOfPosition())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
 	assert.Equal(t, UpBound_1, pair.GetUpBound())
 	assert.Equal(t, LowBound_1, pair.GetLowBound())
-	assert.Equal(t, BuyQuantity_1, pair.GetBuyQuantity())
-	assert.Equal(t, BuyValue_1, pair.GetBuyValue())
-	assert.Equal(t, SellQuantity_1, pair.GetSellQuantity())
-	assert.Equal(t, SellValue_1, pair.GetSellValue())
-}
-
-func TestPairChecking(t *testing.T) {
-	assert.True(t, pair_1.CheckingPair())
-	assert.False(t, pair_2.CheckingPair())
+	assert.Equal(t, Value_1, pair.GetValue())
 }
 
 func TestConfigGetter(t *testing.T) {

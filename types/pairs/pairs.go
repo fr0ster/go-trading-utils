@@ -88,23 +88,8 @@ type (
 		MarginType MarginType `json:"margin_type"` // Тип маржі
 		Leverage   int        `json:"leverage"`    // Маржинальне плече
 
-		// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
-		// поки не наберемо цей ліміт, не можемо перейти до режиму спекуляціі
-		LimitInputIntoPosition float64 `json:"limit_input_into_position"`
-
-		// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
-		// як тільки наберемо цей ліміт, мусимо вийти з режиму спекуляціі
-		// LimitOutputOfPosition > LimitInputIntoPosition
-		LimitOutputOfPosition float64 `json:"limit_output_of_position"`
-
 		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
-
-		// Нижня (відсоток від ліміту на позицію) межа нереалізованого прибутку (відсоток від середньої ціни)
-		// Використовуется як CurrentBalance * LimitOnPosition * (1 + UnRealizedProfitLowBound)
-		UnRealizedProfitLowBound float64 `json:"unrealized_profit_low_bound"`
-		// Використовуется як CurrentBalance * LimitOnPosition * (1 + UnRealizedProfitUpBound)
-		UnRealizedProfitUpBound float64 `json:"unrealized_profit_up_bound"` // Верхня межа нереалізованого прибутку
 
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
@@ -113,10 +98,7 @@ type (
 		DeltaQuantity float64         `json:"delta_quantity"` // Кількість для купівлі/продажу
 		Progression   ProgressionType `json:"progression"`    // Тип прогресії
 
-		BuyQuantity  float64 `json:"buy_quantity"`  // Кількість для купівлі, суммарно по позиції
-		BuyValue     float64 `json:"buy_value"`     // Вартість для купівлі, суммарно по позиції
-		SellQuantity float64 `json:"sell_quantity"` // Кількість для продажу, суммарно по позиції
-		SellValue    float64 `json:"sell_value"`    // Вартість для продажу, суммарно по позиції
+		Value float64 `json:"value"` // Вартість позиції
 
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 	}
@@ -196,28 +178,12 @@ func (pr *Pairs) SetLeverage(leverage int) {
 	pr.Leverage = leverage
 }
 
-func (pr *Pairs) GetLimitInputIntoPosition() float64 {
-	return pr.LimitInputIntoPosition
-}
-
-func (pr *Pairs) GetLimitOutputOfPosition() float64 {
-	return pr.LimitOutputOfPosition
-}
-
 func (pr *Pairs) GetLimitOnPosition() float64 {
 	return pr.LimitOnPosition
 }
 
 func (pr *Pairs) GetLimitOnTransaction() float64 {
 	return pr.LimitOnTransaction
-}
-
-func (pr *Pairs) GetUnRealizedProfitLowBound() float64 {
-	return pr.UnRealizedProfitLowBound
-}
-
-func (pr *Pairs) GetUnRealizedProfitUpBound() float64 {
-	return pr.UnRealizedProfitUpBound
 }
 
 func (pr *Pairs) GetUpBound() float64 {
@@ -240,28 +206,8 @@ func (pr *Pairs) GetProgression() ProgressionType {
 	return pr.Progression
 }
 
-func (pr *Pairs) GetBuyQuantity() float64 {
-	return pr.BuyQuantity
-}
-
-func (pr *Pairs) GetSellQuantity() float64 {
-	return pr.SellQuantity
-}
-
-func (pr *Pairs) GetBuyValue() float64 {
-	return pr.BuyValue
-}
-
-func (pr *Pairs) GetSellValue() float64 {
-	return pr.SellValue
-}
-
-func (pr *Pairs) SetLimitOutputOfPosition(val float64) {
-	pr.LimitOutputOfPosition = val
-}
-
-func (pr *Pairs) SetLimitInputIntoPosition(val float64) {
-	pr.LimitInputIntoPosition = val
+func (pr *Pairs) GetValue() float64 {
+	return pr.Value
 }
 
 func (pr *Pairs) SetLimitOnPosition(val float64) {
@@ -292,30 +238,8 @@ func (pr *Pairs) SetProgression(val ProgressionType) {
 	pr.Progression = val
 }
 
-func (pr *Pairs) SetBuyQuantity(quantity float64) {
-	pr.BuyQuantity = quantity
-}
-
-func (pr *Pairs) SetSellQuantity(quantity float64) {
-	pr.SellQuantity = quantity
-}
-
-func (pr *Pairs) SetBuyValue(value float64) {
-	pr.BuyValue = value
-}
-
-func (pr *Pairs) SetSellValue(value float64) {
-	pr.SellValue = value
-}
-
-func (pr *Pairs) SetBuyData(quantity, value float64) {
-	pr.BuyQuantity = quantity
-	pr.BuyValue = value
-}
-
-func (pr *Pairs) SetSellData(quantity, value float64) {
-	pr.SellQuantity = quantity
-	pr.SellValue = value
+func (pr *Pairs) SetValue(value float64) {
+	pr.Value = value
 }
 
 func (pr *Pairs) GetCallbackRate() float64 {
@@ -324,26 +248,6 @@ func (pr *Pairs) GetCallbackRate() float64 {
 
 func (pr *Pairs) SetCallbackRate(rate float64) {
 	pr.CallbackRate = rate
-}
-
-func (pr *Pairs) GetMiddlePrice() float64 {
-	if pr.BuyQuantity == pr.SellQuantity {
-		return 0
-	}
-
-	return (pr.BuyValue - pr.SellValue) / (pr.BuyQuantity - pr.SellQuantity)
-}
-
-func (pr *Pairs) GetProfit(currentPrice float64) float64 {
-	return (currentPrice - pr.GetMiddlePrice()) * (pr.BuyQuantity - pr.SellQuantity)
-}
-
-func (pr *Pairs) CheckingPair() bool {
-	return pr.GetMiddlePrice() != 0 &&
-		pr.LimitInputIntoPosition != 0 &&
-		pr.LimitOutputOfPosition != 0 &&
-		pr.LimitInputIntoPosition < pr.LimitOutputOfPosition &&
-		pr.UnRealizedProfitLowBound < pr.UnRealizedProfitUpBound
 }
 
 func New(
@@ -356,23 +260,16 @@ func New(
 	baseSymbol string,
 ) *Pairs {
 	return &Pairs{
-		AccountType:              accountType,
-		StrategyType:             strategyType,
-		StageType:                stageType,
-		Pair:                     pair,
-		LimitInputIntoPosition:   0.1,  // 10%
-		LimitOutputOfPosition:    0.5,  // 50%
-		LimitOnPosition:          1.0,  // 100%
-		LimitOnTransaction:       0.01, // 1%
-		UnRealizedProfitLowBound: 0.1,  // 10%
-		UnRealizedProfitUpBound:  1,    // 100%
-		DeltaPrice:               0.01, // 1%
-		DeltaQuantity:            0.1,  // 10%
-		Progression:              "GEOMETRIC",
-		BuyQuantity:              0.0,
-		BuyValue:                 0.0,
-		SellQuantity:             0.0,
-		SellValue:                0.0,
-		CallbackRate:             0.1, // 0.1%
+		AccountType:        accountType,
+		StrategyType:       strategyType,
+		StageType:          stageType,
+		Pair:               pair,
+		LimitOnPosition:    1.0,  // 100%
+		LimitOnTransaction: 0.01, // 1%
+		DeltaPrice:         0.01, // 1%
+		DeltaQuantity:      0.1,  // 10%
+		Progression:        "GEOMETRIC",
+		Value:              0.0,
+		CallbackRate:       0.1, // 0.1%
 	}
 }
