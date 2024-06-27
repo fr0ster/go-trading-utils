@@ -49,23 +49,12 @@ const (
 	SleepingTime_1               = 5                                  // Час сплячки, міллісекунди
 	TakingPositionSleepingTime_1 = 60                                 // Час сплячки при вході в позицію, хвилини
 
-	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
-	// повинно бути меньше ніж LimitOutputOfPosition_1,
-	// але це для перевірки CheckingPair
-	LimitInputIntoPosition_1 = 0.01
-	// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
-	// повинно бути більше ніж LimitInputIntoPosition_1,
-	// але це для перевірки CheckingPair
-	LimitOutputOfPosition_1 = 0.05
-
 	LimitOnPosition_1    = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1 = 0.10 // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UnRealizedProfitLowBound_1 = 0.1 // Нижня межа нереалізованого прибутку
-	UnRealizedProfitUpBound_1  = 0.9 // Верхня межа нереалізованого прибутку
-
 	UpBound_1  = 80000.0 // Верхня межа
 	LowBound_1 = 40000.0 // Нижня межа
+	MinSteps_1 = 10      // Мінімальна кількість кроків
 
 	DeltaPrice_1    = 0.01  // Дельта для купівлі
 	DeltaQuantity_1 = 0.1   // Дельта для кількості
@@ -82,23 +71,12 @@ const (
 	StageType_2    = pairs_types.WorkInPositionStage // Тип стадії
 	Pair_2         = "ETHUSDT"                       // Пара
 
-	// Ліміт на вхід в позицію, відсоток від балансу базової валюти,
-	// повинно бути меньше ніж LimitOutputOfPosition_2,
-	// але це для перевірки CheckingPair
-	LimitInputIntoPosition_2 = 0.15
-	// Ліміт на вихід з позиції, відсоток від балансу базової валюти,
-	// повинно бути більше ніж LimitInputIntoPosition_2,
-	// але це для перевірки CheckingPair
-	LimitOutputOfPosition_2 = 0.10 // Ліміт на вихід з позиції, відсоток від балансу базової валюти
-
 	LimitOnPosition_2    = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2 = 0.01 // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UnRealizedProfitLowBound_2 = 0.1 // Нижня межа нереалізованого прибутку
-	UnRealizedProfitUpBound_2  = 0.9 // Верхня межа нереалізованого прибутку
-
 	UpBound_2  = 14.0 // Верхня межа
 	LowBound_2 = 4.0  // Нижня межа
+	MinSteps_2 = 10   // Мінімальна кількість кроків
 
 	Delta_Price_2   = 0.01  // Дельта для купівлі
 	DeltaQuantity_2 = 0.1   // Дельта для кількості
@@ -145,6 +123,7 @@ var (
 		LimitOnTransaction: LimitOnTransaction_1,
 		UpBound:            UpBound_1,
 		LowBound:           LowBound_1,
+		MinSteps:           MinSteps_1,
 		DeltaPrice:         DeltaPrice_1,
 		DeltaQuantity:      DeltaQuantity_1,
 		Value:              Value_1,
@@ -161,6 +140,7 @@ var (
 		LimitOnTransaction: LimitOnTransaction_2,
 		UpBound:            UpBound_2,
 		LowBound:           LowBound_2,
+		MinSteps:           MinSteps_2,
 		DeltaPrice:         Delta_Price_2,
 		DeltaQuantity:      DeltaQuantity_2,
 		Value:              Value_2,
@@ -195,14 +175,11 @@ func getTestData() []byte {
 					"leverage": ` + strconv.Itoa(Leverage_1) + `,
 					"sleeping_time": ` + strconv.Itoa(SleepingTime_1) + `,
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
-					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_1, 'f', -1, 64)).String() + `,
-					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_1, 'f', -1, 64)).String() + `,
 					"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
-					"unrealized_profit_low_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitLowBound_1, 'f', -1, 64)).String() + `,
-					"unrealized_profit_up_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitUpBound_1, 'f', -1, 64)).String() + `,
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_1, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_1, 'f', -1, 64)).String() + `,
+					"min_steps": ` + strconv.Itoa(MinSteps_1) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(DeltaPrice_1, 'f', -1, 64)).String() + `,
 					"delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_1, 'f', -1, 64)).String() + `,
 					"value": ` + json.Number(strconv.FormatFloat(Value_1, 'f', -1, 64)).String() + `,
@@ -215,14 +192,11 @@ func getTestData() []byte {
 					"symbol": "` + Pair_2 + `",
 					"margin_type": "` + string(MarginType_2) + `",
 					"leverage": ` + strconv.Itoa(Leverage_2) + `,
-					"limit_input_into_position": ` + json.Number(strconv.FormatFloat(LimitInputIntoPosition_2, 'f', -1, 64)).String() + `,
-					"limit_output_of_position": ` + json.Number(strconv.FormatFloat(LimitOutputOfPosition_2, 'f', -1, 64)).String() + `,
 					"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
-					"unrealized_profit_low_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitLowBound_2, 'f', -1, 64)).String() + `,
-					"unrealized_profit_up_bound": ` + json.Number(strconv.FormatFloat(UnRealizedProfitUpBound_2, 'f', -1, 64)).String() + `,
 					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_2, 'f', -1, 64)).String() + `,
 					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_2, 'f', -1, 64)).String() + `,
+					"min_steps": ` + strconv.Itoa(MinSteps_2) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(Delta_Price_2, 'f', -1, 64)).String() + `,
 					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_2, 'f', -1, 64)).String() + `,
 					"value": ` + json.Number(strconv.FormatFloat(Value_2, 'f', -1, 64)).String() + `,
@@ -261,6 +235,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 
 	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpBound())
 	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
+	assert.Equal(t, (checkingDate)[0].GetMinSteps(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMinSteps())
 
 	assert.Equal(t, (checkingDate)[0].GetValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetValue())
 
@@ -279,6 +254,7 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 
 	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpBound())
 	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())
+	assert.Equal(t, (checkingDate)[1].GetMinSteps(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMinSteps())
 
 	assert.Equal(t, (checkingDate)[1].GetValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetValue())
 

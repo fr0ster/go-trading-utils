@@ -57,6 +57,7 @@ func RunScalpingHolding(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	callbackRate float64,
 	percentsToStopSettingNewOrder float64,
 	progression pairs_types.ProgressionType,
@@ -73,6 +74,7 @@ func RunScalpingHolding(
 		deltaQuantity,
 		marginType,
 		leverage,
+		minSteps,
 		percentsToStopSettingNewOrder,
 		callbackRate,
 		progression,
@@ -203,6 +205,7 @@ func RunFuturesTrading(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	callBackRate float64,
 	shortPositionNewOrderType futures.OrderType,
 	shortPositionDecOrderType futures.OrderType,
@@ -232,6 +235,7 @@ func RunFuturesTrading(
 		deltaQuantity,
 		marginType,
 		leverage,
+		minSteps,
 		callBackRate,
 		quit,
 		progression)
@@ -239,20 +243,30 @@ func RunFuturesTrading(
 		printError()
 		return
 	}
-
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		return
+	}
 	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
 		return err
 	}
-	_, quantityUp, _, _, quantityDown, _, err = pairProcessor.InitPositionGrid(10, price)
-	if err != nil {
-		err = fmt.Errorf("can't check position: %v", err)
-		printError()
-		return
-	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, quantityUp, quantityDown)
-	if err != nil {
-		return err
+	initPriceUp = pairProcessor.NextPriceUp(price)
+	quantityUp = limitOnPosition * limitOnTransaction / initPriceUp
+	initPriceDown = pairProcessor.NextPriceDown(price)
+	quantityDown = limitOnPosition * limitOnTransaction / initPriceDown
+	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+		if positionPrice == 0 {
+			positionPrice = utils.ConvStrToFloat64(risk.EntryPrice)
+		}
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+			initPriceDown = pairProcessor.NextPriceDown(math.Min(positionPrice, price))
+			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+			initPriceUp = pairProcessor.NextPriceUp(math.Max(positionPrice, price))
+			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+		}
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -568,42 +582,46 @@ func openPosition(
 		printError()
 		return
 	}
-	// Створюємо ордери на продаж
-	upOrder, err = createOrder(
-		pairProcessor,
-		sideUp,
-		orderTypeUp,
-		quantityUp,
-		priceUp,
-		stopPriceUp,
-		pairProcessor.GetCallbackRate(),
-		false)
-	if err != nil {
-		logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
-			pairProcessor.GetPair(), sideUp, orderTypeUp, priceUp, quantityUp, pairProcessor.GetCallbackRate())
-		printError()
-		return
+	if quantityUp != 0 {
+		// Створюємо ордери на продаж
+		upOrder, err = createOrder(
+			pairProcessor,
+			sideUp,
+			orderTypeUp,
+			quantityUp,
+			priceUp,
+			stopPriceUp,
+			pairProcessor.GetCallbackRate(),
+			false)
+		if err != nil {
+			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
+				pairProcessor.GetPair(), sideUp, orderTypeUp, priceUp, quantityUp, pairProcessor.GetCallbackRate())
+			printError()
+			return
+		}
+		logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
+			pairProcessor.GetPair(), sideUp, orderTypeUp, priceUp, quantityUp, pairProcessor.GetCallbackRate(), upOrder.Status)
 	}
-	logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
-		pairProcessor.GetPair(), sideUp, orderTypeUp, priceUp, quantityUp, pairProcessor.GetCallbackRate(), upOrder.Status)
-	// Створюємо ордери на купівлю
-	downOrder, err = createOrder(
-		pairProcessor,
-		sideDown,
-		orderTypeDown,
-		quantityDown,
-		priceDown,
-		stopPriceDown,
-		pairProcessor.GetCallbackRate(),
-		false)
-	if err != nil {
-		logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
-			pairProcessor.GetPair(), sideDown, orderTypeDown, priceDown, quantityDown, pairProcessor.GetCallbackRate())
-		printError()
-		return
+	if quantityDown != 0 {
+		// Створюємо ордери на купівлю
+		downOrder, err = createOrder(
+			pairProcessor,
+			sideDown,
+			orderTypeDown,
+			quantityDown,
+			priceDown,
+			stopPriceDown,
+			pairProcessor.GetCallbackRate(),
+			false)
+		if err != nil {
+			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
+				pairProcessor.GetPair(), sideDown, orderTypeDown, priceDown, quantityDown, pairProcessor.GetCallbackRate())
+			printError()
+			return
+		}
+		logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
+			pairProcessor.GetPair(), sideDown, orderTypeDown, priceDown, quantityDown, pairProcessor.GetCallbackRate(), downOrder.Status)
 	}
-	logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
-		pairProcessor.GetPair(), sideDown, orderTypeDown, priceDown, quantityDown, pairProcessor.GetCallbackRate(), downOrder.Status)
 	return
 }
 
@@ -727,6 +745,7 @@ func RunFuturesGridTrading(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	percentsToStopSettingNewOrder float64,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
@@ -756,6 +775,7 @@ func RunFuturesGridTrading(
 		deltaQuantity,
 		marginType,
 		leverage,
+		minSteps,
 		callbackRate,
 		quit,
 		progression)
@@ -893,7 +913,6 @@ func getCallBack_v2(
 }
 
 func RunFuturesGridTradingV2(
-	// config *config_types.ConfigFile,
 	client *futures.Client,
 	pair *pairs_types.Pairs,
 	limitOnPosition float64,
@@ -904,6 +923,7 @@ func RunFuturesGridTradingV2(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	callbackRate float64,
 	percentsToStopSettingNewOrder float64,
 	quit chan struct{},
@@ -934,6 +954,7 @@ func RunFuturesGridTradingV2(
 		deltaQuantity,
 		marginType,
 		leverage,
+		minSteps,
 		callbackRate,
 		quit,
 		progression)
@@ -1062,16 +1083,15 @@ func createNextPair_v3(
 		downPrice    float64
 		upQuantity   float64
 		downQuantity float64
-		sellOrder    *futures.CreateOrderResponse
-		buyOrder     *futures.CreateOrderResponse
-		callBackRate float64 = pairProcessor.GetCallbackRate()
+		sellType     futures.OrderType
+		downType     futures.OrderType
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance()
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pairProcessor.GetLeverage())
-	if AccumulatedFilledQty == utils.ConvStrToFloat64(risk.PositionAmt) {
-		_, upQuantity, _, _, downQuantity, _, err = pairProcessor.InitPositionGrid(10, LastExecutedPrice)
+	if pairProcessor.up == nil || pairProcessor.down == nil {
+		_, _, _, _, _, _, err = pairProcessor.InitPositionGrid(pairProcessor.minSteps, LastExecutedPrice)
 		if err != nil {
 			err = fmt.Errorf("can't check position: %v", err)
 			printError()
@@ -1089,20 +1109,6 @@ func createNextPair_v3(
 					logrus.Errorf("Can't check position: %v", err)
 					return
 				}
-				// Створюємо ордер на продаж, тобто збільшуємо позицію short
-				// Створюємо ордер на купівлю, тобто скорочуємо позицію short
-				sellOrder, buyOrder, err = openPosition(
-					futures.SideTypeSell,      // sideUp
-					shortPositionIncOrderType, // typeUp
-					futures.SideTypeBuy,       // sideDown
-					shortPositionDecOrderType, // typeDown
-					upQuantity,                // quantityUp
-					AccumulatedFilledQty,      // quantityDown
-					upPrice,                   // priceUp
-					upPrice,                   // stopPriceUp
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // priceDown
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // stopPriceDown
-					pairProcessor) // pairProcessor
 				// Виконаний ордер був на купівлю, тобто скоротив позицію short
 				// Обробляємо розворот курсу
 			} else if LastExecutedSide == futures.SideTypeBuy {
@@ -1113,66 +1119,21 @@ func createNextPair_v3(
 					logrus.Errorf("Can't check position: %v", err)
 					return
 				}
-				// Створюємо ордер на продаж, тобто збільшуємо позицію short
-				// Створюємо ордер на купівлю, тобто скорочуємо позицію short
-				sellOrder, buyOrder, err = openPosition(
-					futures.SideTypeSell,      // sideUp
-					shortPositionIncOrderType, // typeUp
-					futures.SideTypeBuy,       // sideDown
-					shortPositionDecOrderType, // typeDown
-					upQuantity,                // quantityUp
-					AccumulatedFilledQty,      // quantityDown
-					upPrice,                   // priceUp
-					upPrice,                   // stopPriceUp
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // priceDown
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // stopPriceDown
-					pairProcessor) // pairProcessor
-
 			}
-			if err != nil {
-				logrus.Errorf("Can't open position: %v", err)
-				printError()
-				return
-			}
-			logrus.Debugf("Futures %s: Sell type %v Quantity Up %v * upPrice %v = %v, status %v",
-				pairProcessor.GetPair(),
-				longPositionIncOrderType,
-				upQuantity,
-				upPrice,
-				upQuantity*upPrice,
-				sellOrder.Status)
-			logrus.Debugf("Futures %s: Buy type %v Quantity Down %v * downPrice %v = %v, status %v",
-				pairProcessor.GetPair(),
-				longPositionDecOrderType,
-				AccumulatedFilledQty,
-				pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				AccumulatedFilledQty*pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				buyOrder.Status)
+			// Створюємо ордер на продаж, тобто збільшуємо позицію short
+			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
+			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			sellType = shortPositionIncOrderType
+			downType = shortPositionDecOrderType
+			downQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
 		} else {
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
-			buyOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeBuy,
-				shortPositionDecOrderType,
-				AccumulatedFilledQty,
-				pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				callBackRate,
-				false)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, stopPrice %v, callbackRate %v, status %v",
-					pairProcessor.GetPair(),
-					futures.SideTypeSell,
-					shortPositionDecOrderType,
-					AccumulatedFilledQty,
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-					callBackRate,
-					buyOrder.Status)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
+			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			sellType = shortPositionNewOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
+			downType = shortPositionNewOrderType
+			upQuantity = 0
+			downQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
 		}
 	} else if positionVal > 0 { // Маємо позицію long
 		if positionVal <= free {
@@ -1185,23 +1146,11 @@ func createNextPair_v3(
 					logrus.Errorf("Can't check position: %v", err)
 					return
 				}
-				// Створюємо ордер на продаж, тобто скорочуємо позицію long
-				// Створюємо ордер на купівлю, тобто збільшуємо позицію long
-				sellOrder, buyOrder, err = openPosition(
-					futures.SideTypeSell,     // sideUp
-					longPositionIncOrderType, // typeUp
-					futures.SideTypeBuy,      // sideDown
-					longPositionDecOrderType, // typeDown
-					AccumulatedFilledQty,     // quantityUp
-					downQuantity,             // quantityDown
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // priceUp
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // stopPriceUp
-					downPrice,     // priceDown
-					downPrice,     // stopPriceDown
-					pairProcessor) // pairProcessor
 				// Виконаний ордер був на продаж, тобто скоротив позицію long
 				// Обробляємо розворот курсу
 			} else if LastExecutedSide == futures.SideTypeSell {
+				logrus.Debugf("Futures %s: ComeBack Price, LastExecutedPrice %v, AccumulatedFilledQty %v",
+					pairProcessor.GetPair(), LastExecutedPrice, AccumulatedFilledQty)
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
 				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
@@ -1209,86 +1158,47 @@ func createNextPair_v3(
 					logrus.Errorf("Can't check position: %v", err)
 					return
 				}
-				// Створюємо ордер на продаж, тобто скорочуємо позицію long
-				// Створюємо ордер на купівлю, тобто збільшуємо позицію long
-				sellOrder, buyOrder, err = openPosition(
-					futures.SideTypeSell,     // sideUp
-					longPositionIncOrderType, // typeUp
-					futures.SideTypeBuy,      // sideDown
-					longPositionDecOrderType, // typeDown
-					AccumulatedFilledQty,     // quantityUp
-					downQuantity,             // quantityDown
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // priceUp
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)), // stopPriceUp
-					downPrice,     // priceDown
-					downPrice,     // stopPriceDown
-					pairProcessor) // pairProcessor
 			}
-			if err != nil {
-				logrus.Errorf("Can't open position: %v", err)
-				printError()
-				return
-			}
-			logrus.Debugf("Futures %s: Sell type %v Quantity Up %v * upPrice %v = %v, status %v",
-				pairProcessor.GetPair(),
-				longPositionIncOrderType,
-				AccumulatedFilledQty,
-				pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				AccumulatedFilledQty*pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice)),
-				sellOrder.Status)
-			logrus.Debugf("Futures %s: Buy type %v Quantity Down %v * downPrice %v = %v, status %v",
-				pairProcessor.GetPair(),
-				longPositionDecOrderType,
-				downQuantity,
-				downPrice,
-				downPrice*downQuantity,
-				buyOrder.Status)
+			// Створюємо ордер на продаж, тобто скорочуємо позицію long
+			// Створюємо ордер на купівлю, тобто збільшуємо позицію long
+			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			sellType = longPositionDecOrderType
+			downType = longPositionIncOrderType
+			upQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
 		} else {
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
-			sellOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeSell,
-				longPositionDecOrderType,
-				upQuantity,
-				upPrice,
-				upPrice,
-				callBackRate,
-				false)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v, status %v",
-					pairProcessor.GetPair(),
-					futures.SideTypeSell,
-					longPositionDecOrderType,
-					upQuantity,
-					upPrice,
-					callBackRate,
-					sellOrder.Status)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
+			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			sellType = longPositionDecOrderType
+			downType = longPositionDecOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
+			upQuantity = math.Min(AccumulatedFilledQty, utils.ConvStrToFloat64(risk.PositionAmt))
+			downQuantity = 0
 		}
 	} else { // Немає позиції, відкриваємо нову
 		// Відкриваємо нову позицію
 		// Визначаємо ціну для нових ордерів
 		// Визначаємо кількість для нових ордерів
-		openPosition(
-			futures.SideTypeBuy,       // sideUp
-			shortPositionNewOrderType, // typeUp
-			futures.SideTypeSell,      // sideDown
-			longPositionNewOrderType,  // typeDown
-			upQuantity,                // quantityUp
-			downQuantity,              // quantityDown
-			upPrice,                   // priceUp
-			upPrice,                   // stopPriceUp
-			downPrice,                 // priceDown
-			downPrice,                 // stopPriceDown
-			pairProcessor)             // pairProcessor
-		logrus.Debugf("Futures %s: Buy type %v Quantity Up %v * upPrice %v = %v",
-			pairProcessor.GetPair(), shortPositionNewOrderType, upQuantity, upPrice, upQuantity*upPrice)
-		logrus.Debugf("Futures %s: Sell type %v Quantity Down %v * downPrice %v = %v",
-			pairProcessor.GetPair(), longPositionNewOrderType, downQuantity, downPrice, downQuantity*downPrice)
+		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
+		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
+		sellType = shortPositionNewOrderType
+		downType = longPositionNewOrderType
+		_, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.UpBound)
+		_, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.LowBound)
 	}
+	// Створюємо ордер на продаж, тобто скорочуємо позицію long
+	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
+	_, _, err = openPosition(
+		futures.SideTypeSell, // sideUp
+		sellType,             // typeUp
+		futures.SideTypeBuy,  // sideDown
+		downType,             // typeDown
+		upQuantity,           // quantityUp
+		downQuantity,         // quantityDown
+		upPrice,              // priceUp
+		upPrice,              // stopPriceUp
+		downPrice,            // priceDown
+		downPrice,            // stopPriceDown
+		pairProcessor)        // pairProcessor
 	return
 }
 
@@ -1307,6 +1217,7 @@ func RunFuturesGridTradingV3(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	callbackRate float64,
 	shortPositionNewOrderType futures.OrderType,
 	shortPositionIncOrderType futures.OrderType,
@@ -1322,7 +1233,6 @@ func RunFuturesGridTradingV3(
 		initPriceDown float64
 		quantityUp    float64
 		quantityDown  float64
-		// minNotional   float64
 		pairProcessor *PairProcessor
 	)
 	defer wg.Done()
@@ -1340,6 +1250,7 @@ func RunFuturesGridTradingV3(
 		deltaQuantity,
 		marginType,
 		leverage,
+		minSteps,
 		callbackRate,
 		quit,
 		progression)
@@ -1351,13 +1262,7 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	_, quantityUp, _, _, quantityDown, _, err = pairProcessor.InitPositionGrid(10, price)
-	if err != nil {
-		err = fmt.Errorf("can't check position: %v", err)
-		printError()
-		return
-	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, quantityUp, quantityDown)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price)
 	if err != nil {
 		return err
 	}
@@ -1366,360 +1271,6 @@ func RunFuturesGridTradingV3(
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v3(
-			pairProcessor,
-			shortPositionNewOrderType,
-			shortPositionIncOrderType,
-			shortPositionDecOrderType,
-			longPositionNewOrderType,
-			longPositionIncOrderType,
-			longPositionDecOrderType,
-			maintainedOrders,
-			quit))
-	if err != nil {
-		printError()
-		return err
-	}
-	// Створюємо початкові ордери на продаж та купівлю
-	_, _, err = openPosition(
-		futures.SideTypeSell,      // sideUp
-		shortPositionNewOrderType, // typeUp
-		futures.SideTypeBuy,       // sideDown
-		longPositionNewOrderType,  // typeDown
-		quantityUp,                // quantityUp
-		quantityDown,              // quantityDown
-		initPriceUp,               // priceUp
-		initPriceUp,               // stopPriceUp
-		initPriceDown,             // priceDown
-		initPriceDown,             // stopPriceDown
-		pairProcessor)             // pairProcessor
-	if err != nil {
-		return err
-	}
-	<-quit
-	logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
-	pairProcessor.CancelAllOrders()
-	return nil
-}
-
-func getCallBack_v4(
-	pairProcessor *PairProcessor,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
-	maintainedOrders *btree.BTree,
-	quit chan struct{}) func(*futures.WsUserDataEvent) {
-	return func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
-			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
-			// Знаходимо у гріді на якому був виконаний ордер
-			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
-				maintainedOrders.ReplaceOrInsert(grid_types.OrderIdType(event.OrderTradeUpdate.ID))
-				logrus.Debugf("Futures %s: Order filled %v type %v on price %v/activation price %v with quantity %v side %v status %s",
-					pairProcessor.GetPair(),
-					event.OrderTradeUpdate.ID,
-					event.OrderTradeUpdate.Type,
-					event.OrderTradeUpdate.LastFilledPrice,
-					event.OrderTradeUpdate.ActivationPrice,
-					event.OrderTradeUpdate.AccumulatedFilledQty,
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Status)
-				risk, err := pairProcessor.GetPositionRisk()
-				if err != nil {
-					printError()
-					pairProcessor.CancelAllOrders()
-					close(quit)
-					return
-				}
-				logrus.Debugf("Futures %s: Event OrderTradeUpdate: Side %v Type %v OriginalPrice %v, OriginalQty %v, LastFilledPrice %v, LastFilledQty %v",
-					pairProcessor.GetPair(),
-					event.OrderTradeUpdate.Side,
-					event.OrderTradeUpdate.Type,
-					event.OrderTradeUpdate.OriginalPrice,
-					event.OrderTradeUpdate.OriginalQty,
-					event.OrderTradeUpdate.LastFilledPrice,
-					event.OrderTradeUpdate.LastFilledQty)
-				// Балансування маржі як треба
-				marginBalancing(risk, pairProcessor)
-				pairProcessor.CancelAllOrders()
-				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
-				err = createNextPair_v4(
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),      // LastExecutedPrice
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty), // AccumulatedFilledQty
-					shortPositionNewOrderType, // shortPositionNewOrderType
-					shortPositionIncOrderType, // shortPositionIncOrderType
-					shortPositionDecOrderType, // shortPositionDecOrderType
-					longPositionNewOrderType,  // longPositionNewOrderType
-					longPositionIncOrderType,  // longPositionIncOrderType
-					longPositionDecOrderType,  // longPositionDecOrderType
-					pairProcessor)             // pairProcessor
-				if err != nil {
-					logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-					printError()
-					close(quit)
-					return
-				}
-			}
-		}
-	}
-}
-
-func createNextPair_v4(
-	LastExecutedPrice float64,
-	AccumulatedFilledQty float64,
-	// LastExecutedSide futures.SideType,
-	// quantity float64,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
-	pairProcessor *PairProcessor) (err error) {
-	var (
-		risk             *futures.PositionRisk
-		upPrice          float64
-		downPrice        float64
-		upQuantity       float64
-		downQuantity     float64
-		callBackRate     float64 = pairProcessor.GetCallbackRate()
-		createdOrderUp   bool    = false
-		createdOrderDown bool    = false
-		sellOrder        *futures.CreateOrderResponse
-		buyOrder         *futures.CreateOrderResponse
-	)
-	risk, _ = pairProcessor.GetPositionRisk()
-	if AccumulatedFilledQty == utils.ConvStrToFloat64(risk.PositionAmt) {
-		_, upQuantity, _, _, downQuantity, _, err = pairProcessor.InitPositionGrid(10, LastExecutedPrice)
-		if err != nil {
-			err = fmt.Errorf("can't check position: %v", err)
-			printError()
-			return
-		}
-	}
-	getClosePosition := func(risk *futures.PositionRisk) (up, down bool) {
-		// Визначаємо кількість для нових ордерів коли позиція від'ємна
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			up = false
-			down = true
-			// Визначаємо кількість для нових ордерів коли позиція позитивна
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			up = true
-			down = false
-			// Визначаємо кількість для нових ордерів коли позиція нульова
-		} else {
-			up = false
-			down = false
-		}
-		return
-	}
-	upClosePosition, downClosePosition := getClosePosition(risk)
-	if pairProcessor.GetUpBound() != 0 && upPrice <= pairProcessor.GetUpBound() && upQuantity > 0 {
-		if upClosePosition {
-			sellOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeSell,
-				futures.OrderTypeTrailingStopMarket,
-				upQuantity,
-				upPrice,
-				upPrice,
-				callBackRate,
-				upClosePosition)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v",
-					pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
-		} else {
-			sellOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeSell,
-				futures.OrderTypeLimit,
-				upQuantity,
-				upPrice,
-				upPrice,
-				0,
-				upClosePosition)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Sell order: side %v, type %v, quantity %v, price %v, callbackRate %v",
-					pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
-		}
-		logrus.Debugf("Futures %s: Create Sell order type %v on price %v quantity %v status %v",
-			pairProcessor.GetPair(), sellOrder.Type, upPrice, upQuantity, sellOrder.Status)
-		if sellOrder.Status == futures.OrderStatusTypeFilled {
-			pairProcessor.CancelAllOrders()
-			return createNextPair_v4(
-				upPrice,                   // LastExecutedPrice
-				upQuantity,                // AccumulatedFilledQty
-				shortPositionNewOrderType, // shortPositionNewOrderType
-				shortPositionIncOrderType, // shortPositionIncOrderType
-				shortPositionDecOrderType, // shortPositionDecOrderType
-				longPositionNewOrderType,  // longPositionNewOrderType
-				longPositionIncOrderType,  // longPositionIncOrderType
-				longPositionDecOrderType,  // longPositionDecOrderType
-				pairProcessor)             // pairProcessor
-		}
-		createdOrderUp = true
-	} else {
-		if upQuantity <= 0 {
-			logrus.Debugf("Futures %s: upQuantity %v less than 0", pairProcessor.GetPair(), upQuantity)
-		} else {
-			logrus.Debugf("Futures %s: upPrice %v more than upBound %v",
-				pairProcessor.GetPair(), upPrice, pairProcessor.GetUpBound())
-		}
-	}
-	// Створюємо ордер на купівлю
-	if pairProcessor.GetLowBound() != 0 && downPrice >= pairProcessor.GetLowBound() && downQuantity > 0 {
-		if downClosePosition {
-			buyOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeBuy,
-				futures.OrderTypeTrailingStopMarket,
-				downQuantity,
-				downPrice,
-				downPrice,
-				callBackRate,
-				downClosePosition)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Buy order: side %v, type %v, quantity %v, price %v, callbackRate %v",
-					pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
-		} else {
-			buyOrder, err = createOrder(
-				pairProcessor,
-				futures.SideTypeBuy,
-				futures.OrderTypeLimit,
-				downQuantity,
-				downPrice,
-				downPrice,
-				0,
-				downClosePosition)
-			if err != nil {
-				logrus.Errorf("Futures %s: Could not create Buy order: side %v, type %v, quantity %v, price %v, callbackRate %v",
-					pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeTrailingStopMarket, upQuantity, upPrice, callBackRate)
-				logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
-				printError()
-				return
-			}
-		}
-		logrus.Debugf("Futures %s: Create Buy order type %v on price %v quantity %v status %v",
-			pairProcessor.GetPair(), buyOrder.Type, downPrice, downQuantity, buyOrder.Status)
-		if buyOrder.Status == futures.OrderStatusTypeFilled {
-			pairProcessor.CancelAllOrders()
-			return createNextPair_v4(
-				upPrice,                   // LastExecutedPrice
-				upQuantity,                // AccumulatedFilledQty
-				shortPositionNewOrderType, // shortPositionNewOrderType
-				shortPositionIncOrderType, // shortPositionIncOrderType
-				shortPositionDecOrderType, // shortPositionDecOrderType
-				longPositionNewOrderType,  // longPositionNewOrderType
-				longPositionIncOrderType,  // longPositionIncOrderType
-				longPositionDecOrderType,  // longPositionDecOrderType
-				pairProcessor)             // pairProcessor
-		}
-		createdOrderDown = true
-		logrus.Debugf("Futures %s: Create Buy order on price %v quantity %v", pairProcessor.GetPair(), downPrice, downQuantity)
-	} else {
-		if downQuantity <= 0 {
-			logrus.Debugf("Futures %s: downQuantity %v less than 0", pairProcessor.GetPair(), downQuantity)
-		} else {
-			logrus.Debugf("Futures %s: downPrice %v less than lowBound %v",
-				pairProcessor.GetPair(), downPrice, pairProcessor.GetLowBound())
-		}
-	}
-	if !createdOrderUp && !createdOrderDown {
-		logrus.Debugf("Futures %s: Orders was not created", pairProcessor.GetPair())
-		printError()
-		return fmt.Errorf("orders were not created")
-	}
-	return
-}
-
-// Працюємо лімітними та TakeProfit/TrailingStop ордерами,
-// відкриваємо лімітний ордер на збільшення, а закриваємо всю позицію TakeProfit/TrailingStop або лімітним ордером
-// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-// після 5 наприклад ордера ставимо на більшу відстань
-// або статично відкриємо ордери на продаж та купівлю з однаковою кількістью та с однаковим шагом
-func RunFuturesGridTradingV4(
-	client *futures.Client,
-	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
-	marginType pairs_types.MarginType,
-	leverage int,
-	callbackRate float64,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
-	progression pairs_types.ProgressionType,
-	quit chan struct{},
-	wg *sync.WaitGroup) (err error) {
-	var (
-		initPriceUp   float64
-		initPriceDown float64
-		quantityUp    float64
-		quantityDown  float64
-		// minNotional   float64
-		pairProcessor *PairProcessor
-	)
-	defer wg.Done()
-	futures.WebsocketKeepalive = true
-	// Створюємо обробник пари
-	pairProcessor, err = NewPairProcessor(
-		client,
-		pair,
-		limitOnPosition,
-		limitOnTransaction,
-		upBound,
-		lowBound,
-		deltaPrice,
-		deltaQuantity,
-		marginType,
-		leverage,
-		callbackRate,
-		quit,
-		progression)
-	if err != nil {
-		printError()
-		return
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		return err
-	}
-	_, quantityUp, _, _, quantityDown, _, err = pairProcessor.InitPositionGrid(10, price)
-	if err != nil {
-		err = fmt.Errorf("can't check position: %v", err)
-		printError()
-		return
-	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, quantityUp, quantityDown)
-	if err != nil {
-		return err
-	}
-	// Стартуємо обробку ордерів
-	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
-	maintainedOrders := btree.New(2)
-	_, err = pairProcessor.UserDataEventStart(
-		getCallBack_v4(
 			pairProcessor,
 			shortPositionNewOrderType,
 			shortPositionIncOrderType,
@@ -1788,6 +1339,7 @@ func Run(
 				pair.GetDeltaQuantity(),      // deltaQuantity
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetProgression(), // progression
@@ -1809,6 +1361,7 @@ func Run(
 				pair.GetDeltaQuantity(),             // deltaQuantity
 				pair.GetMarginType(),                // marginType
 				pair.GetLeverage(),                  // leverage
+				pair.GetMinSteps(),                  // minSteps
 				pair.GetCallbackRate(),              // callbackRate
 				futures.OrderTypeLimit,              // shortPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
@@ -1831,6 +1384,7 @@ func Run(
 				pair.GetDeltaQuantity(),      // deltaQuantity
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetProgression(), // progression
@@ -1849,6 +1403,7 @@ func Run(
 				pair.GetDeltaQuantity(),      // deltaQuantity
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				quit,                  // quit
@@ -1867,6 +1422,7 @@ func Run(
 				pair.GetDeltaQuantity(),             // deltaQuantity
 				pair.GetMarginType(),                // marginType
 				pair.GetLeverage(),                  // leverage
+				pair.GetMinSteps(),                  // minSteps
 				pair.GetCallbackRate(),              // callbackRate
 				futures.OrderTypeLimit,              // shortPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
@@ -1879,27 +1435,28 @@ func Run(
 				wg)                                  // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV4 {
-			err = RunFuturesGridTradingV4(
-				client,                              // client
-				pair.GetPair(),                      // pair
-				pair.GetLimitOnPosition(),           // limitOnPosition
-				pair.GetLimitOnTransaction(),        // limitOnTransaction
-				pair.GetUpBound(),                   // upBound
-				pair.GetLowBound(),                  // lowBound
-				pair.GetDeltaPrice(),                // deltaPrice
-				pair.GetDeltaQuantity(),             // deltaQuantity
-				pair.GetMarginType(),                // marginType
-				pair.GetLeverage(),                  // leverage
-				pair.GetCallbackRate(),              // callbackRate
-				futures.OrderTypeLimit,              // shortPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-				futures.OrderTypeLimit,              // longPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionIncOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
-				pair.GetProgression(),               // progression
-				quit,                                // quit
-				wg)                                  // wg
+			err = RunFuturesGridTradingV3(
+				client,                       // client
+				pair.GetPair(),               // pair
+				pair.GetLimitOnPosition(),    // limitOnPosition
+				pair.GetLimitOnTransaction(), // limitOnTransaction
+				pair.GetUpBound(),            // upBound
+				pair.GetLowBound(),           // lowBound
+				pair.GetDeltaPrice(),         // deltaPrice
+				pair.GetDeltaQuantity(),      // deltaQuantity
+				pair.GetMarginType(),         // marginType
+				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
+				pair.GetCallbackRate(),       // callbackRate
+				futures.OrderTypeLimit,       // shortPositionNewOrderType
+				futures.OrderTypeLimit,       // shortPositionIncOrderType
+				futures.OrderTypeLimit,       // shortPositionDecOrderType
+				futures.OrderTypeLimit,       // longPositionNewOrderType
+				futures.OrderTypeLimit,       // longPositionIncOrderType
+				futures.OrderTypeLimit,       // longPositionDecOrderType
+				pair.GetProgression(),        // progression
+				quit,                         // quit
+				wg)                           // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
 			err = RunFuturesGridTradingV3(
@@ -1913,6 +1470,7 @@ func Run(
 				pair.GetDeltaQuantity(),      // deltaQuantity
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
 				futures.OrderTypeLimit,       // shortPositionNewOrderType
 				futures.OrderTypeTakeProfit,  // shortPositionIncOrderType

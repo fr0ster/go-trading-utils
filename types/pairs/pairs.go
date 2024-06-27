@@ -81,8 +81,6 @@ type (
 		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
 
 		Pair string `json:"symbol"` // Пара
-		// TargetSymbol string `json:"target_symbol"` // Цільовий токен
-		// BaseSymbol   string `json:"base_symbol"`   // Базовий токен
 
 		// Для USDT_FUTURE/COIN_FUTURE
 		MarginType MarginType `json:"margin_type"` // Тип маржі
@@ -93,6 +91,7 @@ type (
 
 		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
 		LowBound float64 `json:"low_bound"` // Нижня межа ціни
+		MinSteps int     `json:"min_steps"` // Мінімальна кількість кроків
 
 		DeltaPrice    float64         `json:"delta_price"`    // Дельта для купівлі/продажу
 		DeltaQuantity float64         `json:"delta_quantity"` // Кількість для купівлі/продажу
@@ -194,6 +193,10 @@ func (pr *Pairs) GetLowBound() float64 {
 	return pr.LowBound
 }
 
+func (pr *Pairs) GetMinSteps() int {
+	return pr.MinSteps
+}
+
 func (pr *Pairs) GetDeltaPrice() float64 {
 	return pr.DeltaPrice
 }
@@ -224,6 +227,10 @@ func (pr *Pairs) SetUpBound(val float64) {
 
 func (pr *Pairs) SetLowBound(val float64) {
 	pr.LowBound = val
+}
+
+func (pr *Pairs) SetMinSteps(val int) {
+	pr.MinSteps = val
 }
 
 func (pr *Pairs) SetDeltaPrice(val float64) {

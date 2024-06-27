@@ -35,6 +35,7 @@ type (
 		targetSymbol  string
 		notional      float64
 		stepSizeDelta float64
+		minSteps      int
 		up            *btree.BTree
 		down          *btree.BTree
 
@@ -775,8 +776,8 @@ func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
 	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func (pp *PairProcessor) GetPrices(price float64, quantityUp float64, quantityDown float64) (
-	priceUp, quantityUpOut, priceDown, quantityDownOut float64, err error) {
+func (pp *PairProcessor) GetPrices(price float64) (
+	priceUp, quantityUp, priceDown, quantityDown float64, err error) {
 	var (
 		risk *futures.PositionRisk
 	)
@@ -786,8 +787,8 @@ func (pp *PairProcessor) GetPrices(price float64, quantityUp float64, quantityDo
 	}
 	priceUp = price * (1 + pp.GetDeltaPrice())
 	priceDown = price * (1 - pp.GetDeltaPrice())
-	quantityUpOut = quantityUp
-	quantityDownOut = quantityDown
+	_, quantityUp, _, _ = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
+	_, quantityDown, _, _ = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.LowBound)
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
@@ -795,10 +796,10 @@ func (pp *PairProcessor) GetPrices(price float64, quantityUp float64, quantityDo
 		}
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(math.Min(positionPrice, price))
-			quantityDownOut = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
+			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
-			quantityUpOut = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
 		}
 	}
 	return
@@ -815,6 +816,7 @@ func NewPairProcessor(
 	deltaQuantity float64,
 	marginType pairs_types.MarginType,
 	leverage int,
+	minSteps int,
 	callbackRate float64,
 	stop chan struct{},
 	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
@@ -830,6 +832,7 @@ func NewPairProcessor(
 		baseSymbol:    "",
 		notional:      0,
 		stepSizeDelta: 0,
+		minSteps:      minSteps,
 		up:            btree.New(2),
 		down:          btree.New(2),
 
