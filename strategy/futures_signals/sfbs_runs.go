@@ -232,18 +232,20 @@ func RunFuturesTrading(
 		printError()
 		return
 	}
-	risk, err := pairProcessor.GetPositionRisk()
+
+	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
-		printError()
-		close(quit)
 		return err
 	}
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		initPriceDown = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt) * -1
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		initPriceUp = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
+	_, quantityUp, _, _, quantityDown, _, err = pairProcessor.InitPositionGrid(10, price)
+	if err != nil {
+		err = fmt.Errorf("can't check position: %v", err)
+		printError()
+		return
+	}
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, quantityUp, quantityDown)
+	if err != nil {
+		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
