@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -22,12 +21,7 @@ import (
 )
 
 const (
-	deltaUp    = 0.0005
-	deltaDown  = 0.0005
-	degree     = 3
-	limit      = 1000
-	interval   = "1m"
-	reloadTime = 500 * time.Millisecond
+	degree = 3
 )
 
 func printError() {

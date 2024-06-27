@@ -601,61 +601,17 @@ func (pp *PairProcessor) CalcValueForQuantity(
 	return
 }
 
-// func (pp *PairProcessor) recSearch(
-// 	P1 float64,
-// 	low float64,
-// 	high float64,
-// 	P2 float64,
-// 	limit float64,
-// 	minSteps int) (
-// 	value float64,
-// 	quantity float64,
-// 	n int,
-// 	err error) {
-
-// 	for high-low > pp.stepSizeDelta {
-// 		mid := (low + high) / 2
-// 		value, n = pp.CalcValueForQuantity(P1, mid, P2)
-// 		if value <= limit && n >= minSteps {
-// 			low = mid
-// 		} else {
-// 			high = mid
-// 		}
-// 	}
-
-// 	value, n = pp.CalcValueForQuantity(P1, high, P2)
-// 	if value < limit && n >= minSteps {
-// 		quantity = pp.roundQuantity(high)
-// 		return
-// 	}
-// 	value, n = pp.CalcValueForQuantity(P1, low, P2)
-// 	if value < limit && n >= minSteps {
-// 		quantity = pp.roundQuantity(low)
-// 		return
-// 	}
-
-// 	err = fmt.Errorf("can't calculate initial position")
-// 	return
-// }
-
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
 	endPrice float64) (value, quantity float64, n int, err error) {
 	low := pp.roundQuantity(pp.notional / buyPrice)
 	high := pp.roundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
-	// value, quantity, n, err = pp.recSearch(
-	// 	buyPrice,
-	// 	low,
-	// 	high,
-	// 	endPrice,
-	// 	pp.GetFreeBalance()*float64(pp.GetLeverage()),
-	// 	minN)
 
 	for high-low > pp.stepSizeDelta {
 		mid := pp.roundQuantity((low + high) / 2)
 		value, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
-		if value <= limit && n >= minN {
+		if value <= pp.limitOnPosition && n >= minN {
 			low = mid
 		} else {
 			high = mid
@@ -663,12 +619,12 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 
 	value, n = pp.CalcValueForQuantity(buyPrice, high, endPrice)
-	if value < limit && n >= minN {
+	if value < pp.limitOnPosition && n >= minN {
 		quantity = pp.roundQuantity(high)
 		return
 	}
 	value, n = pp.CalcValueForQuantity(buyPrice, low, endPrice)
-	if value < limit && n >= minN {
+	if value < pp.limitOnPosition && n >= minN {
 		quantity = pp.roundQuantity(low)
 		return
 	}
