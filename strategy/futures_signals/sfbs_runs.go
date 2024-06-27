@@ -78,10 +78,14 @@ func RunScalpingHolding(
 
 func getCallBackTrading(
 	pairProcessor *PairProcessor,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionTPOrderType futures.OrderType,
+	shortPositionSLOrderType futures.OrderType,
+	longPositionTPOrderType futures.OrderType,
+	longPositionSLOrderType futures.OrderType,
 	quit chan struct{}) func(*futures.WsUserDataEvent) {
 	var (
 		sideUp    futures.SideType
@@ -92,12 +96,14 @@ func getCallBackTrading(
 		priceDown float64
 	)
 	return func(event *futures.WsUserDataEvent) {
-		if event.Event == futures.UserDataEventTypeOrderTradeUpdate {
+		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
+			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			risk, _ := pairProcessor.GetPositionRisk()
-			if (event.OrderTradeUpdate.Type == shortPositionNewOrderType ||
-				event.OrderTradeUpdate.Type == longPositionNewOrderType) &&
-				risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
-				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+			currentPrice, _ := pairProcessor.GetCurrentPrice()
+			if (event.OrderTradeUpdate.Type == upPositionNewOrderType ||
+				event.OrderTradeUpdate.Type == downPositionNewOrderType) &&
+				risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+				// Спрацював ордер на відкриття позиції
 				logrus.Debugf("Futures %s: Order filled %v type %v on price %v/activation price %v with quantity %v side %v status %s",
 					pairProcessor.GetPair(),
 					event.OrderTradeUpdate.ID,
@@ -109,22 +115,22 @@ func getCallBackTrading(
 					event.OrderTradeUpdate.Status)
 				if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
 					// Відкрили позицію long купівлею, закриваємо її продажем
-					sideUp = futures.SideTypeBuy
-					typeUp = longPositionDecOrderType
-					priceUp = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					sideUp = futures.SideTypeSell
+					typeUp = longPositionTPOrderType
+					priceUp = math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), currentPrice) * (1 + pairProcessor.GetDeltaPrice()*2)
 					sideDown = futures.SideTypeSell
-					typeDown = futures.OrderTypeStopMarket
-					priceDown = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice))
+					typeDown = longPositionSLOrderType
+					priceDown = utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 - pairProcessor.GetDeltaPrice())
 				} else if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 					// Відкрили позицію short продажею, закриваємо її купівлею
-					sideUp = futures.SideTypeSell
-					typeUp = shortPositionDecOrderType
-					priceUp = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice))
+					sideUp = futures.SideTypeBuy
+					typeUp = shortPositionTPOrderType
+					priceUp = utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + pairProcessor.GetDeltaPrice())
 					sideDown = futures.SideTypeBuy
-					typeDown = futures.OrderTypeTrailingStopMarket
-					priceDown = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					typeDown = shortPositionSLOrderType
+					priceDown = math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), currentPrice) * (1 - pairProcessor.GetDeltaPrice()*2)
 				}
-				sellOrder, buyOrder, err := openPosition(
+				upOrder, downOrder, err := openPosition(
 					sideUp,
 					typeUp,
 					sideDown,
@@ -144,24 +150,21 @@ func getCallBackTrading(
 				}
 				logrus.Debugf("Futures %s: Open position order %v side %v type %v on price %v quantity %v status %v",
 					pairProcessor.GetPair(),
-					sellOrder.OrderID,
-					sellOrder.Side,
-					sellOrder.Type,
-					sellOrder.Price,
-					sellOrder.OrigQuantity,
-					sellOrder.Status)
+					upOrder.OrderID,
+					upOrder.Side,
+					upOrder.Type,
+					upOrder.Price,
+					upOrder.OrigQuantity,
+					upOrder.Status)
 				logrus.Debugf("Futures %s: Open position order %v side %v type %v on price %v quantity %v status %v",
 					pairProcessor.GetPair(),
-					buyOrder.OrderID,
-					buyOrder.Side,
-					buyOrder.Type,
-					buyOrder.Price,
-					buyOrder.OrigQuantity,
-					buyOrder.Status)
-			} else if (event.OrderTradeUpdate.Type == shortPositionDecOrderType ||
-				event.OrderTradeUpdate.Type == longPositionDecOrderType) &&
-				(risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0) &&
-				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
+					downOrder.OrderID,
+					downOrder.Side,
+					downOrder.Type,
+					downOrder.Price,
+					downOrder.OrigQuantity,
+					downOrder.Status)
+			} else if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 				// Створюємо початкові ордери на продаж та купівлю
 				currentPrice, err := pairProcessor.GetCurrentPrice()
 				if err != nil {
@@ -172,10 +175,10 @@ func getCallBackTrading(
 				}
 				quantity := pairProcessor.GetLimitOnTransaction() / currentPrice
 				_, _, err = openPosition(
-					futures.SideTypeSell,
-					shortPositionNewOrderType,
-					futures.SideTypeBuy,
-					longPositionNewOrderType,
+					upOrderSideOpen,
+					upPositionNewOrderType,
+					downOrderSideOpen,
+					downPositionNewOrderType,
 					quantity,
 					quantity,
 					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
@@ -209,10 +212,14 @@ func RunFuturesTrading(
 	leverage int,
 	minSteps int,
 	callBackRate float64,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionTPOrderType futures.OrderType,
+	shortPositionSLOrderType futures.OrderType,
+	longPositionTPOrderType futures.OrderType,
+	longPositionSLOrderType futures.OrderType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
@@ -276,10 +283,14 @@ func RunFuturesTrading(
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBackTrading(
 			pairProcessor,                       // pairProcessor
-			futures.OrderTypeLimit,              // shortPositionNewOrderType
-			futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-			futures.OrderTypeLimit,              // longPositionNewOrderType
-			futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
+			futures.SideTypeBuy,                 // upOrderSideOpen
+			futures.OrderTypeTakeProfit,         // upPositionNewOrderType
+			futures.SideTypeSell,                // downOrderSideOpen
+			futures.OrderTypeLimit,              // downPositionNewOrderType
+			futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
+			futures.OrderTypeStop,               // shortPositionSLOrderType
+			futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
+			futures.OrderTypeStop,               // longPositionSLOrderType
 			quit))                               // quit
 	if err != nil {
 		printError()
@@ -287,10 +298,10 @@ func RunFuturesTrading(
 	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		futures.SideTypeSell,
-		shortPositionNewOrderType,
-		futures.SideTypeBuy,
-		shortPositionNewOrderType,
+		upOrderSideOpen,
+		upPositionNewOrderType,
+		downOrderSideOpen,
+		downPositionNewOrderType,
 		quantity,
 		quantity,
 		initPriceUp,
@@ -1376,10 +1387,14 @@ func Run(
 				pair.GetLeverage(),                  // leverage
 				pair.GetMinSteps(),                  // minSteps
 				pair.GetCallbackRate(),              // callbackRate
-				futures.OrderTypeLimit,              // shortPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-				futures.OrderTypeLimit,              // longPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
+				futures.SideTypeBuy,                 // upOrderSideOpen
+				futures.OrderTypeTakeProfit,         // upPositionNewOrderType
+				futures.SideTypeSell,                // downOrderSideOpen
+				futures.OrderTypeLimit,              // downPositionNewOrderType
+				futures.OrderTypeTrailingStopMarket, // shortPositionTPOrderType
+				futures.OrderTypeStop,               // shortPositionSLOrderType
+				futures.OrderTypeTrailingStopMarket, // longPositionTPOrderType
+				futures.OrderTypeStop,               // longPositionSLOrderType
 				pair.GetProgression(),               // progression
 				quit,                                // quit
 				wg)
