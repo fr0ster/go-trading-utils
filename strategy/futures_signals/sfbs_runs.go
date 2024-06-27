@@ -113,6 +113,7 @@ func getCallBackTrading(
 					event.OrderTradeUpdate.AccumulatedFilledQty,
 					event.OrderTradeUpdate.Side,
 					event.OrderTradeUpdate.Status)
+				pairProcessor.CancelAllOrders()
 				if event.OrderTradeUpdate.Side == futures.SideTypeBuy {
 					// Відкрили позицію long купівлею, закриваємо її продажем
 					sideUp = futures.SideTypeSell
@@ -165,6 +166,7 @@ func getCallBackTrading(
 					downOrder.OrigQuantity,
 					downOrder.Status)
 			} else if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
+				pairProcessor.CancelAllOrders()
 				// Створюємо початкові ордери на продаж та купівлю
 				if pairProcessor.GetNotional() > pairProcessor.GetLimitOnTransaction() {
 					logrus.Errorf("Notional %v > LimitOnTransaction %v", pairProcessor.GetNotional(), pairProcessor.GetLimitOnTransaction())
@@ -179,7 +181,9 @@ func getCallBackTrading(
 					close(quit)
 					return
 				}
-				quantity := pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() / currentPrice)
+				quantity := pairProcessor.RoundQuantity(
+					pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() *
+						float64(pairProcessor.GetLeverage()) / currentPrice))
 				_, _, err = openPosition(
 					upOrderSideOpen,
 					upPositionNewOrderType,
@@ -270,7 +274,8 @@ func RunFuturesTrading(
 	}
 	initPriceUp = pairProcessor.NextPriceUp(price)
 	initPriceDown = pairProcessor.NextPriceDown(price)
-	quantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() / initPriceUp)
+	quantity = pairProcessor.RoundQuantity(
+		pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceUp)
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
