@@ -166,6 +166,12 @@ func getCallBackTrading(
 					downOrder.Status)
 			} else if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 				// Створюємо початкові ордери на продаж та купівлю
+				if pairProcessor.GetNotional() > pairProcessor.GetLimitOnTransaction() {
+					logrus.Errorf("Notional %v > LimitOnTransaction %v", pairProcessor.GetNotional(), pairProcessor.GetLimitOnTransaction())
+					printError()
+					close(quit)
+					return
+				}
 				currentPrice, err := pairProcessor.GetCurrentPrice()
 				if err != nil {
 					logrus.Errorf("Can't get current price: %v", err)
@@ -173,7 +179,7 @@ func getCallBackTrading(
 					close(quit)
 					return
 				}
-				quantity := pairProcessor.GetLimitOnTransaction() / currentPrice
+				quantity := pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() / currentPrice)
 				_, _, err = openPosition(
 					upOrderSideOpen,
 					upPositionNewOrderType,
@@ -181,10 +187,10 @@ func getCallBackTrading(
 					downPositionNewOrderType,
 					quantity,
 					quantity,
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
-					pairProcessor.NextPriceUp(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
-					pairProcessor.NextPriceDown(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
+					pairProcessor.NextPriceUp(currentPrice),
+					pairProcessor.NextPriceUp(currentPrice),
+					pairProcessor.NextPriceDown(currentPrice),
+					pairProcessor.NextPriceDown(currentPrice),
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Can't open position: %v", err)
@@ -264,7 +270,7 @@ func RunFuturesTrading(
 	}
 	initPriceUp = pairProcessor.NextPriceUp(price)
 	initPriceDown = pairProcessor.NextPriceDown(price)
-	quantity = pairProcessor.GetLimitOnTransaction() / initPriceUp
+	quantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() / initPriceUp)
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
@@ -379,7 +385,7 @@ func processOrder(
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
-			upPrice := pairProcessor.roundPrice(order.GetPrice() * (1 + pairProcessor.GetDeltaPrice()))
+			upPrice := pairProcessor.RoundPrice(order.GetPrice() * (1 + pairProcessor.GetDeltaPrice()))
 			if (pairProcessor.GetUpBound() == 0 || upPrice <= pairProcessor.GetUpBound()) &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pairProcessor.GetFreeBalance() &&
 				locked <= pairProcessor.GetFreeBalance() {
@@ -466,7 +472,7 @@ func processOrder(
 		// Якшо нижче немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
-			downPrice := pairProcessor.roundPrice(order.GetPrice() * (1 - pairProcessor.GetDeltaPrice()))
+			downPrice := pairProcessor.RoundPrice(order.GetPrice() * (1 - pairProcessor.GetDeltaPrice()))
 			if (pairProcessor.GetLowBound() == 0 || downPrice >= pairProcessor.GetLowBound()) &&
 				delta_percent(downPrice) >= percentsToStopSettingNewOrder &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pairProcessor.GetFreeBalance() &&
@@ -572,7 +578,7 @@ func initVars(
 	}
 	// Отримання середньої ціни
 	price, _ = pairProcessor.GetCurrentPrice() // Отримання ціни по ринку для пари
-	price = pairProcessor.roundPrice(price)
+	price = pairProcessor.RoundPrice(price)
 	priceUp = pairProcessor.NextPriceUp(price)
 	priceDown = pairProcessor.NextPriceDown(price)
 	minNotional = utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
@@ -644,7 +650,7 @@ func marginBalancing(
 	pairProcessor *PairProcessor) (err error) {
 	// Балансування маржі як треба
 	if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-		delta := pairProcessor.roundPrice(pairProcessor.GetFreeBalance()) - pairProcessor.roundPrice(utils.ConvStrToFloat64(risk.IsolatedMargin))
+		delta := pairProcessor.RoundPrice(pairProcessor.GetFreeBalance()) - pairProcessor.RoundPrice(utils.ConvStrToFloat64(risk.IsolatedMargin))
 		if delta != 0 {
 			if delta > 0 && delta < pairProcessor.GetFreeBalance() {
 				err = pairProcessor.SetPositionMargin(delta, 1)
@@ -666,13 +672,13 @@ func initGrid(
 	logrus.Debugf("Futures %s: Grid initialized", pairProcessor.GetPair())
 	grid = grid_types.New()
 	// Записуємо середню ціну в грід
-	grid.Set(grid_types.NewRecord(0, price, 0, pairProcessor.roundPrice(price*(1+pairProcessor.GetDeltaPrice())), pairProcessor.roundPrice(price*(1-pairProcessor.GetDeltaPrice())), types.SideTypeNone))
+	grid.Set(grid_types.NewRecord(0, price, 0, pairProcessor.RoundPrice(price*(1+pairProcessor.GetDeltaPrice())), pairProcessor.RoundPrice(price*(1-pairProcessor.GetDeltaPrice())), types.SideTypeNone))
 	logrus.Debugf("Futures %s: Set Entry Price order on price %v", pairProcessor.GetPair(), price)
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(sellOrder.OrderID, pairProcessor.roundPrice(price*(1+pairProcessor.GetDeltaPrice())), quantity, 0, price, types.SideTypeSell))
-	logrus.Debugf("Futures %s: Set Sell order on price %v", pairProcessor.GetPair(), pairProcessor.roundPrice(price*(1+pairProcessor.GetDeltaPrice())))
+	grid.Set(grid_types.NewRecord(sellOrder.OrderID, pairProcessor.RoundPrice(price*(1+pairProcessor.GetDeltaPrice())), quantity, 0, price, types.SideTypeSell))
+	logrus.Debugf("Futures %s: Set Sell order on price %v", pairProcessor.GetPair(), pairProcessor.RoundPrice(price*(1+pairProcessor.GetDeltaPrice())))
 	// Записуємо ордер в грід
-	grid.Set(grid_types.NewRecord(buyOrder.OrderID, pairProcessor.roundPrice(price*(1-pairProcessor.GetDeltaPrice())), quantity, price, 0, types.SideTypeBuy))
+	grid.Set(grid_types.NewRecord(buyOrder.OrderID, pairProcessor.RoundPrice(price*(1-pairProcessor.GetDeltaPrice())), quantity, price, 0, types.SideTypeBuy))
 	grid.Debug("Futures Grid", "", pairProcessor.GetPair())
 	return
 }
