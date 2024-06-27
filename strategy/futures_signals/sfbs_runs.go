@@ -1107,6 +1107,7 @@ func createNextPair_v3(
 				upPrice, upQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
+					printError()
 					return
 				}
 				// Виконаний ордер був на купівлю, тобто скоротив позицію short
@@ -1117,6 +1118,7 @@ func createNextPair_v3(
 				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
+					printError()
 					return
 				}
 			}
@@ -1144,6 +1146,7 @@ func createNextPair_v3(
 				downPrice, downQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
+					printError()
 					return
 				}
 				// Виконаний ордер був на продаж, тобто скоротив позицію long
@@ -1156,6 +1159,7 @@ func createNextPair_v3(
 				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
 					logrus.Errorf("Can't check position: %v", err)
+					printError()
 					return
 				}
 			}
@@ -1199,6 +1203,10 @@ func createNextPair_v3(
 		downPrice,            // priceDown
 		downPrice,            // stopPriceDown
 		pairProcessor)        // pairProcessor
+	if err != nil {
+		printError()
+		return
+	}
 	return
 }
 
