@@ -100,7 +100,7 @@ func getCallBackTrading(
 			risk, _ := pairProcessor.GetPositionRisk()
 			if (event.OrderTradeUpdate.Type == shortPositionNewOrderType ||
 				event.OrderTradeUpdate.Type == longPositionNewOrderType) &&
-				risk != nil &&
+				risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
 				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 				logrus.Debugf("Futures %s: Order filled %v type %v on price %v/activation price %v with quantity %v side %v status %s",
 					pairProcessor.GetPair(),
@@ -164,6 +164,7 @@ func getCallBackTrading(
 					buyOrder.Status)
 			} else if (event.OrderTradeUpdate.Type == shortPositionDecOrderType ||
 				event.OrderTradeUpdate.Type == longPositionDecOrderType) &&
+				(risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0) &&
 				event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 				// Створюємо початкові ордери на продаж та купівлю
 				_, _, err := openPosition(
