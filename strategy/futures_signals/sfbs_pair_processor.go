@@ -771,8 +771,18 @@ func (pp *PairProcessor) GetPrices(price float64) (
 	}
 	priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 	priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
-	_, quantityUp, _, _ = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
-	_, quantityDown, _, _ = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.LowBound)
+	_, quantityUp, _, err = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
+	if err != nil {
+		err = fmt.Errorf("can't calculate initial position for price up %v", priceUp)
+		printError()
+		return
+	}
+	_, quantityDown, _, err = pp.CalculateInitialPosition(pp.minSteps, priceDown, pp.LowBound)
+	if err != nil {
+		err = fmt.Errorf("can't calculate initial position for price down %v", priceDown)
+		printError()
+		return
+	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
