@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 // ArithmeticProgressionNthTerm calculates the nth term of an arithmetic progression
 // given the first term (firstTerm), the common difference (commonDifference), and the position of the term (termPosition).
@@ -29,4 +29,16 @@ func FindLengthOfArithmeticProgression(firstTerm, secondTerm, lastTerm float64) 
 	commonDifference := secondTerm - firstTerm
 	numberOfTerms := (lastTerm-firstTerm)/commonDifference + 1
 	return int(numberOfTerms)
+}
+
+// FindArithmeticProgressionTthTerm calculates the Tth term of an arithmetic progression
+// given the first term (firstTerm), the last term (lastTerm), the length of the progression (length),
+// and the sum of the progression (sum). It returns the value of the Tth term in the arithmetic progression.
+func FindArithmeticProgressionTthTerm(firstTerm, lastTerm float64, length int, sum float64, T int) float64 {
+	// Calculate the common difference of the arithmetic progression
+	commonDifference := (lastTerm - firstTerm) / float64(length-1)
+	// Calculate the Tth term using the formula: TthTerm = firstTerm + (T-1)*commonDifference
+	// Where TthTerm is the Tth term, firstTerm is the first term, and commonDifference is the common difference.
+	TthTerm := firstTerm + float64(T-1)*commonDifference
+	return TthTerm
 }

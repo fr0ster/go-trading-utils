@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -34,4 +34,15 @@ func FindLengthOfGeometricProgression(firstTerm, secondTerm, lastTerm float64) i
 	commonRatio := secondTerm / firstTerm
 	termPosition := math.Log(lastTerm/firstTerm)/math.Log(commonRatio) + 1
 	return int(termPosition)
+}
+
+// FindGeometricProgressionTthTerm calculates the Tth term of a geometric progression
+// given the first term (firstTerm), the last term (lastTerm), the length of the progression (length),
+// and the sum of the progression (sum). It returns the value of the Tth term in the geometric progression.
+func FindGeometricProgressionTthTerm(firstTerm, lastTerm float64, length int, sum float64, T int) float64 {
+	// Calculate the common ratio of the geometric progression
+	commonRatio := math.Pow(lastTerm/firstTerm, 1/float64(length-1))
+	// Calculate the Tth term using the formula: TthTerm = firstTerm * commonRatio^(T-1)
+	TthTerm := firstTerm * math.Pow(commonRatio, float64(T-1))
+	return TthTerm
 }

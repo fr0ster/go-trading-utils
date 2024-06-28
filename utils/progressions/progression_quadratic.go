@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -41,4 +41,20 @@ func FindLengthOfQuadraticProgression(firstTerm, secondTerm, lastTerm float64) i
 	// Розв'язок квадратного рівняння може бути реалізований тут.
 	// Повертаємо прикладне значення для демонстрації.
 	return int(math.Sqrt((lastTerm-firstTerm)/commonDifference)) + 1
+}
+
+// FindQuadraticProgressionTthTerm calculates the Tth term of a quadratic progression
+// given the first term (a), the last term (l), the length of the progression (n),
+// and the sum of the progression (S). It returns the value of the Tth term (TthTerm).
+func FindQuadraticProgressionTthTerm(a, l float64, n int, S float64, T int) float64 {
+	// Calculate the common difference (d) using the formula: d = (2S/n - 2a - 2l + 2a/n + 2l/n) / (n - 1)
+	d := (2*S/float64(n) - 2*a - 2*l + 2*a/float64(n) + 2*l/float64(n)) / float64(n-1)
+
+	// // Calculate the second term (b) of the progression for further calculations
+	// b := a + d
+
+	// Calculate the Tth term using the formula: TthTerm = a + (T-1)*d + (T-1)*(T-2)*d^2/(2*n)
+	TthTerm := a + float64(T-1)*d + (float64(T-1)*(float64(T-2)*math.Pow(d, 2)))/(2*float64(n))
+
+	return TthTerm
 }

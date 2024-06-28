@@ -125,10 +125,10 @@ func getCallBackTrading(
 				} else if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 					// Відкрили позицію short продажею, закриваємо її купівлею
 					sideUp = futures.SideTypeBuy
-					typeUp = shortPositionTPOrderType
+					typeUp = shortPositionSLOrderType
 					priceUp = utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + pairProcessor.GetDeltaPrice())
 					sideDown = futures.SideTypeBuy
-					typeDown = shortPositionSLOrderType
+					typeDown = shortPositionTPOrderType
 					priceDown = math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), currentPrice) * (1 - pairProcessor.GetDeltaPrice()*2)
 				}
 				upOrder, downOrder, err := openPosition(

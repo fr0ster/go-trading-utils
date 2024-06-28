@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -26,4 +26,18 @@ func CubicRootProgressionSum(firstTerm, commonRatio float64, numberOfTerms int) 
 func FindLengthOfCubicRootProgression(firstTerm, secondTerm, lastTerm float64) int {
 	commonRatio := math.Cbrt(secondTerm / firstTerm)
 	return int((3 * math.Log(lastTerm/firstTerm) / math.Log(commonRatio)) + 1)
+}
+
+// FindCubicRootProgressionTthTerm calculates the Tth term of a progression
+// where each term is obtained by applying cubic root to the previous term,
+// given the first term (firstTerm), the last term (lastTerm), the length of the progression (length),
+// and the sum of the progression (sum). It returns the value of the Tth term.
+func FindCubicRootProgressionTthTerm(firstTerm, lastTerm float64, length int, sum float64, T int) float64 {
+	// Correct calculation of the common ratio of the progression
+	// Since the progression is defined by cubic roots, the ratio should be calculated accordingly
+	commonRatio := math.Pow(lastTerm/firstTerm, 1/float64(length-1))
+
+	// Calculate the Tth term using the corrected formula: TthTerm = firstTerm * commonRatio^(T-1)
+	TthTerm := firstTerm * math.Pow(commonRatio, float64(T-1))
+	return TthTerm
 }

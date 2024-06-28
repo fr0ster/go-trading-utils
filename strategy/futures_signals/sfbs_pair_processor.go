@@ -14,6 +14,7 @@ import (
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
+	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
@@ -22,12 +23,7 @@ import (
 )
 
 type (
-	NthTermType                 func(firstTerm, commonRatio float64, termPosition int) float64
-	DeltaType                   func(firstTerm, secondTerm float64) float64
-	SumType                     func(firstTerm, commonRatio float64, numberOfTerms int) float64
-	FindNthTermType             func(firstTerm, secondTerm float64, termPosition int) float64
-	FindLengthOfProgressionType func(firstTerm, secondTerm, lastTerm float64) int
-	PairProcessor               struct {
+	PairProcessor struct {
 		client        *futures.Client
 		exchangeInfo  *exchange_types.ExchangeInfo
 		symbol        *futures.Symbol
@@ -58,11 +54,12 @@ type (
 		deltaQuantity float64
 
 		progression             pairs_types.ProgressionType
-		GetDelta                DeltaType
-		NthTerm                 NthTermType
-		Sum                     SumType
-		FindNthTerm             FindNthTermType
-		FindLengthOfProgression FindLengthOfProgressionType
+		GetDelta                progressions.DeltaType
+		NthTerm                 progressions.NthTermType
+		Sum                     progressions.SumType
+		FindNthTerm             progressions.FindNthTermType
+		FindLengthOfProgression progressions.FindLengthOfProgressionType
+		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
 	}
 )
 
@@ -875,53 +872,61 @@ func NewPairProcessor(
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
 
 	if pp.progression == pairs_types.ArithmeticProgression {
-		pp.NthTerm = utils.FindArithmeticProgressionNthTerm
-		pp.Sum = utils.ArithmeticProgressionSum
-		pp.FindNthTerm = utils.FindArithmeticProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfArithmeticProgression
+		pp.NthTerm = progressions.ArithmeticProgressionNthTerm
+		pp.Sum = progressions.ArithmeticProgressionSum
+		pp.FindNthTerm = progressions.FindArithmeticProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfArithmeticProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return P1 - P1 }
+		pp.FindProgressionTthTerm = progressions.FindArithmeticProgressionTthTerm
 	} else if pp.progression == pairs_types.GeometricProgression {
-		pp.NthTerm = utils.FindGeometricProgressionNthTerm
-		pp.Sum = utils.GeometricProgressionSum
-		pp.FindNthTerm = utils.FindGeometricProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfGeometricProgression
+		pp.NthTerm = progressions.GeometricProgressionNthTerm
+		pp.Sum = progressions.GeometricProgressionSum
+		pp.FindNthTerm = progressions.FindGeometricProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfGeometricProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return P2 / P1 }
+		pp.FindProgressionTthTerm = progressions.FindGeometricProgressionTthTerm
 	} else if pp.progression == pairs_types.CubicProgression {
-		pp.NthTerm = utils.FindCubicProgressionNthTerm
-		pp.Sum = utils.CubicProgressionSum
-		pp.FindNthTerm = utils.FindCubicProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfCubicProgression
+		pp.NthTerm = progressions.CubicProgressionNthTerm
+		pp.Sum = progressions.CubicProgressionSum
+		pp.FindNthTerm = progressions.FindCubicProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfCubicProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return math.Pow(P2/P1, 1.0/3) }
+		pp.FindProgressionTthTerm = progressions.FindCubicProgressionTthTerm
 	} else if pp.progression == pairs_types.CubicRootProgression {
-		pp.NthTerm = utils.FindCubicRootProgressionNthTerm
-		pp.Sum = utils.CubicRootProgressionSum
-		pp.FindNthTerm = utils.FindCubicRootProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfCubicRootProgression
+		pp.NthTerm = progressions.CubicRootProgressionNthTerm
+		pp.Sum = progressions.CubicRootProgressionSum
+		pp.FindNthTerm = progressions.FindCubicRootProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfCubicRootProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return math.Cbrt(P2 / P1) }
+		pp.FindProgressionTthTerm = progressions.FindCubicRootProgressionTthTerm
 	} else if pp.progression == pairs_types.QuadraticProgression {
-		pp.NthTerm = utils.FindQuadraticProgressionNthTerm
-		pp.Sum = utils.QuadraticProgressionSum
-		pp.FindNthTerm = utils.FindQuadraticProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfQuadraticProgression
+		pp.NthTerm = progressions.QuadraticProgressionNthTerm
+		pp.Sum = progressions.QuadraticProgressionSum
+		pp.FindNthTerm = progressions.FindQuadraticProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfQuadraticProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return (P2 - P1) / 1 }
+		pp.FindProgressionTthTerm = progressions.FindQuadraticProgressionTthTerm
 	} else if pp.progression == pairs_types.ExponentialProgression {
-		pp.NthTerm = utils.FindExponentialProgressionNthTerm
-		pp.Sum = utils.ExponentialProgressionSum
-		pp.FindNthTerm = utils.FindExponentialProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfExponentialProgression
+		pp.NthTerm = progressions.ExponentialProgressionNthTerm
+		pp.Sum = progressions.ExponentialProgressionSum
+		pp.FindNthTerm = progressions.FindExponentialProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfExponentialProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return P2 / P1 }
+		pp.FindProgressionTthTerm = progressions.FindExponentialProgressionTthTerm
 	} else if pp.progression == pairs_types.LogarithmicProgression {
-		pp.NthTerm = utils.FindLogarithmicProgressionNthTerm
-		pp.Sum = utils.LogarithmicProgressionSum
-		pp.FindNthTerm = utils.FindLogarithmicProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfLogarithmicProgression
+		pp.NthTerm = progressions.LogarithmicProgressionNthTerm
+		pp.Sum = progressions.LogarithmicProgressionSum
+		pp.FindNthTerm = progressions.FindLogarithmicProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfLogarithmicProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return (P2 - P1) / math.Log(2) }
+		pp.FindProgressionTthTerm = progressions.FindLogarithmicProgressionTthTerm
 	} else if pp.progression == pairs_types.HarmonicProgression {
-		pp.NthTerm = utils.FindHarmonicProgressionNthTerm
-		pp.Sum = utils.HarmonicProgressionSum
-		pp.FindNthTerm = utils.FindHarmonicProgressionNthTerm
-		pp.FindLengthOfProgression = utils.FindLengthOfHarmonicProgression
+		pp.NthTerm = progressions.HarmonicProgressionNthTerm
+		pp.Sum = progressions.HarmonicProgressionSum
+		pp.FindNthTerm = progressions.FindHarmonicProgressionNthTerm
+		pp.FindLengthOfProgression = progressions.FindLengthOfHarmonicProgression
 		pp.GetDelta = func(P1, P2 float64) float64 { return 1/P2 - 1/P1 }
+		pp.FindProgressionTthTerm = progressions.FindHarmonicProgressionTthTerm
 	} else {
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
 		return

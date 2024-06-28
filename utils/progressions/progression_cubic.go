@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -26,4 +26,15 @@ func CubicProgressionSum(firstTerm, commonRatio float64, numberOfTerms int) floa
 func FindLengthOfCubicProgression(firstTerm, secondTerm, lastTerm float64) int {
 	commonRatio := math.Pow(secondTerm/firstTerm, 1.0/3)
 	return int(math.Cbrt(lastTerm/firstTerm)/commonRatio) + 1
+}
+
+// FindCubicProgressionTthTerm calculates the Tth term of a cubic progression
+// given the first term (firstTerm), the last term (lastTerm), the length of the progression (length),
+// and the sum of the progression (sum). It returns the value of the Tth term in the cubic progression.
+func FindCubicProgressionTthTerm(firstTerm, lastTerm float64, length int, sum float64, T int) float64 {
+	// Calculate the common ratio of the cubic progression
+	commonRatio := math.Pow(lastTerm/firstTerm, 1/float64((length-1)/3))
+	// Calculate the Tth term using the formula: TthTerm = firstTerm * commonRatio^(3*(T-1))
+	TthTerm := firstTerm * math.Pow(commonRatio, float64(3*(T-1)))
+	return TthTerm
 }

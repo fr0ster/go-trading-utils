@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -39,4 +39,23 @@ func FindLengthOfHarmonicProgression(firstTerm, secondTerm, lastTerm float64) in
 	// Припустимо, що ми маємо формулу для знаходження кількості членів, але в загальному випадку це може бути складно.
 	// Повертаємо прикладне значення для демонстрації.
 	return -1 // Замініть це на реальний розрахунок, якщо доступна відповідна формула.
+}
+
+// FindHarmonicProgressionTthTerm calculates the Tth term of a harmonic progression.
+// Parameters:
+// - firstTerm: the first term of the harmonic progression.
+// - lastTerm: the last term of the harmonic progression.
+// - length: the number of terms in the harmonic progression.
+// - sum: the sum of all terms in the harmonic progression (not used in this calculation).
+// - T: the position of the term to find.
+// Returns the Tth term of the harmonic progression.
+func FindHarmonicProgressionTthTerm(firstTerm, lastTerm float64, length int, sum float64, T int) float64 {
+	// Calculate the common difference of the corresponding AP
+	d := (1/lastTerm - 1/firstTerm) / float64(length-1)
+
+	// Calculate the Tth term of the corresponding AP
+	TthTermAP := 1/firstTerm + float64(T-1)*d
+
+	// Return the reciprocal to get the Tth term of the HP
+	return 1 / TthTermAP
 }

@@ -1,4 +1,4 @@
-package utils
+package progressions
 
 import "math"
 
@@ -33,4 +33,17 @@ func ExponentialProgressionSum(firstTerm, commonRatio float64, numberOfTerms int
 func FindLengthOfExponentialProgression(firstTerm, secondTerm, lastTerm float64) int {
 	commonRatio := secondTerm / firstTerm
 	return int(math.Log(lastTerm/firstTerm)/math.Log(commonRatio)) + 1
+}
+
+// FindExponentialProgressionTthTerm calculates the Tth term of an exponential progression
+// given the first term (a), the last term (l), the length of the progression (n),
+// and the sum of the progression (S). It returns the value of the Tth term (TthTerm).
+func FindExponentialProgressionTthTerm(a, l float64, n int, S float64, T int) float64 {
+	// Calculate the common ratio (r) using the formula: r = (l/a)^(1/(n-1))
+	r := math.Pow(l/a, 1/float64(n-1))
+
+	// Calculate the Tth term using the formula: TthTerm = a * r^(T-1)
+	TthTerm := a * math.Pow(r, float64(T-1))
+
+	return TthTerm
 }
