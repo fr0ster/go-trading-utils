@@ -117,6 +117,7 @@ func (pp *PairProcessor) createOrder(
 	closePosition bool,
 	price float64,
 	stopPrice float64,
+	activationPrice float64,
 	callbackRate float64,
 	times int,
 	oldErr ...error) (
@@ -180,7 +181,7 @@ func (pp *PairProcessor) createOrder(
 			CallbackRate(utils.ConvFloat64ToStr(callbackRate, priceRound))
 		if stopPrice != 0 {
 			service = service.
-				ActivationPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+				ActivationPrice(utils.ConvFloat64ToStr(activationPrice, priceRound))
 		}
 	}
 	order, err = service.Do(context.Background())
@@ -232,14 +233,7 @@ func (pp *PairProcessor) createOrder(
 			// На наступних кодах помилок можна спробувати ще раз
 		} else if apiError.Code == -1008 || apiError.Code == -5028 {
 			time.Sleep(3 * time.Second)
-			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-			// } else if apiError.Code == -2021 {
-			// 	time.Sleep(3 * time.Second)
-			// 	if sideType == futures.SideTypeSell {
-			// 		return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-			// 	} else if sideType == futures.SideTypeBuy {
-			// 		return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, times-1, err)
-			// 	}
+			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, activationPrice, callbackRate, times-1, err)
 		}
 		return
 	}
@@ -253,9 +247,10 @@ func (pp *PairProcessor) CreateOrder(
 	closePosition bool,
 	price float64,
 	stopPrice float64,
+	activationPrice float64,
 	callbackRate float64) (
 	order *futures.CreateOrderResponse, err error) {
-	return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, callbackRate, 3)
+	return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, activationPrice, callbackRate, 3)
 }
 
 func (pp *PairProcessor) GetOpenOrders() (orders []*futures.Order, err error) {

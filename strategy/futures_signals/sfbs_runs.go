@@ -140,6 +140,8 @@ func getCallBackTrading(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					priceUp,
 					priceUp,
+					priceUp,
+					priceDown,
 					priceDown,
 					priceDown,
 					pairProcessor)
@@ -193,6 +195,8 @@ func getCallBackTrading(
 					quantity,
 					pairProcessor.NextPriceUp(currentPrice),
 					pairProcessor.NextPriceUp(currentPrice),
+					pairProcessor.NextPriceUp(currentPrice),
+					pairProcessor.NextPriceDown(currentPrice),
 					pairProcessor.NextPriceDown(currentPrice),
 					pairProcessor.NextPriceDown(currentPrice),
 					pairProcessor)
@@ -317,6 +321,8 @@ func RunFuturesTrading(
 		quantity,
 		initPriceUp,
 		initPriceUp,
+		initPriceUp,
+		initPriceDown,
 		initPriceDown,
 		initPriceDown,
 		pairProcessor)
@@ -337,6 +343,7 @@ func createOrder(
 	quantity,
 	price float64,
 	stopPrice float64,
+	activationPrice float64,
 	callbackRate float64,
 	closePosition bool) (order *futures.CreateOrderResponse, err error) {
 	order, err = pairProcessor.CreateOrder(
@@ -347,6 +354,7 @@ func createOrder(
 		closePosition,              // closePosition
 		price,                      // price
 		stopPrice,                  // stopPrice
+		activationPrice,            // activationPrice
 		callbackRate)               // callbackRate
 	return
 }
@@ -402,6 +410,7 @@ func processOrder(
 					upPrice,
 					upPrice,
 					0,
+					0,
 					false)
 				if err != nil {
 					printError()
@@ -440,6 +449,7 @@ func processOrder(
 				quantity,
 				order.GetDownPrice(),
 				order.GetDownPrice(),
+				0,
 				0,
 				false)
 			if err != nil {
@@ -490,6 +500,7 @@ func processOrder(
 					downPrice,
 					downPrice,
 					0,
+					0,
 					false)
 				if err != nil {
 					printError()
@@ -532,6 +543,7 @@ func processOrder(
 				quantity,
 				order.GetUpPrice(),
 				order.GetUpPrice(),
+				0,
 				0,
 				false)
 			if err != nil {
@@ -599,8 +611,10 @@ func openPosition(
 	quantityDown float64,
 	priceUp float64,
 	stopPriceUp float64,
+	activationPriceUp float64,
 	priceDown float64,
 	stopPriceDown float64,
+	activationPriceDown float64,
 	pairProcessor *PairProcessor) (upOrder, downOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
@@ -616,6 +630,7 @@ func openPosition(
 			quantityUp,
 			priceUp,
 			stopPriceUp,
+			activationPriceUp,
 			pairProcessor.GetCallbackRate(),
 			false)
 		if err != nil {
@@ -636,6 +651,7 @@ func openPosition(
 			quantityDown,
 			priceDown,
 			stopPriceDown,
+			activationPriceDown,
 			pairProcessor.GetCallbackRate(),
 			false)
 		if err != nil {
@@ -841,8 +857,10 @@ func RunFuturesGridTrading(
 		quantityDown,           // quantityDown
 		initPriceUp,            // priceUp
 		initPriceUp,            // stopPriceUp
+		initPriceUp,            // activationPriceUp
 		initPriceDown,          // priceDown
 		initPriceDown,          // stopPriceDown
+		initPriceDown,          // activationPriceDown
 		pairProcessor)          // pairProcessor
 	if err != nil {
 		printError()
@@ -1018,8 +1036,10 @@ func RunFuturesGridTradingV2(
 		quantityDown,           // quantityDown
 		initPriceUp,            // priceUp
 		initPriceUp,            // stopPriceUp
+		initPriceUp,            // activationPriceUp
 		initPriceDown,          // priceDown
 		initPriceDown,          // stopPriceDown
+		initPriceDown,          // activationPriceDown
 		pairProcessor)          // pairProcessor
 	if err != nil {
 		return err
@@ -1227,8 +1247,10 @@ func createNextPair_v3(
 		downQuantity,         // quantityDown
 		upPrice,              // priceUp
 		upPrice,              // stopPriceUp
+		upPrice,              // activationPriceUp
 		downPrice,            // priceDown
 		downPrice,            // stopPriceDown
+		downPrice,            // activationPriceDown
 		pairProcessor)        // pairProcessor
 	if err != nil {
 		printError()
@@ -1329,8 +1351,10 @@ func RunFuturesGridTradingV3(
 		quantityDown,              // quantityDown
 		initPriceUp,               // priceUp
 		initPriceUp,               // stopPriceUp
+		initPriceUp,               // activationPriceUp
 		initPriceDown,             // priceDown
 		initPriceDown,             // stopPriceDown
+		initPriceDown,             // activationPriceDown
 		pairProcessor)             // pairProcessor
 	if err != nil {
 		return err
