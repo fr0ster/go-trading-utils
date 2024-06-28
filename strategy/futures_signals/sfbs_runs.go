@@ -1321,7 +1321,16 @@ func RunFuturesGridTradingV3(
 	if err != nil {
 		return err
 	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price)
+	upNewOrder := upPositionNewOrderType
+	downNewOrder := downPositionNewOrderType
+	initPriceUp, quantityUp, initPriceDown, quantityDown, upNewOrder, downNewOrder, err = pairProcessor.GetPrices(
+		price,
+		upPositionNewOrderType,
+		downPositionNewOrderType,
+		shortPositionIncOrderType,
+		shortPositionDecOrderType,
+		longPositionIncOrderType,
+		longPositionDecOrderType)
 	if err != nil {
 		return err
 	}
@@ -1330,34 +1339,34 @@ func RunFuturesGridTradingV3(
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v3(
-			pairProcessor,
-			upPositionNewOrderType,
-			shortPositionIncOrderType,
-			shortPositionDecOrderType,
-			downPositionNewOrderType,
-			longPositionIncOrderType,
-			longPositionDecOrderType,
-			maintainedOrders,
-			quit))
+			pairProcessor,             // pairProcessor
+			upPositionNewOrderType,    // shortPositionNewOrderType,
+			shortPositionIncOrderType, // shortPositionIncOrderType,
+			shortPositionDecOrderType, // shortPositionDecOrderType,
+			downPositionNewOrderType,  // longPositionNewOrderType,
+			longPositionIncOrderType,  // longPositionIncOrderType,
+			longPositionDecOrderType,  // longPositionDecOrderType,
+			maintainedOrders,          // maintainedOrders
+			quit))                     // quit
 	if err != nil {
 		printError()
 		return err
 	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		futures.SideTypeSell,     // sideUp
-		upPositionNewOrderType,   // typeUp
-		futures.SideTypeBuy,      // sideDown
-		downPositionNewOrderType, // typeDown
-		quantityUp,               // quantityUp
-		quantityDown,             // quantityDown
-		initPriceUp,              // priceUp
-		initPriceUp,              // stopPriceUp
-		initPriceUp,              // activationPriceUp
-		initPriceDown,            // priceDown
-		initPriceDown,            // stopPriceDown
-		initPriceDown,            // activationPriceDown
-		pairProcessor)            // pairProcessor
+		futures.SideTypeSell, // sideUp
+		upNewOrder,           // typeUp
+		futures.SideTypeBuy,  // sideDown
+		downNewOrder,         // typeDown
+		quantityUp,           // quantityUp
+		quantityDown,         // quantityDown
+		initPriceUp,          // priceUp
+		initPriceUp,          // stopPriceUp
+		initPriceUp,          // activationPriceUp
+		initPriceDown,        // priceDown
+		initPriceDown,        // stopPriceDown
+		initPriceDown,        // activationPriceDown
+		pairProcessor)        // pairProcessor
 	if err != nil {
 		return err
 	}

@@ -750,8 +750,20 @@ func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
 	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
-func (pp *PairProcessor) GetPrices(price float64) (
-	priceUp, quantityUp, priceDown, quantityDown float64, err error) {
+func (pp *PairProcessor) GetPrices(
+	price float64,
+	upPositionNewOrderType futures.OrderType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionIncOrderType futures.OrderType,
+	shortPositionDecOrderType futures.OrderType,
+	longPositionIncOrderType futures.OrderType,
+	longPositionDecOrderType futures.OrderType) (
+	priceUp,
+	quantityUp,
+	priceDown,
+	quantityDown float64,
+	upOrderType,
+	downOrderType futures.OrderType, err error) {
 	var (
 		risk *futures.PositionRisk
 	)
@@ -773,6 +785,8 @@ func (pp *PairProcessor) GetPrices(price float64) (
 		printError()
 		return
 	}
+	upOrderType = upPositionNewOrderType
+	downOrderType = downPositionNewOrderType
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
@@ -781,9 +795,13 @@ func (pp *PairProcessor) GetPrices(price float64) (
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(math.Min(positionPrice, price))
 			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
+			upOrderType = shortPositionIncOrderType
+			downOrderType = shortPositionDecOrderType
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
 			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+			upOrderType = longPositionIncOrderType
+			downOrderType = longPositionDecOrderType
 		}
 	}
 	return
