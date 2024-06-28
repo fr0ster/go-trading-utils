@@ -39,11 +39,6 @@ type (
 		up            *btree.BTree
 		down          *btree.BTree
 
-		updateTime            time.Duration
-		minuteOrderLimit      *exchange_types.RateLimits
-		dayOrderLimit         *exchange_types.RateLimits
-		minuteRawRequestLimit *exchange_types.RateLimits
-
 		stop chan struct{}
 
 		pairInfo           *symbol_types.FuturesSymbol
@@ -825,11 +820,6 @@ func NewPairProcessor(
 		up:            btree.New(2),
 		down:          btree.New(2),
 
-		updateTime:            0,
-		minuteOrderLimit:      &exchange_types.RateLimits{},
-		dayOrderLimit:         &exchange_types.RateLimits{},
-		minuteRawRequestLimit: &exchange_types.RateLimits{},
-
 		stop: stop,
 
 		pairInfo:           nil,
@@ -869,16 +859,6 @@ func NewPairProcessor(
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit,
-		err =
-		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
-	if err != nil {
-		return
-	}
 
 	if pp.progression == pairs_types.ArithmeticProgression {
 		pp.NthTerm = utils.FindArithmeticProgressionNthTerm
