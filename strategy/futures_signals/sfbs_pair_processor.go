@@ -558,22 +558,12 @@ func (pp *PairProcessor) UserDataEventStart(
 	return
 }
 
-// Округлення ціни до StepSize знаків після коми
-func (pp *PairProcessor) getStepSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
-}
-
-// Округлення ціни до TickSize знаків після коми
-func (pp *PairProcessor) getTickSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
-}
-
 func (pp *PairProcessor) RoundPrice(price float64) float64 {
-	return utils.RoundToDecimalPlace(price, pp.getTickSizeExp())
+	return utils.RoundToDecimalPlace(price, pp.GetTickSizeExp())
 }
 
 func (pp *PairProcessor) RoundQuantity(quantity float64) float64 {
-	return utils.RoundToDecimalPlace(quantity, pp.getStepSizeExp())
+	return utils.RoundToDecimalPlace(quantity, pp.GetStepSizeExp())
 }
 
 func (pp *PairProcessor) CalcValueForQuantity(
@@ -601,7 +591,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	buyPrice,
 	endPrice float64) (value, quantity float64, n int, err error) {
 	low := pp.RoundQuantity(pp.notional / buyPrice)
-	high := pp.RoundQuantity(pp.GetFreeBalance() * float64(pp.GetLeverage()) / buyPrice)
+	high := pp.RoundQuantity(pp.limitOnPosition * float64(pp.leverage) / buyPrice)
 
 	for pp.RoundQuantity(high-low) > pp.stepSizeDelta {
 		mid := pp.RoundQuantity((low + high) / 2)
