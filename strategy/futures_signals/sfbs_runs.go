@@ -240,7 +240,8 @@ func RunFuturesTrading(
 	var (
 		initPriceUp   float64
 		initPriceDown float64
-		quantity      float64
+		quantityUp    float64
+		quantityDown  float64
 		pairProcessor *PairProcessor
 	)
 	defer wg.Done()
@@ -268,30 +269,29 @@ func RunFuturesTrading(
 	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
 		return fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
 	}
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		return
-	}
 	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
 		return err
 	}
-	initPriceUp = pairProcessor.NextPriceUp(price)
-	initPriceDown = pairProcessor.NextPriceDown(price)
-	quantity = pairProcessor.RoundQuantity(
-		pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceUp)
-	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-		if positionPrice == 0 {
-			positionPrice = utils.ConvStrToFloat64(risk.EntryPrice)
-		}
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			initPriceDown = pairProcessor.NextPriceDown(math.Min(positionPrice, price))
-			quantity = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantity)
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			initPriceUp = pairProcessor.NextPriceUp(math.Max(positionPrice, price))
-			quantity = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantity)
-		}
+	upNewOrder := upPositionNewOrderType
+	downNewOrder := downPositionNewOrderType
+	initPriceUp,
+		quantityUp,
+		initPriceDown,
+		quantityDown,
+		upNewOrder,
+		downNewOrder,
+		err = pairProcessor.GetPrices(
+		price,
+		upPositionNewOrderType,
+		downPositionNewOrderType,
+		shortPositionTPOrderType,
+		shortPositionSLOrderType,
+		longPositionTPOrderType,
+		longPositionSLOrderType,
+		false)
+	if err != nil {
+		return err
 	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
@@ -314,11 +314,11 @@ func RunFuturesTrading(
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
 		upOrderSideOpen,
-		upPositionNewOrderType,
+		upNewOrder,
 		downOrderSideOpen,
-		downPositionNewOrderType,
-		quantity,
-		quantity,
+		downNewOrder,
+		quantityUp,
+		quantityDown,
 		initPriceUp,
 		initPriceUp,
 		initPriceUp,
@@ -1330,7 +1330,8 @@ func RunFuturesGridTradingV3(
 		shortPositionIncOrderType,
 		shortPositionDecOrderType,
 		longPositionIncOrderType,
-		longPositionDecOrderType)
+		longPositionDecOrderType,
+		true)
 	if err != nil {
 		return err
 	}

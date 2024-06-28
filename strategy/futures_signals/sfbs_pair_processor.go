@@ -757,7 +757,8 @@ func (pp *PairProcessor) GetPrices(
 	shortPositionIncOrderType futures.OrderType,
 	shortPositionDecOrderType futures.OrderType,
 	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType) (
+	longPositionDecOrderType futures.OrderType,
+	isDynamic bool) (
 	priceUp,
 	quantityUp,
 	priceDown,
@@ -773,17 +774,22 @@ func (pp *PairProcessor) GetPrices(
 	}
 	priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 	priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
-	_, quantityUp, _, err = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
-	if err != nil {
-		err = fmt.Errorf("can't calculate initial position for price up %v", priceUp)
-		printError()
-		return
-	}
-	_, quantityDown, _, err = pp.CalculateInitialPosition(pp.minSteps, priceDown, pp.LowBound)
-	if err != nil {
-		err = fmt.Errorf("can't calculate initial position for price down %v", priceDown)
-		printError()
-		return
+	if isDynamic {
+		_, quantityUp, _, err = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
+		if err != nil {
+			err = fmt.Errorf("can't calculate initial position for price up %v", priceUp)
+			printError()
+			return
+		}
+		_, quantityDown, _, err = pp.CalculateInitialPosition(pp.minSteps, priceDown, pp.LowBound)
+		if err != nil {
+			err = fmt.Errorf("can't calculate initial position for price down %v", priceDown)
+			printError()
+			return
+		}
+	} else {
+		quantityUp = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceUp)
+		quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceDown)
 	}
 	upOrderType = upPositionNewOrderType
 	downOrderType = downPositionNewOrderType
