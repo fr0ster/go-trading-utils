@@ -1276,10 +1276,12 @@ func RunFuturesGridTradingV3(
 	leverage int,
 	minSteps int,
 	callbackRate float64,
-	shortPositionNewOrderType futures.OrderType,
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
 	shortPositionIncOrderType futures.OrderType,
 	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
 	longPositionIncOrderType futures.OrderType,
 	longPositionDecOrderType futures.OrderType,
 	progression pairs_types.ProgressionType,
@@ -1329,10 +1331,10 @@ func RunFuturesGridTradingV3(
 	_, err = pairProcessor.UserDataEventStart(
 		getCallBack_v3(
 			pairProcessor,
-			shortPositionNewOrderType,
+			upPositionNewOrderType,
 			shortPositionIncOrderType,
 			shortPositionDecOrderType,
-			longPositionNewOrderType,
+			downPositionNewOrderType,
 			longPositionIncOrderType,
 			longPositionDecOrderType,
 			maintainedOrders,
@@ -1343,19 +1345,19 @@ func RunFuturesGridTradingV3(
 	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		futures.SideTypeSell,      // sideUp
-		shortPositionNewOrderType, // typeUp
-		futures.SideTypeBuy,       // sideDown
-		longPositionNewOrderType,  // typeDown
-		quantityUp,                // quantityUp
-		quantityDown,              // quantityDown
-		initPriceUp,               // priceUp
-		initPriceUp,               // stopPriceUp
-		initPriceUp,               // activationPriceUp
-		initPriceDown,             // priceDown
-		initPriceDown,             // stopPriceDown
-		initPriceDown,             // activationPriceDown
-		pairProcessor)             // pairProcessor
+		futures.SideTypeSell,     // sideUp
+		upPositionNewOrderType,   // typeUp
+		futures.SideTypeBuy,      // sideDown
+		downPositionNewOrderType, // typeDown
+		quantityUp,               // quantityUp
+		quantityDown,             // quantityDown
+		initPriceUp,              // priceUp
+		initPriceUp,              // stopPriceUp
+		initPriceUp,              // activationPriceUp
+		initPriceDown,            // priceDown
+		initPriceDown,            // stopPriceDown
+		initPriceDown,            // activationPriceDown
+		pairProcessor)            // pairProcessor
 	if err != nil {
 		return err
 	}
@@ -1487,10 +1489,12 @@ func Run(
 				pair.GetLeverage(),                  // leverage
 				pair.GetMinSteps(),                  // minSteps
 				pair.GetCallbackRate(),              // callbackRate
-				futures.OrderTypeLimit,              // shortPositionNewOrderType
+				futures.SideTypeSell,                // upOrderSideOpen
+				futures.OrderTypeLimit,              // upPositionNewOrderType
+				futures.SideTypeBuy,                 // downOrderSideOpen
+				futures.OrderTypeLimit,              // downPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
 				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-				futures.OrderTypeLimit,              // longPositionNewOrderType
 				futures.OrderTypeTrailingStopMarket, // longPositionIncOrderType
 				futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
 				pair.GetProgression(),               // progression
@@ -1511,10 +1515,12 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
-				futures.OrderTypeLimit,       // shortPositionNewOrderType
+				futures.SideTypeSell,         // upOrderSideOpen
+				futures.OrderTypeLimit,       // upPositionNewOrderType
+				futures.SideTypeBuy,          // downOrderSideOpen
+				futures.OrderTypeLimit,       // upPositionNewOrderType
 				futures.OrderTypeLimit,       // shortPositionIncOrderType
 				futures.OrderTypeLimit,       // shortPositionDecOrderType
-				futures.OrderTypeLimit,       // longPositionNewOrderType
 				futures.OrderTypeLimit,       // longPositionIncOrderType
 				futures.OrderTypeLimit,       // longPositionDecOrderType
 				pair.GetProgression(),        // progression
@@ -1535,10 +1541,12 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
-				futures.OrderTypeLimit,       // shortPositionNewOrderType
+				futures.SideTypeSell,         // upOrderSideOpen
+				futures.OrderTypeLimit,       // upPositionNewOrderType
+				futures.SideTypeBuy,          // downOrderSideOpen
+				futures.OrderTypeLimit,       // downPositionNewOrderType
 				futures.OrderTypeTakeProfit,  // shortPositionIncOrderType
 				futures.OrderTypeTakeProfit,  // shortPositionDecOrderType
-				futures.OrderTypeLimit,       // longPositionNewOrderType
 				futures.OrderTypeTakeProfit,  // longPositionIncOrderType
 				futures.OrderTypeTakeProfit,  // longPositionDecOrderType
 				pair.GetProgression(),        // progression
