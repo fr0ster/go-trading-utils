@@ -876,7 +876,7 @@ func NewPairProcessor(
 		pp.Sum = progressions.ArithmeticProgressionSum
 		pp.FindNthTerm = progressions.FindArithmeticProgressionNthTerm
 		pp.FindLengthOfProgression = progressions.FindLengthOfArithmeticProgression
-		pp.GetDelta = func(P1, P2 float64) float64 { return P1 - P1 }
+		pp.GetDelta = func(P1, P2 float64) float64 { return P2 - P1 }
 		pp.FindProgressionTthTerm = progressions.FindArithmeticProgressionTthTerm
 	} else if pp.progression == pairs_types.GeometricProgression {
 		pp.NthTerm = progressions.GeometricProgressionNthTerm
