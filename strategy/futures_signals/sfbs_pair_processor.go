@@ -785,10 +785,10 @@ func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
 	upPositionNewOrderType futures.OrderType,
 	downOrderSideOpen futures.SideType,
 	downPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
+	shortPositionTPOrderType futures.OrderType,
+	shortPositionSLOrderType futures.OrderType,
+	longPositionTPOrderType futures.OrderType,
+	longPositionSLOrderType futures.OrderType,
 	isDynamic bool) (
 	upOrderSide futures.SideType,
 	upOrderType futures.OrderType,
@@ -802,14 +802,14 @@ func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // SHORT Закриваємо SHORT позицію
 			upOrderSide = futures.SideTypeBuy
-			upOrderType = shortPositionIncOrderType
+			upOrderType = shortPositionSLOrderType
 			downOrderSide = futures.SideTypeBuy
-			downOrderType = shortPositionDecOrderType
+			downOrderType = shortPositionTPOrderType
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 { // LONG Закриваємо LONG позицію
 			upOrderSide = futures.SideTypeSell
-			upOrderType = longPositionIncOrderType
+			upOrderType = longPositionTPOrderType
 			downOrderSide = futures.SideTypeSell
-			downOrderType = longPositionDecOrderType
+			downOrderType = longPositionSLOrderType
 		}
 	}
 	return
