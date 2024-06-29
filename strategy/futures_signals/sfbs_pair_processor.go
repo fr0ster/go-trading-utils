@@ -481,21 +481,29 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) UserDataEventStart(
-	callBack func(event *futures.WsUserDataEvent), eventType ...futures.UserDataEventType) (resetEvent chan error, err error) {
-	// Ініціалізуємо стріми для відмірювання часу
-	ticker := time.NewTicker(pp.timeOut)
-	// Ініціалізуємо маркер для останньої відповіді
-	lastResponse := time.Now()
-	// Отримуємо ключ для прослуховування подій користувача
+func (pp *PairProcessor) StartStream(handler futures.WsUserDataHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
+	// Отримуємо новий або той же самий ключ для прослуховування подій користувача при втраті з'єднання
 	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
 		return
 	}
+	// Запускаємо стрім подій користувача
+	doneC, stopC, err = futures.WsUserDataServe(listenKey, handler, errHandler)
+	return
+}
+
+func (pp *PairProcessor) UserDataEventStart(
+	callBack func(event *futures.WsUserDataEvent),
+	eventType ...futures.UserDataEventType) (resetEvent chan error, err error) {
+	// Ініціалізуємо стріми для відмірювання часу
+	ticker := time.NewTicker(pp.timeOut)
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
 	// Ініціалізуємо канал для відправки подій про необхідність оновлення стріму подій користувача
 	resetEvent = make(chan error, 1)
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
+		logrus.Errorf("Future wsErrorHandler error: %v", err)
 		resetEvent <- err
 	}
 	// Ініціалізуємо обробник подій
@@ -509,45 +517,23 @@ func (pp *PairProcessor) UserDataEventStart(
 		}
 	}
 	// Запускаємо стрім подій користувача
-	var stopC chan struct{}
-	_, stopC, err = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
-	if err != nil {
-		return
-	}
+	doneC, stopC, err := pp.StartStream(wsHandler, wsErrorHandler)
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
 			select {
+			case <-doneC:
+				// Запускаємо новий стрім подій користувача
+				doneC, stopC, err = pp.StartStream(wsHandler, wsErrorHandler)
+				return
 			case <-resetEvent:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
-				// Запускаємо стрім подій користувача
-				_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 			case <-ticker.C:
-				// Оновлюємо стан з'єднання для стріму подій користувача з раніше отриманим ключем
-				err := pp.client.NewKeepaliveUserStreamService().ListenKey(listenKey).Do(context.Background())
-				if err != nil {
-					// Отримуємо новий ключ для прослуховування подій користувача при втраті з'єднання
-					listenKey, err = pp.client.NewStartUserStreamService().Do(context.Background())
-					if err != nil {
-						return
-					}
-				}
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > pp.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
-					// Запускаємо стрім подій користувача
-					_, stopC, _ = futures.WsUserDataServe(listenKey, wsHandler, wsErrorHandler)
 				}
 			}
 		}
