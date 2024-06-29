@@ -554,6 +554,8 @@ func (pp *PairProcessor) CalcValueForQuantity(
 	Q1 float64,
 	P2 float64) (
 	value float64,
+	quantity float64,
+	middlePrice float64,
 	n int) {
 	var (
 		deltaPrice float64
@@ -566,19 +568,25 @@ func (pp *PairProcessor) CalcValueForQuantity(
 	n = pp.FindLengthOfProgression(P1, P1*(1+deltaPrice), P2)
 	delta := pp.GetDelta(P1*Q1, P1*(1+deltaPrice)*Q1*(1+pp.GetDeltaQuantity()))
 	value = pp.Sum(P1*Q1, delta, n)
+	quantity = pp.Sum(Q1, Q1*pp.GetDeltaQuantity(), n)
+	middlePrice = pp.RoundPrice(value / quantity)
 	return
 }
 
 func (pp *PairProcessor) CalculateInitialPosition(
 	minN int,
 	buyPrice,
-	endPrice float64) (value, quantity float64, n int, err error) {
+	endPrice float64) (
+	value,
+	quantity,
+	middlePrice,
+	initialQuantity float64, n int, err error) {
 	low := pp.RoundQuantity(pp.notional / buyPrice)
 	high := pp.RoundQuantity(pp.limitOnPosition * float64(pp.leverage) / buyPrice)
 
 	for pp.RoundQuantity(high-low) > pp.stepSizeDelta {
 		mid := pp.RoundQuantity((low + high) / 2)
-		value, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
+		value, _, _, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
 		if value <= pp.limitOnPosition*float64(pp.leverage) && n >= minN {
 			low = mid
 		} else {
@@ -586,14 +594,14 @@ func (pp *PairProcessor) CalculateInitialPosition(
 		}
 	}
 
-	value, n = pp.CalcValueForQuantity(buyPrice, high, endPrice)
+	value, quantity, middlePrice, n = pp.CalcValueForQuantity(buyPrice, high, endPrice)
 	if value < pp.limitOnPosition*float64(pp.leverage) && n >= minN {
-		quantity = pp.RoundQuantity(high)
+		initialQuantity = pp.RoundQuantity(high)
 		return
 	}
-	value, n = pp.CalcValueForQuantity(buyPrice, low, endPrice)
+	value, quantity, middlePrice, n = pp.CalcValueForQuantity(buyPrice, low, endPrice)
 	if value < pp.limitOnPosition*float64(pp.leverage) && n >= minN {
-		quantity = pp.RoundQuantity(low)
+		initialQuantity = pp.RoundQuantity(low)
 		return
 	}
 
@@ -604,20 +612,24 @@ func (pp *PairProcessor) CalculateInitialPosition(
 func (pp *PairProcessor) InitPositionGrid(
 	minN int,
 	price float64) (
-	valueUp,
+	valueUp float64,
+	quantityUp float64,
+	middlePriceUp float64,
 	startQuantityUp float64,
 	stepsUp int,
 	valueDown,
+	quantityDown float64,
+	middlePriceDown float64,
 	startQuantityDown float64,
 	stepsDown int,
 	err error) {
 	var (
-		priceUp      float64
-		quantityUp   float64
-		priceDown    float64
-		quantityDown float64
+		priceUp             float64
+		currentQuantityUp   float64
+		priceDown           float64
+		currentQuantityDown float64
 	)
-	valueUp, startQuantityUp, stepsUp, err = pp.CalculateInitialPosition(
+	valueUp, quantityUp, middlePriceUp, startQuantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.UpBound)
@@ -625,14 +637,14 @@ func (pp *PairProcessor) InitPositionGrid(
 		return
 	}
 	priceUp = price * (1 + pp.GetDeltaPrice())
-	quantityUp = startQuantityUp
+	currentQuantityUp = startQuantityUp
 	pp.up.Clear(false)
 	for i := 2; i < stepsUp; i++ {
-		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: quantityUp})
+		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: currentQuantityUp})
 		priceUp = pp.RoundPrice(pp.FindNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1))
-		quantityUp = pp.RoundQuantity(pp.FindNthTerm(quantityUp, quantityUp*(1+pp.GetDeltaQuantity()), i+1))
+		currentQuantityUp = pp.RoundQuantity(pp.FindNthTerm(currentQuantityUp, currentQuantityUp*(1+pp.GetDeltaQuantity()), i+1))
 	}
-	valueDown, startQuantityDown, stepsDown, err = pp.CalculateInitialPosition(
+	valueDown, quantityDown, middlePriceDown, startQuantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		minN,
 		price,
 		pp.LowBound)
@@ -640,18 +652,18 @@ func (pp *PairProcessor) InitPositionGrid(
 		return
 	}
 	priceDown = price * (1 - pp.GetDeltaPrice())
-	quantityDown = startQuantityDown
+	currentQuantityDown = startQuantityDown
 	pp.down.Clear(false)
 	for i := 2; i < stepsUp; i++ {
-		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: quantityDown})
+		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: currentQuantityDown})
 		priceDown = pp.FindNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
-		quantityDown = pp.FindNthTerm(quantityDown, quantityDown*(1+pp.GetDeltaQuantity()), i+1)
+		currentQuantityDown = pp.FindNthTerm(currentQuantityDown, currentQuantityDown*(1+pp.GetDeltaQuantity()), i+1)
 	}
 	if quantityUp*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
 	}
-	if quantityDown*price < pp.notional {
-		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, quantityDown*price)
+	if currentQuantityDown*price < pp.notional {
+		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, currentQuantityDown*price)
 	}
 	return
 
@@ -735,13 +747,13 @@ func (pp *PairProcessor) GetPrices(
 	priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 	priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
 	if isDynamic {
-		_, quantityUp, _, err = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
+		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(pp.minSteps, priceUp, pp.UpBound)
 		if err != nil {
 			err = fmt.Errorf("can't calculate initial position for price up %v", priceUp)
 			printError()
 			return
 		}
-		_, quantityDown, _, err = pp.CalculateInitialPosition(pp.minSteps, priceDown, pp.LowBound)
+		_, _, _, quantityDown, _, err = pp.CalculateInitialPosition(pp.minSteps, priceDown, pp.LowBound)
 		if err != nil {
 			err = fmt.Errorf("can't calculate initial position for price down %v", priceDown)
 			printError()

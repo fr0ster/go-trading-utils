@@ -1143,7 +1143,7 @@ func createNextPair_v3(
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance()
 	if pairProcessor.up.Len() == 0 || pairProcessor.down.Len() == 0 {
-		_, _, _, _, _, _, err = pairProcessor.InitPositionGrid(pairProcessor.minSteps, LastExecutedPrice)
+		_, _, _, _, _, _, _, _, _, _, err = pairProcessor.InitPositionGrid(pairProcessor.minSteps, LastExecutedPrice)
 		if err != nil {
 			err = fmt.Errorf("can't check position: %v", err)
 			printError()
@@ -1242,8 +1242,8 @@ func createNextPair_v3(
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upType = shortPositionNewOrderType
 		downType = longPositionNewOrderType
-		_, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.UpBound)
-		_, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.LowBound)
+		_, _, _, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.UpBound)
+		_, _, _, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.LowBound)
 	}
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
 	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
