@@ -282,12 +282,17 @@ func RunFuturesTrading(
 	upNewOrder := upPositionNewOrderType
 	downNewSide := downOrderSideOpen
 	downNewOrder := downPositionNewOrderType
-	initPriceUp, _, initPriceDown, _, err = pairProcessor.GetPrices(price, risk, true)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
 	if err != nil {
 		return err
 	}
-	quantityUp = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceUp)
-	quantityDown = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceDown)
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		quantityUp = -utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
+	}
 	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
 		risk,
 		upOrderSideOpen,
