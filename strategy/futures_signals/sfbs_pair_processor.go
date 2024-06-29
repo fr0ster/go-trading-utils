@@ -517,23 +517,31 @@ func (pp *PairProcessor) UserDataEventStart(
 		}
 	}
 	// Запускаємо стрім подій користувача
-	doneC, stopC, err := pp.StartStream(wsHandler, wsErrorHandler)
+	_, stopC, err := pp.StartStream(wsHandler, wsErrorHandler)
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
 			select {
-			case <-doneC:
-				// Запускаємо новий стрім подій користувача
-				doneC, stopC, err = pp.StartStream(wsHandler, wsErrorHandler)
-				return
 			case <-resetEvent:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
+				// Запускаємо новий стрім подій користувача
+				_, stopC, err = pp.StartStream(wsHandler, wsErrorHandler)
+				if err != nil {
+					close(pp.stop)
+					return
+				}
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > pp.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
+				}
+				// Запускаємо новий стрім подій користувача
+				_, stopC, err = pp.StartStream(wsHandler, wsErrorHandler)
+				if err != nil {
+					close(pp.stop)
+					return
 				}
 			}
 		}
