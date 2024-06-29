@@ -286,10 +286,10 @@ func RunFuturesTrading(
 	if err != nil {
 		return err
 	}
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
 		quantityUp = -utils.ConvStrToFloat64(risk.PositionAmt)
 		quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
 		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
 		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
 	}
