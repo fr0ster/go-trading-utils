@@ -725,26 +725,13 @@ func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
 
 func (pp *PairProcessor) GetPrices(
 	price float64,
-	upPositionNewOrderType futures.OrderType,
-	downPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
+	risk *futures.PositionRisk,
 	isDynamic bool) (
 	priceUp,
 	quantityUp,
 	priceDown,
 	quantityDown float64,
-	upOrderType,
-	downOrderType futures.OrderType, err error) {
-	var (
-		risk *futures.PositionRisk
-	)
-	risk, err = pp.GetPositionRisk()
-	if err != nil {
-		return
-	}
+	err error) {
 	priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 	priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
 	if isDynamic {
@@ -764,8 +751,6 @@ func (pp *PairProcessor) GetPrices(
 		quantityUp = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceUp)
 		quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceDown)
 	}
-	upOrderType = upPositionNewOrderType
-	downOrderType = downPositionNewOrderType
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
@@ -774,12 +759,44 @@ func (pp *PairProcessor) GetPrices(
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(math.Min(positionPrice, price))
 			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
-			upOrderType = shortPositionIncOrderType
-			downOrderType = shortPositionDecOrderType
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
 			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+		}
+	}
+	return
+}
+
+func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
+	risk *futures.PositionRisk,
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionIncOrderType futures.OrderType,
+	shortPositionDecOrderType futures.OrderType,
+	longPositionIncOrderType futures.OrderType,
+	longPositionDecOrderType futures.OrderType,
+	isDynamic bool) (
+	upOrderSide futures.SideType,
+	upOrderType futures.OrderType,
+	downOrderSide futures.SideType,
+	downOrderType futures.OrderType,
+	err error) {
+	upOrderSide = upOrderSideOpen
+	upOrderType = upPositionNewOrderType
+	downOrderSide = downOrderSideOpen
+	downOrderType = downPositionNewOrderType
+	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // SHORT Закриваємо SHORT позицію
+			upOrderSide = futures.SideTypeBuy
+			upOrderType = shortPositionIncOrderType
+			downOrderSide = futures.SideTypeBuy
+			downOrderType = shortPositionDecOrderType
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 { // LONG Закриваємо LONG позицію
+			upOrderSide = futures.SideTypeSell
 			upOrderType = longPositionIncOrderType
+			downOrderSide = futures.SideTypeSell
 			downOrderType = longPositionDecOrderType
 		}
 	}

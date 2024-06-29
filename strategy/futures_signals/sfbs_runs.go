@@ -266,6 +266,11 @@ func RunFuturesTrading(
 		printError()
 		return
 	}
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		return err
+	}
 	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
 		return fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
 	}
@@ -273,23 +278,27 @@ func RunFuturesTrading(
 	if err != nil {
 		return err
 	}
+	upNewSide := upOrderSideOpen
 	upNewOrder := upPositionNewOrderType
+	downNewSide := downOrderSideOpen
 	downNewOrder := downPositionNewOrderType
-	initPriceUp,
-		quantityUp,
-		initPriceDown,
-		quantityDown,
-		upNewOrder,
-		downNewOrder,
-		err = pairProcessor.GetPrices(
-		price,
+	initPriceUp, _, initPriceDown, _, err = pairProcessor.GetPrices(price, risk, true)
+	if err != nil {
+		return err
+	}
+	quantityUp = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceUp)
+	quantityDown = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / initPriceDown)
+	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
+		risk,
+		upOrderSideOpen,
 		upPositionNewOrderType,
+		downOrderSideOpen,
 		downPositionNewOrderType,
 		shortPositionTPOrderType,
 		shortPositionSLOrderType,
 		longPositionTPOrderType,
 		longPositionSLOrderType,
-		false)
+		true)
 	if err != nil {
 		return err
 	}
@@ -313,9 +322,9 @@ func RunFuturesTrading(
 	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		upOrderSideOpen,
+		upNewSide,
 		upNewOrder,
-		downOrderSideOpen,
+		downNewSide,
 		downNewOrder,
 		quantityUp,
 		quantityDown,
@@ -1317,21 +1326,19 @@ func RunFuturesGridTradingV3(
 		printError()
 		return
 	}
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		return err
+	}
 	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
+		printError()
 		return err
 	}
 	upNewOrder := upPositionNewOrderType
 	downNewOrder := downPositionNewOrderType
-	initPriceUp, quantityUp, initPriceDown, quantityDown, upNewOrder, downNewOrder, err = pairProcessor.GetPrices(
-		price,
-		upPositionNewOrderType,
-		downPositionNewOrderType,
-		shortPositionIncOrderType,
-		shortPositionDecOrderType,
-		longPositionIncOrderType,
-		longPositionDecOrderType,
-		true)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
 	if err != nil {
 		return err
 	}
