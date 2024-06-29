@@ -775,10 +775,10 @@ func (pp *PairProcessor) GetPrices(
 		if positionPrice == 0 {
 			positionPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 		}
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
 			priceDown = pp.NextPriceDown(math.Min(positionPrice, price))
 			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
 			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
 		}
@@ -806,7 +806,8 @@ func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
 	upOrderType = upPositionNewOrderType
 	downOrderSide = downOrderSideOpen
 	downOrderType = downPositionNewOrderType
-	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
+		math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // SHORT Закриваємо SHORT позицію
 			upOrderSide = futures.SideTypeBuy
 			upOrderType = shortPositionSLOrderType
