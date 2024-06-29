@@ -566,9 +566,8 @@ func (pp *PairProcessor) CalcValueForQuantity(
 		deltaPrice = -pp.GetDeltaPrice()
 	}
 	n = pp.FindLengthOfProgression(P1, P1*(1+deltaPrice), P2)
-	delta := pp.GetDelta(P1*Q1, P1*(1+deltaPrice)*Q1*(1+pp.GetDeltaQuantity()))
-	value = pp.Sum(P1*Q1, delta, n)
-	quantity = pp.Sum(Q1, Q1*(1+pp.GetDeltaQuantity()), n)
+	value = pp.Sum(P1*Q1, pp.GetDelta(P1*Q1, P1*(1+deltaPrice)*Q1*(1+pp.GetDeltaQuantity())), n)
+	quantity = pp.Sum(Q1, pp.GetDelta(Q1, Q1*(1+pp.GetDeltaQuantity())), n)
 	middlePrice = pp.RoundPrice(value / quantity)
 	return
 }
