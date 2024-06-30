@@ -1147,7 +1147,7 @@ func createNextPair_v3(
 		downType     futures.OrderType
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
-	free := pairProcessor.GetFreeBalance()
+	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 	err = pairProcessor.ResetUpDown(LastExecutedPrice)
 	if err != nil {
 		err = fmt.Errorf("can't check position: %v", err)
