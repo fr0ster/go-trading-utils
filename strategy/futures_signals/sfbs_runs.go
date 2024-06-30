@@ -17,6 +17,7 @@ import (
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
+	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -77,7 +78,7 @@ func RunScalpingHolding(
 }
 
 func getCallBackTrading(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	upOrderSideOpen futures.SideType,
 	upPositionNewOrderType futures.OrderType,
 	downOrderSideOpen futures.SideType,
@@ -242,12 +243,12 @@ func RunFuturesTrading(
 		initPriceDown float64
 		quantityUp    float64
 		quantityDown  float64
-		pairProcessor *PairProcessor
+		pairProcessor *processor.PairProcessor
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	// Створюємо обробник пари
-	pairProcessor, err = NewPairProcessor(
+	pairProcessor, err = processor.NewPairProcessor(
 		client,
 		symbol,
 		limitOnPosition,
@@ -351,7 +352,7 @@ func RunFuturesTrading(
 
 // Створення ордера для розміщення в грід
 func createOrder(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	side futures.SideType,
 	orderType futures.OrderType,
 	quantity,
@@ -373,7 +374,7 @@ func createOrder(
 	return
 }
 
-func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *PairProcessor, pair *pairs_types.Pairs) (err error) {
+func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *processor.PairProcessor, pair *pairs_types.Pairs) (err error) {
 	grid.Ascend(func(item btree.Item) bool {
 		var orderOut *futures.Order
 		record := item.(*grid_types.Record)
@@ -393,7 +394,7 @@ func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *PairProcessor, pair *p
 
 // Обробка ордерів після виконання ордера з гріду
 func processOrder(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	side futures.SideType,
 	grid *grid_types.Grid,
 	percentsToStopSettingNewOrder float64,
@@ -597,7 +598,7 @@ func processOrder(
 }
 
 func initVars(
-	pairProcessor *PairProcessor) (
+	pairProcessor *processor.PairProcessor) (
 	price float64,
 	priceUp,
 	priceDown float64,
@@ -629,7 +630,7 @@ func openPosition(
 	priceDown float64,
 	stopPriceDown float64,
 	activationPriceDown float64,
-	pairProcessor *PairProcessor) (upOrder, downOrder *futures.CreateOrderResponse, err error) {
+	pairProcessor *processor.PairProcessor) (upOrder, downOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
 		printError()
@@ -682,7 +683,7 @@ func openPosition(
 
 func marginBalancing(
 	risk *futures.PositionRisk,
-	pairProcessor *PairProcessor) (err error) {
+	pairProcessor *processor.PairProcessor) (err error) {
 	// Балансування маржі як треба
 	if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		delta := pairProcessor.RoundPrice(pairProcessor.GetFreeBalance()) - pairProcessor.RoundPrice(utils.ConvStrToFloat64(risk.IsolatedMargin))
@@ -698,7 +699,7 @@ func marginBalancing(
 }
 
 func initGrid(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	price float64,
 	quantity float64,
 	sellOrder,
@@ -720,7 +721,7 @@ func initGrid(
 
 func getCallBack_v1(
 	// config *config_types.ConfigFile,
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	grid *grid_types.Grid,
 	percentsToStopSettingNewOrder float64,
 	quit chan struct{},
@@ -819,7 +820,7 @@ func RunFuturesGridTrading(
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	// Створюємо обробник пари
-	pairProcessor, err := NewPairProcessor(
+	pairProcessor, err := processor.NewPairProcessor(
 		client,
 		pair,
 		limitOnPosition,
@@ -894,7 +895,7 @@ func RunFuturesGridTrading(
 }
 
 func getCallBack_v2(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	grid *grid_types.Grid,
 	percentsToStopSettingNewOrder float64,
 	quit chan struct{},
@@ -995,12 +996,12 @@ func RunFuturesGridTradingV2(
 		quantityDown  float64
 		minNotional   float64
 		grid          *grid_types.Grid
-		pairProcessor *PairProcessor
+		pairProcessor *processor.PairProcessor
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	// Створюємо обробник пари
-	pairProcessor, err = NewPairProcessor(
+	pairProcessor, err = processor.NewPairProcessor(
 		client,
 		pair.GetPair(),
 		limitOnPosition,
@@ -1068,7 +1069,7 @@ func RunFuturesGridTradingV2(
 }
 
 func getCallBack_v3(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	shortPositionNewOrderType futures.OrderType,
 	shortPositionIncOrderType futures.OrderType,
 	shortPositionDecOrderType futures.OrderType,
@@ -1135,7 +1136,7 @@ func createNextPair_v3(
 	longPositionNewOrderType futures.OrderType,
 	longPositionIncOrderType futures.OrderType,
 	longPositionDecOrderType futures.OrderType,
-	pairProcessor *PairProcessor) (err error) {
+	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk         *futures.PositionRisk
 		upPrice      float64
@@ -1147,13 +1148,11 @@ func createNextPair_v3(
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance()
-	if pairProcessor.up.Len() == 0 || pairProcessor.down.Len() == 0 {
-		_, _, _, _, _, _, _, _, _, _, err = pairProcessor.InitPositionGrid(pairProcessor.minSteps, LastExecutedPrice)
-		if err != nil {
-			err = fmt.Errorf("can't check position: %v", err)
-			printError()
-			return
-		}
+	err = pairProcessor.ResetUpDown(LastExecutedPrice)
+	if err != nil {
+		err = fmt.Errorf("can't check position: %v", err)
+		printError()
+		return
 	}
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pairProcessor.GetLeverage())
@@ -1243,12 +1242,13 @@ func createNextPair_v3(
 		// Відкриваємо нову позицію
 		// Визначаємо ціну для нових ордерів
 		// Визначаємо кількість для нових ордерів
+		pairProcessor.UpDownClear()
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upType = shortPositionNewOrderType
 		downType = longPositionNewOrderType
-		_, _, _, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.UpBound)
-		_, _, _, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(pairProcessor.minSteps, LastExecutedPrice, pairProcessor.LowBound)
+		_, _, _, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
+		_, _, _, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
 	}
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
 	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
@@ -1306,13 +1306,13 @@ func RunFuturesGridTradingV3(
 		initPriceDown float64
 		quantityUp    float64
 		quantityDown  float64
-		pairProcessor *PairProcessor
+		pairProcessor *processor.PairProcessor
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 
 	// Створюємо обробник пари
-	pairProcessor, err = NewPairProcessor(
+	pairProcessor, err = processor.NewPairProcessor(
 		client,
 		pair,
 		limitOnPosition,
