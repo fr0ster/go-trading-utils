@@ -1505,29 +1505,29 @@ func Run(
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = RunFuturesGridTradingV3(
-				client,                              // client
-				pair.GetPair(),                      // pair
-				pair.GetLimitOnPosition(),           // limitOnPosition
-				pair.GetLimitOnTransaction(),        // limitOnTransaction
-				pair.GetUpBound(),                   // upBound
-				pair.GetLowBound(),                  // lowBound
-				pair.GetDeltaPrice(),                // deltaPrice
-				pair.GetDeltaQuantity(),             // deltaQuantity
-				pair.GetMarginType(),                // marginType
-				pair.GetLeverage(),                  // leverage
-				pair.GetMinSteps(),                  // minSteps
-				pair.GetCallbackRate(),              // callbackRate
-				futures.SideTypeSell,                // upOrderSideOpen
-				futures.OrderTypeLimit,              // upPositionNewOrderType
-				futures.SideTypeBuy,                 // downOrderSideOpen
-				futures.OrderTypeLimit,              // downPositionNewOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
-				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionIncOrderType
-				futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
-				pair.GetProgression(),               // progression
-				quit,                                // quit
-				wg)                                  // wg
+				client,                       // client
+				pair.GetPair(),               // pair
+				pair.GetLimitOnPosition(),    // limitOnPosition
+				pair.GetLimitOnTransaction(), // limitOnTransaction
+				pair.GetUpBound(),            // upBound
+				pair.GetLowBound(),           // lowBound
+				pair.GetDeltaPrice(),         // deltaPrice
+				pair.GetDeltaQuantity(),      // deltaQuantity
+				pair.GetMarginType(),         // marginType
+				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
+				pair.GetCallbackRate(),       // callbackRate
+				futures.SideTypeSell,         // upOrderSideOpen
+				futures.OrderTypeLimit,       // upPositionNewOrderType
+				futures.SideTypeBuy,          // downOrderSideOpen
+				futures.OrderTypeLimit,       // downPositionNewOrderType
+				futures.OrderTypeLimit,       // shortPositionIncOrderType
+				futures.OrderTypeLimit,       // shortPositionDecOrderType
+				futures.OrderTypeLimit,       // longPositionIncOrderType
+				futures.OrderTypeLimit,       // longPositionDecOrderType
+				pair.GetProgression(),        // progression
+				quit,                         // quit
+				wg)                           // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV4 {
 			// Відкриваємо позицію лімітними ордерами,
@@ -1551,10 +1551,10 @@ func Run(
 				futures.OrderTypeLimit,       // upPositionNewOrderType
 				futures.SideTypeBuy,          // downOrderSideOpen
 				futures.OrderTypeLimit,       // upPositionNewOrderType
-				futures.OrderTypeLimit,       // shortPositionIncOrderType
-				futures.OrderTypeLimit,       // shortPositionDecOrderType
-				futures.OrderTypeLimit,       // longPositionIncOrderType
-				futures.OrderTypeLimit,       // longPositionDecOrderType
+				futures.OrderTypeTakeProfit,  // shortPositionIncOrderType
+				futures.OrderTypeTakeProfit,  // shortPositionDecOrderType
+				futures.OrderTypeTakeProfit,  // longPositionIncOrderType
+				futures.OrderTypeTakeProfit,  // longPositionDecOrderType
 				pair.GetProgression(),        // progression
 				quit,                         // quit
 				wg)                           // wg
@@ -1565,29 +1565,29 @@ func Run(
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = RunFuturesGridTradingV3(
-				client,                       // client
-				pair.GetPair(),               // pair
-				pair.GetLimitOnPosition(),    // limitOnPosition
-				pair.GetLimitOnTransaction(), // limitOnTransaction
-				pair.GetUpBound(),            // upBound
-				pair.GetLowBound(),           // lowBound
-				pair.GetDeltaPrice(),         // deltaPrice
-				pair.GetDeltaQuantity(),      // deltaQuantity
-				pair.GetMarginType(),         // marginType
-				pair.GetLeverage(),           // leverage
-				pair.GetMinSteps(),           // minSteps
-				pair.GetCallbackRate(),       // callbackRate
-				futures.SideTypeSell,         // upOrderSideOpen
-				futures.OrderTypeLimit,       // upPositionNewOrderType
-				futures.SideTypeBuy,          // downOrderSideOpen
-				futures.OrderTypeLimit,       // downPositionNewOrderType
-				futures.OrderTypeTakeProfit,  // shortPositionIncOrderType
-				futures.OrderTypeTakeProfit,  // shortPositionDecOrderType
-				futures.OrderTypeTakeProfit,  // longPositionIncOrderType
-				futures.OrderTypeTakeProfit,  // longPositionDecOrderType
-				pair.GetProgression(),        // progression
-				quit,                         // quit
-				wg)                           // wg
+				client,                              // client
+				pair.GetPair(),                      // pair
+				pair.GetLimitOnPosition(),           // limitOnPosition
+				pair.GetLimitOnTransaction(),        // limitOnTransaction
+				pair.GetUpBound(),                   // upBound
+				pair.GetLowBound(),                  // lowBound
+				pair.GetDeltaPrice(),                // deltaPrice
+				pair.GetDeltaQuantity(),             // deltaQuantity
+				pair.GetMarginType(),                // marginType
+				pair.GetLeverage(),                  // leverage
+				pair.GetMinSteps(),                  // minSteps
+				pair.GetCallbackRate(),              // callbackRate
+				futures.SideTypeSell,                // upOrderSideOpen
+				futures.OrderTypeLimit,              // upPositionNewOrderType
+				futures.SideTypeBuy,                 // downOrderSideOpen
+				futures.OrderTypeLimit,              // downPositionNewOrderType
+				futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
+				futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
+				futures.OrderTypeTrailingStopMarket, // longPositionIncOrderType
+				futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
+				pair.GetProgression(),               // progression
+				quit,                                // quit
+				wg)                                  // wg
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
