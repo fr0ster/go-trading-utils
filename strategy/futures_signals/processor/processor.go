@@ -64,23 +64,16 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	return
 }
 
-func (pp *PairProcessor) InitPositionGrid(price float64) (
+func (pp *PairProcessor) InitPositionGridUp(price float64) (
 	valueUp float64,
 	quantityUp float64,
 	middlePriceUp float64,
 	startQuantityUp float64,
 	stepsUp int,
-	valueDown,
-	quantityDown float64,
-	middlePriceDown float64,
-	startQuantityDown float64,
-	stepsDown int,
 	err error) {
 	var (
-		priceUp             float64
-		currentQuantityUp   float64
-		priceDown           float64
-		currentQuantityDown float64
+		priceUp           float64
+		currentQuantityUp float64
 	)
 	valueUp, quantityUp, middlePriceUp, startQuantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		price,
@@ -88,30 +81,41 @@ func (pp *PairProcessor) InitPositionGrid(price float64) (
 	if err != nil {
 		return
 	}
-	priceUp = price * (1 + pp.GetDeltaPrice())
-	currentQuantityUp = startQuantityUp
 	pp.up.Clear(false)
-	for i := 2; i < stepsUp; i++ {
+	for i := 1; i < stepsUp; i++ {
+		priceUp = pp.RoundPrice(pp.FindNthTerm(price, price*(1+pp.GetDeltaPrice()), i+1))
+		currentQuantityUp = pp.RoundQuantity(pp.FindNthTerm(startQuantityUp, startQuantityUp*(1+pp.GetDeltaQuantity()), i+1))
 		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: currentQuantityUp})
-		priceUp = pp.RoundPrice(pp.FindNthTerm(priceUp, priceUp*(1+pp.GetDeltaPrice()), i+1))
-		currentQuantityUp = pp.RoundQuantity(pp.FindNthTerm(currentQuantityUp, currentQuantityUp*(1+pp.GetDeltaQuantity()), i+1))
 	}
+	if quantityUp*price < pp.notional {
+		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
+	}
+	return
+
+}
+
+func (pp *PairProcessor) InitPositionGridDown(price float64) (
+	valueDown,
+	quantityDown float64,
+	middlePriceDown float64,
+	startQuantityDown float64,
+	stepsDown int,
+	err error) {
+	var (
+		priceDown           float64
+		currentQuantityDown float64
+	)
 	valueDown, quantityDown, middlePriceDown, startQuantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		price,
 		pp.LowBound)
 	if err != nil {
 		return
 	}
-	priceDown = price * (1 - pp.GetDeltaPrice())
-	currentQuantityDown = startQuantityDown
 	pp.down.Clear(false)
-	for i := 2; i < stepsUp; i++ {
+	for i := 1; i < stepsDown; i++ {
+		priceDown = pp.FindNthTerm(price, price*(1-pp.GetDeltaPrice()), i)
+		currentQuantityDown = pp.FindNthTerm(startQuantityDown, startQuantityDown*(1+pp.GetDeltaQuantity()), i)
 		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: currentQuantityDown})
-		priceDown = pp.FindNthTerm(priceDown, priceDown*(1-pp.GetDeltaPrice()), i+1)
-		currentQuantityDown = pp.FindNthTerm(currentQuantityDown, currentQuantityDown*(1+pp.GetDeltaQuantity()), i+1)
-	}
-	if quantityUp*price < pp.notional {
-		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
 	}
 	if currentQuantityDown*price < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, currentQuantityDown*price)
@@ -203,27 +207,41 @@ func (pp *PairProcessor) nextDowns(currentPrice float64) (price, quantity float6
 	}
 }
 
-func (pp *PairProcessor) ResetUpDown(currentPrice float64) (err error) {
-	if pp.up.Len() == 0 && pp.down.Len() == 0 {
-		_, _, _, _, _, _, _, _, _, _, err = pp.InitPositionGrid(currentPrice)
-	} else {
-		up := pp.up.Min()
-		down := pp.down.Max()
-		if up != nil && down != nil {
-			upPrice := up.(*pair_price_types.PairPrice).Price
-			downPrice := down.(*pair_price_types.PairPrice).Price
-			if currentPrice < upPrice && currentPrice > downPrice {
-				return
-			} else if currentPrice >= upPrice {
-				_, _, err = pp.nextUps(currentPrice)
-			} else if currentPrice <= downPrice {
-				_, _, err = pp.nextDowns(currentPrice)
-			}
-		} else if up == nil && currentPrice <= down.(*pair_price_types.PairPrice).Price {
-			_, _, err = pp.nextDowns(currentPrice)
-		} else if down == nil && currentPrice >= up.(*pair_price_types.PairPrice).Price {
+func (pp *PairProcessor) resetUpDown(currentPrice float64) (err error) {
+	up := pp.up.Min()
+	down := pp.down.Max()
+	if up != nil && down != nil {
+		upPrice := up.(*pair_price_types.PairPrice).Price
+		downPrice := down.(*pair_price_types.PairPrice).Price
+		if currentPrice < upPrice && currentPrice > downPrice {
+			return
+		} else if currentPrice >= upPrice {
 			_, _, err = pp.nextUps(currentPrice)
+		} else if currentPrice <= downPrice {
+			_, _, err = pp.nextDowns(currentPrice)
 		}
+	} else if up == nil && currentPrice <= down.(*pair_price_types.PairPrice).Price {
+		_, _, err = pp.nextDowns(currentPrice)
+	} else if down == nil && currentPrice >= up.(*pair_price_types.PairPrice).Price {
+		_, _, err = pp.nextUps(currentPrice)
+	}
+	return
+}
+
+func (pp *PairProcessor) ResetUp(currentPrice float64) (err error) {
+	if pp.up.Len() == 0 && pp.down.Len() == 0 {
+		_, _, _, _, _, err = pp.InitPositionGridUp(currentPrice)
+	} else {
+		pp.resetUpDown(currentPrice)
+	}
+	return
+}
+
+func (pp *PairProcessor) ResetDown(currentPrice float64) (err error) {
+	if pp.up.Len() == 0 && pp.down.Len() == 0 {
+		_, _, _, _, _, err = pp.InitPositionGridDown(currentPrice)
+	} else {
+		pp.resetUpDown(currentPrice)
 	}
 	return
 }

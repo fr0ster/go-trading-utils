@@ -1148,15 +1148,15 @@ func createNextPair_v3(
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
-	err = pairProcessor.ResetUpDown(LastExecutedPrice)
-	if err != nil {
-		err = fmt.Errorf("can't check position: %v", err)
-		printError()
-		return
-	}
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pairProcessor.GetLeverage())
 	if positionVal < 0 { // Маємо позицію short
+		err = pairProcessor.ResetUp(LastExecutedPrice)
+		if err != nil {
+			err = fmt.Errorf("can't check position: %v", err)
+			printError()
+			return
+		}
 		if positionVal >= -free {
 			// Виконаний ордер був на продаж, тобто збільшив позицію short
 			if LastExecutedSide == futures.SideTypeSell {
@@ -1197,6 +1197,12 @@ func createNextPair_v3(
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
 	} else if positionVal > 0 { // Маємо позицію long
+		err = pairProcessor.ResetDown(LastExecutedPrice)
+		if err != nil {
+			err = fmt.Errorf("can't check position: %v", err)
+			printError()
+			return
+		}
 		if positionVal <= free {
 			// Виконаний ордер був на купівлю, тобто збільшив позицію long
 			if LastExecutedSide == futures.SideTypeBuy {
@@ -1273,10 +1279,6 @@ func createNextPair_v3(
 	return
 }
 
-// Працюємо лімітними ордерами (але можливо зменьшувати позицію будемо і TakeProfit ордером),
-// відкриваємо ордера на продаж та купівлю з однаковою кількістью
-// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-// після 5 наприклад ордера ставимо на більшу відстань
 func RunFuturesGridTradingV3(
 	client *futures.Client,
 	pair string,
@@ -1498,6 +1500,10 @@ func Run(
 				wg)                    // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV3 {
+			// Відкриваємо позицію лімітними ордерами,
+			// Збільшуємо та зменшуємо позицію трейлінг стопами
+			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
+			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = RunFuturesGridTradingV3(
 				client,                              // client
 				pair.GetPair(),                      // pair
@@ -1524,6 +1530,10 @@ func Run(
 				wg)                                  // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV4 {
+			// Відкриваємо позицію лімітними ордерами,
+			// Збільшуємо та зменшуємо позицію лімітними ордерами
+			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
+			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = RunFuturesGridTradingV3(
 				client,                       // client
 				pair.GetPair(),               // pair
@@ -1550,6 +1560,10 @@ func Run(
 				wg)                           // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
+			// Відкриваємо позицію лімітними ордерами,
+			// Збільшуємо та зменшуємо позицію тейк профіт ордерами
+			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
+			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = RunFuturesGridTradingV3(
 				client,                       // client
 				pair.GetPair(),               // pair
