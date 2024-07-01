@@ -61,7 +61,6 @@ func (pp *PairProcessor) DepthEventStart(
 			case <-stop:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
-				close(pp.stop)
 				return
 			case <-resetEvent:
 				// Запускаємо новий стрім подій користувача
@@ -75,12 +74,12 @@ func (pp *PairProcessor) DepthEventStart(
 				if time.Since(lastResponse) > pp.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
-				}
-				// Запускаємо новий стрім подій користувача
-				_, stopC, err = pp.startDepthStream(levels, rate, callBack, wsErrorHandler)
-				if err != nil {
-					close(pp.stop)
-					return
+					// Запускаємо новий стрім подій користувача
+					_, stopC, err = pp.startDepthStream(levels, rate, callBack, wsErrorHandler)
+					if err != nil {
+						close(pp.stop)
+						return
+					}
 				}
 			}
 		}

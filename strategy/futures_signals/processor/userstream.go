@@ -58,7 +58,6 @@ func (pp *PairProcessor) UserDataEventStart(
 			case <-stop:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
-				close(pp.stop)
 				return
 			case <-resetEvent:
 				// Запускаємо новий стрім подій користувача
@@ -72,12 +71,12 @@ func (pp *PairProcessor) UserDataEventStart(
 				if time.Since(lastResponse) > pp.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
-				}
-				// Запускаємо новий стрім подій користувача
-				_, stopC, err = pp.startUserDataStream(wsHandler, wsErrorHandler)
-				if err != nil {
-					close(pp.stop)
-					return
+					// Запускаємо новий стрім подій користувача
+					_, stopC, err = pp.startUserDataStream(wsHandler, wsErrorHandler)
+					if err != nil {
+						close(pp.stop)
+						return
+					}
 				}
 			}
 		}
