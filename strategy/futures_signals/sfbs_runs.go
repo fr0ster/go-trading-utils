@@ -1211,12 +1211,6 @@ func createNextPair_v3(
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
 	} else if positionVal > 0 { // Маємо позицію long
-		err = pairProcessor.ResetDownOrInit(LastExecutedPrice)
-		if err != nil {
-			err = fmt.Errorf("can't check position: %v", err)
-			printError()
-			return
-		}
 		if positionVal <= free {
 			// Виконаний ордер був на купівлю, тобто збільшив позицію long
 			if LastExecutedSide == futures.SideTypeBuy {
