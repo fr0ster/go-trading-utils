@@ -69,8 +69,6 @@ func (pp *PairProcessor) KlineEventStart(
 				close(pp.stop)
 				return
 			case <-resetEvent:
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = pp.startKlineStream(interval, callBack, wsErrorHandler)
 				if err != nil {

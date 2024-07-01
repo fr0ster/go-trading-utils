@@ -64,8 +64,6 @@ func (pp *PairProcessor) DepthEventStart(
 				close(pp.stop)
 				return
 			case <-resetEvent:
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = pp.startDepthStream(levels, rate, callBack, wsErrorHandler)
 				if err != nil {

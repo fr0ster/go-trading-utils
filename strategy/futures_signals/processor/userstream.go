@@ -61,8 +61,6 @@ func (pp *PairProcessor) UserDataEventStart(
 				close(pp.stop)
 				return
 			case <-resetEvent:
-				// Зупиняємо стрім подій користувача
-				stopC <- struct{}{}
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = pp.startUserDataStream(wsHandler, wsErrorHandler)
 				if err != nil {
