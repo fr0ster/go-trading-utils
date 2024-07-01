@@ -1151,15 +1151,20 @@ func createNextPair_v3(
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * currentPrice / float64(pairProcessor.GetLeverage())
 	if positionVal < 0 { // Маємо позицію short
-		err = pairProcessor.ResetUp(LastExecutedPrice)
-		if err != nil {
-			err = fmt.Errorf("can't check position: %v", err)
-			printError()
-			return
-		}
 		if positionVal >= -free {
-			// Виконаний ордер був на продаж, тобто збільшив позицію short
+			// Виконаний ордер був на продаж, тобто збільшив або відкрив позицію short
 			if LastExecutedSide == futures.SideTypeSell {
+				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій short
+				// Як не маємо, то вважаемо, шо виконаний ордер створив позицію short
+				// та розраховуємо цінові позиції від ціни відкриття позиції
+				if pairProcessor.GetUpLength() == 0 {
+					_, _, _, _, _, err = pairProcessor.InitPositionGridUp(LastExecutedPrice)
+				}
+				if err != nil {
+					err = fmt.Errorf("can't check position: %v", err)
+					printError()
+					return
+				}
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
 				upPrice, upQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
@@ -1171,6 +1176,15 @@ func createNextPair_v3(
 				// Виконаний ордер був на купівлю, тобто скоротив позицію short
 				// Обробляємо розворот курсу
 			} else if LastExecutedSide == futures.SideTypeBuy {
+				logrus.Debugf("Futures %s: ComeBack Price, LastExecutedPrice %v, AccumulatedFilledQty %v",
+					pairProcessor.GetPair(), LastExecutedPrice, AccumulatedFilledQty)
+				// У випадку, коли ми маємо позицію short,
+				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
+				// то ми їх розраховуємо
+				if pairProcessor.GetDownLength() == 0 {
+					pairProcessor.InitPositionGridUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.ResetUpDown(LastExecutedPrice)
+				}
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
 				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
@@ -1197,7 +1211,7 @@ func createNextPair_v3(
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
 	} else if positionVal > 0 { // Маємо позицію long
-		err = pairProcessor.ResetDown(LastExecutedPrice)
+		err = pairProcessor.ResetDownOrInit(LastExecutedPrice)
 		if err != nil {
 			err = fmt.Errorf("can't check position: %v", err)
 			printError()
@@ -1206,6 +1220,17 @@ func createNextPair_v3(
 		if positionVal <= free {
 			// Виконаний ордер був на купівлю, тобто збільшив позицію long
 			if LastExecutedSide == futures.SideTypeBuy {
+				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій long
+				// Як не маємо, то вважаемо, шо виконаний ордер створив позицію long
+				// та розраховуємо цінові позиції від ціни відкриття позиції
+				if pairProcessor.GetDownLength() == 0 {
+					_, _, _, _, _, err = pairProcessor.InitPositionGridDown(LastExecutedPrice)
+				}
+				if err != nil {
+					err = fmt.Errorf("can't check position: %v", err)
+					printError()
+					return
+				}
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
 				downPrice, downQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
@@ -1219,6 +1244,13 @@ func createNextPair_v3(
 			} else if LastExecutedSide == futures.SideTypeSell {
 				logrus.Debugf("Futures %s: ComeBack Price, LastExecutedPrice %v, AccumulatedFilledQty %v",
 					pairProcessor.GetPair(), LastExecutedPrice, AccumulatedFilledQty)
+				// У випадку, коли ми маємо позицію long,
+				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
+				// то ми їх розраховуємо
+				if pairProcessor.GetUpLength() == 0 {
+					pairProcessor.InitPositionGridDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.ResetUpDown(LastExecutedPrice)
+				}
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів
 				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)

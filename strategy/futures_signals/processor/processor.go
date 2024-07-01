@@ -207,7 +207,7 @@ func (pp *PairProcessor) nextDowns(currentPrice float64) (price, quantity float6
 	}
 }
 
-func (pp *PairProcessor) resetUpDown(currentPrice float64) (err error) {
+func (pp *PairProcessor) ResetUpDown(currentPrice float64) (err error) {
 	up := pp.up.Min()
 	down := pp.down.Max()
 	if up != nil && down != nil {
@@ -228,20 +228,20 @@ func (pp *PairProcessor) resetUpDown(currentPrice float64) (err error) {
 	return
 }
 
-func (pp *PairProcessor) ResetUp(currentPrice float64) (err error) {
+func (pp *PairProcessor) ResetUpOrInit(currentPrice float64) (err error) {
 	if pp.up.Len() == 0 && pp.down.Len() == 0 {
 		_, _, _, _, _, err = pp.InitPositionGridUp(currentPrice)
 	} else {
-		pp.resetUpDown(currentPrice)
+		pp.ResetUpDown(currentPrice)
 	}
 	return
 }
 
-func (pp *PairProcessor) ResetDown(currentPrice float64) (err error) {
+func (pp *PairProcessor) ResetDownOrInit(currentPrice float64) (err error) {
 	if pp.up.Len() == 0 && pp.down.Len() == 0 {
 		_, _, _, _, _, err = pp.InitPositionGridDown(currentPrice)
 	} else {
-		pp.resetUpDown(currentPrice)
+		pp.ResetUpDown(currentPrice)
 	}
 	return
 }
