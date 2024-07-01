@@ -7,17 +7,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (pp *PairProcessor) startBookTickerStream(handler futures.WsBookTickerHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
+func (pp *PairProcessor) startBookTickerStream(handler futures.WsBookTickerHandler, errHandler futures.ErrHandler) (
+	doneC,
+	stopC chan struct{},
+	err error) {
 	// Запускаємо стрім подій користувача
 	doneC, stopC, err = futures.WsBookTickerServe(pp.symbol.Symbol, handler, errHandler)
 	return
 }
 
 func (pp *PairProcessor) BookTickerEventStart(
+	stop chan struct{},
 	levels int,
 	rate time.Duration,
 	callBack futures.WsBookTickerHandler) (
-	resetEvent chan error, err error) {
+	resetEvent chan error,
+	err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -35,6 +40,11 @@ func (pp *PairProcessor) BookTickerEventStart(
 	go func() {
 		for {
 			select {
+			case <-stop:
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				close(pp.stop)
+				return
 			case <-resetEvent:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}

@@ -21,17 +21,26 @@ type (
 	DepthStreamRate  time.Duration
 )
 
-func (pp *PairProcessor) startDepthStream(levels DepthStreamLevel, rate DepthStreamRate, handler futures.WsDepthHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
+func (pp *PairProcessor) startDepthStream(
+	levels DepthStreamLevel,
+	rate DepthStreamRate,
+	handler futures.WsDepthHandler,
+	errHandler futures.ErrHandler) (
+	doneC,
+	stopC chan struct{},
+	err error) {
 	// Запускаємо стрім подій користувача
 	doneC, stopC, err = futures.WsPartialDepthServeWithRate(pp.symbol.Symbol, int(levels), time.Duration(rate), handler, errHandler)
 	return
 }
 
 func (pp *PairProcessor) DepthEventStart(
+	stop chan struct{},
 	levels DepthStreamLevel,
 	rate DepthStreamRate,
 	callBack futures.WsDepthHandler) (
-	resetEvent chan error, err error) {
+	resetEvent chan error,
+	err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -49,6 +58,11 @@ func (pp *PairProcessor) DepthEventStart(
 	go func() {
 		for {
 			select {
+			case <-stop:
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				close(pp.stop)
+				return
 			case <-resetEvent:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}

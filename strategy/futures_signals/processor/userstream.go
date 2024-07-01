@@ -8,7 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (pp *PairProcessor) startUserDataStream(handler futures.WsUserDataHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
+func (pp *PairProcessor) startUserDataStream(handler futures.WsUserDataHandler, errHandler futures.ErrHandler) (
+	doneC,
+	stopC chan struct{},
+	err error) {
 	// Отримуємо новий або той же самий ключ для прослуховування подій користувача при втраті з'єднання
 	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
 	if err != nil {
@@ -20,9 +23,11 @@ func (pp *PairProcessor) startUserDataStream(handler futures.WsUserDataHandler, 
 }
 
 func (pp *PairProcessor) UserDataEventStart(
+	stop chan struct{},
 	callBack futures.WsUserDataHandler,
 	eventType ...futures.UserDataEventType) (
-	resetEvent chan error, err error) {
+	resetEvent chan error,
+	err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -50,6 +55,11 @@ func (pp *PairProcessor) UserDataEventStart(
 	go func() {
 		for {
 			select {
+			case <-stop:
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				close(pp.stop)
+				return
 			case <-resetEvent:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}

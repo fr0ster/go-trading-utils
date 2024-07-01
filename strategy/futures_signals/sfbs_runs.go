@@ -307,6 +307,7 @@ func RunFuturesTrading(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	_, err = pairProcessor.UserDataEventStart(
+		quit,
 		getCallBackTrading(
 			pairProcessor,            // pairProcessor
 			upOrderSideOpen,          // upOrderSideOpen
@@ -824,6 +825,7 @@ func RunFuturesGridTrading(
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
+		quit,
 		getCallBack_v1(
 			pairProcessor,
 			grid,
@@ -1003,6 +1005,7 @@ func RunFuturesGridTradingV2(
 	}
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
+		quit,
 		getCallBack_v2(
 			pairProcessor,
 			grid,
@@ -1351,6 +1354,7 @@ func RunFuturesGridTradingV3(
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
+		quit,
 		getCallBack_v3(
 			pairProcessor,             // pairProcessor
 			upPositionNewOrderType,    // shortPositionNewOrderType,

@@ -9,7 +9,7 @@ import (
 
 const (
 	// Kline interval
-	KlineStreamInterval1s  KlineStreamInterval = "1s"
+	// KlineStreamInterval1s  KlineStreamInterval = "1s"
 	KlineStreamInterval1m  KlineStreamInterval = "1m"
 	KlineStreamInterval3m  KlineStreamInterval = "3m"
 	KlineStreamInterval5m  KlineStreamInterval = "5m"
@@ -31,16 +31,21 @@ type (
 	KlineStreamInterval string
 )
 
-func (pp *PairProcessor) startKlineStream(interval KlineStreamInterval, handler futures.WsKlineHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
+func (pp *PairProcessor) startKlineStream(interval KlineStreamInterval, handler futures.WsKlineHandler, errHandler futures.ErrHandler) (
+	doneC,
+	stopC chan struct{},
+	err error) {
 	// Запускаємо стрім подій користувача
 	doneC, stopC, err = futures.WsKlineServe(pp.symbol.Symbol, string(interval), handler, errHandler)
 	return
 }
 
 func (pp *PairProcessor) KlineEventStart(
+	stop chan struct{},
 	interval KlineStreamInterval,
 	callBack futures.WsKlineHandler) (
-	resetEvent chan error, err error) {
+	resetEvent chan error,
+	err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -58,6 +63,11 @@ func (pp *PairProcessor) KlineEventStart(
 	go func() {
 		for {
 			select {
+			case <-stop:
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				close(pp.stop)
+				return
 			case <-resetEvent:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
