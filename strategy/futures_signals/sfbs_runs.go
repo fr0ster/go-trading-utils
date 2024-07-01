@@ -21,10 +21,6 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-const (
-	degree = 3
-)
-
 func printError() {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		_, file, line, ok := runtime.Caller(1)
@@ -350,30 +346,6 @@ func RunFuturesTrading(
 	return nil
 }
 
-// Створення ордера для розміщення в грід
-func createOrder(
-	pairProcessor *processor.PairProcessor,
-	side futures.SideType,
-	orderType futures.OrderType,
-	quantity,
-	price float64,
-	stopPrice float64,
-	activationPrice float64,
-	callbackRate float64,
-	closePosition bool) (order *futures.CreateOrderResponse, err error) {
-	order, err = pairProcessor.CreateOrder(
-		orderType,                  // orderType
-		side,                       // sideType
-		futures.TimeInForceTypeGTC, // timeInForce
-		quantity,                   // quantity
-		closePosition,              // closePosition
-		price,                      // price
-		stopPrice,                  // stopPrice
-		activationPrice,            // activationPrice
-		callbackRate)               // callbackRate
-	return
-}
-
 func IsOrdersOpened(grid *grid_types.Grid, pairProcessor *processor.PairProcessor, pair *pairs_types.Pairs) (err error) {
 	grid.Ascend(func(item btree.Item) bool {
 		var orderOut *futures.Order
@@ -417,16 +389,16 @@ func processOrder(
 			if (pairProcessor.GetUpBound() == 0 || upPrice <= pairProcessor.GetUpBound()) &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pairProcessor.GetFreeBalance() &&
 				locked <= pairProcessor.GetFreeBalance() {
-				upOrder, err := createOrder(
-					pairProcessor,
-					futures.SideTypeSell,
+				upOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,
+					futures.SideTypeSell,
+					futures.TimeInForceTypeGTC,
 					quantity,
+					false,
 					upPrice,
 					upPrice,
 					0,
-					0,
-					false)
+					0)
 				if err != nil {
 					printError()
 					return err
@@ -457,16 +429,16 @@ func processOrder(
 		downPrice, ok := grid.Get(&grid_types.Record{Price: order.GetDownPrice()}).(*grid_types.Record)
 		if ok && downPrice.GetOrderId() == 0 && downPrice.GetQuantity() <= 0 {
 			// Створюємо ордер на купівлю
-			downOrder, err := createOrder(
-				pairProcessor,
-				futures.SideTypeBuy,
+			downOrder, err := pairProcessor.CreateOrder(
 				futures.OrderTypeLimit,
+				futures.SideTypeBuy,
+				futures.TimeInForceTypeGTC,
 				quantity,
+				false,
 				order.GetDownPrice(),
 				order.GetDownPrice(),
 				0,
-				0,
-				false)
+				0)
 			if err != nil {
 				printError()
 				return err
@@ -507,16 +479,16 @@ func processOrder(
 				delta_percent(downPrice) >= percentsToStopSettingNewOrder &&
 				utils.ConvStrToFloat64(risk.IsolatedMargin) <= pairProcessor.GetFreeBalance() &&
 				locked <= pairProcessor.GetFreeBalance() {
-				downOrder, err := createOrder(
-					pairProcessor,
-					futures.SideTypeBuy,
+				downOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,
+					futures.SideTypeBuy,
+					futures.TimeInForceTypeGTC,
 					quantity,
+					false,
 					downPrice,
 					downPrice,
 					0,
-					0,
-					false)
+					0)
 				if err != nil {
 					printError()
 					return err
@@ -551,16 +523,16 @@ func processOrder(
 		upRecord, ok := grid.Get(&grid_types.Record{Price: order.GetUpPrice()}).(*grid_types.Record)
 		if ok && upRecord.GetOrderId() == 0 && upRecord.GetQuantity() <= 0 {
 			// Створюємо ордер на продаж
-			upOrder, err := createOrder(
-				pairProcessor,
-				futures.SideTypeSell,
+			upOrder, err := pairProcessor.CreateOrder(
 				futures.OrderTypeLimit,
+				futures.SideTypeSell,
+				futures.TimeInForceTypeGTC,
 				quantity,
+				false,
 				order.GetUpPrice(),
 				order.GetUpPrice(),
 				0,
-				0,
-				false)
+				0)
 			if err != nil {
 				printError()
 				return err
@@ -638,16 +610,16 @@ func openPosition(
 	}
 	if quantityUp != 0 {
 		// Створюємо ордери на продаж
-		upOrder, err = createOrder(
-			pairProcessor,
-			sideUp,
+		upOrder, err = pairProcessor.CreateOrder(
 			orderTypeUp,
+			sideUp,
+			futures.TimeInForceTypeGTC,
 			quantityUp,
+			false,
 			priceUp,
 			stopPriceUp,
 			activationPriceUp,
-			pairProcessor.GetCallbackRate(),
-			false)
+			pairProcessor.GetCallbackRate())
 		if err != nil {
 			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
 				pairProcessor.GetPair(), sideUp, orderTypeUp, priceUp, quantityUp, pairProcessor.GetCallbackRate())
@@ -659,16 +631,16 @@ func openPosition(
 	}
 	if quantityDown != 0 {
 		// Створюємо ордери на купівлю
-		downOrder, err = createOrder(
-			pairProcessor,
-			sideDown,
+		downOrder, err = pairProcessor.CreateOrder(
 			orderTypeDown,
+			sideDown,
+			futures.TimeInForceTypeGTC,
 			quantityDown,
+			false,
 			priceDown,
 			stopPriceDown,
 			activationPriceDown,
-			pairProcessor.GetCallbackRate(),
-			false)
+			pairProcessor.GetCallbackRate())
 		if err != nil {
 			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
 				pairProcessor.GetPair(), sideDown, orderTypeDown, priceDown, quantityDown, pairProcessor.GetCallbackRate())

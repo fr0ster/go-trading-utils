@@ -59,7 +59,7 @@ func (pp *PairBookTickersObserver) GetStream() chan *futures.WsBookTickerEvent {
 func (pp *PairBookTickersObserver) StartStream() chan *futures.WsBookTickerEvent {
 	if pp.bookTickerEvent == nil {
 		if pp.data == nil {
-			pp.data = book_ticker_types.New(degree)
+			pp.data = book_ticker_types.New(pp.degree)
 		}
 
 		ticker := time.NewTicker(pp.timeOut)
@@ -114,7 +114,7 @@ func (pp *PairBookTickersObserver) StartPriceChangesSignal() (
 	bidDown chan *pair_price_types.AskBid) {
 	bookTicker := pp.data.Get(pp.symbol.Symbol)
 	if pp.data == nil {
-		pp.data = book_ticker_types.New(degree)
+		pp.data = book_ticker_types.New(pp.degree)
 	}
 	if bookTicker == nil {
 		logrus.Errorf("Can't get bookTicker for %s when read for last price, futures strategy", pp.symbol.Symbol)

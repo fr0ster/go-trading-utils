@@ -1,27 +1,22 @@
 package processor
 
 import (
-	"context"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 )
 
-func (pp *PairProcessor) startUserDataStream(handler futures.WsUserDataHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
-	// Отримуємо новий або той же самий ключ для прослуховування подій користувача при втраті з'єднання
-	listenKey, err := pp.client.NewStartUserStreamService().Do(context.Background())
-	if err != nil {
-		return
-	}
+func (pp *PairProcessor) startBookTickerStream(handler futures.WsBookTickerHandler, errHandler futures.ErrHandler) (doneC, stopC chan struct{}, err error) {
 	// Запускаємо стрім подій користувача
-	doneC, stopC, err = futures.WsUserDataServe(listenKey, handler, errHandler)
+	doneC, stopC, err = futures.WsBookTickerServe(pp.symbol.Symbol, handler, errHandler)
 	return
 }
 
-func (pp *PairProcessor) UserDataEventStart(
-	callBack futures.WsUserDataHandler,
-	eventType ...futures.UserDataEventType) (
+func (pp *PairProcessor) BookTickerEventStart(
+	levels int,
+	rate time.Duration,
+	callBack futures.WsBookTickerHandler) (
 	resetEvent chan error, err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
@@ -34,18 +29,8 @@ func (pp *PairProcessor) UserDataEventStart(
 		logrus.Errorf("Future wsErrorHandler error: %v", err)
 		resetEvent <- err
 	}
-	// Ініціалізуємо обробник подій
-	eventMap := make(map[futures.UserDataEventType]bool)
-	for _, event := range eventType {
-		eventMap[event] = true
-	}
-	wsHandler := func(event *futures.WsUserDataEvent) {
-		if len(eventType) == 0 || eventMap[event.Event] {
-			callBack(event)
-		}
-	}
 	// Запускаємо стрім подій користувача
-	_, stopC, err := pp.startUserDataStream(wsHandler, wsErrorHandler)
+	_, stopC, err := pp.startBookTickerStream(callBack, wsErrorHandler)
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
@@ -54,7 +39,7 @@ func (pp *PairProcessor) UserDataEventStart(
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
 				// Запускаємо новий стрім подій користувача
-				_, stopC, err = pp.startUserDataStream(wsHandler, wsErrorHandler)
+				_, stopC, err = pp.startBookTickerStream(callBack, wsErrorHandler)
 				if err != nil {
 					close(pp.stop)
 					return
@@ -66,7 +51,7 @@ func (pp *PairProcessor) UserDataEventStart(
 					stopC <- struct{}{}
 				}
 				// Запускаємо новий стрім подій користувача
-				_, stopC, err = pp.startUserDataStream(wsHandler, wsErrorHandler)
+				_, stopC, err = pp.startBookTickerStream(callBack, wsErrorHandler)
 				if err != nil {
 					close(pp.stop)
 					return

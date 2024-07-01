@@ -58,7 +58,7 @@ func (pp *PairPartialDepthsObserver) GetStream() chan *futures.WsDepthEvent {
 func (pp *PairPartialDepthsObserver) StartStream() chan *futures.WsDepthEvent {
 	if pp.depthsEvent == nil {
 		if pp.data == nil {
-			pp.data = depth_types.New(degree, pp.symbol.Symbol)
+			pp.data = depth_types.New(pp.degree, pp.symbol.Symbol)
 		}
 
 		ticker := time.NewTicker(pp.timeOut)
