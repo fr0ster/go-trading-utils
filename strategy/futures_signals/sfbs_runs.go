@@ -1310,16 +1310,21 @@ func RunFuturesGridTradingV3(
 	longPositionDecOrderType futures.OrderType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
-	wg *sync.WaitGroup) (err error) {
+	wg *sync.WaitGroup,
+	timeout ...time.Duration) (err error) {
 	var (
 		initPriceUp   float64
 		initPriceDown float64
 		quantityUp    float64
 		quantityDown  float64
 		pairProcessor *processor.PairProcessor
+		timeOut       time.Duration = 5000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
+	if len(timeout) > 0 {
+		timeOut = timeout[0]
+	}
 
 	// Створюємо обробник пари
 	pairProcessor, err = processor.NewPairProcessor(
@@ -1384,7 +1389,7 @@ func RunFuturesGridTradingV3(
 			select {
 			case <-quit:
 				return
-			case <-time.After(time.Second * 5):
+			case <-time.After(timeOut * time.Millisecond):
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 0 {
 					_, _, err = openPosition(
@@ -1415,12 +1420,16 @@ func RunFuturesGridTradingV3(
 							close(quit)
 							return
 						}
-						breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-						if math.Abs(currentPrice-breakEvenPrice/breakEvenPrice)*100 > 15 {
-							logrus.Debugf("Futures %s: Price %v is more than 15%% from BreakEvenPrice %v",
-								pairProcessor.GetPair(), currentPrice, breakEvenPrice)
+						if (utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice < pairProcessor.GetLowBound()) ||
+							(utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice > pairProcessor.GetUpBound()) {
+							pairProcessor.ClosePosition(risk)
 						}
 					}
+				} else if len(openOrders) > 2 {
+					logrus.Errorf("Futures %s: Too many open orders", pairProcessor.GetPair())
+					printError()
+					close(quit)
+					return
 				}
 			}
 		}

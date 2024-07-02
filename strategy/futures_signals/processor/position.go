@@ -90,3 +90,12 @@ func (pp *PairProcessor) SetPositionMargin(amountMargin float64, typeMargin int)
 		Symbol(pp.symbol.Symbol).Type(typeMargin).
 		Amount(utils.ConvFloat64ToStrDefault(amountMargin)).Do(context.Background())
 }
+
+func (pp *PairProcessor) ClosePosition(risk *futures.PositionRisk) (err error) {
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		_, err = pp.CreateOrder(futures.OrderTypeTakeProfitMarket, futures.SideTypeBuy, futures.TimeInForceTypeGTC, 0, true, 0, 0, 0, 0)
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		_, err = pp.CreateOrder(futures.OrderTypeTakeProfitMarket, futures.SideTypeSell, futures.TimeInForceTypeGTC, 0, true, 0, 0, 0, 0)
+	}
+	return
+}
