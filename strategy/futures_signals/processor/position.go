@@ -59,7 +59,9 @@ func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage,
 func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
 	if pp.marginType == "" {
 		risk, _ := pp.GetPositionRisk()
-		pp.marginType = pairs_types.MarginType(risk.MarginType)
+		if risk == nil {
+			pp.marginType = pairs_types.MarginType(risk.MarginType)
+		}
 	}
 	return pp.marginType
 }
