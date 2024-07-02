@@ -56,3 +56,19 @@ func AddToBuffer(buffer []float64, value float64) []float64 {
 	buffer = append(buffer[1:], value) // Видаляємо перший елемент і додаємо новий в кінець
 	return buffer
 }
+
+// Функція для додавання дельти у відсотках між новим значенням та останнім значенням у кільцевому буфері
+func AddPercentageChangeToBuffer(buffer []float64, newValue float64) []float64 {
+	if len(buffer) > 0 {
+		// Останнє значення в буфері
+		lastValue := buffer[len(buffer)-1]
+		// Обчислення дельти у відсотках
+		percentageChange := (newValue - lastValue) / lastValue * 100
+		// Додавання дельти до буфера, видаляючи перший елемент, якщо потрібно
+		buffer = append(buffer[1:], percentageChange)
+	} else {
+		// Якщо буфер порожній, просто додайте 0, оскільки ми не можемо обчислити дельту
+		buffer = append(buffer, 0)
+	}
+	return buffer
+}
