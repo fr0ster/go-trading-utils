@@ -1251,6 +1251,7 @@ func createNextPair_v3(
 		// Визначаємо ціну для нових ордерів
 		// Визначаємо кількість для нових ордерів
 		pairProcessor.UpDownClear()
+		pairProcessor.SetBounds(LastExecutedPrice)
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upType = shortPositionNewOrderType
@@ -1392,6 +1393,13 @@ func RunFuturesGridTradingV3(
 			case <-time.After(timeOut * time.Millisecond):
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 0 {
+					currentPrice, err := pairProcessor.GetCurrentPrice()
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+					pairProcessor.SetBounds(currentPrice)
 					_, _, err = openPosition(
 						futures.SideTypeSell, // sideUp
 						upNewOrder,           // typeUp
