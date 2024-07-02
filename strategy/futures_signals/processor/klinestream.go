@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"context"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -90,4 +91,8 @@ func (pp *PairProcessor) KlineEventStart(
 		}
 	}()
 	return
+}
+
+func (pp *PairProcessor) GetKlines(interval KlineStreamInterval) ([]*futures.Kline, error) {
+	return pp.client.NewKlinesService().Symbol(pp.symbol.Symbol).Interval(string(interval)).Limit(1).Do(context.Background())
 }
