@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -95,4 +96,38 @@ func (pp *PairProcessor) KlineEventStart(
 
 func (pp *PairProcessor) GetKlines(interval KlineStreamInterval, limit int) ([]*futures.Kline, error) {
 	return pp.client.NewKlinesService().Symbol(pp.symbol.Symbol).Interval(string(interval)).Limit(limit).Do(context.Background())
+}
+
+// Функція для обчислення коефіцієнтів a та b за методом найменших квадратів
+func (pp *PairProcessor) LeastSquares(y []float64) (a float64, b float64) {
+	var sumX, sumY, sumXY, sumX2 float64
+	x := []float64{}
+	N := float64(len(x))
+
+	for i := 0; i < int(N); i++ {
+		sumX += x[i]
+		sumY += y[i]
+		sumXY += x[i] * y[i]
+		sumX2 += x[i] * x[i]
+	}
+
+	a = (N*sumXY - sumX*sumY) / (N*sumX2 - sumX*sumX)
+	b = (sumY - a*sumX) / N
+
+	return a, b
+}
+
+// Функція для обчислення кута нахилу тренду з коефіцієнта нахилу a
+func (pp *PairProcessor) CalculateTrendAngle(a float64) float64 {
+	return math.Atan(a) * (180 / math.Pi) // Перетворення радіанів в градуси
+}
+
+func (pp *PairProcessor) InitKlinesBuffer(size int) {
+	pp.klinesBuffer = make([]float64, size)
+}
+
+// Функція для додавання нового значення до кільцевого буфера
+func (pp *PairProcessor) AddToBuffer(value float64) []float64 {
+	pp.klinesBuffer = append(pp.klinesBuffer[1:], value) // Видаляємо перший елемент і додаємо новий в кінець
+	return pp.klinesBuffer
 }
