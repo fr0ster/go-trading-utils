@@ -1,6 +1,9 @@
 package futures_signals
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // Функція для обчислення коефіцієнтів a та b за методом найменших квадратів
 func LeastSquares(y []float64) (a float64, b float64) {
@@ -53,12 +56,26 @@ func CalculateTrendAngle(a float64) float64 {
 
 // Функція для додавання нового значення до кільцевого буфера
 func AddToBuffer(buffer []float64, value float64) []float64 {
-	buffer = append(buffer[1:], value) // Видаляємо перший елемент і додаємо новий в кінець
+	if len(buffer) > 0 {
+		buffer = append(buffer[1:], value) // Видаляємо перший елемент і додаємо новий в кінець
+	} else {
+		// Якщо буфер порожній, просто додайте 0, оскільки ми не можемо обчислити дельту
+		buffer = append(buffer, value)
+	}
 	return buffer
 }
 
 // Функція для додавання дельти у відсотках між новим значенням та останнім значенням у кільцевому буфері
-func AddPercentageChangeToBuffer(buffer []float64, newValue float64) []float64 {
+func AddPercentageChangeToBuffer(buffer []float64, newValue float64, initValue ...float64) ([]float64, error) {
+	var (
+		first float64
+	)
+	if (len(initValue) == 0 && len(buffer) == 0) || (initValue[0] == 0 && len(buffer) == 0) {
+		return nil, fmt.Errorf("can't calculate percentage change without initial value")
+	}
+	if len(initValue) > 0 {
+		first = initValue[0]
+	}
 	if len(buffer) > 0 {
 		// Останнє значення в буфері
 		lastValue := buffer[len(buffer)-1]
@@ -67,8 +84,9 @@ func AddPercentageChangeToBuffer(buffer []float64, newValue float64) []float64 {
 		// Додавання дельти до буфера, видаляючи перший елемент, якщо потрібно
 		buffer = append(buffer[1:], percentageChange)
 	} else {
-		// Якщо буфер порожній, просто додайте 0, оскільки ми не можемо обчислити дельту
-		buffer = append(buffer, 0)
+		if first != 0 {
+			buffer = append(buffer, (newValue-first)/first*100)
+		}
 	}
-	return buffer
+	return buffer, nil
 }
