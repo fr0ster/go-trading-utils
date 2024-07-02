@@ -25,6 +25,27 @@ func LeastSquares(y []float64) (a float64, b float64) {
 	return a, b
 }
 
+// Функція для обчислення стандартного відхилення (волатильності)
+func CalculateVolatility(prices []float64) float64 {
+	var sum, mean, variance float64
+	n := float64(len(prices))
+
+	// Обчислення середнього значення
+	for _, price := range prices {
+		sum += price
+	}
+	mean = sum / n
+
+	// Обчислення суми квадратів відхилень від середнього
+	for _, price := range prices {
+		variance += math.Pow(price-mean, 2)
+	}
+
+	// Обчислення середнього квадрату відхилень і взяття квадратного кореня
+	variance /= n
+	return math.Sqrt(variance)
+}
+
 // Функція для обчислення кута нахилу тренду з коефіцієнта нахилу a
 func CalculateTrendAngle(a float64) float64 {
 	return math.Atan(a) * (180 / math.Pi) // Перетворення радіанів в градуси

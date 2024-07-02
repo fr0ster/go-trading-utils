@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -1375,6 +1376,55 @@ func RunFuturesGridTradingV3(
 		printError()
 		return err
 	}
+	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-quit:
+				return
+			case <-time.After(time.Second * 5):
+				openOrders, _ := pairProcessor.GetOpenOrders()
+				if len(openOrders) == 0 {
+					_, _, err = openPosition(
+						futures.SideTypeSell, // sideUp
+						upNewOrder,           // typeUp
+						futures.SideTypeBuy,  // sideDown
+						downNewOrder,         // typeDown
+						quantityUp,           // quantityUp
+						quantityDown,         // quantityDown
+						initPriceUp,          // priceUp
+						initPriceUp,          // stopPriceUp
+						initPriceUp,          // activationPriceUp
+						initPriceDown,        // priceDown
+						initPriceDown,        // stopPriceDown
+						initPriceDown,        // activationPriceDown
+						pairProcessor)        // pairProcessor
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+				} else if len(openOrders) == 1 {
+					risk, _ := pairProcessor.GetPositionRisk()
+					if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+						currentPrice, err := pairProcessor.GetCurrentPrice()
+						if err != nil {
+							printError()
+							close(quit)
+							return
+						}
+						breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+						if math.Abs(currentPrice-breakEvenPrice/breakEvenPrice)*100 > 15 {
+							logrus.Debugf("Futures %s: Price %v is more than 15%% from BreakEvenPrice %v",
+								pairProcessor.GetPair(), currentPrice, breakEvenPrice)
+						}
+					}
+				}
+			}
+		}
+	}()
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
 		futures.SideTypeSell, // sideUp
