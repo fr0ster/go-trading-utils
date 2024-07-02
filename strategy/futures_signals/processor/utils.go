@@ -53,17 +53,22 @@ func (pp *PairProcessor) GetPrices(
 	if isDynamic {
 		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(priceUp, pp.UpBound)
 		if err != nil {
-			err = fmt.Errorf("can't calculate initial position for price up %v", priceUp)
-			return
+			logrus.Errorf("Futures %s: can't calculate initial position for price up %v", pp.symbol.Symbol, priceUp)
+			quantityUp = 0
 		}
 		_, _, _, quantityDown, _, err = pp.CalculateInitialPosition(priceDown, pp.LowBound)
 		if err != nil {
-			err = fmt.Errorf("can't calculate initial position for price down %v", priceDown)
-			return
+			logrus.Errorf("Futures %s: can't calculate initial position for price down %v", pp.symbol.Symbol, priceDown)
+			quantityDown = 0
 		}
 	} else {
 		quantityUp = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceUp)
 		quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceDown)
+	}
+	if quantityUp == 0 && quantityDown == 0 {
+		err = fmt.Errorf("future %s: can't calculate initial position for price up %v and price down %v",
+			pp.symbol.Symbol, priceUp, priceDown)
+		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)

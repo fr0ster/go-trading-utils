@@ -1256,13 +1256,11 @@ func createNextPair_v3(
 		downType = longPositionNewOrderType
 		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
 		if err != nil {
-			printError()
-			return
+			logrus.Errorf("Future %s: can't calculate initial position for price up %v", pairProcessor.GetPair(), LastExecutedPrice)
 		}
 		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
 		if err != nil {
-			printError()
-			return
+			logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
 		}
 	}
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
