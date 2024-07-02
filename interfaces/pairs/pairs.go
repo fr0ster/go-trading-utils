@@ -26,8 +26,10 @@ type (
 		GetLimitOnPosition() float64
 		GetLimitOnTransaction() float64
 
-		GetUpBound() float64
-		GetLowBound() float64
+		GetUpBoundPercent() float64
+		SetUpBoundPercent(float64)
+		GetLowBoundPercent() float64
+		SetLowBoundPercent(float64)
 
 		GetDeltaPrice() float64
 		SetDeltaPrice(float64)

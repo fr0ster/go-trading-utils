@@ -46,7 +46,7 @@ func TestFindCubicRootProgressionNthTerm(t *testing.T) {
 	firstTerm = 2.0
 	secondTerm = 0.125
 	termPosition = 5
-	expectedResult = 0.583265
+	expectedResult = 0.5832645197880584
 	result = progressions.FindCubicRootProgressionNthTerm(firstTerm, secondTerm, termPosition)
 	assert.Equal(t, expectedResult, result)
 

@@ -18,9 +18,11 @@ func getTestData() *btree.BTree {
 		MarginType:         pairs_types.CrossMarginType,
 		Leverage:           20,
 		LimitOnPosition:    1000,
-		LimitOnTransaction: 0.1,
-		DeltaPrice:         0.01,
-		DeltaQuantity:      0.1,
+		LimitOnTransaction: 10,   // LimitOnTransaction 10%
+		UpBound:            10,   // UpBoundPercent 10%
+		LowBound:           10,   // LowBoundPercent 10%
+		DeltaPrice:         1.0,  // DeltaPrice 1%
+		DeltaQuantity:      10.0, // DeltaQuantity 10%
 		Progression:        "GEOMETRIC",
 		Value:              200.0,
 		CallbackRate:       0.1, // CallbackRate 0.1%
@@ -33,9 +35,11 @@ func getTestData() *btree.BTree {
 		MarginType:         pairs_types.CrossMarginType,
 		Leverage:           20,
 		LimitOnPosition:    1000,
-		LimitOnTransaction: 0.1,
-		DeltaPrice:         0.01,
-		DeltaQuantity:      0.1,
+		LimitOnTransaction: 10,   // LimitOnTransaction 10%
+		UpBound:            10,   // UpBoundPercent 10%
+		LowBound:           10,   // LowBoundPercent 10%
+		DeltaPrice:         1.0,  // DeltaPrice 1%
+		DeltaQuantity:      10.0, // DeltaQuantity 10%
 		Progression:        "GEOMETRIC",
 		Value:              200.0,
 		CallbackRate:       0.1, // CallbackRate 0.1%
@@ -77,6 +81,12 @@ func assertPair(
 
 	// Test GetLimitOnTransaction
 	assert.Equal(t, 0.1, pair.GetLimitOnTransaction())
+
+	// Test GetUpBoundPercent
+	assert.Equal(t, 0.1, pair.GetUpBound())
+
+	// Test GetLowBoundPercent
+	assert.Equal(t, 0.1, pair.GetLowBound())
 
 	// Test GetDeltaPrice
 	assert.Equal(t, 0.01, pair.GetDeltaPrice())

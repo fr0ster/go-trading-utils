@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"time"
@@ -29,14 +28,6 @@ func (pp *PairProcessor) Debug(fl, id string) {
 			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}
 	}
-}
-
-func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
-	price, err := pp.client.NewListPricesService().Symbol(pp.symbol.Symbol).Do(context.Background())
-	if err != nil {
-		return 0, err
-	}
-	return utils.ConvStrToFloat64(price[0].Price), nil
 }
 
 func (pp *PairProcessor) GetPrices(

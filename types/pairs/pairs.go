@@ -89,8 +89,8 @@ type (
 		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни
-		LowBound float64 `json:"low_bound"` // Нижня межа ціни
+		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни, най буде відсоток від ціни безубитку позиції
+		LowBound float64 `json:"low_bound"` // Нижня межа ціни, най буде відсоток від ціни безубитку позиції
 		MinSteps int     `json:"min_steps"` // Мінімальна кількість кроків
 
 		DeltaPrice    float64         `json:"delta_price"`    // Дельта для купівлі/продажу
@@ -182,15 +182,15 @@ func (pr *Pairs) GetLimitOnPosition() float64 {
 }
 
 func (pr *Pairs) GetLimitOnTransaction() float64 {
-	return pr.LimitOnTransaction
+	return pr.LimitOnTransaction / 100
 }
 
 func (pr *Pairs) GetUpBound() float64 {
-	return pr.UpBound
+	return pr.UpBound / 100
 }
 
 func (pr *Pairs) GetLowBound() float64 {
-	return pr.LowBound
+	return pr.LowBound / 100
 }
 
 func (pr *Pairs) GetMinSteps() int {
@@ -198,11 +198,11 @@ func (pr *Pairs) GetMinSteps() int {
 }
 
 func (pr *Pairs) GetDeltaPrice() float64 {
-	return pr.DeltaPrice
+	return pr.DeltaPrice / 100
 }
 
 func (pr *Pairs) GetDeltaQuantity() float64 {
-	return pr.DeltaQuantity
+	return pr.DeltaQuantity / 100
 }
 
 func (pr *Pairs) GetProgression() ProgressionType {
@@ -218,15 +218,15 @@ func (pr *Pairs) SetLimitOnPosition(val float64) {
 }
 
 func (pr *Pairs) SetLimitOnTransaction(val float64) {
-	pr.LimitOnTransaction = val
+	pr.LimitOnTransaction = val * 100
 }
 
-func (pr *Pairs) SetUpBound(val float64) {
-	pr.UpBound = val
+func (pr *Pairs) SetUpBoundPercent(val float64) {
+	pr.UpBound = val * 100
 }
 
-func (pr *Pairs) SetLowBound(val float64) {
-	pr.LowBound = val
+func (pr *Pairs) SetLowBoundPercent(val float64) {
+	pr.LowBound = val * 100
 }
 
 func (pr *Pairs) SetMinSteps(val int) {
@@ -234,11 +234,11 @@ func (pr *Pairs) SetMinSteps(val int) {
 }
 
 func (pr *Pairs) SetDeltaPrice(val float64) {
-	pr.DeltaPrice = val
+	pr.DeltaPrice = val * 100
 }
 
 func (pr *Pairs) SetDeltaQuantity(quantity float64) {
-	pr.DeltaQuantity = quantity
+	pr.DeltaQuantity = quantity * 100
 }
 
 func (pr *Pairs) SetProgression(val ProgressionType) {

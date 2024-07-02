@@ -49,15 +49,15 @@ const (
 	SleepingTime_1               = 5                                  // Час сплячки, міллісекунди
 	TakingPositionSleepingTime_1 = 60                                 // Час сплячки при вході в позицію, хвилини
 
-	LimitOnPosition_1    = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_1 = 0.10 // Ліміт на транзакцію, відсоток від ліміту на позицію
+	LimitOnPosition_1    = 1000.0 // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_1 = 10.0   // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UpBound_1  = 80000.0 // Верхня межа
-	LowBound_1 = 40000.0 // Нижня межа
-	MinSteps_1 = 10      // Мінімальна кількість кроків
+	UpBoundPercent_1  = 10.0 // Верхня межа відсоток
+	LowBoundPercent_1 = 20.0 // Нижня межа відсоток
+	MinSteps_1        = 10   // Мінімальна кількість кроків
 
-	DeltaPrice_1    = 0.01  // Дельта для купівлі
-	DeltaQuantity_1 = 0.1   // Дельта для кількості
+	DeltaPrice_1    = 1.0   // Дельта для купівлі
+	DeltaQuantity_1 = 10.0  // Дельта для кількості
 	Value_1         = 100.0 // Вартість для позиції
 
 	CallbackRate_1 = 0.1 // CallbackRate 0.1%
@@ -71,15 +71,15 @@ const (
 	StageType_2    = pairs_types.WorkInPositionStage // Тип стадії
 	Pair_2         = "ETHUSDT"                       // Пара
 
-	LimitOnPosition_2    = 0.50 // Ліміт на позицію, відсоток від балансу базової валюти
-	LimitOnTransaction_2 = 0.01 // Ліміт на транзакцію, відсоток від ліміту на позицію
+	LimitOnPosition_2    = 2000.0 // Ліміт на позицію, відсоток від балансу базової валюти
+	LimitOnTransaction_2 = 1.0    // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UpBound_2  = 14.0 // Верхня межа
-	LowBound_2 = 4.0  // Нижня межа
-	MinSteps_2 = 10   // Мінімальна кількість кроків
+	UpBoundPercent_2  = 10.0 // Верхня межа відсоток
+	LowBoundPercent_2 = 10.0 // Нижня межа відсоток
+	MinSteps_2        = 10   // Мінімальна кількість кроків
 
-	Delta_Price_2   = 0.01  // Дельта для купівлі
-	DeltaQuantity_2 = 0.1   // Дельта для кількості
+	Delta_Price_2   = 1.0   // Дельта для купівлі
+	DeltaQuantity_2 = 10.0  // Дельта для кількості
 	Value_2         = 100.0 // Вартість для позиції
 
 	CallbackRate_2 = 0.5 // CallbackRate 0.5%
@@ -121,8 +121,8 @@ var (
 		Leverage:           Leverage_1,
 		LimitOnPosition:    LimitOnPosition_1,
 		LimitOnTransaction: LimitOnTransaction_1,
-		UpBound:            UpBound_1,
-		LowBound:           LowBound_1,
+		UpBound:            UpBoundPercent_1,
+		LowBound:           LowBoundPercent_1,
 		MinSteps:           MinSteps_1,
 		DeltaPrice:         DeltaPrice_1,
 		DeltaQuantity:      DeltaQuantity_1,
@@ -138,8 +138,8 @@ var (
 		Leverage:           Leverage_2,
 		LimitOnPosition:    LimitOnPosition_2,
 		LimitOnTransaction: LimitOnTransaction_2,
-		UpBound:            UpBound_2,
-		LowBound:           LowBound_2,
+		UpBound:            UpBoundPercent_2,
+		LowBound:           LowBoundPercent_2,
 		MinSteps:           MinSteps_2,
 		DeltaPrice:         Delta_Price_2,
 		DeltaQuantity:      DeltaQuantity_2,
@@ -177,8 +177,8 @@ func getTestData() []byte {
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
 					"limit_on_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_1, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_1, 'f', -1, 64)).String() + `,
-					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_1, 'f', -1, 64)).String() + `,
-					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_1, 'f', -1, 64)).String() + `,
+					"up_bound": ` + json.Number(strconv.FormatFloat(UpBoundPercent_1, 'f', -1, 64)).String() + `,
+					"low_bound": ` + json.Number(strconv.FormatFloat(LowBoundPercent_1, 'f', -1, 64)).String() + `,
 					"min_steps": ` + strconv.Itoa(MinSteps_1) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(DeltaPrice_1, 'f', -1, 64)).String() + `,
 					"delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_1, 'f', -1, 64)).String() + `,
@@ -194,8 +194,8 @@ func getTestData() []byte {
 					"leverage": ` + strconv.Itoa(Leverage_2) + `,
 					"limit_in_position": ` + json.Number(strconv.FormatFloat(LimitOnPosition_2, 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(LimitOnTransaction_2, 'f', -1, 64)).String() + `,
-					"up_bound": ` + json.Number(strconv.FormatFloat(UpBound_2, 'f', -1, 64)).String() + `,
-					"low_bound": ` + json.Number(strconv.FormatFloat(LowBound_2, 'f', -1, 64)).String() + `,
+					"up_bound": ` + json.Number(strconv.FormatFloat(UpBoundPercent_2, 'f', -1, 64)).String() + `,
+					"low_bound": ` + json.Number(strconv.FormatFloat(LowBoundPercent_2, 'f', -1, 64)).String() + `,
 					"min_steps": ` + strconv.Itoa(MinSteps_2) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(Delta_Price_2, 'f', -1, 64)).String() + `,
 					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_2, 'f', -1, 64)).String() + `,
@@ -362,9 +362,9 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, StageType_1, pair.GetStage())
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
-	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
-	assert.Equal(t, UpBound_1, pair.GetUpBound())
-	assert.Equal(t, LowBound_1, pair.GetLowBound())
+	assert.Equal(t, LimitOnTransaction_1/100, pair.GetLimitOnTransaction())
+	assert.Equal(t, UpBoundPercent_1/100, pair.GetUpBound())
+	assert.Equal(t, LowBoundPercent_1/100, pair.GetLowBound())
 	assert.Equal(t, Value_1, pair.GetValue())
 }
 
