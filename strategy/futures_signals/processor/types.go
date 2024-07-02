@@ -48,8 +48,6 @@ type (
 		deltaPrice    float64
 		deltaQuantity float64
 
-		klinesBuffer []float64 // Буфер для зберігання цін KLines
-
 		progression             pairs_types.ProgressionType
 		GetDelta                progressions.DeltaType
 		NthTerm                 progressions.NthTermType
