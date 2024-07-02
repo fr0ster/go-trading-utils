@@ -37,7 +37,9 @@ type (
 		timeOut            time.Duration
 		limitOnPosition    float64
 		limitOnTransaction float64
+		UpBoundPercent     float64
 		UpBound            float64
+		LowBoundPercent    float64
 		LowBound           float64
 		leverage           int
 		marginType         pairs_types.MarginType

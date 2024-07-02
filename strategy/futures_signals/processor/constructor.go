@@ -33,10 +33,6 @@ func NewPairProcessor(
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
 	stop chan struct{}) (pp *PairProcessor, err error) {
-	currentPrice, err := pp.GetCurrentPrice()
-	if err != nil {
-		return
-	}
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
@@ -62,8 +58,10 @@ func NewPairProcessor(
 		timeOut:            1 * time.Hour,
 		limitOnPosition:    limitOnPosition,
 		limitOnTransaction: limitOnTransaction,
-		UpBound:            currentPrice * (1 + UpBound),
-		LowBound:           currentPrice * (1 - LowBound),
+		UpBoundPercent:     UpBound,
+		UpBound:            0,
+		LowBoundPercent:    LowBound,
+		LowBound:           0,
 		leverage:           leverage,
 		callbackRate:       callbackRate,
 
@@ -72,6 +70,11 @@ func NewPairProcessor(
 
 		progression: progression,
 	}
+	currentPrice, err := pp.GetCurrentPrice()
+	if err != nil {
+		return
+	}
+	pp.SetBounds(currentPrice)
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
