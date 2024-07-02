@@ -1254,8 +1254,16 @@ func createNextPair_v3(
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upType = shortPositionNewOrderType
 		downType = longPositionNewOrderType
-		_, _, _, upQuantity, _, _ = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
-		_, _, _, downQuantity, _, _ = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
+		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
+		if err != nil {
+			printError()
+			return
+		}
+		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
+		if err != nil {
+			printError()
+			return
+		}
 	}
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
 	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
