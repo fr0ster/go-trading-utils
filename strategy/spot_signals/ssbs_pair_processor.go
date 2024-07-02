@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
@@ -35,7 +34,7 @@ type (
 	PairProcessor struct {
 		client        *binance.Client
 		exchangeInfo  *exchange_types.ExchangeInfo
-		symbol        *futures.Symbol
+		symbol        *binance.Symbol
 		baseSymbol    string
 		targetSymbol  string
 		notional      float64
@@ -555,13 +554,13 @@ func NewPairProcessor(
 	}
 
 	// Буферизуємо інформацію про символ
-	pp.symbol, err = pp.GetSymbol().GetFuturesSymbol()
+	pp.symbol, err = pp.GetSymbol().GetSpotSymbol()
 	if err != nil {
 		return
 	}
 	pp.baseSymbol = pp.symbol.QuoteAsset
 	pp.targetSymbol = pp.symbol.BaseAsset
-	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
+	pp.notional = utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MinNotional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
 
 	// Перевіряємо ліміти на ордери та запити
