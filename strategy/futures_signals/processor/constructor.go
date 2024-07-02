@@ -70,11 +70,6 @@ func NewPairProcessor(
 
 		progression: progression,
 	}
-	currentPrice, err := pp.GetCurrentPrice()
-	if err != nil {
-		return
-	}
-	pp.SetBounds(currentPrice)
 
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
@@ -95,6 +90,12 @@ func NewPairProcessor(
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
 	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+
+	currentPrice, err := pp.GetCurrentPrice()
+	if err != nil {
+		return
+	}
+	pp.SetBounds(currentPrice)
 
 	if pp.progression == pairs_types.ArithmeticProgression {
 		pp.NthTerm = progressions.ArithmeticProgressionNthTerm
