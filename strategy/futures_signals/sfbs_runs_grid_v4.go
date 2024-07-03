@@ -18,13 +18,9 @@ import (
 )
 
 func getCallBack_v4(
-	price float64,
 	pairProcessor *processor.PairProcessor,
 	maintainedOrders *btree.BTree,
 	quit chan struct{}) func(*futures.WsUserDataEvent) {
-	var (
-		oldPrice float64 = price
-	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
@@ -51,8 +47,7 @@ func getCallBack_v4(
 				marginBalancing(risk, pairProcessor)
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
-				oldPrice, err = createNextPair_v4(
-					oldPrice,
+				err = createNextPair_v4(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
 					pairProcessor)
 				if err != nil {
@@ -67,9 +62,9 @@ func getCallBack_v4(
 }
 
 func createNextPair_v4(
-	oldPrice float64,
+	// oldPrice float64,
 	LastExecutedPrice float64,
-	pairProcessor *processor.PairProcessor) (oldPriceOut float64, err error) {
+	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk              *futures.PositionRisk
 		upPrice           float64
@@ -84,23 +79,26 @@ func createNextPair_v4(
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * LastExecutedPrice / float64(pairProcessor.GetLeverage())
-	oldPriceOut = LastExecutedPrice
+	price := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+	if price == 0 {
+		price = utils.ConvStrToFloat64(risk.EntryPrice)
+	}
 	if positionVal < 0 {
 		if positionVal >= -free {
-			upPrice = pairProcessor.NextPriceUp(oldPrice)
+			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
-		downPrice = oldPrice
+		downPrice = pairProcessor.NextPriceDown(price)
 		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = false
 		downReduceOnly = true
 	} else if positionVal > 0 {
-		upPrice = oldPrice
+		upPrice = pairProcessor.NextPriceUp(price)
 		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		if positionVal <= free {
-			downPrice = pairProcessor.NextPriceDown(oldPrice)
+			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		}
 		upClosePosition = false
@@ -206,7 +204,6 @@ func RunFuturesGridTradingV4(
 	_, err = pairProcessor.UserDataEventStart(
 		quit,
 		getCallBack_v4(
-			price,            // oldPrice
 			pairProcessor,    // pairProcessor
 			maintainedOrders, // maintainedOrders
 			quit))            // quit
