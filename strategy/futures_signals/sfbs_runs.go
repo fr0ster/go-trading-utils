@@ -209,14 +209,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetCallbackRate(),       // callbackRate
-				futures.SideTypeSell,         // upOrderSideOpen
-				futures.OrderTypeLimit,       // upPositionNewOrderType
-				futures.SideTypeBuy,          // downOrderSideOpen
-				futures.OrderTypeLimit,       // upPositionNewOrderType
-				futures.OrderTypeTakeProfit,  // shortPositionIncOrderType
-				futures.OrderTypeTakeProfit,  // shortPositionDecOrderType
-				futures.OrderTypeTakeProfit,  // longPositionIncOrderType
-				futures.OrderTypeTakeProfit,  // longPositionDecOrderType
 				pair.GetProgression(),        // progression
 				quit,                         // quit
 				wg)                           // wg

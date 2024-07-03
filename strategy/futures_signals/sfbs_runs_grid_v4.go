@@ -19,12 +19,6 @@ import (
 
 func getCallBack_v4(
 	pairProcessor *processor.PairProcessor,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
 	maintainedOrders *btree.BTree,
 	quit chan struct{}) func(*futures.WsUserDataEvent) {
 	var (
@@ -59,12 +53,6 @@ func getCallBack_v4(
 				oldPrice, err = createNextPair_v4(
 					oldPrice,
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
-					shortPositionNewOrderType,
-					shortPositionIncOrderType,
-					shortPositionDecOrderType,
-					longPositionNewOrderType,
-					longPositionIncOrderType,
-					longPositionDecOrderType,
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
@@ -80,12 +68,6 @@ func getCallBack_v4(
 func createNextPair_v4(
 	oldPrice float64,
 	LastExecutedPrice float64,
-	shortPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionNewOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
 	pairProcessor *processor.PairProcessor) (oldPriceOut float64, err error) {
 	var (
 		risk              *futures.PositionRisk
@@ -93,8 +75,6 @@ func createNextPair_v4(
 		downPrice         float64
 		upQuantity        float64
 		downQuantity      float64
-		upType            futures.OrderType
-		downType          futures.OrderType
 		upClosePosition   bool
 		downClosePosition bool
 		upReduceOnly      bool
@@ -111,8 +91,6 @@ func createNextPair_v4(
 		}
 		downPrice = oldPrice
 		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
-		upType = shortPositionIncOrderType
-		downType = shortPositionDecOrderType
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = false
@@ -124,8 +102,6 @@ func createNextPair_v4(
 			downPrice = pairProcessor.NextPriceDown(oldPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		}
-		upType = longPositionDecOrderType
-		downType = longPositionIncOrderType
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = true
@@ -135,8 +111,6 @@ func createNextPair_v4(
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
-		upType = shortPositionNewOrderType
-		downType = longPositionNewOrderType
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = false
@@ -145,23 +119,23 @@ func createNextPair_v4(
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
 	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
 	_, _, err = openPosition(
-		futures.SideTypeSell, // sideUp
-		upType,               // typeUp
-		futures.SideTypeBuy,  // sideDown
-		downType,             // typeDown
-		upClosePosition,      // closePositionUp
-		upReduceOnly,         // reduceOnlyUp
-		downClosePosition,    // closePositionDown
-		downReduceOnly,       // reduceOnlyDown
-		upQuantity,           // quantityUp
-		downQuantity,         // quantityDown
-		upPrice,              // priceUp
-		upPrice,              // stopPriceUp
-		upPrice,              // activationPriceUp
-		downPrice,            // priceDown
-		downPrice,            // stopPriceDown
-		downPrice,            // activationPriceDown
-		pairProcessor)        // pairProcessor
+		futures.SideTypeSell,   // sideUp
+		futures.OrderTypeLimit, // typeUp
+		futures.SideTypeBuy,    // sideDown
+		futures.OrderTypeLimit, // typeDown
+		upClosePosition,        // closePositionUp
+		upReduceOnly,           // reduceOnlyUp
+		downClosePosition,      // closePositionDown
+		downReduceOnly,         // reduceOnlyDown
+		upQuantity,             // quantityUp
+		downQuantity,           // quantityDown
+		upPrice,                // priceUp
+		upPrice,                // stopPriceUp
+		upPrice,                // activationPriceUp
+		downPrice,              // priceDown
+		downPrice,              // stopPriceDown
+		downPrice,              // activationPriceDown
+		pairProcessor)          // pairProcessor
 	if err != nil {
 		printError()
 		return
@@ -182,14 +156,6 @@ func RunFuturesGridTradingV4(
 	leverage int,
 	minSteps int,
 	callbackRate float64,
-	upOrderSideOpen futures.SideType,
-	upPositionNewOrderType futures.OrderType,
-	downOrderSideOpen futures.SideType,
-	downPositionNewOrderType futures.OrderType,
-	shortPositionIncOrderType futures.OrderType,
-	shortPositionDecOrderType futures.OrderType,
-	longPositionIncOrderType futures.OrderType,
-	longPositionDecOrderType futures.OrderType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
@@ -234,21 +200,13 @@ func RunFuturesGridTradingV4(
 	_, err = pairProcessor.UserDataEventStart(
 		quit,
 		getCallBack_v4(
-			pairProcessor,             // pairProcessor
-			upPositionNewOrderType,    // shortPositionNewOrderType,
-			shortPositionIncOrderType, // shortPositionIncOrderType,
-			shortPositionDecOrderType, // shortPositionDecOrderType,
-			downPositionNewOrderType,  // longPositionNewOrderType,
-			longPositionIncOrderType,  // longPositionIncOrderType,
-			longPositionDecOrderType,  // longPositionDecOrderType,
-			maintainedOrders,          // maintainedOrders
-			quit))                     // quit
+			pairProcessor,    // pairProcessor
+			maintainedOrders, // maintainedOrders
+			quit))            // quit
 	if err != nil {
 		printError()
 		return err
 	}
-	upNewOrder := upPositionNewOrderType
-	downNewOrder := downPositionNewOrderType
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
@@ -282,23 +240,23 @@ func RunFuturesGridTradingV4(
 						}
 						// Створюємо початкові ордери на продаж та купівлю
 						_, _, err = openPosition(
-							upOrderSideOpen,   // sideUp
-							upNewOrder,        // typeUp
-							downOrderSideOpen, // sideDown
-							downNewOrder,      // typeDown
-							false,             // closePositionUp
-							false,             // reduceOnlyUp
-							false,             // closePositionDown
-							false,             // reduceOnlyDown
-							quantityUp,        // quantityUp
-							quantityDown,      // quantityDown
-							initPriceUp,       // priceUp
-							initPriceUp,       // stopPriceUp
-							initPriceUp,       // activationPriceUp
-							initPriceDown,     // priceDown
-							initPriceDown,     // stopPriceDown
-							initPriceDown,     // activationPriceDown
-							pairProcessor)     // pairProcessor
+							futures.SideTypeSell,   // sideUp
+							futures.OrderTypeLimit, // typeUp
+							futures.SideTypeBuy,    // sideDown
+							futures.OrderTypeLimit, // typeDown
+							false,                  // closePositionUp
+							false,                  // reduceOnlyUp
+							false,                  // closePositionDown
+							false,                  // reduceOnlyDown
+							quantityUp,             // quantityUp
+							quantityDown,           // quantityDown
+							initPriceUp,            // priceUp
+							initPriceUp,            // stopPriceUp
+							initPriceUp,            // activationPriceUp
+							initPriceDown,          // priceDown
+							initPriceDown,          // stopPriceDown
+							initPriceDown,          // activationPriceDown
+							pairProcessor)          // pairProcessor
 						if err != nil {
 							printError()
 							close(quit)
@@ -327,23 +285,23 @@ func RunFuturesGridTradingV4(
 	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		upOrderSideOpen,   // sideUp
-		upNewOrder,        // typeUp
-		downOrderSideOpen, // sideDown
-		downNewOrder,      // typeDown
-		false,             // closePositionUp
-		false,             // reduceOnlyUp
-		false,             // closePositionDown
-		false,             // reduceOnlyDown
-		quantityUp,        // quantityUp
-		quantityDown,      // quantityDown
-		initPriceUp,       // priceUp
-		initPriceUp,       // stopPriceUp
-		initPriceUp,       // activationPriceUp
-		initPriceDown,     // priceDown
-		initPriceDown,     // stopPriceDown
-		initPriceDown,     // activationPriceDown
-		pairProcessor)     // pairProcessor
+		futures.SideTypeSell,   // sideUp
+		futures.OrderTypeLimit, // typeUp
+		futures.SideTypeBuy,    // sideDown
+		futures.OrderTypeLimit, // typeDown
+		false,                  // closePositionUp
+		false,                  // reduceOnlyUp
+		false,                  // closePositionDown
+		false,                  // reduceOnlyDown
+		quantityUp,             // quantityUp
+		quantityDown,           // quantityDown
+		initPriceUp,            // priceUp
+		initPriceUp,            // stopPriceUp
+		initPriceUp,            // activationPriceUp
+		initPriceDown,          // priceDown
+		initPriceDown,          // stopPriceDown
+		initPriceDown,          // activationPriceDown
+		pairProcessor)          // pairProcessor
 	if err != nil {
 		return err
 	}
