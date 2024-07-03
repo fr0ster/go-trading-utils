@@ -160,12 +160,14 @@ func RunFuturesGridTradingV4(
 	wg *sync.WaitGroup,
 	timeout ...time.Duration) (err error) {
 	var (
-		initPriceUp   float64
-		initPriceDown float64
-		quantityUp    float64
-		quantityDown  float64
-		pairProcessor *processor.PairProcessor
-		timeOut       time.Duration = 5000
+		initPriceUp    float64
+		initPriceDown  float64
+		quantityUp     float64
+		quantityDown   float64
+		reduceOnlyUp   bool
+		reduceOnlyDown bool
+		pairProcessor  *processor.PairProcessor
+		timeOut        time.Duration = 5000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -236,7 +238,7 @@ func RunFuturesGridTradingV4(
 							math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 							pairProcessor.ClosePosition(risk)
 						}
-						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(currentPrice, risk, false)
+						initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(currentPrice, risk, false)
 						if err != nil {
 							printError()
 							close(quit)
@@ -249,9 +251,9 @@ func RunFuturesGridTradingV4(
 							futures.SideTypeBuy,    // sideDown
 							futures.OrderTypeLimit, // typeDown
 							false,                  // closePositionUp
-							false,                  // reduceOnlyUp
+							reduceOnlyUp,           // reduceOnlyUp
 							false,                  // closePositionDown
-							false,                  // reduceOnlyDown
+							reduceOnlyDown,         // reduceOnlyDown
 							quantityUp,             // quantityUp
 							quantityDown,           // quantityDown
 							initPriceUp,            // priceUp
@@ -276,7 +278,7 @@ func RunFuturesGridTradingV4(
 		printError()
 		return err
 	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, false)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(price, risk, false)
 	if err != nil {
 		printError()
 		close(quit)
@@ -289,9 +291,9 @@ func RunFuturesGridTradingV4(
 		futures.SideTypeBuy,    // sideDown
 		futures.OrderTypeLimit, // typeDown
 		false,                  // closePositionUp
-		false,                  // reduceOnlyUp
+		reduceOnlyUp,           // reduceOnlyUp
 		false,                  // closePositionDown
-		false,                  // reduceOnlyDown
+		reduceOnlyDown,         // reduceOnlyDown
 		quantityUp,             // quantityUp
 		quantityDown,           // quantityDown
 		initPriceUp,            // priceUp

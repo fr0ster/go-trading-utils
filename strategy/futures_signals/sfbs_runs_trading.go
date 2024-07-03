@@ -76,9 +76,9 @@ func getCallBackTrading(
 					sideDown,
 					typeDown,
 					false,
+					true,
 					false,
-					false,
-					false,
+					true,
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					priceUp,
@@ -229,7 +229,7 @@ func RunFuturesTrading(
 	upNewOrder := upPositionNewOrderType
 	downNewSide := downOrderSideOpen
 	downNewOrder := downPositionNewOrderType
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, _, _, err = pairProcessor.GetPrices(price, risk, true)
 	if err != nil {
 		return err
 	}

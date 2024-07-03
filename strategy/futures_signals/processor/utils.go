@@ -38,9 +38,13 @@ func (pp *PairProcessor) GetPrices(
 	quantityUp,
 	priceDown,
 	quantityDown float64,
+	reduceOnlyUp bool,
+	reduceOnlyDown bool,
 	err error) {
 	priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 	priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+	reduceOnlyUp = false
+	reduceOnlyDown = false
 	if isDynamic {
 		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(priceUp, pp.UpBound)
 		if err != nil {
@@ -66,12 +70,18 @@ func (pp *PairProcessor) GetPrices(
 		if positionPrice == 0 {
 			positionPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 		}
-		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
+		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown(math.Min(positionPrice, price))
-			quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
-		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
+			if math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
+				quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
+				reduceOnlyDown = true
+			}
+		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
-			quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+			if math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
+				quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
+				reduceOnlyUp = true
+			}
 		}
 	}
 	return

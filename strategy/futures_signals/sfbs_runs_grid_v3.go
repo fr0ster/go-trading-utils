@@ -70,13 +70,11 @@ func createNextPair_v3(
 	LastExecutedSide futures.SideType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
-		risk         *futures.PositionRisk
-		upPrice      float64
-		downPrice    float64
-		upQuantity   float64
-		downQuantity float64
-		// upType            futures.OrderType
-		// downType          futures.OrderType
+		risk              *futures.PositionRisk
+		upPrice           float64
+		downPrice         float64
+		upQuantity        float64
+		downQuantity      float64
 		upClosePosition   bool
 		downClosePosition bool
 		upReduceOnly      bool
@@ -273,12 +271,14 @@ func RunFuturesGridTradingV3(
 	wg *sync.WaitGroup,
 	timeout ...time.Duration) (err error) {
 	var (
-		initPriceUp   float64
-		initPriceDown float64
-		quantityUp    float64
-		quantityDown  float64
-		pairProcessor *processor.PairProcessor
-		timeOut       time.Duration = 5000
+		initPriceUp    float64
+		initPriceDown  float64
+		quantityUp     float64
+		quantityDown   float64
+		reduceOnlyUp   bool
+		reduceOnlyDown bool
+		pairProcessor  *processor.PairProcessor
+		timeOut        time.Duration = 5000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -346,7 +346,7 @@ func RunFuturesGridTradingV3(
 							math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 							pairProcessor.ClosePosition(risk)
 						}
-						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(currentPrice, risk, true)
+						initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(currentPrice, risk, true)
 						if err != nil {
 							printError()
 							close(quit)
@@ -359,9 +359,9 @@ func RunFuturesGridTradingV3(
 							futures.SideTypeBuy,    // sideDown
 							futures.OrderTypeLimit, // typeDown
 							false,                  // closePositionUp
-							false,                  // reduceOnlyUp
+							reduceOnlyUp,           // reduceOnlyUp
 							false,                  // closePositionDown
-							false,                  // reduceOnlyDown
+							reduceOnlyDown,         // reduceOnlyDown
 							quantityUp,             // quantityUp
 							quantityDown,           // quantityDown
 							initPriceUp,            // priceUp
@@ -392,7 +392,7 @@ func RunFuturesGridTradingV3(
 		printError()
 		return err
 	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+	initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(price, risk, true)
 	if err != nil {
 		return err
 	}
