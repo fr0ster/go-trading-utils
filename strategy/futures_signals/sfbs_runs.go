@@ -1491,10 +1491,16 @@ func RunFuturesGridTradingV3(
 						}
 					}
 				} else if len(openOrders) > 2 {
-					logrus.Errorf("Futures %s: Too many open orders", pairProcessor.GetPair())
-					printError()
-					close(quit)
-					return
+					logrus.Debugf("Futures %s: Too many open orders", pairProcessor.GetPair())
+					for _, order := range openOrders {
+						logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
+							pairProcessor.GetPair(),
+							order.OrderID,
+							order.Price,
+							order.OrigQuantity,
+							order.Side,
+							order.Status)
+					}
 				}
 			}
 		}
