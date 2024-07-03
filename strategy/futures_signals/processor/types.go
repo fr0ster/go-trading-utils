@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	errorMsg = "Error: %v"
+	errorMsg    = "Error: %v"
+	repeatTimes = 3
 )
 
 type (

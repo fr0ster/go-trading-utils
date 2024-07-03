@@ -56,6 +56,7 @@ func (pp *PairProcessor) createOrder(
 	timeInForce futures.TimeInForceType,
 	quantity float64,
 	closePosition bool,
+	reduceOnly bool,
 	price float64,
 	stopPrice float64,
 	activationPrice float64,
@@ -90,6 +91,9 @@ func (pp *PairProcessor) createOrder(
 			Symbol(string(futures.SymbolType(pp.symbol.Symbol))).
 			Type(orderType).
 			Side(sideType)
+	if reduceOnly && !closePosition {
+		service = service.ReduceOnly(reduceOnly)
+	}
 	// Additional mandatory parameters based on type:
 	// Type	Additional mandatory parameters
 	if orderType == futures.OrderTypeMarket {
@@ -174,7 +178,19 @@ func (pp *PairProcessor) createOrder(
 			// На наступних кодах помилок можна спробувати ще раз
 		} else if apiError.Code == -1008 || apiError.Code == -5028 {
 			time.Sleep(3 * time.Second)
-			return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, activationPrice, callbackRate, times-1, err)
+			return pp.createOrder(
+				orderType,
+				sideType,
+				timeInForce,
+				quantity,
+				closePosition,
+				reduceOnly,
+				price,
+				stopPrice,
+				activationPrice,
+				callbackRate,
+				times-1,
+				err)
 		}
 		return
 	}
@@ -186,12 +202,24 @@ func (pp *PairProcessor) CreateOrder(
 	timeInForce futures.TimeInForceType,
 	quantity float64,
 	closePosition bool,
+	reduceOnly bool,
 	price float64,
 	stopPrice float64,
 	activationPrice float64,
 	callbackRate float64) (
 	order *futures.CreateOrderResponse, err error) {
-	return pp.createOrder(orderType, sideType, timeInForce, quantity, closePosition, price, stopPrice, activationPrice, callbackRate, 3)
+	return pp.createOrder(
+		orderType,
+		sideType,
+		timeInForce,
+		quantity,
+		closePosition,
+		reduceOnly,
+		price,
+		stopPrice,
+		activationPrice,
+		callbackRate,
+		repeatTimes)
 }
 
 func (pp *PairProcessor) GetOpenOrders() (orders []*futures.Order, err error) {

@@ -134,6 +134,10 @@ func getCallBackTrading(
 					typeUp,
 					sideDown,
 					typeDown,
+					false,
+					false,
+					false,
+					false,
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					priceUp,
@@ -189,6 +193,10 @@ func getCallBackTrading(
 					upPositionNewOrderType,
 					downOrderSideOpen,
 					downPositionNewOrderType,
+					false,
+					false,
+					false,
+					false,
 					quantity,
 					quantity,
 					pairProcessor.NextPriceUp(currentPrice),
@@ -330,6 +338,10 @@ func RunFuturesTrading(
 		upNewOrder,
 		downNewSide,
 		downNewOrder,
+		false,
+		false,
+		false,
+		false,
 		quantityUp,
 		quantityDown,
 		initPriceUp,
@@ -397,6 +409,7 @@ func processOrder(
 					futures.TimeInForceTypeGTC,
 					quantity,
 					false,
+					false,
 					upPrice,
 					upPrice,
 					0,
@@ -436,6 +449,7 @@ func processOrder(
 				futures.SideTypeBuy,
 				futures.TimeInForceTypeGTC,
 				quantity,
+				false,
 				false,
 				order.GetDownPrice(),
 				order.GetDownPrice(),
@@ -487,6 +501,7 @@ func processOrder(
 					futures.TimeInForceTypeGTC,
 					quantity,
 					false,
+					false,
 					downPrice,
 					downPrice,
 					0,
@@ -530,6 +545,7 @@ func processOrder(
 				futures.SideTypeSell,
 				futures.TimeInForceTypeGTC,
 				quantity,
+				false,
 				false,
 				order.GetUpPrice(),
 				order.GetUpPrice(),
@@ -596,6 +612,10 @@ func openPosition(
 	orderTypeUp futures.OrderType,
 	sideDown futures.SideType,
 	orderTypeDown futures.OrderType,
+	closePositionUp bool,
+	reduceOnlyUp bool,
+	closePositionDown bool,
+	reduceOnlyDown bool,
 	quantityUp float64,
 	quantityDown float64,
 	priceUp float64,
@@ -617,7 +637,8 @@ func openPosition(
 			sideUp,
 			futures.TimeInForceTypeGTC,
 			quantityUp,
-			false,
+			closePositionUp,
+			reduceOnlyUp,
 			priceUp,
 			stopPriceUp,
 			activationPriceUp,
@@ -638,7 +659,8 @@ func openPosition(
 			sideDown,
 			futures.TimeInForceTypeGTC,
 			quantityDown,
-			false,
+			closePositionDown,
+			reduceOnlyDown,
 			priceDown,
 			stopPriceDown,
 			activationPriceDown,
@@ -843,6 +865,10 @@ func RunFuturesGridTrading(
 		futures.OrderTypeLimit, // typeUp
 		futures.SideTypeBuy,    // sideDown
 		futures.OrderTypeLimit, // typeDown
+		false,                  // closePositionUp
+		false,                  // reduceOnlyUp
+		false,                  // closePositionDown
+		false,                  // reduceOnlyDown
 		quantityUp,             // quantityUp
 		quantityDown,           // quantityDown
 		initPriceUp,            // priceUp
@@ -1023,6 +1049,10 @@ func RunFuturesGridTradingV2(
 		futures.OrderTypeLimit, // typeUp
 		futures.SideTypeBuy,    // sideDown
 		futures.OrderTypeLimit, // typeDown
+		false,                  // closePositionUp
+		false,                  // reduceOnlyUp
+		false,                  // closePositionDown
+		false,                  // reduceOnlyDown
 		quantityUp,             // quantityUp
 		quantityDown,           // quantityDown
 		initPriceUp,            // priceUp
@@ -1114,13 +1144,17 @@ func createNextPair_v3(
 	longPositionDecOrderType futures.OrderType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
-		risk         *futures.PositionRisk
-		upPrice      float64
-		downPrice    float64
-		upQuantity   float64
-		downQuantity float64
-		upType       futures.OrderType
-		downType     futures.OrderType
+		risk              *futures.PositionRisk
+		upPrice           float64
+		downPrice         float64
+		upQuantity        float64
+		downQuantity      float64
+		upType            futures.OrderType
+		downType          futures.OrderType
+		upClosePosition   bool
+		downClosePosition bool
+		upReduceOnly      bool
+		downReduceOnly    bool
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
@@ -1174,7 +1208,7 @@ func createNextPair_v3(
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
 			upType = shortPositionIncOrderType
 			downType = shortPositionDecOrderType
-			upPrice = math.Max(upPrice, pairProcessor.NextPriceUp(currentPrice))
+			// upPrice = math.Max(upPrice, pairProcessor.NextPriceUp(currentPrice))
 			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		} else {
@@ -1186,6 +1220,11 @@ func createNextPair_v3(
 			upQuantity = 0
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
+		// Позиція short, не закриваємо обов'язково повністю ордером на купівлю але скорочуемо
+		upClosePosition = false
+		upReduceOnly = false
+		downClosePosition = false
+		downReduceOnly = true
 	} else if positionVal > 0 { // Маємо позицію long
 		if positionVal <= free {
 			// Виконаний ордер був на купівлю, тобто збільшив позицію long
@@ -1233,7 +1272,7 @@ func createNextPair_v3(
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
 			// Створюємо ордер на купівлю, тобто збільшуємо позицію long
 			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-			downPrice = math.Min(downPrice, pairProcessor.NextPriceDown(currentPrice))
+			// downPrice = math.Min(downPrice, pairProcessor.NextPriceDown(currentPrice))
 			upType = longPositionDecOrderType
 			downType = longPositionIncOrderType
 			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
@@ -1246,6 +1285,11 @@ func createNextPair_v3(
 			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 			downQuantity = 0
 		}
+		// Позиція long, не закриваємо обов'язково повністю ордером на продаж але скорочуемо
+		upClosePosition = false
+		upReduceOnly = true
+		downClosePosition = false
+		downReduceOnly = false
 	} else { // Немає позиції, відкриваємо нову
 		// Відкриваємо нову позицію
 		// Визначаємо ціну для нових ордерів
@@ -1264,6 +1308,11 @@ func createNextPair_v3(
 		if err != nil {
 			logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
 		}
+		// Тіко відкриваємо позицію, не закриваємо та не скорочуемо
+		upClosePosition = false
+		upReduceOnly = false
+		downClosePosition = false
+		downReduceOnly = false
 	}
 	// Створюємо ордер на продаж, тобто скорочуємо позицію long
 	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
@@ -1272,6 +1321,10 @@ func createNextPair_v3(
 		upType,               // typeUp
 		futures.SideTypeBuy,  // sideDown
 		downType,             // typeDown
+		upClosePosition,      // closePositionUp
+		upReduceOnly,         // reduceOnlyUp
+		downClosePosition,    // closePositionDown
+		downReduceOnly,       // reduceOnlyDown
 		upQuantity,           // quantityUp
 		downQuantity,         // quantityDown
 		upPrice,              // priceUp
@@ -1405,6 +1458,10 @@ func RunFuturesGridTradingV3(
 						upNewOrder,           // typeUp
 						futures.SideTypeBuy,  // sideDown
 						downNewOrder,         // typeDown
+						false,                // closePositionUp
+						false,                // reduceOnlyUp
+						false,                // closePositionDown
+						false,                // reduceOnlyDown
 						quantityUp,           // quantityUp
 						quantityDown,         // quantityDown
 						initPriceUp,          // priceUp
@@ -1448,6 +1505,10 @@ func RunFuturesGridTradingV3(
 		upNewOrder,           // typeUp
 		futures.SideTypeBuy,  // sideDown
 		downNewOrder,         // typeDown
+		false,                // closePositionUp
+		false,                // reduceOnlyUp
+		false,                // closePositionDown
+		false,                // reduceOnlyDown
 		quantityUp,           // quantityUp
 		quantityDown,         // quantityDown
 		initPriceUp,          // priceUp
