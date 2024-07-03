@@ -1443,44 +1443,7 @@ func RunFuturesGridTradingV3(
 				return
 			case <-time.After(timeOut * time.Millisecond):
 				openOrders, _ := pairProcessor.GetOpenOrders()
-				if len(openOrders) == 0 {
-					currentPrice, err := pairProcessor.GetCurrentPrice()
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
-					initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
-					pairProcessor.SetBounds(currentPrice)
-					_, _, err = openPosition(
-						futures.SideTypeSell, // sideUp
-						upNewOrder,           // typeUp
-						futures.SideTypeBuy,  // sideDown
-						downNewOrder,         // typeDown
-						false,                // closePositionUp
-						false,                // reduceOnlyUp
-						false,                // closePositionDown
-						false,                // reduceOnlyDown
-						quantityUp,           // quantityUp
-						quantityDown,         // quantityDown
-						initPriceUp,          // priceUp
-						initPriceUp,          // stopPriceUp
-						initPriceUp,          // activationPriceUp
-						initPriceDown,        // priceDown
-						initPriceDown,        // stopPriceDown
-						initPriceDown,        // activationPriceDown
-						pairProcessor)        // pairProcessor
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
-				} else if len(openOrders) == 1 {
+				if len(openOrders) == 1 {
 					risk, _ := pairProcessor.GetPositionRisk()
 					if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 						currentPrice, err := pairProcessor.GetCurrentPrice()
@@ -1493,17 +1456,36 @@ func RunFuturesGridTradingV3(
 							(utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice > pairProcessor.GetUpBound()) {
 							pairProcessor.ClosePosition(risk)
 						}
-					}
-				} else if len(openOrders) > 2 {
-					logrus.Debugf("Futures %s: Too many open orders", pairProcessor.GetPair())
-					for _, order := range openOrders {
-						logrus.Debugf("Futures %s: Order %v on price %v with quantity %v side %v status %s",
-							pairProcessor.GetPair(),
-							order.OrderID,
-							order.Price,
-							order.OrigQuantity,
-							order.Side,
-							order.Status)
+						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+						if err != nil {
+							printError()
+							close(quit)
+							return
+						}
+						// Створюємо початкові ордери на продаж та купівлю
+						_, _, err = openPosition(
+							upOrderSideOpen,   // sideUp
+							upNewOrder,        // typeUp
+							downOrderSideOpen, // sideDown
+							downNewOrder,      // typeDown
+							false,             // closePositionUp
+							false,             // reduceOnlyUp
+							false,             // closePositionDown
+							false,             // reduceOnlyDown
+							quantityUp,        // quantityUp
+							quantityDown,      // quantityDown
+							initPriceUp,       // priceUp
+							initPriceUp,       // stopPriceUp
+							initPriceUp,       // activationPriceUp
+							initPriceDown,     // priceDown
+							initPriceDown,     // stopPriceDown
+							initPriceDown,     // activationPriceDown
+							pairProcessor)     // pairProcessor
+						if err != nil {
+							printError()
+							close(quit)
+							return
+						}
 					}
 				}
 			}
@@ -1511,23 +1493,23 @@ func RunFuturesGridTradingV3(
 	}()
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
-		futures.SideTypeSell, // sideUp
-		upNewOrder,           // typeUp
-		futures.SideTypeBuy,  // sideDown
-		downNewOrder,         // typeDown
-		false,                // closePositionUp
-		false,                // reduceOnlyUp
-		false,                // closePositionDown
-		false,                // reduceOnlyDown
-		quantityUp,           // quantityUp
-		quantityDown,         // quantityDown
-		initPriceUp,          // priceUp
-		initPriceUp,          // stopPriceUp
-		initPriceUp,          // activationPriceUp
-		initPriceDown,        // priceDown
-		initPriceDown,        // stopPriceDown
-		initPriceDown,        // activationPriceDown
-		pairProcessor)        // pairProcessor
+		upOrderSideOpen,   // sideUp
+		upNewOrder,        // typeUp
+		downOrderSideOpen, // sideDown
+		downNewOrder,      // typeDown
+		false,             // closePositionUp
+		false,             // reduceOnlyUp
+		false,             // closePositionDown
+		false,             // reduceOnlyDown
+		quantityUp,        // quantityUp
+		quantityDown,      // quantityDown
+		initPriceUp,       // priceUp
+		initPriceUp,       // stopPriceUp
+		initPriceUp,       // activationPriceUp
+		initPriceDown,     // priceDown
+		initPriceDown,     // stopPriceDown
+		initPriceDown,     // activationPriceDown
+		pairProcessor)     // pairProcessor
 	if err != nil {
 		return err
 	}
