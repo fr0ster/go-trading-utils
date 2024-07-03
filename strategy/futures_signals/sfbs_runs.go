@@ -1156,6 +1156,16 @@ func createNextPair_v3(
 		upReduceOnly      bool
 		downReduceOnly    bool
 	)
+	riskBreakEvenPriceOrEntryPrice := func(risk *futures.PositionRisk) float64 {
+		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
+		entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
+		if breakEvenPrice != 0 {
+			return breakEvenPrice
+		} else if entryPrice != 0 {
+			return entryPrice
+		}
+		return 0
+	}
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 	currentPrice, _ := pairProcessor.GetCurrentPrice()
@@ -1193,7 +1203,7 @@ func createNextPair_v3(
 				// то ми їх розраховуємо
 				pairProcessor.UpDownDebug()
 				if pairProcessor.GetDownLength() == 0 {
-					pairProcessor.InitPositionGridUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.InitPositionGridUp(riskBreakEvenPriceOrEntryPrice(risk))
 					pairProcessor.UpDownDebug()
 					pairProcessor.ResetUpDown(LastExecutedPrice)
 				}
@@ -1218,7 +1228,7 @@ func createNextPair_v3(
 			upType = shortPositionNewOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
 			downType = shortPositionNewOrderType
 			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
 			upQuantity = 0
 			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		}
@@ -1260,7 +1270,7 @@ func createNextPair_v3(
 				// то ми їх розраховуємо
 				pairProcessor.UpDownDebug()
 				if pairProcessor.GetUpLength() == 0 {
-					pairProcessor.InitPositionGridDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.InitPositionGridDown(riskBreakEvenPriceOrEntryPrice(risk))
 					pairProcessor.UpDownDebug()
 					pairProcessor.ResetUpDown(LastExecutedPrice)
 					pairProcessor.UpDownDebug()
@@ -1276,15 +1286,15 @@ func createNextPair_v3(
 			}
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
 			// Створюємо ордер на купівлю, тобто збільшуємо позицію long
-			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
 			// downPrice = math.Min(downPrice, pairProcessor.NextPriceDown(currentPrice))
 			upType = longPositionDecOrderType
 			downType = longPositionIncOrderType
 			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 		} else {
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
-			upPrice = pairProcessor.NextPriceUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-			downPrice = pairProcessor.NextPriceDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
+			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
 			upType = longPositionDecOrderType
 			downType = longPositionDecOrderType // На справді кількість буде нульова але тип ордера має бути вказаний
 			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
