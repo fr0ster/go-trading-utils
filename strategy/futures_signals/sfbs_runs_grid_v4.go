@@ -59,7 +59,6 @@ func getCallBack_v4(
 				oldPrice, err = createNextPair_v4(
 					oldPrice,
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
 					shortPositionNewOrderType,
 					shortPositionIncOrderType,
 					shortPositionDecOrderType,
@@ -81,7 +80,6 @@ func getCallBack_v4(
 func createNextPair_v4(
 	oldPrice float64,
 	LastExecutedPrice float64,
-	AccumulatedFilledQty float64,
 	shortPositionNewOrderType futures.OrderType,
 	shortPositionIncOrderType futures.OrderType,
 	shortPositionDecOrderType futures.OrderType,
@@ -105,13 +103,14 @@ func createNextPair_v4(
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 	positionVal := utils.ConvStrToFloat64(risk.PositionAmt) * LastExecutedPrice / float64(pairProcessor.GetLeverage())
+	oldPriceOut = LastExecutedPrice
 	if positionVal < 0 {
 		if positionVal >= -free {
 			upPrice = pairProcessor.NextPriceUp(oldPrice)
 			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
 		downPrice = oldPrice
-		downQuantity = AccumulatedFilledQty
+		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		upType = shortPositionIncOrderType
 		downType = shortPositionDecOrderType
 		upClosePosition = false
@@ -120,7 +119,7 @@ func createNextPair_v4(
 		downReduceOnly = true
 	} else if positionVal > 0 {
 		upPrice = oldPrice
-		upQuantity = AccumulatedFilledQty
+		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		if positionVal <= free {
 			downPrice = pairProcessor.NextPriceDown(oldPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
