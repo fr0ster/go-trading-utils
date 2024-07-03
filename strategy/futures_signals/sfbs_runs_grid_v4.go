@@ -216,6 +216,9 @@ func RunFuturesGridTradingV4(
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
+		var (
+			times = Times
+		)
 		defer wg.Done()
 		for {
 			select {
@@ -268,6 +271,47 @@ func RunFuturesGridTradingV4(
 							close(quit)
 							return
 						}
+					}
+				} else if len(openOrders) == 0 && times > 0 {
+					times--
+				} else if len(openOrders) == 0 && times == 0 {
+					risk, _ := pairProcessor.GetPositionRisk()
+					currentPrice, err := pairProcessor.GetCurrentPrice()
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+					initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(currentPrice, risk, false)
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+					times = Times
+					// Створюємо початкові ордери на продаж та купівлю
+					_, _, err = openPosition(
+						futures.SideTypeSell,   // sideUp
+						futures.OrderTypeLimit, // typeUp
+						futures.SideTypeBuy,    // sideDown
+						futures.OrderTypeLimit, // typeDown
+						false,                  // closePositionUp
+						reduceOnlyUp,           // reduceOnlyUp
+						false,                  // closePositionDown
+						reduceOnlyDown,         // reduceOnlyDown
+						quantityUp,             // quantityUp
+						quantityDown,           // quantityDown
+						initPriceUp,            // priceUp
+						initPriceUp,            // stopPriceUp
+						initPriceUp,            // activationPriceUp
+						initPriceDown,          // priceDown
+						initPriceDown,          // stopPriceDown
+						initPriceDown,          // activationPriceDown
+						pairProcessor)          // pairProcessor
+					if err != nil {
+						printError()
+						close(quit)
+						return
 					}
 				}
 			}

@@ -12,6 +12,10 @@ import (
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
+const (
+	Times = 3
+)
+
 func RunFuturesHolding(wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return fmt.Errorf("it should be implemented for futures")
