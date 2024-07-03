@@ -18,11 +18,12 @@ import (
 )
 
 func getCallBack_v4(
+	price float64,
 	pairProcessor *processor.PairProcessor,
 	maintainedOrders *btree.BTree,
 	quit chan struct{}) func(*futures.WsUserDataEvent) {
 	var (
-		oldPrice float64
+		oldPrice float64 = price
 	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
@@ -197,9 +198,15 @@ func RunFuturesGridTradingV4(
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
+	price, err := pairProcessor.GetCurrentPrice()
+	if err != nil {
+		printError()
+		return err
+	}
 	_, err = pairProcessor.UserDataEventStart(
 		quit,
 		getCallBack_v4(
+			price,            // oldPrice
 			pairProcessor,    // pairProcessor
 			maintainedOrders, // maintainedOrders
 			quit))            // quit
@@ -268,11 +275,6 @@ func RunFuturesGridTradingV4(
 		}
 	}()
 	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	price, err := pairProcessor.GetCurrentPrice()
 	if err != nil {
 		printError()
 		return err
