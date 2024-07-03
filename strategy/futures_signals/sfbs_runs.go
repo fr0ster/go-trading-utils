@@ -1205,7 +1205,8 @@ func createNextPair_v3(
 				// Визначаємо кількість для нових ордерів
 				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
-					upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
+					upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
+					upQuantity = pairProcessor.NextQuantityUp(AccumulatedFilledQty)
 				}
 			}
 			// Створюємо ордер на продаж, тобто збільшуємо позицію short
@@ -1263,7 +1264,8 @@ func createNextPair_v3(
 				// Визначаємо кількість для нових ордерів
 				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
 				if err != nil {
-					downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
+					downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
+					downQuantity = pairProcessor.NextQuantityDown(AccumulatedFilledQty)
 				}
 			}
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
