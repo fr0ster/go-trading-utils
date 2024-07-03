@@ -1191,8 +1191,10 @@ func createNextPair_v3(
 				// У випадку, коли ми маємо позицію short,
 				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
 				// то ми їх розраховуємо
+				pairProcessor.UpDownDebug()
 				if pairProcessor.GetDownLength() == 0 {
 					pairProcessor.InitPositionGridUp(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.UpDownDebug()
 					pairProcessor.ResetUpDown(LastExecutedPrice)
 				}
 				// Визначаємо ціну для нових ордерів
@@ -1256,9 +1258,12 @@ func createNextPair_v3(
 				// У випадку, коли ми маємо позицію long,
 				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
 				// то ми їх розраховуємо
+				pairProcessor.UpDownDebug()
 				if pairProcessor.GetUpLength() == 0 {
 					pairProcessor.InitPositionGridDown(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+					pairProcessor.UpDownDebug()
 					pairProcessor.ResetUpDown(LastExecutedPrice)
+					pairProcessor.UpDownDebug()
 				}
 				// Визначаємо ціну для нових ордерів
 				// Визначаємо кількість для нових ордерів

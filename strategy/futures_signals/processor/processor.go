@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	"github.com/sirupsen/logrus"
 )
 
 func (pp *PairProcessor) CalcValueForQuantity(
@@ -148,9 +149,39 @@ func (pp *PairProcessor) GetDownLength() int {
 	return pp.down.Len()
 }
 
+func (pp *PairProcessor) GetUpMin() *pair_price_types.PairPrice {
+	return pp.up.Min().(*pair_price_types.PairPrice)
+}
+
+func (pp *PairProcessor) GetDownMax() *pair_price_types.PairPrice {
+	return pp.down.Max().(*pair_price_types.PairPrice)
+}
+
 func (pp *PairProcessor) UpDownClear() {
 	pp.up.Clear(false)
 	pp.down.Clear(false)
+}
+
+func (pp *PairProcessor) UpDownDebug() {
+
+	if pp.GetUpLength() != 0 {
+		logrus.Debugf("Futures %s: UpLength %v, Min record: Price %v, Quantity %v",
+			pp.GetPair(),
+			pp.GetUpLength(),
+			pp.GetUpMin().Price,
+			pp.GetUpMin().Quantity)
+	} else {
+		logrus.Debugf("Futures %s: UpLength %v", pp.GetPair(), pp.GetUpLength())
+	}
+	if pp.GetDownLength() != 0 {
+		logrus.Debugf("Futures %s: DownLength %v, Min record: Price %v, Quantity %v",
+			pp.GetPair(),
+			pp.GetDownLength(),
+			pp.GetDownMax().Price,
+			pp.GetDownMax().Quantity)
+	} else {
+		logrus.Debugf("Futures %s: DownLength %v", pp.GetPair(), pp.GetDownLength())
+	}
 }
 
 func (pp *PairProcessor) NextUp(currentPrice float64, currentQuantity ...float64) (price, quantity float64, err error) {
