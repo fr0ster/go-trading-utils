@@ -158,6 +158,159 @@ func getCallBackTrading(
 	}
 }
 
+func getErrorHandlingTrading(
+	pairProcessor *processor.PairProcessor,
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionTPOrderType futures.OrderType,
+	shortPositionSLOrderType futures.OrderType,
+	longPositionTPOrderType futures.OrderType,
+	longPositionSLOrderType futures.OrderType,
+	quit chan struct{}) futures.ErrHandler {
+	return func(networkErr error) {
+		var (
+			upNewSide     futures.SideType
+			upNewOrder    futures.OrderType
+			downNewSide   futures.SideType
+			downNewOrder  futures.OrderType
+			initPriceUp   float64
+			initPriceDown float64
+			quantityUp    float64
+			quantityDown  float64
+			err           error
+		)
+		openOrders, _ := pairProcessor.GetOpenOrders()
+		if len(openOrders) == 0 {
+			logrus.Debugf("Futures %s: Error: %v", pairProcessor.GetPair(), networkErr)
+			upNewSide,
+				upNewOrder,
+				downNewSide,
+				downNewOrder,
+				initPriceUp,
+				quantityUp,
+				initPriceDown,
+				quantityDown,
+				err = initNewTradingPosition(
+				upOrderSideOpen,
+				upPositionNewOrderType,
+				downOrderSideOpen,
+				downPositionNewOrderType,
+				shortPositionTPOrderType,
+				shortPositionSLOrderType,
+				longPositionTPOrderType,
+				longPositionSLOrderType,
+				pairProcessor,
+				quit)
+			if err != nil {
+				printError()
+				close(quit)
+				return
+			}
+			// Створюємо початкові ордери на продаж та купівлю
+			_, _, err = openPosition(
+				upNewSide,     // upNewSide
+				upNewOrder,    // upNewOrder
+				downNewSide,   // downNewSide
+				downNewOrder,  // downNewOrder
+				false,         // reduceOnlyUp
+				false,         // reduceOnlyDown
+				false,         // reduceOnlyUp
+				false,         // reduceOnlyDown
+				quantityUp,    // quantityUp
+				quantityDown,  // quantityDown
+				initPriceUp,   // initPriceUp
+				initPriceUp,   // initPriceUp
+				initPriceUp,   // initPriceUp
+				initPriceDown, // initPriceDown
+				initPriceDown, // initPriceDown
+				initPriceDown, // initPriceDown
+				pairProcessor) // pairProcessor
+			if err != nil {
+				printError()
+				close(quit)
+				return
+			}
+		}
+	}
+}
+
+func initNewTradingPosition(
+	upOrderSideOpen futures.SideType,
+	upPositionNewOrderType futures.OrderType,
+	downOrderSideOpen futures.SideType,
+	downPositionNewOrderType futures.OrderType,
+	shortPositionTPOrderType futures.OrderType,
+	shortPositionSLOrderType futures.OrderType,
+	longPositionTPOrderType futures.OrderType,
+	longPositionSLOrderType futures.OrderType,
+	pairProcessor *processor.PairProcessor,
+	quit chan struct{}) (
+	upNewSide futures.SideType,
+	upNewOrder futures.OrderType,
+	downNewSide futures.SideType,
+	downNewOrder futures.OrderType,
+	initPriceUp float64,
+	initPriceDown float64,
+	quantityUp float64,
+	quantityDown float64,
+	err error) {
+
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		close(quit)
+		return
+	}
+	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
+		err = fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
+		printError()
+		close(quit)
+		return
+	}
+	price, err := pairProcessor.GetCurrentPrice()
+	if err != nil {
+		printError()
+		close(quit)
+		return
+	}
+	upNewSide = upOrderSideOpen
+	upNewOrder = upPositionNewOrderType
+	downNewSide = downOrderSideOpen
+	downNewOrder = downPositionNewOrderType
+	initPriceUp, quantityUp, initPriceDown, quantityDown, _, _, err = pairProcessor.GetPrices(price, risk, true)
+	if err != nil {
+		printError()
+		close(quit)
+		return
+	}
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
+		quantityUp = -utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
+		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
+	}
+	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
+		risk,
+		upOrderSideOpen,
+		upPositionNewOrderType,
+		downOrderSideOpen,
+		downPositionNewOrderType,
+		shortPositionTPOrderType,
+		shortPositionSLOrderType,
+		longPositionTPOrderType,
+		longPositionSLOrderType,
+		true)
+	if err != nil {
+		printError()
+		close(quit)
+		return
+	}
+	return
+}
+
 func RunFuturesTrading(
 	client *futures.Client,
 	symbol string,
@@ -185,6 +338,10 @@ func RunFuturesTrading(
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
+		upNewSide     futures.SideType
+		upNewOrder    futures.OrderType
+		downNewSide   futures.SideType
+		downNewOrder  futures.OrderType
 		initPriceUp   float64
 		initPriceDown float64
 		quantityUp    float64
@@ -213,47 +370,6 @@ func RunFuturesTrading(
 		printError()
 		return
 	}
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
-		return fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		return err
-	}
-	upNewSide := upOrderSideOpen
-	upNewOrder := upPositionNewOrderType
-	downNewSide := downOrderSideOpen
-	downNewOrder := downPositionNewOrderType
-	initPriceUp, quantityUp, initPriceDown, quantityDown, _, _, err = pairProcessor.GetPrices(price, risk, true)
-	if err != nil {
-		return err
-	}
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = -utils.ConvStrToFloat64(risk.PositionAmt)
-		quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
-		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
-	}
-	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
-		risk,
-		upOrderSideOpen,
-		upPositionNewOrderType,
-		downOrderSideOpen,
-		downPositionNewOrderType,
-		shortPositionTPOrderType,
-		shortPositionSLOrderType,
-		longPositionTPOrderType,
-		longPositionSLOrderType,
-		true)
-	if err != nil {
-		return err
-	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	_, err = pairProcessor.UserDataEventStart(
@@ -268,11 +384,41 @@ func RunFuturesTrading(
 			shortPositionSLOrderType, // shortPositionSLOrderType
 			longPositionTPOrderType,  // longPositionTPOrderType
 			longPositionSLOrderType,  // longPositionSLOrderType
+			quit),
+		getErrorHandlingTrading(
+			pairProcessor,            // pairProcessor
+			upOrderSideOpen,          // upOrderSideOpen
+			upPositionNewOrderType,   // upPositionNewOrderType
+			downOrderSideOpen,        // downOrderSideOpen
+			downPositionNewOrderType, // downPositionNewOrderType
+			shortPositionTPOrderType, // shortPositionTPOrderType
+			shortPositionSLOrderType, // shortPositionSLOrderType
+			longPositionTPOrderType,  // longPositionTPOrderType
+			longPositionSLOrderType,  // longPositionSLOrderType
 			quit))                    // quit
 	if err != nil {
 		printError()
 		return err
 	}
+	upNewSide,
+		upNewOrder,
+		downNewSide,
+		downNewOrder,
+		initPriceUp,
+		quantityUp,
+		initPriceDown,
+		quantityDown,
+		err = initNewTradingPosition(
+		upOrderSideOpen,
+		upPositionNewOrderType,
+		downOrderSideOpen,
+		downPositionNewOrderType,
+		shortPositionTPOrderType,
+		shortPositionSLOrderType,
+		longPositionTPOrderType,
+		longPositionSLOrderType,
+		pairProcessor,
+		quit)
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
 		upNewSide,

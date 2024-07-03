@@ -160,7 +160,8 @@ func RunFuturesGridTradingV2(
 			grid,
 			percentsToStopSettingNewOrder,
 			quit,
-			maintainedOrders))
+			maintainedOrders),
+		nil)
 	if err != nil {
 		printError()
 		return err

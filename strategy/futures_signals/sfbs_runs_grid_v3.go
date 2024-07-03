@@ -44,6 +44,8 @@ func getCallBack_v3(
 					close(quit)
 					return
 				}
+				logrus.Debugf("Futures %s: Risk Position: PositionAmt %v, EntryPrice %v, UnrealizedProfit %v, LiquidationPrice %v, Leverage %v",
+					pairProcessor.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.UnRealizedProfit, risk.LiquidationPrice, risk.Leverage)
 				// Балансування маржі як треба
 				marginBalancing(risk, pairProcessor)
 				pairProcessor.CancelAllOrders()
@@ -59,6 +61,74 @@ func getCallBack_v3(
 					close(quit)
 					return
 				}
+			}
+		}
+	}
+}
+
+func getErrorHandling_v3(
+	pairProcessor *processor.PairProcessor,
+	quit chan struct{}) futures.ErrHandler {
+	return func(networkErr error) {
+		var (
+			initPriceUp    float64
+			initPriceDown  float64
+			quantityUp     float64
+			quantityDown   float64
+			reduceOnlyUp   bool
+			reduceOnlyDown bool
+		)
+		openOrders, _ := pairProcessor.GetOpenOrders()
+		if len(openOrders) == 0 {
+			logrus.Debugf("Futures %s: Error: %v", pairProcessor.GetPair(), networkErr)
+			risk, err := pairProcessor.GetPositionRisk()
+			if err != nil {
+				printError()
+				pairProcessor.CancelAllOrders()
+				close(quit)
+				return
+			}
+			price, err := pairProcessor.GetCurrentPrice()
+			if err != nil {
+				printError()
+				close(quit)
+				return
+			}
+			initPriceUp,
+				quantityUp,
+				initPriceDown,
+				quantityDown,
+				reduceOnlyUp,
+				reduceOnlyDown,
+				err = pairProcessor.GetPrices(price, risk, true)
+			if err != nil {
+				printError()
+				close(quit)
+				return
+			}
+			// Створюємо початкові ордери на продаж та купівлю
+			_, _, err = openPosition(
+				futures.SideTypeSell,   // sideUp
+				futures.OrderTypeLimit, // typeUp
+				futures.SideTypeBuy,    // sideDown
+				futures.OrderTypeLimit, // typeDown
+				false,                  // closePositionUp
+				reduceOnlyUp,           // reduceOnlyUp
+				false,                  // closePositionDown
+				reduceOnlyDown,         // reduceOnlyDown
+				quantityUp,             // quantityUp
+				quantityDown,           // quantityDown
+				initPriceUp,            // priceUp
+				initPriceUp,            // stopPriceUp
+				initPriceUp,            // activationPriceUp
+				initPriceDown,          // priceDown
+				initPriceDown,          // stopPriceDown
+				initPriceDown,          // activationPriceDown
+				pairProcessor)          // pairProcessor
+			if err != nil {
+				printError()
+				close(quit)
+				return
 			}
 		}
 	}
@@ -316,7 +386,10 @@ func RunFuturesGridTradingV3(
 		getCallBack_v3(
 			pairProcessor,    // pairProcessor
 			maintainedOrders, // maintainedOrders
-			quit))            // quit
+			quit),
+		getErrorHandling_v3(
+			pairProcessor, // pairProcessor
+			quit))         // quit
 	if err != nil {
 		printError()
 		return err
@@ -324,9 +397,6 @@ func RunFuturesGridTradingV3(
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
-		var (
-			times = Times
-		)
 		defer wg.Done()
 		for {
 			select {
@@ -349,7 +419,13 @@ func RunFuturesGridTradingV3(
 							math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 							pairProcessor.ClosePosition(risk)
 						}
-						initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(currentPrice, risk, true)
+						initPriceUp,
+							quantityUp,
+							initPriceDown,
+							quantityDown,
+							reduceOnlyUp,
+							reduceOnlyDown,
+							err = pairProcessor.GetPrices(currentPrice, risk, true)
 						if err != nil {
 							printError()
 							close(quit)
@@ -380,47 +456,6 @@ func RunFuturesGridTradingV3(
 							return
 						}
 					}
-				} else if len(openOrders) == 0 && times > 0 {
-					times--
-				} else if len(openOrders) == 0 && times == 0 {
-					risk, _ := pairProcessor.GetPositionRisk()
-					currentPrice, err := pairProcessor.GetCurrentPrice()
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
-					initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(currentPrice, risk, false)
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
-					times = Times
-					// Створюємо початкові ордери на продаж та купівлю
-					_, _, err = openPosition(
-						futures.SideTypeSell,   // sideUp
-						futures.OrderTypeLimit, // typeUp
-						futures.SideTypeBuy,    // sideDown
-						futures.OrderTypeLimit, // typeDown
-						false,                  // closePositionUp
-						reduceOnlyUp,           // reduceOnlyUp
-						false,                  // closePositionDown
-						reduceOnlyDown,         // reduceOnlyDown
-						quantityUp,             // quantityUp
-						quantityDown,           // quantityDown
-						initPriceUp,            // priceUp
-						initPriceUp,            // stopPriceUp
-						initPriceUp,            // activationPriceUp
-						initPriceDown,          // priceDown
-						initPriceDown,          // stopPriceDown
-						initPriceDown,          // activationPriceDown
-						pairProcessor)          // pairProcessor
-					if err != nil {
-						printError()
-						close(quit)
-						return
-					}
 				}
 			}
 		}
@@ -436,7 +471,13 @@ func RunFuturesGridTradingV3(
 		printError()
 		return err
 	}
-	initPriceUp, quantityUp, initPriceDown, quantityDown, reduceOnlyUp, reduceOnlyDown, err = pairProcessor.GetPrices(price, risk, true)
+	initPriceUp,
+		quantityUp,
+		initPriceDown,
+		quantityDown,
+		reduceOnlyUp,
+		reduceOnlyDown,
+		err = pairProcessor.GetPrices(price, risk, true)
 	if err != nil {
 		return err
 	}

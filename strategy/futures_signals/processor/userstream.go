@@ -25,6 +25,7 @@ func (pp *PairProcessor) startUserDataStream(handler futures.WsUserDataHandler, 
 func (pp *PairProcessor) UserDataEventStart(
 	stop chan struct{},
 	callBack futures.WsUserDataHandler,
+	errCallBack futures.ErrHandler,
 	eventType ...futures.UserDataEventType) (
 	resetEvent chan error,
 	err error) {
@@ -37,6 +38,9 @@ func (pp *PairProcessor) UserDataEventStart(
 	// Ініціалізуємо обробник помилок
 	wsErrorHandler := func(err error) {
 		logrus.Errorf("Future wsErrorHandler error: %v", err)
+		if errCallBack != nil {
+			errCallBack(err)
+		}
 		resetEvent <- err
 	}
 	// Ініціалізуємо обробник подій
