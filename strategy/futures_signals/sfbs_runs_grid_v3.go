@@ -342,22 +342,8 @@ func RunFuturesGridTradingV3(
 		printError()
 		return
 	}
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		return err
-	}
 	upNewOrder := upPositionNewOrderType
 	downNewOrder := downPositionNewOrderType
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
-	if err != nil {
-		return err
-	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
@@ -402,7 +388,7 @@ func RunFuturesGridTradingV3(
 							math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 							pairProcessor.ClosePosition(risk)
 						}
-						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(currentPrice, risk, true)
 						if err != nil {
 							printError()
 							close(quit)
@@ -438,6 +424,20 @@ func RunFuturesGridTradingV3(
 		}
 	}()
 	// Створюємо початкові ордери на продаж та купівлю
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		return err
+	}
+	price, err := pairProcessor.GetCurrentPrice()
+	if err != nil {
+		printError()
+		return err
+	}
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+	if err != nil {
+		return err
+	}
 	_, _, err = openPosition(
 		upOrderSideOpen,   // sideUp
 		upNewOrder,        // typeUp

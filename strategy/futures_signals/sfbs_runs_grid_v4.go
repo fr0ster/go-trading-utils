@@ -229,22 +229,6 @@ func RunFuturesGridTradingV4(
 		printError()
 		return
 	}
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		return err
-	}
-	upNewOrder := upPositionNewOrderType
-	downNewOrder := downPositionNewOrderType
-	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
-	if err != nil {
-		return err
-	}
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
@@ -264,6 +248,8 @@ func RunFuturesGridTradingV4(
 		printError()
 		return err
 	}
+	upNewOrder := upPositionNewOrderType
+	downNewOrder := downPositionNewOrderType
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
@@ -289,7 +275,7 @@ func RunFuturesGridTradingV4(
 							math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 							pairProcessor.ClosePosition(risk)
 						}
-						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, true)
+						initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(currentPrice, risk, false)
 						if err != nil {
 							printError()
 							close(quit)
@@ -324,6 +310,22 @@ func RunFuturesGridTradingV4(
 			}
 		}
 	}()
+	risk, err := pairProcessor.GetPositionRisk()
+	if err != nil {
+		printError()
+		return err
+	}
+	price, err := pairProcessor.GetCurrentPrice()
+	if err != nil {
+		printError()
+		return err
+	}
+	initPriceUp, quantityUp, initPriceDown, quantityDown, err = pairProcessor.GetPrices(price, risk, false)
+	if err != nil {
+		printError()
+		close(quit)
+		return
+	}
 	// Створюємо початкові ордери на продаж та купівлю
 	_, _, err = openPosition(
 		upOrderSideOpen,   // sideUp
