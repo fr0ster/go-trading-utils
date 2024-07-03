@@ -196,7 +196,7 @@ func Run(
 			// Збільшуємо та зменшуємо позицію лімітними ордерами
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-			err = RunFuturesGridTradingV3(
+			err = RunFuturesGridTradingV4(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
