@@ -81,6 +81,8 @@ func (pp *PairProcessor) UserDataEventStart(
 						close(pp.stop)
 						return
 					}
+					// Встановлюємо новий час відповіді
+					lastResponse = time.Now()
 				}
 			}
 		}

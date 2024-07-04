@@ -86,6 +86,8 @@ func (pp *PairProcessor) KlineEventStart(
 						close(pp.stop)
 						return
 					}
+					// Встановлюємо новий час відповіді
+					lastResponse = time.Now()
 				}
 			}
 		}

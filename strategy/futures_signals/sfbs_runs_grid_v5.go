@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	v5 sync.Mutex = sync.Mutex{}
+	v5         sync.Mutex = sync.Mutex{}
+	timeOut_v5            = 1000 * time.Millisecond
 )
 
 func getCallBack_v5(
@@ -202,7 +203,7 @@ func createNextPair_v5(
 		upReduceOnly = false
 		downReduceOnly = false
 	}
-	if LastExecutedSide == futures.SideTypeBuy {
+	if LastExecutedSide == futures.SideTypeSell {
 		// Створюємо ордер на продаж
 		upOrder, err = pairProcessor.CreateOrder(
 			futures.OrderTypeLimit,
@@ -223,7 +224,7 @@ func createNextPair_v5(
 		}
 		logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
 			pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeLimit, upPrice, upQuantity, pairProcessor.GetCallbackRate(), upOrder.Status)
-	} else if LastExecutedSide == futures.SideTypeSell {
+	} else if LastExecutedSide == futures.SideTypeBuy {
 		// Створюємо ордер на купівлю
 		downOrder, err = pairProcessor.CreateOrder(
 			futures.OrderTypeLimit,
@@ -318,12 +319,11 @@ func RunFuturesGridTradingV5(
 	timeout ...time.Duration) (err error) {
 	var (
 		pairProcessor *processor.PairProcessor
-		timeOut       time.Duration = 5000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	if len(timeout) > 0 {
-		timeOut = timeout[0]
+		timeOut_v5 = timeout[0]
 	}
 
 	// Створюємо обробник пари
@@ -362,6 +362,8 @@ func RunFuturesGridTradingV5(
 		printError()
 		return err
 	}
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
@@ -370,7 +372,7 @@ func RunFuturesGridTradingV5(
 			select {
 			case <-quit:
 				return
-			case <-time.After(timeOut * time.Millisecond):
+			case <-time.After(timeOut_v5):
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 1 {
 					if v5.TryLock() {
@@ -392,23 +394,42 @@ func RunFuturesGridTradingV5(
 						}
 						v5.Unlock()
 					}
+				} else if len(openOrders) == 2 {
+					if v5.TryLock() && time.Since(lastResponse) > timeOut_v5*30 {
+						pairProcessor.CancelAllOrders()
+						v5.Unlock()
+					}
+				} else if len(openOrders) == 0 {
+					if v5.TryLock() {
+						risk, _ := pairProcessor.GetPositionRisk()
+						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+							currentPrice, err := pairProcessor.GetCurrentPrice()
+							if err != nil {
+								printError()
+								close(quit)
+								return
+							}
+							initPosition_v5(currentPrice, risk, pairProcessor, quit)
+						}
+						v5.Unlock()
+					}
 				}
 			}
 		}
 	}()
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		close(quit)
-		return
-	}
-	currentPrice, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		close(quit)
-		return
-	}
-	initPosition_v5(currentPrice, risk, pairProcessor, quit)
+	// risk, err := pairProcessor.GetPositionRisk()
+	// if err != nil {
+	// 	printError()
+	// 	close(quit)
+	// 	return
+	// }
+	// currentPrice, err := pairProcessor.GetCurrentPrice()
+	// if err != nil {
+	// 	printError()
+	// 	close(quit)
+	// 	return
+	// }
+	// initPosition_v5(currentPrice, risk, pairProcessor, quit)
 	<-quit
 	logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
 	pairProcessor.CancelAllOrders()

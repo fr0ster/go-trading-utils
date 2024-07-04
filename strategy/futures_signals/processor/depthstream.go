@@ -80,6 +80,8 @@ func (pp *PairProcessor) DepthEventStart(
 						close(pp.stop)
 						return
 					}
+					// Встановлюємо новий час відповіді
+					lastResponse = time.Now()
 				}
 			}
 		}

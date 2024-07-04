@@ -19,7 +19,8 @@ import (
 )
 
 var (
-	v3 sync.Mutex = sync.Mutex{}
+	v3         sync.Mutex = sync.Mutex{}
+	timeOut_v3            = 1000 * time.Millisecond
 )
 
 func getCallBack_v3(
@@ -408,12 +409,11 @@ func RunFuturesGridTradingV3(
 	timeout ...time.Duration) (err error) {
 	var (
 		pairProcessor *processor.PairProcessor
-		timeOut       time.Duration = 1000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	if len(timeout) > 0 {
-		timeOut = timeout[0]
+		timeOut_v3 = timeout[0]
 	}
 
 	// Створюємо обробник пари
@@ -462,7 +462,7 @@ func RunFuturesGridTradingV3(
 			select {
 			case <-quit:
 				return
-			case <-time.After(timeOut * time.Millisecond):
+			case <-time.After(timeOut_v3):
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 1 {
 					if v3.TryLock() {
