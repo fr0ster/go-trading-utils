@@ -338,6 +338,68 @@ func createNextPair_v3(
 	return
 }
 
+func initPosition_v3(pairProcessor *processor.PairProcessor, quit chan struct{}) {
+	var (
+		initPriceUp    float64
+		initPriceDown  float64
+		quantityUp     float64
+		quantityDown   float64
+		reduceOnlyUp   bool
+		reduceOnlyDown bool
+	)
+	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
+	risk, _ := pairProcessor.GetPositionRisk()
+	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		currentPrice, err := pairProcessor.GetCurrentPrice()
+		if err != nil {
+			printError()
+			close(quit)
+			return
+		}
+		if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
+			(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
+			math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
+			pairProcessor.ClosePosition(risk)
+		}
+		initPriceUp,
+			quantityUp,
+			initPriceDown,
+			quantityDown,
+			reduceOnlyUp,
+			reduceOnlyDown,
+			err = pairProcessor.GetPrices(currentPrice, risk, true)
+		if err != nil {
+			printError()
+			close(quit)
+			return
+		}
+		// Створюємо початкові ордери на продаж та купівлю
+		_, _, err = openPosition(
+			futures.SideTypeSell,   // sideUp
+			futures.OrderTypeLimit, // typeUp
+			futures.SideTypeBuy,    // sideDown
+			futures.OrderTypeLimit, // typeDown
+			false,                  // closePositionUp
+			reduceOnlyUp,           // reduceOnlyUp
+			false,                  // closePositionDown
+			reduceOnlyDown,         // reduceOnlyDown
+			quantityUp,             // quantityUp
+			quantityDown,           // quantityDown
+			initPriceUp,            // priceUp
+			initPriceUp,            // stopPriceUp
+			initPriceUp,            // activationPriceUp
+			initPriceDown,          // priceDown
+			initPriceDown,          // stopPriceDown
+			initPriceDown,          // activationPriceDown
+			pairProcessor)          // pairProcessor
+		if err != nil {
+			printError()
+			close(quit)
+			return
+		}
+	}
+}
+
 func RunFuturesGridTradingV3(
 	client *futures.Client,
 	pair string,
@@ -356,14 +418,14 @@ func RunFuturesGridTradingV3(
 	wg *sync.WaitGroup,
 	timeout ...time.Duration) (err error) {
 	var (
-		initPriceUp    float64
-		initPriceDown  float64
-		quantityUp     float64
-		quantityDown   float64
-		reduceOnlyUp   bool
-		reduceOnlyDown bool
-		pairProcessor  *processor.PairProcessor
-		timeOut        time.Duration = 1000
+		// initPriceUp    float64
+		// initPriceDown  float64
+		// quantityUp     float64
+		// quantityDown   float64
+		// reduceOnlyUp   bool
+		// reduceOnlyDown bool
+		pairProcessor *processor.PairProcessor
+		timeOut       time.Duration = 1000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -421,105 +483,107 @@ func RunFuturesGridTradingV3(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if len(openOrders) == 1 {
 					if v3.TryLock() {
-						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
-						risk, _ := pairProcessor.GetPositionRisk()
-						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-							currentPrice, err := pairProcessor.GetCurrentPrice()
-							if err != nil {
-								printError()
-								close(quit)
-								return
-							}
-							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
-								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
-								math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
-								pairProcessor.ClosePosition(risk)
-							}
-							initPriceUp,
-								quantityUp,
-								initPriceDown,
-								quantityDown,
-								reduceOnlyUp,
-								reduceOnlyDown,
-								err = pairProcessor.GetPrices(currentPrice, risk, true)
-							if err != nil {
-								printError()
-								close(quit)
-								return
-							}
-							// Створюємо початкові ордери на продаж та купівлю
-							_, _, err = openPosition(
-								futures.SideTypeSell,   // sideUp
-								futures.OrderTypeLimit, // typeUp
-								futures.SideTypeBuy,    // sideDown
-								futures.OrderTypeLimit, // typeDown
-								false,                  // closePositionUp
-								reduceOnlyUp,           // reduceOnlyUp
-								false,                  // closePositionDown
-								reduceOnlyDown,         // reduceOnlyDown
-								quantityUp,             // quantityUp
-								quantityDown,           // quantityDown
-								initPriceUp,            // priceUp
-								initPriceUp,            // stopPriceUp
-								initPriceUp,            // activationPriceUp
-								initPriceDown,          // priceDown
-								initPriceDown,          // stopPriceDown
-								initPriceDown,          // activationPriceDown
-								pairProcessor)          // pairProcessor
-							if err != nil {
-								printError()
-								close(quit)
-								return
-							}
-						}
+						// free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
+						// risk, _ := pairProcessor.GetPositionRisk()
+						// if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+						// 	currentPrice, err := pairProcessor.GetCurrentPrice()
+						// 	if err != nil {
+						// 		printError()
+						// 		close(quit)
+						// 		return
+						// 	}
+						// 	if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
+						// 		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
+						// 		math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
+						// 		pairProcessor.ClosePosition(risk)
+						// 	}
+						// 	initPriceUp,
+						// 		quantityUp,
+						// 		initPriceDown,
+						// 		quantityDown,
+						// 		reduceOnlyUp,
+						// 		reduceOnlyDown,
+						// 		err = pairProcessor.GetPrices(currentPrice, risk, true)
+						// 	if err != nil {
+						// 		printError()
+						// 		close(quit)
+						// 		return
+						// 	}
+						// 	// Створюємо початкові ордери на продаж та купівлю
+						// 	_, _, err = openPosition(
+						// 		futures.SideTypeSell,   // sideUp
+						// 		futures.OrderTypeLimit, // typeUp
+						// 		futures.SideTypeBuy,    // sideDown
+						// 		futures.OrderTypeLimit, // typeDown
+						// 		false,                  // closePositionUp
+						// 		reduceOnlyUp,           // reduceOnlyUp
+						// 		false,                  // closePositionDown
+						// 		reduceOnlyDown,         // reduceOnlyDown
+						// 		quantityUp,             // quantityUp
+						// 		quantityDown,           // quantityDown
+						// 		initPriceUp,            // priceUp
+						// 		initPriceUp,            // stopPriceUp
+						// 		initPriceUp,            // activationPriceUp
+						// 		initPriceDown,          // priceDown
+						// 		initPriceDown,          // stopPriceDown
+						// 		initPriceDown,          // activationPriceDown
+						// 		pairProcessor)          // pairProcessor
+						// 	if err != nil {
+						// 		printError()
+						// 		close(quit)
+						// 		return
+						// 	}
+						// }
+						initPosition_v3(pairProcessor, quit)
 						v3.Unlock()
 					}
 				}
 			}
 		}
 	}()
-	// Створюємо початкові ордери на продаж та купівлю
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		return err
-	}
-	initPriceUp,
-		quantityUp,
-		initPriceDown,
-		quantityDown,
-		reduceOnlyUp,
-		reduceOnlyDown,
-		err = pairProcessor.GetPrices(price, risk, true)
-	if err != nil {
-		return err
-	}
-	_, _, err = openPosition(
-		futures.SideTypeSell,   // sideUp
-		futures.OrderTypeLimit, // typeUp
-		futures.SideTypeBuy,    // sideDown
-		futures.OrderTypeLimit, // typeDown
-		false,                  // closePositionUp
-		false,                  // reduceOnlyUp
-		false,                  // closePositionDown
-		false,                  // reduceOnlyDown
-		quantityUp,             // quantityUp
-		quantityDown,           // quantityDown
-		initPriceUp,            // priceUp
-		initPriceUp,            // stopPriceUp
-		initPriceUp,            // activationPriceUp
-		initPriceDown,          // priceDown
-		initPriceDown,          // stopPriceDown
-		initPriceDown,          // activationPriceDown
-		pairProcessor)          // pairProcessor
-	if err != nil {
-		return err
-	}
+	// // Створюємо початкові ордери на продаж та купівлю
+	// risk, err := pairProcessor.GetPositionRisk()
+	// if err != nil {
+	// 	printError()
+	// 	return err
+	// }
+	// price, err := pairProcessor.GetCurrentPrice()
+	// if err != nil {
+	// 	printError()
+	// 	return err
+	// }
+	// initPriceUp,
+	// 	quantityUp,
+	// 	initPriceDown,
+	// 	quantityDown,
+	// 	reduceOnlyUp,
+	// 	reduceOnlyDown,
+	// 	err = pairProcessor.GetPrices(price, risk, true)
+	// if err != nil {
+	// 	return err
+	// }
+	// _, _, err = openPosition(
+	// 	futures.SideTypeSell,   // sideUp
+	// 	futures.OrderTypeLimit, // typeUp
+	// 	futures.SideTypeBuy,    // sideDown
+	// 	futures.OrderTypeLimit, // typeDown
+	// 	false,                  // closePositionUp
+	// 	false,                  // reduceOnlyUp
+	// 	false,                  // closePositionDown
+	// 	false,                  // reduceOnlyDown
+	// 	quantityUp,             // quantityUp
+	// 	quantityDown,           // quantityDown
+	// 	initPriceUp,            // priceUp
+	// 	initPriceUp,            // stopPriceUp
+	// 	initPriceUp,            // activationPriceUp
+	// 	initPriceDown,          // priceDown
+	// 	initPriceDown,          // stopPriceDown
+	// 	initPriceDown,          // activationPriceDown
+	// 	pairProcessor)          // pairProcessor
+	// if err != nil {
+	// 	return err
+	// }
+	initPosition_v3(pairProcessor, quit)
 	<-quit
 	logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
 	pairProcessor.CancelAllOrders()
