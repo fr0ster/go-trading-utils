@@ -132,7 +132,6 @@ func getErrorHandling_v4(
 }
 
 func createNextPair_v4(
-	// oldPrice float64,
 	LastExecutedPrice float64,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
@@ -148,18 +147,17 @@ func createNextPair_v4(
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
+	currentPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 	position := math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))
-	positionVal := position * LastExecutedPrice
-	price := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-	if price == 0 {
-		price = utils.ConvStrToFloat64(risk.EntryPrice)
+	if currentPrice == 0 {
+		currentPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 	}
-	if positionVal < 0 {
-		if positionVal <= free {
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		if position*LastExecutedPrice <= free {
 			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
-		downPrice = pairProcessor.NextPriceDown(price)
+		downPrice = pairProcessor.NextPriceDown(currentPrice)
 		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		if downQuantity > position {
 			downQuantity = position
@@ -168,13 +166,13 @@ func createNextPair_v4(
 		downClosePosition = false
 		upReduceOnly = false
 		downReduceOnly = true
-	} else if positionVal > 0 {
-		upPrice = pairProcessor.NextPriceUp(price)
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		upPrice = pairProcessor.NextPriceUp(currentPrice)
 		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		if upQuantity > position {
 			upQuantity = position
 		}
-		if positionVal <= free {
+		if position*LastExecutedPrice <= free {
 			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		}
