@@ -302,8 +302,8 @@ func createNextPair_v3(
 		downClosePosition = false
 		downReduceOnly = false
 	}
-	// Створюємо ордер на продаж, тобто скорочуємо позицію long
-	// Створюємо ордер на купівлю, тобто збільшуємо позицію long
+	// Створюємо ордер на продаж
+	// Створюємо ордер на купівлю
 	_, _, err = openPosition(
 		futures.SideTypeSell,   // sideUp
 		futures.OrderTypeLimit, // typeUp

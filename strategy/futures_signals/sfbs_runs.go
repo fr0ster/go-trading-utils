@@ -209,35 +209,27 @@ func Run(
 				quit,                         // quit
 				wg)                           // wg
 
-			// } else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
-			// 	// Відкриваємо позицію лімітними ордерами,
-			// 	// Збільшуємо та зменшуємо позицію тейк профіт ордерами
-			// 	// відкриваємо ордера на продаж та купівлю з однаковою кількістью
-			// 	// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-			// 	err = RunFuturesGridTradingV3(
-			// 		client,                              // client
-			// 		pair.GetPair(),                      // pair
-			// 		pair.GetLimitOnPosition(),           // limitOnPosition
-			// 		pair.GetLimitOnTransaction(),        // limitOnTransaction
-			// 		pair.GetUpBound(),                   // upBound
-			// 		pair.GetLowBound(),                  // lowBound
-			// 		pair.GetDeltaPrice(),                // deltaPrice
-			// 		pair.GetDeltaQuantity(),             // deltaQuantity
-			// 		pair.GetMarginType(),                // marginType
-			// 		pair.GetLeverage(),                  // leverage
-			// 		pair.GetMinSteps(),                  // minSteps
-			// 		pair.GetCallbackRate(),              // callbackRate
-			// 		futures.SideTypeSell,                // upOrderSideOpen
-			// 		futures.OrderTypeLimit,              // upPositionNewOrderType
-			// 		futures.SideTypeBuy,                 // downOrderSideOpen
-			// 		futures.OrderTypeLimit,              // downPositionNewOrderType
-			// 		futures.OrderTypeTrailingStopMarket, // shortPositionIncOrderType
-			// 		futures.OrderTypeTrailingStopMarket, // shortPositionDecOrderType
-			// 		futures.OrderTypeTrailingStopMarket, // longPositionIncOrderType
-			// 		futures.OrderTypeTrailingStopMarket, // longPositionDecOrderType
-			// 		pair.GetProgression(),               // progression
-			// 		quit,                                // quit
-			// 		wg)                                  // wg
+		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
+			// Відкриваємо позицію лімітними ордерами,
+			// Збільшуємо та зменшуємо позицію тейк профіт ордерами
+			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
+			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
+			err = RunFuturesGridTradingV5(
+				client,                       // client
+				pair.GetPair(),               // pair
+				pair.GetLimitOnPosition(),    // limitOnPosition
+				pair.GetLimitOnTransaction(), // limitOnTransaction
+				pair.GetUpBound(),            // upBound
+				pair.GetLowBound(),           // lowBound
+				pair.GetDeltaPrice(),         // deltaPrice
+				pair.GetDeltaQuantity(),      // deltaQuantity
+				pair.GetMarginType(),         // marginType
+				pair.GetLeverage(),           // leverage
+				pair.GetMinSteps(),           // minSteps
+				pair.GetCallbackRate(),       // callbackRate
+				pair.GetProgression(),        // progression
+				quit,                         // quit
+				wg)                           // wg
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {
