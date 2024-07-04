@@ -189,15 +189,15 @@ func createNextPair_v4(
 		downClosePosition = false
 		upReduceOnly = true
 		downReduceOnly = false
-		// } else { // Немає позиції, відкриваємо нову
-		// 	upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
-		// 	downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-		// 	upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
-		// 	downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
-		// 	upClosePosition = false
-		// 	downClosePosition = false
-		// 	upReduceOnly = false
-		// 	downReduceOnly = false
+	} else { // Немає позиції, відкриваємо нову
+		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
+		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
+		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
+		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
+		upClosePosition = false
+		downClosePosition = false
+		upReduceOnly = false
+		downReduceOnly = false
 	}
 	// Створюємо ордер на продаж
 	// Створюємо ордер на купівлю
