@@ -289,27 +289,27 @@ func createNextPair_v3(
 		upReduceOnly = true
 		downClosePosition = false
 		downReduceOnly = false
-	} else { // Немає позиції, відкриваємо нову
-		// Відкриваємо нову позицію
-		// Визначаємо ціну для нових ордерів
-		// Визначаємо кількість для нових ордерів
-		pairProcessor.UpDownClear()
-		pairProcessor.SetBounds(LastExecutedPrice)
-		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
-		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
-		if err != nil {
-			logrus.Errorf("Future %s: can't calculate initial position for price up %v", pairProcessor.GetPair(), LastExecutedPrice)
-		}
-		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
-		if err != nil {
-			logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
-		}
-		// Тіко відкриваємо позицію, не закриваємо та не скорочуемо
-		upClosePosition = false
-		upReduceOnly = false
-		downClosePosition = false
-		downReduceOnly = false
+		// } else { // Немає позиції, відкриваємо нову
+		// 	// Відкриваємо нову позицію
+		// 	// Визначаємо ціну для нових ордерів
+		// 	// Визначаємо кількість для нових ордерів
+		// 	pairProcessor.UpDownClear()
+		// 	pairProcessor.SetBounds(LastExecutedPrice)
+		// 	upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
+		// 	downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
+		// 	_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
+		// 	if err != nil {
+		// 		logrus.Errorf("Future %s: can't calculate initial position for price up %v", pairProcessor.GetPair(), LastExecutedPrice)
+		// 	}
+		// 	_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
+		// 	if err != nil {
+		// 		logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
+		// 	}
+		// 	// Тіко відкриваємо позицію, не закриваємо та не скорочуемо
+		// 	upClosePosition = false
+		// 	upReduceOnly = false
+		// 	downClosePosition = false
+		// 	downReduceOnly = false
 	}
 	// Створюємо ордер на продаж
 	// Створюємо ордер на купівлю
