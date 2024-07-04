@@ -363,7 +363,7 @@ func RunFuturesGridTradingV3(
 		reduceOnlyUp   bool
 		reduceOnlyDown bool
 		pairProcessor  *processor.PairProcessor
-		timeOut        time.Duration = 5000
+		timeOut        time.Duration = 1000
 	)
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
@@ -475,48 +475,48 @@ func RunFuturesGridTradingV3(
 			}
 		}
 	}()
-	// Створюємо початкові ордери на продаж та купівлю
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		return err
-	}
-	price, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		return err
-	}
-	initPriceUp,
-		quantityUp,
-		initPriceDown,
-		quantityDown,
-		reduceOnlyUp,
-		reduceOnlyDown,
-		err = pairProcessor.GetPrices(price, risk, true)
-	if err != nil {
-		return err
-	}
-	_, _, err = openPosition(
-		futures.SideTypeSell,   // sideUp
-		futures.OrderTypeLimit, // typeUp
-		futures.SideTypeBuy,    // sideDown
-		futures.OrderTypeLimit, // typeDown
-		false,                  // closePositionUp
-		false,                  // reduceOnlyUp
-		false,                  // closePositionDown
-		false,                  // reduceOnlyDown
-		quantityUp,             // quantityUp
-		quantityDown,           // quantityDown
-		initPriceUp,            // priceUp
-		initPriceUp,            // stopPriceUp
-		initPriceUp,            // activationPriceUp
-		initPriceDown,          // priceDown
-		initPriceDown,          // stopPriceDown
-		initPriceDown,          // activationPriceDown
-		pairProcessor)          // pairProcessor
-	if err != nil {
-		return err
-	}
+	// // Створюємо початкові ордери на продаж та купівлю
+	// risk, err := pairProcessor.GetPositionRisk()
+	// if err != nil {
+	// 	printError()
+	// 	return err
+	// }
+	// price, err := pairProcessor.GetCurrentPrice()
+	// if err != nil {
+	// 	printError()
+	// 	return err
+	// }
+	// initPriceUp,
+	// 	quantityUp,
+	// 	initPriceDown,
+	// 	quantityDown,
+	// 	reduceOnlyUp,
+	// 	reduceOnlyDown,
+	// 	err = pairProcessor.GetPrices(price, risk, true)
+	// if err != nil {
+	// 	return err
+	// }
+	// _, _, err = openPosition(
+	// 	futures.SideTypeSell,   // sideUp
+	// 	futures.OrderTypeLimit, // typeUp
+	// 	futures.SideTypeBuy,    // sideDown
+	// 	futures.OrderTypeLimit, // typeDown
+	// 	false,                  // closePositionUp
+	// 	false,                  // reduceOnlyUp
+	// 	false,                  // closePositionDown
+	// 	false,                  // reduceOnlyDown
+	// 	quantityUp,             // quantityUp
+	// 	quantityDown,           // quantityDown
+	// 	initPriceUp,            // priceUp
+	// 	initPriceUp,            // stopPriceUp
+	// 	initPriceUp,            // activationPriceUp
+	// 	initPriceDown,          // priceDown
+	// 	initPriceDown,          // stopPriceDown
+	// 	initPriceDown,          // activationPriceDown
+	// 	pairProcessor)          // pairProcessor
+	// if err != nil {
+	// 	return err
+	// }
 	<-quit
 	logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
 	pairProcessor.CancelAllOrders()
