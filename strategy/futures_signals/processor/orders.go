@@ -135,6 +135,9 @@ func (pp *PairProcessor) createOrder(
 		apiError, _ := utils.ParseAPIError(err)
 		if apiError == nil {
 			return
+		} else if apiError.Code == -2022 {
+			// -2022 ReduceOnly Order is rejected.
+			return
 		} else if apiError.Code == -1007 {
 			time.Sleep(1 * time.Second)
 			orders, err := pp.GetOpenOrders()
