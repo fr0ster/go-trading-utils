@@ -271,10 +271,10 @@ func New(
 		StrategyType:       strategyType,
 		StageType:          stageType,
 		Pair:               pair,
-		LimitOnPosition:    1.0,  // 100%
-		LimitOnTransaction: 0.01, // 1%
-		DeltaPrice:         0.01, // 1%
-		DeltaQuantity:      0.1,  // 10%
+		LimitOnPosition:    100.0, // 100$
+		LimitOnTransaction: 1.0,   // 1%
+		DeltaPrice:         1.0,   // 1%
+		DeltaQuantity:      10.0,  // 10%
 		Progression:        "GEOMETRIC",
 		Value:              0.0,
 		CallbackRate:       0.1, // 0.1%
