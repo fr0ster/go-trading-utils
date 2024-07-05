@@ -31,6 +31,7 @@ func getCallBack_v5(
 		v5.Lock()
 		defer v5.Unlock()
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
+			event.OrderTradeUpdate.Type == futures.OrderTypeLimit &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			// Знаходимо у гріді на якому був виконаний ордер
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
@@ -396,7 +397,7 @@ func RunFuturesGridTradingV5(
 							initPosition_v5(currentPrice, risk, pairProcessor, quit)
 						}
 						lastResponse_v5 = time.Now()
-					} else if len(openOrders) == 2 {
+					} else if len(openOrders) >= 2 {
 						if time.Since(lastResponse_v5) > timeOut_v5*30 {
 							pairProcessor.CancelAllOrders()
 							lastResponse_v5 = time.Now()

@@ -30,6 +30,7 @@ func getCallBack_v4(
 		v4.Lock()
 		defer v4.Unlock()
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
+			event.OrderTradeUpdate.Type == futures.OrderTypeLimit &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			// Знаходимо у гріді на якому був виконаний ордер
 			if !maintainedOrders.Has(grid_types.OrderIdType(event.OrderTradeUpdate.ID)) {
