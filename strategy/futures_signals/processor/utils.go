@@ -63,10 +63,10 @@ func (pp *PairProcessor) GetPrices(
 		return
 	}
 	if quantityUp*priceUp < pp.GetNotional() {
-		err = fmt.Errorf("calculated quantity up %v * price up %v > notional %v", quantityUp, priceUp, pp.GetNotional())
+		err = fmt.Errorf("calculated quantity up %v * price up %v < notional %v", quantityUp, priceUp, pp.GetNotional())
 		return
 	} else if quantityDown*priceDown < pp.GetNotional() {
-		err = fmt.Errorf("calculated quantity down %v * price down %v > notional %v", quantityDown, priceDown, pp.GetNotional())
+		err = fmt.Errorf("calculated quantity down %v * price down %v < notional %v", quantityDown, priceDown, pp.GetNotional())
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
