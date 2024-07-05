@@ -8,54 +8,12 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	grid "github.com/fr0ster/go-trading-utils/strategy/futures_signals/grid"
+	trading "github.com/fr0ster/go-trading-utils/strategy/futures_signals/trading"
+
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
-
-const (
-	Times = 3
-)
-
-func RunFuturesHolding(wg *sync.WaitGroup) (err error) {
-	defer wg.Done()
-	return fmt.Errorf("it should be implemented for futures")
-}
-
-func RunScalpingHolding(
-	client *futures.Client,
-	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
-	marginType pairs_types.MarginType,
-	leverage int,
-	minSteps int,
-	callbackRate float64,
-	percentsToStopSettingNewOrder float64,
-	progression pairs_types.ProgressionType,
-	quit chan struct{},
-	wg *sync.WaitGroup) (err error) {
-	return RunFuturesGridTradingV1(
-		client,
-		pair,
-		limitOnPosition,
-		limitOnTransaction,
-		upBound,
-		lowBound,
-		deltaPrice,
-		deltaQuantity,
-		marginType,
-		leverage,
-		minSteps,
-		percentsToStopSettingNewOrder,
-		callbackRate,
-		progression,
-		quit,
-		wg)
-}
 
 func Run(
 	config *config_types.ConfigFile,
@@ -75,11 +33,11 @@ func Run(
 
 			// Відпрацьовуємо  Holding стратегію
 		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-			err = RunFuturesHolding(wg)
+			err = fmt.Errorf("holding strategy shouldn't be implemented for futures")
 
 			// Відпрацьовуємо Scalping стратегію
 		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-			err = RunScalpingHolding(
+			err = grid.RunFuturesGridTradingV1(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
@@ -99,7 +57,7 @@ func Run(
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-			err = RunFuturesTrading(
+			err = trading.RunFuturesTrading(
 				client,                       // client
 				pair.GetPair(),               // pair
 				degree,                       // degree
@@ -128,7 +86,7 @@ func Run(
 
 			// Відпрацьовуємо Grid стратегію
 		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-			err = RunFuturesGridTradingV1(
+			err = grid.RunFuturesGridTradingV1(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
@@ -147,7 +105,7 @@ func Run(
 				wg)                    // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
-			err = RunFuturesGridTradingV2(
+			err = grid.RunFuturesGridTradingV2(
 				client,                       // client
 				pair,                         // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
@@ -170,7 +128,7 @@ func Run(
 			// Збільшуємо та зменшуємо позицію трейлінг стопами
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-			err = RunFuturesGridTradingV3(
+			err = grid.RunFuturesGridTradingV3(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
@@ -192,7 +150,7 @@ func Run(
 			// Збільшуємо та зменшуємо позицію лімітними ордерами
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-			err = RunFuturesGridTradingV4(
+			err = grid.RunFuturesGridTradingV4(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
@@ -214,7 +172,7 @@ func Run(
 			// Збільшуємо та зменшуємо позицію тейк профіт ордерами
 			// відкриваємо ордера на продаж та купівлю з однаковою кількістью
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
-			err = RunFuturesGridTradingV5(
+			err = grid.RunFuturesGridTradingV5(
 				client,                       // client
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition

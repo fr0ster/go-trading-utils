@@ -1,7 +1,6 @@
-package futures_signals
+package grid
 
 import (
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -19,17 +18,17 @@ import (
 )
 
 var (
-	v3         sync.Mutex = sync.Mutex{}
-	timeOut_v3            = 1000 * time.Millisecond
+	v4         sync.Mutex = sync.Mutex{}
+	timeOut_v4            = 1000 * time.Millisecond
 )
 
-func getCallBack_v3(
+func getCallBack_v4(
 	pairProcessor *processor.PairProcessor,
 	maintainedOrders *btree.BTree,
 	quit chan struct{}) func(*futures.WsUserDataEvent) {
 	return func(event *futures.WsUserDataEvent) {
-		v3.Lock()
-		defer v3.Unlock()
+		v4.Lock()
+		defer v4.Unlock()
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
 			event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			// Знаходимо у гріді на якому був виконаний ордер
@@ -57,10 +56,8 @@ func getCallBack_v3(
 				marginBalancing(risk, pairProcessor)
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
-				err = createNextPair_v3(
+				err = createNextPair_v4(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
-					event.OrderTradeUpdate.Side,
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
@@ -73,7 +70,7 @@ func getCallBack_v3(
 	}
 }
 
-func getErrorHandling_v3(
+func getErrorHandling_v4(
 	pairProcessor *processor.PairProcessor,
 	quit chan struct{}) futures.ErrHandler {
 	return func(networkErr error) {
@@ -87,8 +84,8 @@ func getErrorHandling_v3(
 		)
 		openOrders, _ := pairProcessor.GetOpenOrders()
 		if len(openOrders) == 0 {
-			if v3.TryLock() {
-				defer v3.Unlock()
+			if v4.TryLock() {
+				defer v4.Unlock()
 				logrus.Debugf("Futures %s: Error: %v", pairProcessor.GetPair(), networkErr)
 				risk, err := pairProcessor.GetPositionRisk()
 				if err != nil {
@@ -109,7 +106,7 @@ func getErrorHandling_v3(
 					quantityDown,
 					reduceOnlyUp,
 					reduceOnlyDown,
-					err = pairProcessor.GetPrices(price, risk, true)
+					err = pairProcessor.GetPrices(price, risk, false)
 				if err != nil {
 					printError()
 					close(quit)
@@ -144,10 +141,8 @@ func getErrorHandling_v3(
 	}
 }
 
-func createNextPair_v3(
+func createNextPair_v4(
 	LastExecutedPrice float64,
-	AccumulatedFilledQty float64,
-	LastExecutedSide futures.SideType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk              *futures.PositionRisk
@@ -160,156 +155,49 @@ func createNextPair_v3(
 		upReduceOnly      bool
 		downReduceOnly    bool
 	)
-	riskBreakEvenPriceOrEntryPrice := func(risk *futures.PositionRisk) float64 {
-		breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-		entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
-		if breakEvenPrice != 0 {
-			return breakEvenPrice
-		} else if entryPrice != 0 {
-			return entryPrice
-		}
-		return 0
-	}
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
-	currentPrice, _ := pairProcessor.GetCurrentPrice()
+	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 	position := math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // Маємо позицію short
-		if position*currentPrice <= free {
-			// Виконаний ордер був на продаж, тобто збільшив або відкрив позицію short
-			if LastExecutedSide == futures.SideTypeSell {
-				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій short
-				// Як не маємо, то вважаемо, шо виконаний ордер створив позицію short
-				// та розраховуємо цінові позиції від ціни відкриття позиції
-				if pairProcessor.GetUpLength() == 0 {
-					_, _, _, _, _, err = pairProcessor.InitPositionGridUp(LastExecutedPrice)
-					if err != nil {
-						err = fmt.Errorf("can't init position up: %v", err)
-						printError()
-						return
-					}
-				}
-				// Визначаємо ціну для нових ордерів
-				// Визначаємо кількість для нових ордерів
-				upPrice, upQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
-				if err != nil {
-					logrus.Errorf("Can't check position up: %v", err)
-					printError()
-					return
-				}
-				// Виконаний ордер був на купівлю, тобто скоротив позицію short
-				// Обробляємо розворот курсу
-			} else if LastExecutedSide == futures.SideTypeBuy {
-				logrus.Debugf("Futures %s: ComeBack Price, LastExecutedPrice %v, AccumulatedFilledQty %v",
-					pairProcessor.GetPair(), LastExecutedPrice, AccumulatedFilledQty)
-				// У випадку, коли ми маємо позицію short,
-				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
-				// то ми їх розраховуємо
-				// Визначаємо ціну для нових ордерів
-				// Визначаємо кількість для нових ордерів
-				upPrice, upQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
-				if err != nil {
-					upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
-					upQuantity = pairProcessor.NextQuantityUp(AccumulatedFilledQty)
-				}
-			}
-			// Створюємо ордер на продаж, тобто збільшуємо позицію short
-			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
-			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
-			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
-		} else {
-			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
-			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
-			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
-			upQuantity = 0
-			downQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
+	if breakEvenPrice == 0 {
+		breakEvenPrice = utils.ConvStrToFloat64(risk.EntryPrice)
+	}
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+		if position*LastExecutedPrice <= free {
+			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
+			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
+		downPrice = pairProcessor.NextPriceDown(math.Min(breakEvenPrice, LastExecutedPrice))
+		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		if downQuantity > position {
 			downQuantity = position
 		}
-		// Позиція short, не закриваємо обов'язково повністю ордером на купівлю але скорочуемо
 		upClosePosition = false
-		upReduceOnly = false
 		downClosePosition = false
+		upReduceOnly = false
 		downReduceOnly = true
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 { // Маємо позицію long
-		if position*currentPrice <= free {
-			// Виконаний ордер був на купівлю, тобто збільшив позицію long
-			if LastExecutedSide == futures.SideTypeBuy {
-				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій long
-				// Як не маємо, то вважаемо, шо виконаний ордер створив позицію long
-				// та розраховуємо цінові позиції від ціни відкриття позиції
-				if pairProcessor.GetDownLength() == 0 {
-					_, _, _, _, _, err = pairProcessor.InitPositionGridDown(LastExecutedPrice)
-					if err != nil {
-						err = fmt.Errorf("can't init position down: %v", err)
-						printError()
-						return
-					}
-				}
-				// Визначаємо ціну для нових ордерів
-				// Визначаємо кількість для нових ордерів
-				downPrice, downQuantity, err = pairProcessor.NextDown(LastExecutedPrice, AccumulatedFilledQty)
-				if err != nil {
-					logrus.Errorf("Can't check position down: %v", err)
-					printError()
-					return
-				}
-				// Виконаний ордер був на продаж, тобто скоротив позицію long
-				// Обробляємо розворот курсу
-			} else if LastExecutedSide == futures.SideTypeSell {
-				logrus.Debugf("Futures %s: ComeBack Price, LastExecutedPrice %v, AccumulatedFilledQty %v",
-					pairProcessor.GetPair(), LastExecutedPrice, AccumulatedFilledQty)
-				// У випадку, коли ми маємо позицію long,
-				// але не маємо розрахованих цінових позицій від ціни відкриття позиції
-				// то ми їх розраховуємо
-				// Визначаємо ціну для нових ордерів
-				// Визначаємо кількість для нових ордерів
-				downPrice, downQuantity, err = pairProcessor.NextUp(LastExecutedPrice, AccumulatedFilledQty)
-				if err != nil {
-					downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-					downQuantity = pairProcessor.NextQuantityDown(AccumulatedFilledQty)
-				}
-			}
-			// Створюємо ордер на продаж, тобто скорочуємо позицію long
-			// Створюємо ордер на купівлю, тобто збільшуємо позицію long
-			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
-			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
-		} else {
-			// Створюємо ордер на продаж, тобто скорочуємо позицію long
-			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
-			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
-			upQuantity = math.Min(AccumulatedFilledQty, math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
-			downQuantity = 0
-		}
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+		upPrice = pairProcessor.NextPriceUp(math.Max(breakEvenPrice, LastExecutedPrice))
+		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		if upQuantity > position {
 			upQuantity = position
 		}
-		// Позиція long, не закриваємо обов'язково повністю ордером на продаж але скорочуемо
+		if position*LastExecutedPrice <= free {
+			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
+			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
+		}
 		upClosePosition = false
-		upReduceOnly = true
 		downClosePosition = false
+		upReduceOnly = true
 		downReduceOnly = false
 	} else { // Немає позиції, відкриваємо нову
-		// Відкриваємо нову позицію
-		// Визначаємо ціну для нових ордерів
-		// Визначаємо кількість для нових ордерів
-		pairProcessor.UpDownClear()
-		pairProcessor.SetBounds(LastExecutedPrice)
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
-		if err != nil {
-			logrus.Errorf("Future %s: can't calculate initial position for price up %v", pairProcessor.GetPair(), LastExecutedPrice)
-		}
-		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
-		if err != nil {
-			logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
-		}
-		// Тіко відкриваємо позицію, не закриваємо та не скорочуемо
+		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
+		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		upClosePosition = false
-		upReduceOnly = false
 		downClosePosition = false
+		upReduceOnly = false
 		downReduceOnly = false
 	}
 	// Створюємо ордер на продаж
@@ -340,7 +228,7 @@ func createNextPair_v3(
 	return
 }
 
-func initPosition_v3(
+func initPosition_v4(
 	price float64,
 	risk *futures.PositionRisk,
 	pairProcessor *processor.PairProcessor,
@@ -359,7 +247,7 @@ func initPosition_v3(
 		quantityDown,
 		reduceOnlyUp,
 		reduceOnlyDown,
-		err := pairProcessor.GetPrices(price, risk, true)
+		err := pairProcessor.GetPrices(price, risk, false)
 	if err != nil {
 		logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
 		printError()
@@ -392,7 +280,7 @@ func initPosition_v3(
 	}
 }
 
-func RunFuturesGridTradingV3(
+func RunFuturesGridTradingV4(
 	client *futures.Client,
 	pair string,
 	limitOnPosition float64,
@@ -415,7 +303,7 @@ func RunFuturesGridTradingV3(
 	defer wg.Done()
 	futures.WebsocketKeepalive = true
 	if len(timeout) > 0 {
-		timeOut_v3 = timeout[0]
+		timeOut_v4 = timeout[0]
 	}
 
 	// Створюємо обробник пари
@@ -438,18 +326,16 @@ func RunFuturesGridTradingV3(
 		printError()
 		return
 	}
-	// upNewOrder := upPositionNewOrderType
-	// downNewOrder := downPositionNewOrderType
 	// Стартуємо обробку ордерів
 	logrus.Debugf("Futures %s: Start Order Status Event", pairProcessor.GetPair())
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
 		quit,
-		getCallBack_v3(
+		getCallBack_v4(
 			pairProcessor,    // pairProcessor
 			maintainedOrders, // maintainedOrders
 			quit),
-		getErrorHandling_v3(
+		getErrorHandling_v4(
 			pairProcessor, // pairProcessor
 			quit))         // quit
 	if err != nil {
@@ -464,8 +350,8 @@ func RunFuturesGridTradingV3(
 			select {
 			case <-quit:
 				return
-			case <-time.After(timeOut_v3):
-				if v3.TryLock() {
+			case <-time.After(timeOut_v4):
+				if v4.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
 					if len(openOrders) == 1 {
 						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
@@ -477,14 +363,14 @@ func RunFuturesGridTradingV3(
 								close(quit)
 								return
 							}
-							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
-								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
+							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) || // Short позиція і ціна пішла вниз нижче межі діапазону LowBound
+								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) || // Long позиція і ціна пішла вгору вище межі діапазону UpBound
 								math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
 								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
 									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
 								pairProcessor.ClosePosition(risk)
 							}
-							initPosition_v3(currentPrice, risk, pairProcessor, quit)
+							initPosition_v4(currentPrice, risk, pairProcessor, quit)
 						}
 					} else if len(openOrders) == 0 {
 						risk, err := pairProcessor.GetPositionRisk()
@@ -499,9 +385,9 @@ func RunFuturesGridTradingV3(
 							close(quit)
 							return
 						}
-						initPosition_v3(currentPrice, risk, pairProcessor, quit)
+						initPosition_v4(currentPrice, risk, pairProcessor, quit)
 					}
-					v3.Unlock()
+					v4.Unlock()
 				}
 			}
 		}

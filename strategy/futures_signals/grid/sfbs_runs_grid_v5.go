@@ -1,4 +1,4 @@
-package futures_signals
+package grid
 
 import (
 	"math"
