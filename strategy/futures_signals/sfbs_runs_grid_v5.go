@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	v5         sync.Mutex = sync.Mutex{}
-	timeOut_v5            = 1000 * time.Millisecond
+	v5              sync.Mutex = sync.Mutex{}
+	timeOut_v5                 = 1000 * time.Millisecond
+	lastResponse_v5            = time.Now()
 )
 
 func getCallBack_v5(
@@ -364,8 +365,6 @@ func RunFuturesGridTradingV5(
 		printError()
 		return err
 	}
-	// Ініціалізуємо маркер для останньої відповіді
-	lastResponse := time.Now()
 	// Запускаємо горутину для відслідковування виходу ціни за межі диапазону
 	wg.Add(1)
 	go func() {
@@ -396,12 +395,13 @@ func RunFuturesGridTradingV5(
 							}
 							initPosition_v5(currentPrice, risk, pairProcessor, quit)
 						}
+						lastResponse_v5 = time.Now()
 						v5.Unlock()
 					}
 				} else if len(openOrders) == 2 {
-					if v5.TryLock() && time.Since(lastResponse) > timeOut_v5*30 {
-						lastResponse = time.Now()
+					if v5.TryLock() && time.Since(lastResponse_v5) > timeOut_v5*30 {
 						pairProcessor.CancelAllOrders()
+						lastResponse_v5 = time.Now()
 						v5.Unlock()
 					}
 				} else if len(openOrders) == 0 {
@@ -419,6 +419,7 @@ func RunFuturesGridTradingV5(
 							return
 						}
 						initPosition_v5(currentPrice, risk, pairProcessor, quit)
+						lastResponse_v5 = time.Now()
 						v5.Unlock()
 					}
 				}
