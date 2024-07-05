@@ -65,6 +65,15 @@ func (pp *PairProcessor) GetPrices(
 			pp.symbol.Symbol, priceUp, priceDown)
 		return
 	}
+	if quantityUp*priceUp < pp.GetNotional() {
+		err = fmt.Errorf("future %s: calculated quantity up %v * price up %v > notional %v",
+			pp.symbol.Symbol, quantityUp, priceUp, pp.GetNotional())
+		return
+	} else if quantityDown*priceDown < pp.GetNotional() {
+		err = fmt.Errorf("future %s: calculated quantity down %v * price down %v > notional %v",
+			pp.symbol.Symbol, quantityDown, priceDown, pp.GetNotional())
+		return
+	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		positionPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 		if positionPrice == 0 {
@@ -75,12 +84,20 @@ func (pp *PairProcessor) GetPrices(
 			if math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
 				quantityDown = math.Max(-utils.ConvStrToFloat64(risk.PositionAmt), quantityDown)
 				reduceOnlyDown = true
+			} else {
+				err = fmt.Errorf("future %s: calculated quantity down %v * price down %v < notional %v",
+					pp.symbol.Symbol, quantityDown, priceDown, pp.GetNotional())
+				return
 			}
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp(math.Max(positionPrice, price))
 			if math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
 				quantityUp = math.Max(utils.ConvStrToFloat64(risk.PositionAmt), quantityUp)
 				reduceOnlyUp = true
+			} else {
+				err = fmt.Errorf("future %s: calculated quantity up %v * price up %v < notional %v",
+					pp.symbol.Symbol, quantityUp, priceUp, pp.GetNotional())
+				return
 			}
 		}
 	}
