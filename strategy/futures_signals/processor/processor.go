@@ -82,14 +82,19 @@ func (pp *PairProcessor) InitPositionGridUp(price float64) (
 	if err != nil {
 		return
 	}
+	if startQuantityUp*price < pp.notional {
+		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, startQuantityUp*price)
+		return
+	}
 	pp.up.Clear(false)
-	for i := 1; i < stepsUp; i++ {
+	for i := 1; i <= stepsUp; i++ {
 		priceUp = pp.RoundPrice(pp.FindNthTerm(price, price*(1+pp.GetDeltaPrice()), i+1))
 		currentQuantityUp = pp.RoundQuantity(pp.FindNthTerm(startQuantityUp, startQuantityUp*(1+pp.GetDeltaQuantity()), i+1))
+		if currentQuantityUp*price < pp.notional {
+			err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, currentQuantityUp*price)
+			return
+		}
 		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: currentQuantityUp})
-	}
-	if quantityUp*price < pp.notional {
-		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v", pp.notional, quantityUp*price)
 	}
 	return
 
@@ -112,14 +117,20 @@ func (pp *PairProcessor) InitPositionGridDown(price float64) (
 	if err != nil {
 		return
 	}
+	if currentQuantityDown*price < pp.notional {
+		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
+			pp.notional, currentQuantityDown*price)
+		return
+	}
 	pp.down.Clear(false)
 	for i := 1; i < stepsDown; i++ {
 		priceDown = pp.FindNthTerm(price, price*(1-pp.GetDeltaPrice()), i)
 		currentQuantityDown = pp.FindNthTerm(startQuantityDown, startQuantityDown*(1+pp.GetDeltaQuantity()), i)
+		if currentQuantityDown*price < pp.notional {
+			err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
+				pp.notional, currentQuantityDown*price)
+		}
 		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: currentQuantityDown})
-	}
-	if currentQuantityDown*price < pp.notional {
-		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v", pp.notional, currentQuantityDown*price)
 	}
 	return
 
