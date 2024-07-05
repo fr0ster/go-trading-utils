@@ -375,8 +375,8 @@ func RunFuturesGridTradingV5(
 				return
 			case <-time.After(timeOut_v5):
 				openOrders, _ := pairProcessor.GetOpenOrders()
-				if len(openOrders) == 1 {
-					if v5.TryLock() {
+				if v5.TryLock() {
+					if len(openOrders) == 1 {
 						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 						risk, _ := pairProcessor.GetPositionRisk()
 						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
@@ -396,16 +396,12 @@ func RunFuturesGridTradingV5(
 							initPosition_v5(currentPrice, risk, pairProcessor, quit)
 						}
 						lastResponse_v5 = time.Now()
-						v5.Unlock()
-					}
-				} else if len(openOrders) == 2 {
-					if v5.TryLock() && time.Since(lastResponse_v5) > timeOut_v5*30 {
-						pairProcessor.CancelAllOrders()
-						lastResponse_v5 = time.Now()
-						v5.Unlock()
-					}
-				} else if len(openOrders) == 0 {
-					if v5.TryLock() {
+					} else if len(openOrders) == 2 {
+						if time.Since(lastResponse_v5) > timeOut_v5*30 {
+							pairProcessor.CancelAllOrders()
+							lastResponse_v5 = time.Now()
+						}
+					} else if len(openOrders) == 0 {
 						risk, err := pairProcessor.GetPositionRisk()
 						if err != nil {
 							printError()
@@ -420,8 +416,8 @@ func RunFuturesGridTradingV5(
 						}
 						initPosition_v5(currentPrice, risk, pairProcessor, quit)
 						lastResponse_v5 = time.Now()
-						v5.Unlock()
 					}
+					v5.Unlock()
 				}
 			}
 		}

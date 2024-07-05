@@ -464,9 +464,9 @@ func RunFuturesGridTradingV3(
 			case <-quit:
 				return
 			case <-time.After(timeOut_v3):
-				openOrders, _ := pairProcessor.GetOpenOrders()
-				if len(openOrders) == 1 {
-					if v3.TryLock() {
+				if v3.TryLock() {
+					openOrders, _ := pairProcessor.GetOpenOrders()
+					if len(openOrders) == 1 {
 						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 						risk, _ := pairProcessor.GetPositionRisk()
 						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
@@ -485,10 +485,7 @@ func RunFuturesGridTradingV3(
 							}
 							initPosition_v3(currentPrice, risk, pairProcessor, quit)
 						}
-						v3.Unlock()
-					}
-				} else if len(openOrders) == 0 {
-					if v3.TryLock() {
+					} else if len(openOrders) == 0 {
 						risk, err := pairProcessor.GetPositionRisk()
 						if err != nil {
 							printError()
@@ -502,8 +499,8 @@ func RunFuturesGridTradingV3(
 							return
 						}
 						initPosition_v3(currentPrice, risk, pairProcessor, quit)
-						v3.Unlock()
 					}
+					v3.Unlock()
 				}
 			}
 		}
