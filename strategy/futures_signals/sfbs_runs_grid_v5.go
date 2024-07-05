@@ -54,8 +54,7 @@ func getCallBack_v5(
 				logrus.Debugf("Futures %s: Risk Position: PositionAmt %v, EntryPrice %v, BreakEvenPrice %v, UnrealizedProfit %v, LiquidationPrice %v, Leverage %v",
 					pairProcessor.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, risk.UnRealizedProfit, risk.LiquidationPrice, risk.Leverage)
 				// Балансування маржі як треба
-				// marginBalancing(risk, pairProcessor)
-				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
+				marginBalancing(risk, pairProcessor)
 				err = createNextPair_v5(
 					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
 					event.OrderTradeUpdate.Side,
