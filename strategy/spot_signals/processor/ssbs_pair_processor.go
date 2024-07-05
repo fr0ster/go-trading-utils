@@ -63,10 +63,10 @@ type (
 
 		testUp           testFunc
 		testDown         testFunc
-		nextPriceUp      nextPriceFunc
-		nextPriceDown    nextPriceFunc
-		nextQuantityUp   nextQuantityFunc
-		nextQuantityDown nextQuantityFunc
+		NextPriceUp      nextPriceFunc
+		NextPriceDown    nextPriceFunc
+		NextQuantityUp   nextQuantityFunc
+		NextQuantityDown nextQuantityFunc
 	}
 )
 
@@ -568,28 +568,28 @@ func NewPairProcessor(
 		pp.minuteOrderLimit,
 		pp.dayOrderLimit,
 		pp.minuteRawRequestLimit =
-		LimitRead(degree, []string{pp.symbol.Symbol}, client)
+		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
 
 	if functions != nil {
 		pp.testUp = functions[0].TestUp
 		pp.testDown = functions[0].TestDown
-		pp.nextPriceUp = functions[0].NextPriceUp
-		pp.nextPriceDown = functions[0].NextPriceDown
-		pp.nextQuantityUp = functions[0].NextQuantityUp
-		pp.nextQuantityDown = functions[0].NextQuantityDown
+		pp.NextPriceUp = functions[0].NextPriceUp
+		pp.NextPriceDown = functions[0].NextPriceDown
+		pp.NextQuantityUp = functions[0].NextQuantityUp
+		pp.NextQuantityDown = functions[0].NextQuantityDown
 	} else {
 		pp.testUp = func(s, e float64) bool { return s < e }
 		pp.testDown = func(s, e float64) bool { return s > e }
-		pp.nextPriceUp = func(s float64, n int) float64 {
+		pp.NextPriceUp = func(s float64, n int) float64 {
 			return pp.roundPrice(s * math.Pow(1+deltaPrice, float64(2)))
 		}
-		pp.nextPriceDown = func(s float64, n int) float64 {
+		pp.NextPriceDown = func(s float64, n int) float64 {
 			return pp.roundPrice(s * math.Pow(1-deltaPrice, float64(2)))
 		}
-		pp.nextQuantityUp = func(s float64, n int) float64 {
+		pp.NextQuantityUp = func(s float64, n int) float64 {
 			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
 		}
-		pp.nextQuantityDown = func(s float64, n int) float64 {
+		pp.NextQuantityDown = func(s float64, n int) float64 {
 			return pp.roundQuantity(s * (math.Pow(1+deltaQuantity, float64(2))))
 		}
 	}

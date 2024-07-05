@@ -12,6 +12,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -95,7 +96,7 @@ func round(val float64, exp int) float64 {
 }
 
 func initVars(
-	pairProcessor *PairProcessor) (
+	pairProcessor *processor.PairProcessor) (
 	symbol *binance.Symbol,
 	price,
 	quantity float64,
@@ -134,7 +135,7 @@ func initVars(
 func openPosition(
 	price float64,
 	quantity float64,
-	pairProcessor *PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
+	pairProcessor *processor.PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
 	var (
 		targetBalance float64
 	)
@@ -145,30 +146,30 @@ func openPosition(
 			pairProcessor,
 			binance.SideTypeSell,
 			quantity,
-			pairProcessor.nextPriceUp(price, 0))
+			pairProcessor.NextPriceUp(price, 0))
 		if err != nil {
 			printError()
 			return
 		}
 		logrus.Debugf("Spot %s: Set Sell order on price %v with quantity %v",
-			pairProcessor.GetPair(), pairProcessor.nextPriceUp(price, 0), quantity)
+			pairProcessor.GetPair(), pairProcessor.NextPriceUp(price, 0), quantity)
 	} else {
 		logrus.Debugf("Spot %s: Target balance %v >= quantity %v",
 			pairProcessor.GetPair(), targetBalance, quantity)
 	}
-	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, pairProcessor.nextPriceDown(price, 0))
+	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, pairProcessor.NextPriceDown(price, 0))
 	if err != nil {
 		printError()
 		return
 	}
 	logrus.Debugf("Spot %s: Set Buy order on price %v with quantity %v",
-		pairProcessor.GetPair(), pairProcessor.nextPriceDown(price, 0), quantity)
+		pairProcessor.GetPair(), pairProcessor.NextPriceDown(price, 0), quantity)
 	return
 }
 
 // Створення ордера для розміщення в грід
 func createOrderInGrid(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	side binance.SideType,
 	quantity,
 	price float64) (order *binance.CreateOrderResponse, err error) {
@@ -191,7 +192,7 @@ func roundPrice(val float64, symbol *binance.Symbol) float64 {
 }
 
 func getCallBack_v1(
-	pairProcessor *PairProcessor,
+	pairProcessor *processor.PairProcessor,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*binance.WsUserDataEvent) {
 	var (
@@ -231,7 +232,7 @@ func RunSpotGridTrading(
 		quantity float64
 	)
 	// Створюємо обробник пари
-	pairProcessor, err := NewPairProcessor(
+	pairProcessor, err := processor.NewPairProcessor(
 		client,
 		symbol,
 		limitOnPosition,
