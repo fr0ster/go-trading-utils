@@ -249,6 +249,7 @@ func initPosition_v4(
 		reduceOnlyDown,
 		err := pairProcessor.GetPrices(price, risk, false)
 	if err != nil {
+		logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
 		printError()
 		close(quit)
 		return
