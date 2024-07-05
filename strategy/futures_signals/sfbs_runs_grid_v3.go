@@ -51,8 +51,8 @@ func getCallBack_v3(
 					close(quit)
 					return
 				}
-				logrus.Debugf("Futures %s: Risk Position: PositionAmt %v, EntryPrice %v, UnrealizedProfit %v, LiquidationPrice %v, Leverage %v",
-					pairProcessor.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.UnRealizedProfit, risk.LiquidationPrice, risk.Leverage)
+				logrus.Debugf("Futures %s: Risk Position: PositionAmt %v, EntryPrice %v, BreakEvenPrice %v, UnrealizedProfit %v, LiquidationPrice %v, Leverage %v",
+					pairProcessor.GetPair(), risk.PositionAmt, risk.EntryPrice, risk.BreakEvenPrice, risk.UnRealizedProfit, risk.LiquidationPrice, risk.Leverage)
 				// Балансування маржі як треба
 				marginBalancing(risk, pairProcessor)
 				pairProcessor.CancelAllOrders()
@@ -334,6 +334,7 @@ func createNextPair_v3(
 		pairProcessor)          // pairProcessor
 	if err != nil {
 		printError()
+		err = nil // Помилки ігноруємо, якшо не вдалося створити ордер, то чекаємо на перевідкриття
 		return
 	}
 	return
@@ -478,29 +479,35 @@ func RunFuturesGridTradingV3(
 							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
 								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
 								math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
+								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
+									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
 								pairProcessor.ClosePosition(risk)
 							}
 							initPosition_v3(currentPrice, risk, pairProcessor, quit)
 						}
 						v3.Unlock()
 					}
+				} else if len(openOrders) == 0 {
+					if v3.TryLock() {
+						risk, err := pairProcessor.GetPositionRisk()
+						if err != nil {
+							printError()
+							close(quit)
+							return
+						}
+						currentPrice, err := pairProcessor.GetCurrentPrice()
+						if err != nil {
+							printError()
+							close(quit)
+							return
+						}
+						initPosition_v3(currentPrice, risk, pairProcessor, quit)
+						v3.Unlock()
+					}
 				}
 			}
 		}
 	}()
-	risk, err := pairProcessor.GetPositionRisk()
-	if err != nil {
-		printError()
-		close(quit)
-		return
-	}
-	currentPrice, err := pairProcessor.GetCurrentPrice()
-	if err != nil {
-		printError()
-		close(quit)
-		return
-	}
-	initPosition_v3(currentPrice, risk, pairProcessor, quit)
 	<-quit
 	logrus.Infof("Futures %s: Bot was stopped", pairProcessor.GetPair())
 	pairProcessor.CancelAllOrders()
