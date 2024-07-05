@@ -48,12 +48,10 @@ func (pp *PairProcessor) GetPrices(
 	if isDynamic {
 		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(priceUp, pp.UpBound)
 		if err != nil {
-			logrus.Errorf("Futures %s: can't calculate initial position for price up %v", pp.symbol.Symbol, priceUp)
 			quantityUp = 0
 		}
 		_, _, _, quantityDown, _, err = pp.CalculateInitialPosition(priceDown, pp.LowBound)
 		if err != nil {
-			logrus.Errorf("Futures %s: can't calculate initial position for price down %v", pp.symbol.Symbol, priceDown)
 			quantityDown = 0
 		}
 	} else {
@@ -61,17 +59,14 @@ func (pp *PairProcessor) GetPrices(
 		quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() * float64(pp.GetLeverage()) / priceDown)
 	}
 	if quantityUp == 0 && quantityDown == 0 {
-		err = fmt.Errorf("future %s: can't calculate initial position for price up %v and price down %v",
-			pp.symbol.Symbol, priceUp, priceDown)
+		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)
 		return
 	}
 	if quantityUp*priceUp < pp.GetNotional() {
-		err = fmt.Errorf("future %s: calculated quantity up %v * price up %v > notional %v",
-			pp.symbol.Symbol, quantityUp, priceUp, pp.GetNotional())
+		err = fmt.Errorf("calculated quantity up %v * price up %v > notional %v", quantityUp, priceUp, pp.GetNotional())
 		return
 	} else if quantityDown*priceDown < pp.GetNotional() {
-		err = fmt.Errorf("future %s: calculated quantity down %v * price down %v > notional %v",
-			pp.symbol.Symbol, quantityDown, priceDown, pp.GetNotional())
+		err = fmt.Errorf("calculated quantity down %v * price down %v > notional %v", quantityDown, priceDown, pp.GetNotional())
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
