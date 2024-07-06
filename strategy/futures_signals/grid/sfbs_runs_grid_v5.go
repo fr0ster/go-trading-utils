@@ -205,49 +205,53 @@ func createNextPair_v5(
 		downReduceOnly = false
 	}
 	if LastExecutedSide == futures.SideTypeSell {
-		// Створюємо ордер на продаж
-		upOrder, err = pairProcessor.CreateOrder(
-			futures.OrderTypeLimit,
-			futures.SideTypeSell,
-			futures.TimeInForceTypeGTC,
-			upQuantity,
-			upClosePosition,
-			upReduceOnly,
-			upPrice,
-			upPrice,
-			upPrice,
-			pairProcessor.GetCallbackRate())
-		if err != nil {
-			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
-				pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeLimit, upPrice, upQuantity, pairProcessor.GetCallbackRate())
-			printError()
-			err = nil // Помилки ігноруємо, якшо не вдалося створити ордер, то чекаємо на перевідкриття
-			return
+		if upQuantity*upPrice > pairProcessor.GetNotional() {
+			// Створюємо ордер на продаж
+			upOrder, err = pairProcessor.CreateOrder(
+				futures.OrderTypeLimit,
+				futures.SideTypeSell,
+				futures.TimeInForceTypeGTC,
+				upQuantity,
+				upClosePosition,
+				upReduceOnly,
+				upPrice,
+				upPrice,
+				upPrice,
+				pairProcessor.GetCallbackRate())
+			if err != nil {
+				logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
+					pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeLimit, upPrice, upQuantity, pairProcessor.GetCallbackRate())
+				printError()
+				err = nil // Помилки ігноруємо, якшо не вдалося створити ордер, то чекаємо на перевідкриття
+				return
+			}
+			logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
+				pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeLimit, upPrice, upQuantity, pairProcessor.GetCallbackRate(), upOrder.Status)
 		}
-		logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
-			pairProcessor.GetPair(), futures.SideTypeSell, futures.OrderTypeLimit, upPrice, upQuantity, pairProcessor.GetCallbackRate(), upOrder.Status)
 	} else if LastExecutedSide == futures.SideTypeBuy {
-		// Створюємо ордер на купівлю
-		downOrder, err = pairProcessor.CreateOrder(
-			futures.OrderTypeLimit,
-			futures.SideTypeBuy,
-			futures.TimeInForceTypeGTC,
-			downQuantity,
-			downClosePosition,
-			downReduceOnly,
-			downPrice,
-			downPrice,
-			downPrice,
-			pairProcessor.GetCallbackRate())
-		if err != nil {
-			logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
-				pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeLimit, downPrice, downQuantity, pairProcessor.GetCallbackRate())
-			printError()
-			err = nil // Помилки ігноруємо, якшо не вдалося створити ордер, то чекаємо на перевідкриття
-			return
+		if downQuantity*downPrice > pairProcessor.GetNotional() {
+			// Створюємо ордер на купівлю
+			downOrder, err = pairProcessor.CreateOrder(
+				futures.OrderTypeLimit,
+				futures.SideTypeBuy,
+				futures.TimeInForceTypeGTC,
+				downQuantity,
+				downClosePosition,
+				downReduceOnly,
+				downPrice,
+				downPrice,
+				downPrice,
+				pairProcessor.GetCallbackRate())
+			if err != nil {
+				logrus.Errorf("Futures %s: Couldn't set order side %v type %v on price %v with quantity %v call back rate %v",
+					pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeLimit, downPrice, downQuantity, pairProcessor.GetCallbackRate())
+				printError()
+				err = nil // Помилки ігноруємо, якшо не вдалося створити ордер, то чекаємо на перевідкриття
+				return
+			}
+			logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
+				pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeLimit, downPrice, downQuantity, pairProcessor.GetCallbackRate(), downOrder.Status)
 		}
-		logrus.Debugf("Futures %s: Set order side %v type %v on price %v with quantity %v call back rate %v status %v",
-			pairProcessor.GetPair(), futures.SideTypeBuy, futures.OrderTypeLimit, downPrice, downQuantity, pairProcessor.GetCallbackRate(), downOrder.Status)
 	}
 	return
 }
