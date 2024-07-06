@@ -3,12 +3,10 @@ package processor
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
-	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
@@ -64,8 +62,8 @@ func NewPairProcessor(
 		UpBound:            0,
 		LowBoundPercent:    LowBound,
 		LowBound:           0,
-		leverage:           0,
-		marginType:         "",
+		leverage:           leverage,
+		marginType:         marginType,
 		callbackRate:       callbackRate,
 
 		deltaPrice:    deltaPrice,
@@ -160,24 +158,11 @@ func NewPairProcessor(
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
 		return
 	}
-	if pp.GetMarginType() != pairs_types.MarginType(strings.ToUpper(string(marginType))) {
-		logrus.Debugf("Set margin type %v", marginType)
-		err = pp.SetMarginType(marginType)
-		if err != nil {
-			return
-		}
-		pp.marginType = pp.GetMarginType()
-		logrus.Debugf("Margin type %v", pp.marginType)
-	}
-	if pp.GetLeverage() != leverage {
-		logrus.Debugf("Set leverage %v", leverage)
-		var res *futures.SymbolLeverage
-		res, err = pp.SetLeverage(leverage)
-		if err != nil {
-			return
-		}
-		pp.leverage = res.Leverage
-		logrus.Debugf("Leverage %v", pp.leverage)
+	_ = pp.SetMarginType(marginType) // Встановлюємо тип маржі, як зміна не потрібна, помилку ігноруємо
+	res, _ := pp.SetLeverage(leverage)
+	if res.Leverage != leverage {
+		err = fmt.Errorf("leverage %v is not supported", leverage)
+		return
 	}
 
 	return
