@@ -3,6 +3,7 @@ package processor
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -159,16 +160,23 @@ func NewPairProcessor(
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
 		return
 	}
-	if pp.GetMarginType() != marginType {
+	if pp.GetMarginType() != pairs_types.MarginType(strings.ToUpper(string(marginType))) {
 		logrus.Debugf("Set margin type %v", marginType)
-		_ = pp.SetMarginType(marginType)
+		err = pp.SetMarginType(marginType)
+		if err != nil {
+			return
+		}
 		pp.marginType = pp.GetMarginType()
 		logrus.Debugf("Margin type %v", pp.marginType)
 	}
 	if pp.GetLeverage() != leverage {
 		logrus.Debugf("Set leverage %v", leverage)
-		_, _ = pp.SetLeverage(leverage)
-		pp.leverage = pp.GetLeverage()
+		var res *futures.SymbolLeverage
+		res, err = pp.SetLeverage(leverage)
+		if err != nil {
+			return
+		}
+		pp.leverage = res.Leverage
 		logrus.Debugf("Leverage %v", pp.leverage)
 	}
 

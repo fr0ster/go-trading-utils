@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
@@ -43,13 +44,11 @@ func (pp *PairProcessor) GetLiquidationDistance(price float64) (distance float64
 }
 
 func (pp *PairProcessor) GetLeverage() int {
-	if pp.leverage == 0 {
-		risk, err := pp.GetPositionRisk()
-		if err != nil {
-			return 0
-		}
-		pp.leverage = int(utils.ConvStrToFloat64(risk.Leverage))
+	risk, err := pp.GetPositionRisk()
+	if err != nil {
+		return 0
 	}
+	pp.leverage = int(utils.ConvStrToFloat64(risk.Leverage))
 	return pp.leverage
 }
 
@@ -60,13 +59,12 @@ func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage,
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
 func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
-	if pp.marginType == "" {
-		risk, _ := pp.GetPositionRisk()
-		if risk != nil {
-			pp.marginType = pairs_types.MarginType(risk.MarginType)
-		}
+	risk, _ := pp.GetPositionRisk()
+	if risk != nil {
+		pp.marginType = pairs_types.MarginType(strings.ToUpper(risk.MarginType))
+		return pp.marginType
 	}
-	return pp.marginType
+	return ""
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"
