@@ -382,6 +382,7 @@ func RunFuturesGridTradingV5(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if v5.TryLock() {
 					if len(openOrders) == 1 {
+						logrus.Debugf("Futures %s: Check position", pairProcessor.GetPair())
 						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 						risk, _ := pairProcessor.GetPositionRisk()
 						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
@@ -399,14 +400,15 @@ func RunFuturesGridTradingV5(
 								pairProcessor.ClosePosition(risk)
 							}
 							initPosition_v5(currentPrice, risk, pairProcessor, quit)
-						}
-						lastResponse_v5 = time.Now()
-					} else if len(openOrders) >= 2 {
-						if time.Since(lastResponse_v5) > timeOut_v5*30 {
-							pairProcessor.CancelAllOrders()
 							lastResponse_v5 = time.Now()
 						}
+					} else if len(openOrders) >= 2 {
+						if time.Since(lastResponse_v5) > timeOut_v5*30 {
+							logrus.Debugf("Futures %s: Orders are opened too long, cancel all", pairProcessor.GetPair())
+							pairProcessor.CancelAllOrders()
+						}
 					} else if len(openOrders) == 0 {
+						logrus.Debugf("Futures %s: Open new orders", pairProcessor.GetPair())
 						risk, err := pairProcessor.GetPositionRisk()
 						if err != nil {
 							printError()
