@@ -43,11 +43,6 @@ func (pp *PairProcessor) GetLiquidationDistance(price float64) (distance float64
 }
 
 func (pp *PairProcessor) GetLeverage() int {
-	risk, err := pp.GetPositionRisk()
-	if err != nil {
-		return 0
-	}
-	pp.leverage = int(utils.ConvStrToFloat64(risk.Leverage))
 	return pp.leverage
 }
 
