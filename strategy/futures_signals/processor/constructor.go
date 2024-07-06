@@ -7,6 +7,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
+	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
@@ -159,12 +160,16 @@ func NewPairProcessor(
 		return
 	}
 	if pp.GetMarginType() != marginType {
+		logrus.Debugf("Set margin type %v", marginType)
 		_ = pp.SetMarginType(marginType)
 		pp.marginType = pp.GetMarginType()
+		logrus.Debugf("Margin type %v", pp.marginType)
 	}
 	if pp.GetLeverage() != leverage {
+		logrus.Debugf("Set leverage %v", leverage)
 		_, _ = pp.SetLeverage(leverage)
 		pp.leverage = pp.GetLeverage()
+		logrus.Debugf("Leverage %v", pp.leverage)
 	}
 
 	return
