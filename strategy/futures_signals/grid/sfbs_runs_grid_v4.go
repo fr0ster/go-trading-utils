@@ -160,11 +160,12 @@ func createNextPair_v4(
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
 	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
 	position := math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))
+	uPnL := utils.ConvStrToFloat64(risk.UnRealizedProfit)
 	if breakEvenPrice == 0 {
 		breakEvenPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 	}
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		if position*LastExecutedPrice <= free {
+		if uPnL > -free {
 			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
@@ -183,7 +184,7 @@ func createNextPair_v4(
 		if upQuantity > position {
 			upQuantity = position
 		}
-		if position*LastExecutedPrice <= free {
+		if uPnL > -free {
 			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		}

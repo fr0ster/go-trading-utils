@@ -172,10 +172,10 @@ func createNextPair_v3(
 	}
 	risk, _ = pairProcessor.GetPositionRisk()
 	free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
-	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	position := math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))
+	uPnL := utils.ConvStrToFloat64(risk.UnRealizedProfit)
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // Маємо позицію short
-		if position*currentPrice <= free {
+		if uPnL > -free {
 			// Виконаний ордер був на продаж, тобто збільшив або відкрив позицію short
 			if LastExecutedSide == futures.SideTypeSell {
 				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій short
@@ -233,7 +233,7 @@ func createNextPair_v3(
 		downClosePosition = false
 		downReduceOnly = true
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 { // Маємо позицію long
-		if position*currentPrice <= free {
+		if uPnL > -free {
 			// Виконаний ордер був на купівлю, тобто збільшив позицію long
 			if LastExecutedSide == futures.SideTypeBuy {
 				// Перевіряємо чи маємо ми записи для розрахунку цінових позицій long

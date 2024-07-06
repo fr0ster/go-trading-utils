@@ -40,7 +40,7 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	low := pp.RoundQuantity(pp.notional / buyPrice)
 	high := pp.RoundQuantity(pp.limitOnPosition * float64(pp.leverage) / buyPrice)
 
-	for pp.RoundQuantity(high-low) > pp.stepSizeDelta {
+	for pp.RoundQuantity(high-low) > pp.StepSize {
 		mid := pp.RoundQuantity((low + high) / 2)
 		value, _, _, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
 		if value <= pp.limitOnPosition*float64(pp.leverage) && n >= pp.minSteps {

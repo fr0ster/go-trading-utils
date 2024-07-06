@@ -39,15 +39,15 @@ func NewPairProcessor(
 		return
 	}
 	pp = &PairProcessor{
-		client:        client,
-		exchangeInfo:  exchangeInfo,
-		symbol:        nil,
-		baseSymbol:    "",
-		notional:      0,
-		stepSizeDelta: 0,
-		minSteps:      minSteps,
-		up:            btree.New(2),
-		down:          btree.New(2),
+		client:       client,
+		exchangeInfo: exchangeInfo,
+		symbol:       nil,
+		baseSymbol:   "",
+		notional:     0,
+		StepSize:     0,
+		minSteps:     minSteps,
+		up:           btree.New(2),
+		down:         btree.New(2),
 
 		stop: stop,
 
@@ -90,7 +90,12 @@ func NewPairProcessor(
 	pp.baseSymbol = pp.symbol.QuoteAsset
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
-	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+	pp.StepSize = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+	pp.maxQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity)
+	pp.minQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity)
+	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
+	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
+	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
 	currentPrice, err := pp.GetCurrentPrice()
 	if err != nil {

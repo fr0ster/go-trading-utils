@@ -18,16 +18,21 @@ const (
 
 type (
 	PairProcessor struct {
-		client        *futures.Client
-		exchangeInfo  *exchange_types.ExchangeInfo
-		symbol        *futures.Symbol
-		baseSymbol    string
-		targetSymbol  string
-		notional      float64
-		stepSizeDelta float64
-		minSteps      int
-		up            *btree.BTree
-		down          *btree.BTree
+		client       *futures.Client
+		exchangeInfo *exchange_types.ExchangeInfo
+		symbol       *futures.Symbol
+		baseSymbol   string
+		targetSymbol string
+		notional     float64
+		StepSize     float64
+		maxQty       float64
+		minQty       float64
+		minSteps     int
+		tickSize     float64
+		maxPrice     float64
+		minPrice     float64
+		up           *btree.BTree
+		down         *btree.BTree
 
 		stop chan struct{}
 
