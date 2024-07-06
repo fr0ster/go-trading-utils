@@ -62,7 +62,8 @@ func NewPairProcessor(
 		UpBound:            0,
 		LowBoundPercent:    LowBound,
 		LowBound:           0,
-		leverage:           leverage,
+		leverage:           0,
+		marginType:         "",
 		callbackRate:       callbackRate,
 
 		deltaPrice:    deltaPrice,
@@ -159,9 +160,11 @@ func NewPairProcessor(
 	}
 	if pp.GetMarginType() != marginType {
 		_ = pp.SetMarginType(marginType)
+		pp.marginType = pp.GetMarginType()
 	}
 	if pp.GetLeverage() != leverage {
 		_, _ = pp.SetLeverage(leverage)
+		pp.leverage = pp.GetLeverage()
 	}
 
 	return
