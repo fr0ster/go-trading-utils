@@ -2,6 +2,8 @@ package processor
 
 import (
 	"math"
+
+	"github.com/fr0ster/go-trading-utils/utils"
 )
 
 type RingBuffer struct {
@@ -58,6 +60,36 @@ func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
 	} else {
 		return rb.GetElements()
 	}
+}
+
+func (rb *RingBuffer) GetElementsPercentageChange() []float64 {
+	elements := rb.GetElements()
+	percentageChange := make([]float64, len(elements))
+	percentageChange[0] = 100
+	for i := 1; i < len(elements); i++ {
+		percentageChange[i] = utils.RoundToDecimalPlace(elements[i]/elements[0]*100, 6)
+	}
+	return percentageChange
+}
+
+func (rb *RingBuffer) GetLastNElementsPercentageChange(n int) []float64 {
+	elements := rb.GetLastNElements(n)
+	percentageChange := make([]float64, len(elements))
+	percentageChange[0] = 100
+	for i := 1; i < len(elements); i++ {
+		percentageChange[i] = elements[i] / elements[0] * 100
+	}
+	return percentageChange
+}
+
+func (rb *RingBuffer) GetFirstNElementsPercentageChange(n int) []float64 {
+	elements := rb.GetFirstNElements(n)
+	percentageChange := make([]float64, len(elements))
+	percentageChange[0] = 100
+	for i := 1; i < len(elements); i++ {
+		percentageChange[i] = elements[i] / elements[0] * 100
+	}
+	return percentageChange
 }
 
 func (rb *RingBuffer) Length() int {
