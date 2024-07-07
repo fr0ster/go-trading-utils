@@ -40,24 +40,18 @@ func (rb *RingBuffer) SetElements(elements []float64) {
 	}
 }
 
-func (rb *RingBuffer) GetLastNElements(n int) *RingBuffer {
-	new := NewRingBuffer(n)
-	if n <= len(new.elements) {
-		new.elements = new.elements[len(new.elements)-n:]
-	} else {
-		new.elements = append(new.elements[len(new.elements)-n:], rb.elements[:rb.index]...)
+func (rb *RingBuffer) GetLastNElements(n int) []float64 {
+	if n <= len(rb.elements) {
+		return rb.elements[rb.index-n : rb.index]
 	}
-	return new
+	return append(rb.elements[rb.index:], rb.elements[:n-len(rb.elements)+rb.index]...)
 }
 
-func (rb *RingBuffer) GetFirstNElements(n int) *RingBuffer {
-	new := NewRingBuffer(n)
-	if n <= len(new.elements) {
-		new.elements = new.elements[:n]
-	} else {
-		new.elements = append(rb.elements[rb.index:], new.elements[:n-len(new.elements)+rb.index]...)
+func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
+	if n <= len(rb.elements) {
+		return rb.elements[rb.index : rb.index+n]
 	}
-	return new
+	return append(rb.elements[rb.index:], rb.elements[:n-len(rb.elements)+rb.index]...)
 }
 
 func (rb *RingBuffer) Length() int {
@@ -86,11 +80,11 @@ func LeastSquares(x, y []float64) (a, b float64) {
 }
 
 // Функція для знаходження прямої, яка найменше відхиляється від N останніх найбільших значень close і open
-func (rb *RingBuffer) FindBestFitLine() (a, b float64) {
-	values := make([]float64, rb.Length())
-	x := make([]float64, rb.Length())
+func FindBestFitLine(rb []float64) (a, b float64) {
+	values := make([]float64, len(rb))
+	x := make([]float64, len(rb))
 
-	for i, kline := range rb.GetElements() {
+	for i, kline := range rb {
 		values[i] = kline
 		x[i] = float64(i)
 	}

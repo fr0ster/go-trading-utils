@@ -50,7 +50,7 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 func TestKlineRingBuffer_FindBestFitLine(t *testing.T) {
 	rb, _ := getTestData()
 
-	a, b := rb.FindBestFitLine()
+	a, b := processor.FindBestFitLine(rb.GetElements())
 
 	// Add your assertions here to test the values of a and b
 
