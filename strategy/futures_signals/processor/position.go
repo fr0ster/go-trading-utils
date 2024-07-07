@@ -89,3 +89,48 @@ func (pp *PairProcessor) ClosePosition(risk *futures.PositionRisk) (err error) {
 	}
 	return
 }
+
+func (pp *PairProcessor) GetPositionAmt() (positionAmt float64) {
+	risk, err := pp.GetPositionRisk()
+	if err != nil {
+		return 0
+	}
+	positionAmt = utils.ConvStrToFloat64(risk.PositionAmt) // Convert string to float64
+	return
+}
+
+func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price float64) (unRealizedProfit float64) {
+	if risk == nil || pp.leverage <= 0 {
+		return 0
+	}
+	entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
+	positionAmt := utils.ConvStrToFloat64(risk.PositionAmt)
+	if positionAmt == 0 { // No position
+		return 0
+	} else if positionAmt < 0 { // Short position
+		unRealizedProfit = (entryPrice - price) * positionAmt * float64(pp.leverage)
+	} else if positionAmt > 0 { // Long position
+		unRealizedProfit = (price - entryPrice) * positionAmt * float64(pp.leverage)
+	}
+	return
+}
+func (pp *PairProcessor) CheckPosition(risk *futures.PositionRisk, price float64) bool {
+	if risk == nil {
+		return false
+	}
+	// entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
+	positionAmt := utils.ConvStrToFloat64(risk.PositionAmt)
+	liquidationPrice := utils.ConvStrToFloat64(risk.LiquidationPrice)
+	if positionAmt == 0 { // No position
+		return true
+	} else if positionAmt < 0 { // Short position
+		return liquidationPrice > pp.GetUpBound() &&
+			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*float64(pp.GetLeverage())) &&
+			price <= pp.GetUpBound()
+	} else if positionAmt > 0 { // Long position
+		return liquidationPrice < pp.GetLowBound() &&
+			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*float64(pp.GetLeverage())) &&
+			price >= pp.GetLowBound()
+	}
+	return false
+}

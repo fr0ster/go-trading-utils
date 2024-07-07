@@ -137,6 +137,15 @@ func (pp *PairProcessor) createOrder(
 			return
 		} else if apiError.Code == -2022 {
 			// -2022 ReduceOnly Order is rejected.
+			err = nil
+			return
+		} else if apiError.Code == -2027 {
+			// -2027 Exceeded the maximum allowable position at current leverage.
+			err = nil
+			return
+		} else if apiError.Code == -2028 {
+			// -2028 Leverage is smaller than permitted: insufficient margin balance.
+			err = nil
 			return
 		} else if apiError.Code == -1007 {
 			time.Sleep(1 * time.Second)
