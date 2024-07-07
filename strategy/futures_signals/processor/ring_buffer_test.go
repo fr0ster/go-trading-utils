@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func getTestData() (rb *processor.KlineRingBuffer, klines []float64) {
-	rb = processor.NewKlineRingBuffer(5)
+func getTestData() (rb *processor.RingBuffer, klines []float64) {
+	rb = processor.NewRingBuffer(5)
 	klines = []float64{100, 100, 100, 100, 100}
 	for _, kline := range klines {
 		rb.Add(kline)
@@ -25,7 +25,21 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 	if len(elements) != 5 {
 		t.Errorf("Expected ring buffer size to be 5, got %d", len(elements))
 	}
+	for i, expected := range expectedElements {
+		if elements[i] != expected {
+			t.Errorf("Expected element at index %d to be %v, got %v", i, expected, elements[i])
+		}
+	}
 
+	rb.Add(110)
+	rb.Add(120)
+	rb.Add(130)
+	rb.Add(140)
+	elements = rb.GetElements()
+	expectedElements = []float64{100, 110, 120, 130, 140}
+	if len(elements) != 5 {
+		t.Errorf("Expected ring buffer size to be 5, got %d", len(elements))
+	}
 	for i, expected := range expectedElements {
 		if elements[i] != expected {
 			t.Errorf("Expected element at index %d to be %v, got %v", i, expected, elements[i])

@@ -4,21 +4,21 @@ import (
 	"math"
 )
 
-type KlineRingBuffer struct {
+type RingBuffer struct {
 	elements []float64
 	index    int
 	size     int
 	isFull   bool
 }
 
-func NewKlineRingBuffer(size int) *KlineRingBuffer {
-	return &KlineRingBuffer{
+func NewRingBuffer(size int) *RingBuffer {
+	return &RingBuffer{
 		elements: make([]float64, size),
 		size:     size,
 	}
 }
 
-func (rb *KlineRingBuffer) Add(element float64) {
+func (rb *RingBuffer) Add(element float64) {
 	rb.elements[rb.index] = element
 	rb.index++
 	if rb.index == rb.size {
@@ -27,20 +27,20 @@ func (rb *KlineRingBuffer) Add(element float64) {
 	}
 }
 
-func (rb *KlineRingBuffer) GetElements() []float64 {
+func (rb *RingBuffer) GetElements() []float64 {
 	if !rb.isFull {
 		return rb.elements[:rb.index]
 	}
 	return append(rb.elements[rb.index:], rb.elements[:rb.index]...)
 }
 
-func (rb *KlineRingBuffer) SetElements(elements []float64) {
+func (rb *RingBuffer) SetElements(elements []float64) {
 	for _, element := range elements {
 		rb.Add(element)
 	}
 }
 
-func (rb *KlineRingBuffer) GetLastNElements(n int) *KlineRingBuffer {
+func (rb *RingBuffer) GetLastNElements(n int) *RingBuffer {
 	new := rb
 	if n <= len(new.elements) {
 		new.elements = new.elements[len(new.elements)-n:]
@@ -48,7 +48,7 @@ func (rb *KlineRingBuffer) GetLastNElements(n int) *KlineRingBuffer {
 	return new
 }
 
-func (rb *KlineRingBuffer) GetFirstNElements(n int) *KlineRingBuffer {
+func (rb *RingBuffer) GetFirstNElements(n int) *RingBuffer {
 	new := rb
 	if n <= len(new.elements) {
 		new.elements = new.elements[:n]
@@ -56,7 +56,7 @@ func (rb *KlineRingBuffer) GetFirstNElements(n int) *KlineRingBuffer {
 	return new
 }
 
-func (rb *KlineRingBuffer) Length() int {
+func (rb *RingBuffer) Length() int {
 	if rb.isFull {
 		return rb.size
 	}
@@ -82,7 +82,7 @@ func LeastSquares(x, y []float64) (a, b float64) {
 }
 
 // Функція для знаходження прямої, яка найменше відхиляється від N останніх найбільших значень close і open
-func (rb *KlineRingBuffer) FindBestFitLine() (a, b float64) {
+func (rb *RingBuffer) FindBestFitLine() (a, b float64) {
 	values := make([]float64, len(rb.elements))
 	x := make([]float64, len(rb.elements))
 
