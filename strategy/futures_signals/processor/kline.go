@@ -34,6 +34,29 @@ func (rb *KlineRingBuffer) GetElements() []float64 {
 	return append(rb.elements[rb.index:], rb.elements[:rb.index]...)
 }
 
+func (rb *KlineRingBuffer) GetLastNElements(n int) []float64 {
+	elements := rb.GetElements()
+	if n > len(elements) {
+		return elements
+	}
+	return elements[len(elements)-n:]
+}
+
+func (rb *KlineRingBuffer) GetFirstNElements(n int) []float64 {
+	elements := rb.GetElements()
+	if n > len(elements) {
+		return elements
+	}
+	return elements[:n]
+}
+
+func (rb *KlineRingBuffer) Length() int {
+	if rb.isFull {
+		return rb.size
+	}
+	return rb.index
+}
+
 // Функція для розрахунку коефіцієнтів прямої методом найменших квадратів
 func LeastSquares(x, y []float64) (a, b float64) {
 	var sumX, sumY, sumXY, sumXX float64
