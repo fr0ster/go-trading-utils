@@ -87,10 +87,10 @@ func LeastSquares(x, y []float64) (a, b float64) {
 
 // Функція для знаходження прямої, яка найменше відхиляється від N останніх найбільших значень close і open
 func (rb *RingBuffer) FindBestFitLine() (a, b float64) {
-	values := make([]float64, len(rb.elements))
-	x := make([]float64, len(rb.elements))
+	values := make([]float64, rb.Length())
+	x := make([]float64, rb.Length())
 
-	for i, kline := range rb.elements {
+	for i, kline := range rb.GetElements() {
 		values[i] = kline
 		x[i] = float64(i)
 	}
