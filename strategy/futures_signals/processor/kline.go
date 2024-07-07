@@ -34,20 +34,26 @@ func (rb *KlineRingBuffer) GetElements() []float64 {
 	return append(rb.elements[rb.index:], rb.elements[:rb.index]...)
 }
 
-func (rb *KlineRingBuffer) GetLastNElements(n int) []float64 {
-	elements := rb.GetElements()
-	if n > len(elements) {
-		return elements
+func (rb *KlineRingBuffer) SetElements(elements []float64) {
+	for _, element := range elements {
+		rb.Add(element)
 	}
-	return elements[len(elements)-n:]
 }
 
-func (rb *KlineRingBuffer) GetFirstNElements(n int) []float64 {
-	elements := rb.GetElements()
-	if n > len(elements) {
-		return elements
+func (rb *KlineRingBuffer) GetLastNElements(n int) *KlineRingBuffer {
+	new := rb
+	if n <= len(new.elements) {
+		new.elements = new.elements[len(new.elements)-n:]
 	}
-	return elements[:n]
+	return new
+}
+
+func (rb *KlineRingBuffer) GetFirstNElements(n int) *KlineRingBuffer {
+	new := rb
+	if n <= len(new.elements) {
+		new.elements = new.elements[:n]
+	}
+	return new
 }
 
 func (rb *KlineRingBuffer) Length() int {
