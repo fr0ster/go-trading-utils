@@ -41,17 +41,21 @@ func (rb *RingBuffer) SetElements(elements []float64) {
 }
 
 func (rb *RingBuffer) GetLastNElements(n int) *RingBuffer {
-	new := rb
+	new := NewRingBuffer(n)
 	if n <= len(new.elements) {
 		new.elements = new.elements[len(new.elements)-n:]
+	} else {
+		new.elements = append(new.elements[len(new.elements)-n:], rb.elements[:rb.index]...)
 	}
 	return new
 }
 
 func (rb *RingBuffer) GetFirstNElements(n int) *RingBuffer {
-	new := rb
+	new := NewRingBuffer(n)
 	if n <= len(new.elements) {
 		new.elements = new.elements[:n]
+	} else {
+		new.elements = append(rb.elements[rb.index:], new.elements[:n-len(new.elements)+rb.index]...)
 	}
 	return new
 }
