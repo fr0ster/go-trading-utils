@@ -41,17 +41,23 @@ func (rb *RingBuffer) SetElements(elements []float64) {
 }
 
 func (rb *RingBuffer) GetLastNElements(n int) []float64 {
-	if n <= len(rb.elements) {
-		return rb.elements[rb.index-n : rb.index]
+	if !rb.isFull {
+		return []float64{}
+	} else if n <= len(rb.GetElements()) {
+		return rb.GetElements()[n:]
+	} else {
+		return rb.GetElements()
 	}
-	return append(rb.elements[rb.index:], rb.elements[:n-len(rb.elements)+rb.index]...)
 }
 
 func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
-	if n <= len(rb.elements) {
-		return rb.elements[rb.index : rb.index+n]
+	if !rb.isFull {
+		return []float64{}
+	} else if n <= len(rb.GetElements()) {
+		return rb.GetElements()[:n]
+	} else {
+		return rb.GetElements()
 	}
-	return append(rb.elements[rb.index:], rb.elements[:n-len(rb.elements)+rb.index]...)
 }
 
 func (rb *RingBuffer) Length() int {
