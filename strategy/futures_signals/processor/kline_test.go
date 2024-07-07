@@ -9,7 +9,7 @@ import (
 )
 
 func getTestData() (rb *processor.KlineRingBuffer, klines []*futures.Kline) {
-	rb = processor.NewRingBuffer(5)
+	rb = processor.NewKlineRingBuffer(5)
 	klines = []*futures.Kline{
 		{Open: "100", Close: "100"},
 		{Open: "100", Close: "100"},

@@ -14,7 +14,7 @@ type KlineRingBuffer struct {
 	isFull   bool
 }
 
-func NewRingBuffer(size int) *KlineRingBuffer {
+func NewKlineRingBuffer(size int) *KlineRingBuffer {
 	return &KlineRingBuffer{
 		elements: make([]*futures.Kline, size),
 		size:     size,
