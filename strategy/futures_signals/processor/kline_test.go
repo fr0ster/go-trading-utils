@@ -3,20 +3,14 @@ package processor_test
 import (
 	"testing"
 
-	"github.com/adshao/go-binance/v2/futures"
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
+	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func getTestData() (rb *processor.KlineRingBuffer, klines []*futures.Kline) {
+func getTestData() (rb *processor.KlineRingBuffer, klines []float64) {
 	rb = processor.NewKlineRingBuffer(5)
-	klines = []*futures.Kline{
-		{Open: "100", Close: "100"},
-		{Open: "100", Close: "100"},
-		{Open: "100", Close: "100"},
-		{Open: "100", Close: "100"},
-		{Open: "100", Close: "100"},
-	}
+	klines = []float64{100, 100, 100, 100, 100}
 	for _, kline := range klines {
 		rb.Add(kline)
 	}
@@ -54,9 +48,7 @@ func TestSlopeToAngle(t *testing.T) {
 	a := 1.5
 	expectedAngle := 56.31
 
-	angle := processor.SlopeToAngle(a)
+	angle := utils.RoundToDecimalPlace(processor.SlopeToAngle(a), 2)
 
-	if angle != expectedAngle {
-		t.Errorf("Expected angle to be %.2f, got %.2f", expectedAngle, angle)
-	}
+	assert.Equal(t, expectedAngle, angle)
 }

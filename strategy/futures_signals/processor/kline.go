@@ -2,13 +2,10 @@ package processor
 
 import (
 	"math"
-
-	"github.com/adshao/go-binance/v2/futures"
-	"github.com/fr0ster/go-trading-utils/utils"
 )
 
 type KlineRingBuffer struct {
-	elements []*futures.Kline
+	elements []float64
 	index    int
 	size     int
 	isFull   bool
@@ -16,12 +13,12 @@ type KlineRingBuffer struct {
 
 func NewKlineRingBuffer(size int) *KlineRingBuffer {
 	return &KlineRingBuffer{
-		elements: make([]*futures.Kline, size),
+		elements: make([]float64, size),
 		size:     size,
 	}
 }
 
-func (rb *KlineRingBuffer) Add(element *futures.Kline) {
+func (rb *KlineRingBuffer) Add(element float64) {
 	rb.elements[rb.index] = element
 	rb.index++
 	if rb.index == rb.size {
@@ -30,7 +27,7 @@ func (rb *KlineRingBuffer) Add(element *futures.Kline) {
 	}
 }
 
-func (rb *KlineRingBuffer) GetElements() []*futures.Kline {
+func (rb *KlineRingBuffer) GetElements() []float64 {
 	if !rb.isFull {
 		return rb.elements[:rb.index]
 	}
@@ -61,7 +58,7 @@ func (rb *KlineRingBuffer) FindBestFitLine() (a, b float64) {
 	x := make([]float64, len(rb.elements))
 
 	for i, kline := range rb.elements {
-		values[i] = math.Max(utils.ConvStrToFloat64(kline.Close), utils.ConvStrToFloat64(kline.Open))
+		values[i] = kline
 		x[i] = float64(i)
 	}
 
