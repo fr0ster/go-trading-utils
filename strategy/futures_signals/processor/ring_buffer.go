@@ -44,7 +44,7 @@ func (rb *RingBuffer) GetLastNElements(n int) []float64 {
 	if !rb.isFull {
 		return []float64{}
 	} else if n <= len(rb.GetElements()) {
-		return rb.GetElements()[n:]
+		return rb.GetElements()[len(rb.GetElements())-n:]
 	} else {
 		return rb.GetElements()
 	}
