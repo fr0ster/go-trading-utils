@@ -11,9 +11,9 @@ const (
 	DepthStreamLevel5  DepthStreamLevel = 5
 	DepthStreamLevel10 DepthStreamLevel = 10
 	DepthStreamLevel20 DepthStreamLevel = 20
-	DepthStreamRate100 DepthStreamRate  = 100
-	DepthStreamRate250 DepthStreamRate  = 250
-	DepthStreamRate500 DepthStreamRate  = 500
+	DepthStreamRate100 DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
+	DepthStreamRate250 DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
+	DepthStreamRate500 DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
 )
 
 type (
