@@ -7,16 +7,18 @@ import (
 )
 
 type RingBuffer struct {
-	elements []float64
-	index    int
-	size     int
-	isFull   bool
+	elements  []float64
+	index     int
+	size      int
+	threshold float64
+	isFull    bool
 }
 
-func NewRingBuffer(size int) *RingBuffer {
+func NewRingBuffer(size int, threshold float64) *RingBuffer {
 	return &RingBuffer{
-		elements: make([]float64, size),
-		size:     size,
+		elements:  make([]float64, size),
+		size:      size,
+		threshold: threshold,
 	}
 }
 
@@ -97,6 +99,28 @@ func (rb *RingBuffer) Length() int {
 		return rb.size
 	}
 	return rb.index
+}
+
+func (rb *RingBuffer) GetTrend() (a, b, angle float64) {
+	new := rb.GetElementsPercentageChange()
+	a, b = FindBestFitLine(new)
+	angle = SlopeToAngle(a)
+	return
+}
+
+func (rb *RingBuffer) IsUp() bool {
+	_, _, angle := rb.GetTrend()
+	return angle > rb.threshold
+}
+
+func (rb *RingBuffer) IsDown() bool {
+	_, _, angle := rb.GetTrend()
+	return angle < -rb.threshold
+}
+
+func (rb *RingBuffer) IsChannel() bool {
+	_, _, angle := rb.GetTrend()
+	return math.Abs(angle) < rb.threshold
 }
 
 // Функція для розрахунку коефіцієнтів прямої методом найменших квадратів

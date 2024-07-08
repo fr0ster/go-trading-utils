@@ -9,7 +9,7 @@ import (
 )
 
 func getTestData(klines []float64) (rb *processor.RingBuffer) {
-	rb = processor.NewRingBuffer(5)
+	rb = processor.NewRingBuffer(5, 5)
 	for _, kline := range klines {
 		rb.Add(kline)
 	}
