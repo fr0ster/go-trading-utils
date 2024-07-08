@@ -118,7 +118,7 @@ func (rb *RingBuffer) IsDown() bool {
 	return angle < -rb.threshold
 }
 
-func (rb *RingBuffer) IsChannel() bool {
+func (rb *RingBuffer) IsFlat() bool {
 	_, _, angle := rb.GetTrend()
 	return math.Abs(angle) < rb.threshold
 }
