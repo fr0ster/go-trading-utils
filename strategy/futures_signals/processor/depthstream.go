@@ -11,6 +11,13 @@ const (
 	DepthStreamLevel5  DepthStreamLevel = 5
 	DepthStreamLevel10 DepthStreamLevel = 10
 	DepthStreamLevel20 DepthStreamLevel = 20
+	DepthAPILimit5     DepthAPILimit    = 5
+	DepthAPILimit10    DepthAPILimit    = 10
+	DepthAPILimit20    DepthAPILimit    = 20
+	DepthAPILimit50    DepthAPILimit    = 50
+	DepthAPILimit100   DepthAPILimit    = 100
+	DepthAPILimit500   DepthAPILimit    = 500
+	DepthAPILimit1000  DepthAPILimit    = 1000
 	DepthStreamRate100 DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
 	DepthStreamRate250 DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
 	DepthStreamRate500 DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
@@ -18,6 +25,7 @@ const (
 
 type (
 	DepthStreamLevel int
+	DepthAPILimit    int
 	DepthStreamRate  time.Duration
 )
 
