@@ -163,7 +163,7 @@ func createNextPair_v4(
 		breakEvenPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 	}
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-		if pairProcessor.CheckPosition(risk, LastExecutedPrice) {
+		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
 		}
@@ -182,7 +182,7 @@ func createNextPair_v4(
 		if upQuantity > position {
 			upQuantity = position
 		}
-		if pairProcessor.CheckPosition(risk, LastExecutedPrice) {
+		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
 		}
@@ -353,26 +353,26 @@ func RunFuturesGridTradingV4(
 			case <-time.After(timeOut_v4):
 				if v4.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
-					if len(openOrders) == 1 {
-						free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
-						risk, _ := pairProcessor.GetPositionRisk()
-						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-							currentPrice, err := pairProcessor.GetCurrentPrice()
-							if err != nil {
-								printError()
-								close(quit)
-								return
-							}
-							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) || // Short позиція і ціна пішла вниз нижче межі діапазону LowBound
-								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) || // Long позиція і ціна пішла вгору вище межі діапазону UpBound
-								math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free {
-								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
-									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
-								pairProcessor.ClosePosition(risk)
-							}
-							initPosition_v4(currentPrice, risk, pairProcessor, quit)
-						}
-					} else if len(openOrders) == 0 {
+					free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
+					risk, err := pairProcessor.GetPositionRisk()
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+					currentPrice, err := pairProcessor.GetCurrentPrice()
+					if err != nil {
+						printError()
+						close(quit)
+						return
+					}
+					if pairProcessor.CheckStopLoss(free, risk, currentPrice) {
+						logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
+							pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
+						pairProcessor.CancelAllOrders()
+						pairProcessor.ClosePosition(risk)
+					}
+					if len(openOrders) == 0 {
 						risk, err := pairProcessor.GetPositionRisk()
 						if err != nil {
 							printError()

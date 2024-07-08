@@ -114,11 +114,10 @@ func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price fl
 	}
 	return
 }
-func (pp *PairProcessor) CheckPosition(risk *futures.PositionRisk, price float64) bool {
+func (pp *PairProcessor) CheckAddPosition(risk *futures.PositionRisk, price float64) bool {
 	if risk == nil {
 		return false
 	}
-	// entryPrice := utils.ConvStrToFloat64(risk.EntryPrice)
 	positionAmt := utils.ConvStrToFloat64(risk.PositionAmt)
 	liquidationPrice := utils.ConvStrToFloat64(risk.LiquidationPrice)
 	if positionAmt == 0 { // No position
@@ -133,4 +132,13 @@ func (pp *PairProcessor) CheckPosition(risk *futures.PositionRisk, price float64
 			price >= pp.GetLowBound()
 	}
 	return false
+}
+
+func (pp *PairProcessor) CheckStopLoss(free float64, risk *futures.PositionRisk, price float64) bool {
+	if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
+		return false
+	}
+	return (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && price < pp.GetLowBound()) ||
+		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && price > pp.GetUpBound()) ||
+		math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit)) > free
 }
