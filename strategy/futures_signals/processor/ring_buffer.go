@@ -7,25 +7,33 @@ import (
 )
 
 type RingBuffer struct {
-	elements  []float64
-	index     int
-	size      int
-	threshold float64
-	isFull    bool
+	elements                 []float64
+	elementsPercentageChange []float64
+	first                    float64
+	index                    int
+	size                     int
+	threshold                float64
+	isFull                   bool
 }
 
 func NewRingBuffer(size int, threshold float64) *RingBuffer {
 	return &RingBuffer{
-		elements:  make([]float64, size),
-		size:      size,
-		threshold: threshold,
+		elements:                 make([]float64, size),
+		elementsPercentageChange: make([]float64, size),
+		size:                     size,
+		threshold:                threshold,
 	}
 }
 
 func (rb *RingBuffer) Add(element float64) {
 	rb.elements[rb.index] = element
+	if rb.index == 0 && !rb.isFull {
+		rb.first = element
+	}
+	rb.elementsPercentageChange[rb.index] = utils.RoundToDecimalPlace(element/rb.first*100, 6)
 	rb.index++
 	if rb.index == rb.size {
+		rb.first = element
 		rb.index = 0
 		rb.isFull = true
 	}
@@ -65,13 +73,17 @@ func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
 }
 
 func (rb *RingBuffer) GetElementsPercentageChange() []float64 {
-	elements := rb.GetElements()
-	percentageChange := make([]float64, len(elements))
-	percentageChange[0] = 100
-	for i := 1; i < len(elements); i++ {
-		percentageChange[i] = utils.RoundToDecimalPlace(elements[i]/elements[0]*100, 6)
+	// elements := rb.GetElements()
+	// percentageChange := make([]float64, len(elements))
+	// percentageChange[0] = 100
+	// for i := 1; i < len(elements); i++ {
+	// 	percentageChange[i] = utils.RoundToDecimalPlace(elements[i]/elements[0]*100, 6)
+	// }
+	// return percentageChange
+	if !rb.isFull {
+		return rb.elementsPercentageChange[:rb.index]
 	}
-	return percentageChange
+	return append(rb.elementsPercentageChange[rb.index:], rb.elementsPercentageChange[:rb.index]...)
 }
 
 func (rb *RingBuffer) GetLastNElementsPercentageChange(n int) []float64 {
@@ -106,6 +118,23 @@ func (rb *RingBuffer) GetTrend() (a, b, angle float64) {
 	a, b = FindBestFitLine(new)
 	angle = SlopeToAngle(a)
 	return
+}
+
+func (rb *RingBuffer) GetSlope() float64 {
+	new := rb.GetElementsPercentageChange()
+	a, _ := FindBestFitLine(new)
+	return a
+}
+
+func (rb *RingBuffer) GetIntercept() float64 {
+	new := rb.GetElementsPercentageChange()
+	_, b := FindBestFitLine(new)
+	return b
+}
+
+func (rb *RingBuffer) GetAngle() float64 {
+	_, _, angle := rb.GetTrend()
+	return SlopeToAngle(angle)
 }
 
 func (rb *RingBuffer) IsUp() bool {

@@ -35,8 +35,10 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 	rb.Add(120)
 	rb.Add(130)
 	rb.Add(140)
+	rb.Add(150)
+	rb.Add(160)
 	elements = rb.GetElements()
-	expectedElements = []float64{100, 110, 120, 130, 140}
+	expectedElements = []float64{120, 130, 140, 150, 160}
 	if len(elements) != 5 {
 		t.Errorf("Expected ring buffer size to be 5, got %d", len(elements))
 	}
