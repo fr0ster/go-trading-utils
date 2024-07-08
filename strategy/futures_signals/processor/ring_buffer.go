@@ -110,17 +110,17 @@ func (rb *RingBuffer) GetTrend() (a, b, angle float64) {
 
 func (rb *RingBuffer) IsUp() bool {
 	_, _, angle := rb.GetTrend()
-	return angle > rb.threshold
+	return SlopeToAngle(angle) > rb.threshold
 }
 
 func (rb *RingBuffer) IsDown() bool {
 	_, _, angle := rb.GetTrend()
-	return angle < -rb.threshold
+	return SlopeToAngle(angle) < -rb.threshold
 }
 
 func (rb *RingBuffer) IsFlat() bool {
 	_, _, angle := rb.GetTrend()
-	return math.Abs(angle) < rb.threshold
+	return math.Abs(SlopeToAngle(angle)) < rb.threshold
 }
 
 // Функція для розрахунку коефіцієнтів прямої методом найменших квадратів
