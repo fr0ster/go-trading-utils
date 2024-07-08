@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	DepthStreamLevel5   DepthStreamLevel = 5
-	DepthStreamLevel10  DepthStreamLevel = 10
-	DepthStreamLevel20  DepthStreamLevel = 20
-	DepthStreamLevel100 DepthStreamLevel = 100
-	DepthStreamLevel250 DepthStreamLevel = 250
-	DepthStreamLevel500 DepthStreamLevel = 500
+	DepthStreamLevel5  DepthStreamLevel = 5
+	DepthStreamLevel10 DepthStreamLevel = 10
+	DepthStreamLevel20 DepthStreamLevel = 20
+	DepthStreamRate100 DepthStreamRate  = 100
+	DepthStreamRate250 DepthStreamRate  = 250
+	DepthStreamRate500 DepthStreamRate  = 500
 )
 
 type (
