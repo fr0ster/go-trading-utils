@@ -73,13 +73,6 @@ func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
 }
 
 func (rb *RingBuffer) GetElementsPercentageChange() []float64 {
-	// elements := rb.GetElements()
-	// percentageChange := make([]float64, len(elements))
-	// percentageChange[0] = 100
-	// for i := 1; i < len(elements); i++ {
-	// 	percentageChange[i] = utils.RoundToDecimalPlace(elements[i]/elements[0]*100, 6)
-	// }
-	// return percentageChange
 	if !rb.isFull {
 		return rb.elementsPercentageChange[:rb.index]
 	}
