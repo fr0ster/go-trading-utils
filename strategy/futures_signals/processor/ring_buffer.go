@@ -127,22 +127,22 @@ func (rb *RingBuffer) GetIntercept() float64 {
 
 func (rb *RingBuffer) GetAngle() float64 {
 	_, _, angle := rb.GetTrend()
-	return SlopeToAngle(angle)
+	return angle
 }
 
 func (rb *RingBuffer) IsUp() bool {
 	_, _, angle := rb.GetTrend()
-	return SlopeToAngle(angle) > rb.threshold
+	return angle > rb.threshold
 }
 
 func (rb *RingBuffer) IsDown() bool {
 	_, _, angle := rb.GetTrend()
-	return SlopeToAngle(angle) < -rb.threshold
+	return angle < -rb.threshold
 }
 
 func (rb *RingBuffer) IsFlat() bool {
 	_, _, angle := rb.GetTrend()
-	return math.Abs(SlopeToAngle(angle)) < rb.threshold
+	return math.Abs(angle) < rb.threshold
 }
 
 // Функція для розрахунку коефіцієнтів прямої методом найменших квадратів
