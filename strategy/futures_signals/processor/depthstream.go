@@ -105,7 +105,6 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 	depthN int,
 	depth *depth_types.Depth) futures.WsDepthHandler {
 	futures_depth.Init(depth, client, depthN)
-	logrus.Debugf("Future depth: max bid: %v, min ask: %v", depth.GetBids().Max(), depth.GetAsks().Min())
 	return func(event *futures.WsDepthEvent) {
 		depth.Lock()         // Locking the depths
 		defer depth.Unlock() // Unlocking the depths
@@ -138,7 +137,6 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 				depth.DeleteBid(price)
 			}
 			depth.LastUpdateID = event.LastUpdateID
-			logrus.Debugf("Future depth: max bid: %v, min ask: %v", depth.GetBids().Max(), depth.GetAsks().Min())
 		}
 	}
 }
