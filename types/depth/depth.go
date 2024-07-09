@@ -193,22 +193,28 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 	return true
 }
 
-func (d *Depth) GetNormalizedAsks(lines ...int) *btree.BTree {
+func (d *Depth) GetNormalizedAsks(minQuantity ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
 	d.AskAscend(func(i btree.Item) bool {
 		pp := i.(*pair_price_types.PairPrice)
-		newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: (pp.Quantity / d.asksSummaQuantity) * 100})
+		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
+		if len(minQuantity) == 0 || pp.Quantity < minQuantity[0] {
+			newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: quantity})
+		}
 		return true // продовжуємо обхід
 	})
 
 	return newTree
 }
 
-func (d *Depth) GetNormalizedBids() *btree.BTree {
+func (d *Depth) GetNormalizedBids(minQuantity ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
 	d.BidAscend(func(i btree.Item) bool {
 		pp := i.(*pair_price_types.PairPrice)
-		newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: (pp.Quantity / d.bidsSummaQuantity) * 100})
+		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
+		if len(minQuantity) == 0 || pp.Quantity < minQuantity[0] {
+			newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: quantity})
+		}
 		return true // продовжуємо обхід
 	})
 
