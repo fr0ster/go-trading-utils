@@ -195,33 +195,21 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 
 func (d *Depth) GetNormalizedAsks(lines ...int) *btree.BTree {
 	newTree := btree.New(d.degree)
-	index := 0
 	d.AskAscend(func(i btree.Item) bool {
 		pp := i.(*pair_price_types.PairPrice)
 		newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: (pp.Quantity / d.asksSummaQuantity) * 100})
-		index++
-		if len(lines) == 0 || index <= lines[0] {
-			return true // продовжуємо обхід
-		} else {
-			return false // зупиняємо обхід
-		}
+		return true // продовжуємо обхід
 	})
 
 	return newTree
 }
 
-func (d *Depth) GetNormalizedBids(lines ...int) *btree.BTree {
+func (d *Depth) GetNormalizedBids() *btree.BTree {
 	newTree := btree.New(d.degree)
-	index := 0
 	d.BidAscend(func(i btree.Item) bool {
 		pp := i.(*pair_price_types.PairPrice)
 		newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: (pp.Quantity / d.bidsSummaQuantity) * 100})
-		index++
-		if len(lines) == 0 || index <= lines[0] {
-			return true // продовжуємо обхід
-		} else {
-			return false // зупиняємо обхід
-		}
+		return true // продовжуємо обхід
 	})
 
 	return newTree
