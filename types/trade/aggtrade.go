@@ -89,6 +89,14 @@ func (a *AggTrades) Update(val btree.Item) {
 	}
 }
 
+func (a *AggTrades) Delete(id int64) {
+	a.tree.Delete(&AggTrade{AggTradeID: id})
+}
+
+func (a *AggTrades) Len() int {
+	return a.tree.Len()
+}
+
 func NewAggTrades() *AggTrades {
 	return &AggTrades{
 		tree: btree.New(2),
