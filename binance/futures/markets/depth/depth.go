@@ -18,11 +18,11 @@ func Init(d *depth_types.Depth, client *futures.Client, limit int) (err error) {
 	}
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
-		d.SetBid(price, quantity)
+		d.UpdateBid(price, quantity)
 	}
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
-		d.SetAsk(price, quantity)
+		d.UpdateAsk(price, quantity)
 	}
 	d.LastUpdateID = res.LastUpdateID
 	return nil
