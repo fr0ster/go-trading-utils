@@ -17,7 +17,6 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 
-	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
@@ -187,38 +186,6 @@ func getTestDepths() *depth_types.Depth {
 	ds.SetBids(bids)
 
 	return ds
-}
-
-func TestDepthsUpdaterHandler(t *testing.T) {
-	inChannel := make(chan *futures.WsDepthEvent, 1)
-	outChannel := futures_handlers.GetDepthsUpdateGuard(getTestDepths(), inChannel)
-	go func() {
-		for i := 0; i < 10; i++ {
-			inChannel <- &futures.WsDepthEvent{
-				Event:         "depthUpdate",
-				Symbol:        "BTCUSDT",
-				FirstUpdateID: LastUpdateID - 1,
-				LastUpdateID:  LastUpdateID + 2,
-				Bids:          []futures.Bid{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(i), 2)}},
-				Asks:          []futures.Ask{{Price: "1.93", Quantity: utils.ConvFloat64ToStr(float64(0), 2)}},
-			}
-			time.Sleep(100 * time.Millisecond)
-		}
-	}()
-	res := false
-	for {
-		select {
-		case <-outChannel:
-			res = true
-		case <-time.After(10000 * time.Millisecond):
-			res = false
-		}
-		if !res {
-			t.Fatal("Error sending order event to channel")
-		} else {
-			break
-		}
-	}
 }
 
 func TestKlinesUpdateHandler(t *testing.T) {

@@ -5,6 +5,9 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
+
+	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
 const (
@@ -95,4 +98,47 @@ func (pp *PairProcessor) DepthEventStart(
 		}
 	}()
 	return
+}
+
+func (pp *PairProcessor) GetDepthEventCallBack(
+	client *futures.Client,
+	depthN int,
+	depth *depth_types.Depth) futures.WsDepthHandler {
+	futures_depth.Init(depth, client, depthN)
+	logrus.Debugf("Future depth: max bid: %v, min ask: %v", depth.GetBids().Max(), depth.GetAsks().Min())
+	return func(event *futures.WsDepthEvent) {
+		depth.Lock()         // Locking the depths
+		defer depth.Unlock() // Unlocking the depths
+		if event.LastUpdateID < depth.LastUpdateID {
+			return
+		}
+		if event.LastUpdateID >= int64(depth.LastUpdateID) {
+			if !(event.FirstUpdateID <= int64(depth.LastUpdateID) && event.LastUpdateID >= int64(depth.LastUpdateID)) {
+				if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
+					futures_depth.Init(depth, client, depthN)
+				}
+				if event.LastUpdateID < depth.LastUpdateID {
+					return
+				}
+			}
+			for _, bid := range event.Bids {
+				price, quantity, err := bid.Parse()
+				if err != nil {
+					return
+				}
+				depth.UpdateBid(price, quantity)
+				depth.DeleteAsk(price)
+			}
+			for _, ask := range event.Asks {
+				price, quantity, err := ask.Parse()
+				if err != nil {
+					return
+				}
+				depth.UpdateAsk(price, quantity)
+				depth.DeleteBid(price)
+			}
+			depth.LastUpdateID = event.LastUpdateID
+			logrus.Debugf("Future depth: max bid: %v, min ask: %v", depth.GetBids().Max(), depth.GetAsks().Min())
+		}
+	}
 }
