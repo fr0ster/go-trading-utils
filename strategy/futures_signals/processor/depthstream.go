@@ -101,10 +101,9 @@ func (pp *PairProcessor) DepthEventStart(
 }
 
 func (pp *PairProcessor) GetDepthEventCallBack(
-	client *futures.Client,
 	depthN int,
 	depth *depth_types.Depth) futures.WsDepthHandler {
-	futures_depth.Init(depth, client, depthN)
+	futures_depth.Init(depth, pp.client, depthN)
 	return func(event *futures.WsDepthEvent) {
 		depth.Lock()         // Locking the depths
 		defer depth.Unlock() // Unlocking the depths
@@ -114,7 +113,7 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 		if event.LastUpdateID >= int64(depth.LastUpdateID) {
 			if !(event.FirstUpdateID <= int64(depth.LastUpdateID) && event.LastUpdateID >= int64(depth.LastUpdateID)) {
 				if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
-					futures_depth.Init(depth, client, depthN)
+					futures_depth.Init(depth, pp.client, depthN)
 				}
 				if event.LastUpdateID < depth.LastUpdateID {
 					return

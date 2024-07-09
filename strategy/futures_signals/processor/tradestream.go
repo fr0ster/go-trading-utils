@@ -6,6 +6,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
+	futures_trade "github.com/fr0ster/go-trading-utils/binance/futures/markets/trade"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trade"
 )
 
@@ -75,7 +76,8 @@ func (pp *PairProcessor) TradeEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetAggTradesHandler(trade *trade_types.AggTrades) futures.WsAggTradeHandler {
+func (pp *PairProcessor) GetAggTradesHandler(limit int, trade *trade_types.AggTrades) futures.WsAggTradeHandler {
+	futures_trade.AggTradeInit(trade, pp.client, pp.GetPair(), limit)
 	return func(event *futures.WsAggTradeEvent) {
 		trade.Lock()         // Locking the depths
 		defer trade.Unlock() // Unlocking the depths
