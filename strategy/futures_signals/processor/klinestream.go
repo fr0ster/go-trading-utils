@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	utils "github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -97,4 +98,17 @@ func (pp *PairProcessor) KlineEventStart(
 
 func (pp *PairProcessor) GetKlines(interval KlineStreamInterval, limit int) ([]*futures.Kline, error) {
 	return pp.client.NewKlinesService().Symbol(pp.symbol.Symbol).Interval(string(interval)).Limit(limit).Do(context.Background())
+}
+
+func (pp *PairProcessor) GetKlineCallBack(
+	maxRing,
+	minRing *RingBuffer) futures.WsKlineHandler {
+	return func(event *futures.WsKlineEvent) {
+		high := utils.ConvStrToFloat64(event.Kline.High)
+		low := utils.ConvStrToFloat64(event.Kline.Low)
+		if event.Kline.IsFinal {
+			maxRing.Add(high)
+			minRing.Add(low)
+		}
+	}
 }
