@@ -118,11 +118,11 @@ func (d *Depth) SetBid(price float64, quantity float64) {
 	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 }
 
-func (d *Depth) AsksSummaQuantity() float64 {
+func (d *Depth) GetAsksSummaQuantity() float64 {
 	return d.asksSummaQuantity
 }
 
-func (d *Depth) BidsSummaQuantity() float64 {
+func (d *Depth) GetBidsSummaQuantity() float64 {
 	return d.bidsSummaQuantity
 }
 
@@ -152,12 +152,14 @@ func (d *Depth) RestrictBid(price float64) {
 func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
 	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
 	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
-		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
 		return false
 	}
 	if quantity == 0 {
 		d.asks.Delete(&pair_price_types.PairPrice{Price: price})
 	} else {
+		if old != nil {
+			d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		}
 		d.asksSummaQuantity += quantity
 		d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	}
@@ -168,12 +170,14 @@ func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
 func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
 	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
-		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
 		return false
 	}
 	if quantity == 0 {
 		d.bids.Delete(&pair_price_types.PairPrice{Price: price})
 	} else {
+		if old != nil {
+			d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		}
 		d.bidsSummaQuantity += quantity
 		d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	}
