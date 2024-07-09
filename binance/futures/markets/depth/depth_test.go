@@ -51,11 +51,8 @@ func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
 	testDepthTree := depth_types.New(3, "SUSHIUSDT")
-	if testDepthTree == nil {
-		t.Errorf("GetDepthTree returned an empty map")
-	}
-
 	// Add additional assertions if needed
+	assert.NotEmpty(t, testDepthTree)
 }
 
 func TestInitDepthTree(t *testing.T) {
@@ -67,9 +64,7 @@ func TestInitDepthTree(t *testing.T) {
 	// Add more test cases here
 	testDepthTree := depth_types.New(3, "SUSHIUSDT")
 	err := futures_depth.Init(testDepthTree, futures, 10)
-	if err != nil {
-		t.Errorf("Failed to initialize depth tree: %v", err)
-	}
+	assert.NoError(t, err)
 }
 
 func TestGetAsk(t *testing.T) {
@@ -125,6 +120,7 @@ func TestUpdateAsk(t *testing.T) {
 	ds.UpdateAsk(1.951, 300.0)
 	ask := ds.GetAsk(1.951)
 	assert.Equal(t, 300.0, ask.(*pair_price_types.PairPrice).Quantity)
+	assert.Equal(t, 1268.8000000000002, ds.GetAsksSummaQuantity())
 }
 
 func TestUpdateBid(t *testing.T) {
@@ -134,6 +130,7 @@ func TestUpdateBid(t *testing.T) {
 	ds.UpdateBid(1.93, 300.0)
 	bid := ds.GetBid(1.93)
 	assert.Equal(t, 300.0, bid.(*pair_price_types.PairPrice).Quantity)
+	assert.Equal(t, 1515.9999999999998, ds.GetBidsSummaQuantity())
 }
 
 func TestDepthInterface(t *testing.T) {

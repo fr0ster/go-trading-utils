@@ -43,11 +43,19 @@ func (d *Depth) GetBids() *btree.BTree {
 // SetAsks implements depth_interface.Depths.
 func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
+	asks.Ascend(func(i btree.Item) bool {
+		d.asksSummaQuantity += i.(*pair_price_types.PairPrice).Quantity
+		return true
+	})
 }
 
 // SetBids implements depth_interface.Depths.
 func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
+	bids.Ascend(func(i btree.Item) bool {
+		d.bidsSummaQuantity += i.(*pair_price_types.PairPrice).Quantity
+		return true
+	})
 }
 
 // DeleteAsk implements depth_interface.Depths.
