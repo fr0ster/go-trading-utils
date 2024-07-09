@@ -102,7 +102,8 @@ func (pp *PairProcessor) DepthEventStart(
 
 func (pp *PairProcessor) GetDepthEventCallBack(
 	depthN int,
-	depth *depth_types.Depth) futures.WsDepthHandler {
+	depth *depth_types.Depth,
+	summa ...*float64) futures.WsDepthHandler {
 	futures_depth.Init(depth, pp.client, depthN)
 	return func(event *futures.WsDepthEvent) {
 		depth.Lock()         // Locking the depths

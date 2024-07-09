@@ -12,11 +12,13 @@ import (
 type (
 	// DepthItemType - тип для зберігання заявок в стакані
 	Depth struct {
-		symbol       string
-		asks         *btree.BTree
-		bids         *btree.BTree
-		mutex        *sync.Mutex
-		LastUpdateID int64
+		symbol            string
+		asks              *btree.BTree
+		asksSummaQuantity float64
+		bids              *btree.BTree
+		bidsSummaQuantity float64
+		mutex             *sync.Mutex
+		LastUpdateID      int64
 	}
 )
 
@@ -116,6 +118,14 @@ func (d *Depth) SetBid(price float64, quantity float64) {
 	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 }
 
+func (d *Depth) AsksSummaQuantity() float64 {
+	return d.asksSummaQuantity
+}
+
+func (d *Depth) BidsSummaQuantity() float64 {
+	return d.bidsSummaQuantity
+}
+
 // RestrictAsk implements depth_interface.Depths.
 func (d *Depth) RestrictAsk(price float64) {
 	d.asks.Ascend(func(i btree.Item) bool {
@@ -142,13 +152,15 @@ func (d *Depth) RestrictBid(price float64) {
 func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
 	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
 	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
+		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
 		return false
 	}
 	if quantity == 0 {
 		d.asks.Delete(&pair_price_types.PairPrice{Price: price})
-		return true
+	} else {
+		d.asksSummaQuantity += quantity
+		d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	}
-	d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	return true
 }
 
@@ -156,13 +168,15 @@ func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
 func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
 	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
+		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
 		return false
 	}
 	if quantity == 0 {
 		d.bids.Delete(&pair_price_types.PairPrice{Price: price})
-		return true
+	} else {
+		d.bidsSummaQuantity += quantity
+		d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	}
-	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
 	return true
 }
 
