@@ -9,10 +9,8 @@ import (
 
 type (
 	DepthItem struct {
-		Price           float64
-		QuantityPercent float64
-		Quantity        float64
-		SummaQuantity   float64
+		Price    float64
+		Quantity float64
 	}
 	// DepthItemType - тип для зберігання заявок в стакані
 	Depth struct {
@@ -201,42 +199,45 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 	return true
 }
 
-func (d *Depth) GetNormalizedAsks(minPercent ...float64) *btree.BTree {
-	newTree := btree.New(d.degree)
-	sumQuantity := 0.0
-	d.AskAscend(func(i btree.Item) bool {
+type DepthFilter func(float64) bool
+
+func (d *Depth) getIterator(newTree *btree.BTree, f ...DepthFilter) func(i btree.Item) bool {
+	return func(i btree.Item) bool {
+		var filter DepthFilter
 		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
-		sumQuantity += pp.Quantity
-		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
+		if len(f) > 0 {
+			filter = f[0]
+		} else {
+			filter = func(float64) bool { return true }
+		}
+		if filter(quantity) {
 			newTree.ReplaceOrInsert(&DepthItem{
-				Price:           pp.Price,
-				QuantityPercent: quantity,
-				Quantity:        pp.Quantity,
-				SummaQuantity:   sumQuantity})
+				Price:    pp.Price,
+				Quantity: pp.Quantity})
 		}
 		return true // продовжуємо обхід
-	})
+	}
+}
+
+func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) *btree.BTree {
+	newTree := btree.New(d.degree)
+	if len(f) > 0 {
+		d.AskAscend(d.getIterator(newTree, f[0]))
+	} else {
+		d.AskAscend(d.getIterator(newTree))
+	}
 
 	return newTree
 }
 
-func (d *Depth) GetNormalizedBids(minPercent ...float64) *btree.BTree {
+func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) *btree.BTree {
 	newTree := btree.New(d.degree)
-	sumQuantity := 0.0
-	d.BidDescend(func(i btree.Item) bool {
-		pp := i.(*DepthItem)
-		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
-		sumQuantity += pp.Quantity
-		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
-			newTree.ReplaceOrInsert(&DepthItem{
-				Price:           pp.Price,
-				QuantityPercent: quantity,
-				Quantity:        pp.Quantity,
-				SummaQuantity:   sumQuantity})
-		}
-		return true // продовжуємо обхід
-	})
+	if len(f) > 0 {
+		d.BidDescend(d.getIterator(newTree, f[0]))
+	} else {
+		d.BidDescend(d.getIterator(newTree))
+	}
 
 	return newTree
 }
