@@ -121,7 +121,7 @@ func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 	return
 }
 
-func TestUpdateAsk(t *testing.T) {
+func TestUpdateAskAndBid(t *testing.T) {
 	asks, bids := getTestDepths()
 	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
@@ -152,14 +152,27 @@ func TestUpdateAsk(t *testing.T) {
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
 }
 
-func TestUpdateBid(t *testing.T) {
-	_, bids := getTestDepths()
+func TestGetNormalizedDepth(t *testing.T) {
+	asks, bids := getTestDepths()
 	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.SetBids(bids)
-	ds.UpdateBid(1.93, 300.0)
-	bid := ds.GetBid(1.93)
-	assert.Equal(t, 300.0, bid.(*depth_types.DepthItem).Quantity)
-	assert.Equal(t, 1515.9999999999998, ds.GetBidsSummaQuantity())
+	ds.SetAsks(asks)
+	normalizedAsks := ds.GetNormalizedAsks()
+	normalizedBids := ds.GetNormalizedBids()
+	assert.NotNil(t, normalizedAsks)
+	assert.NotNil(t, normalizedBids)
+	normalizedAsksArray := make([]depth_types.DepthItem, 0)
+	normalizedBidsArray := make([]depth_types.DepthItem, 0)
+	normalizedAsks.Ascend(func(i btree.Item) bool {
+		normalizedAsksArray = append(normalizedAsksArray, *i.(*depth_types.DepthItem))
+		return true
+	})
+	normalizedBids.Ascend(func(i btree.Item) bool {
+		normalizedBidsArray = append(normalizedBidsArray, *i.(*depth_types.DepthItem))
+		return true
+	})
+	assert.Equal(t, 8, len(normalizedAsksArray))
+	assert.Equal(t, 8, len(normalizedBidsArray))
 }
 
 func TestDepthInterface(t *testing.T) {

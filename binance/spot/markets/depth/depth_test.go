@@ -9,6 +9,7 @@ import (
 	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -118,26 +119,70 @@ func TestSetBid(t *testing.T) {
 	}
 }
 
-func TestUpdateAsk(t *testing.T) {
-	asks, _ := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
-	ds.SetAsks(asks)
-	ds.UpdateAsk(1.951, 300.0)
-	ask := ds.GetAsk(1.951)
-	assert.Equal(t, 300.0, ask.(*depth_types.DepthItem).Quantity)
-	ds.UpdateAsk(1.000, 100.0)
-	assert.NotNil(t, ds.GetAsk(1.000))
+func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
+	ds.GetAsks().Ascend(func(i btree.Item) bool {
+		summaAsks += i.(*depth_types.DepthItem).Quantity
+		return true
+	})
+	ds.GetBids().Ascend(func(i btree.Item) bool {
+		summaBids += i.(*depth_types.DepthItem).Quantity
+		return true
+	})
+	return
 }
 
-func TestUpdateBid(t *testing.T) {
-	_, bids := getTestDepths()
+func TestUpdateAskAndBid(t *testing.T) {
+	asks, bids := getTestDepths()
+	ds := depth_types.New(3, "SUSHIUSDT")
+	ds.SetAsks(asks)
+	ds.SetBids(bids)
+	ask := ds.GetAsk(1.951)
+	bid := ds.GetBid(1.951)
+	summaAsks, summaBids := summaAsksAndBids(ds)
+	assert.Equal(t, 217.9, ask.(*depth_types.DepthItem).Quantity)
+	assert.Nil(t, bid)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
+	ds.UpdateAsk(1.951, 300.0)
+	ask = ds.GetAsk(1.951)
+	bid = ds.GetBid(1.951)
+	summaAsks, summaBids = summaAsksAndBids(ds)
+	assert.Equal(t, 300.0, ask.(*depth_types.DepthItem).Quantity)
+	assert.Nil(t, bid)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
+
+	ds.UpdateBid(1.951, 300.0)
+	ask = ds.GetAsk(1.951)
+	bid = ds.GetBid(1.951)
+	assert.Nil(t, ask)
+	assert.Equal(t, 300.0, bid.(*depth_types.DepthItem).Quantity)
+	summaAsks, summaBids = summaAsksAndBids(ds)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
+}
+
+func TestGetNormalizedDepth(t *testing.T) {
+	asks, bids := getTestDepths()
 	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.SetBids(bids)
-	ds.UpdateBid(1.93, 300.0)
-	bid := ds.GetBid(1.93)
-	assert.Equal(t, 300.0, bid.(*depth_types.DepthItem).Quantity)
-	ds.UpdateBid(1.000, 100.0)
-	assert.NotNil(t, ds.GetBid(1.000))
+	ds.SetAsks(asks)
+	normalizedAsks := ds.GetNormalizedAsks()
+	normalizedBids := ds.GetNormalizedBids()
+	assert.NotNil(t, normalizedAsks)
+	assert.NotNil(t, normalizedBids)
+	normalizedAsksArray := make([]depth_types.DepthItem, 0)
+	normalizedBidsArray := make([]depth_types.DepthItem, 0)
+	normalizedAsks.Ascend(func(i btree.Item) bool {
+		normalizedAsksArray = append(normalizedAsksArray, *i.(*depth_types.DepthItem))
+		return true
+	})
+	normalizedBids.Ascend(func(i btree.Item) bool {
+		normalizedBidsArray = append(normalizedBidsArray, *i.(*depth_types.DepthItem))
+		return true
+	})
+	assert.Equal(t, 8, len(normalizedAsksArray))
+	assert.Equal(t, 8, len(normalizedBidsArray))
 }
 
 func TestDepthInterface(t *testing.T) {

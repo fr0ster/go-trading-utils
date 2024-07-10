@@ -203,16 +203,17 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 
 func (d *Depth) GetNormalizedAsks(minPercent ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
-	oldQuantity := 0.0
+	sumQuantity := 0.0
 	d.AskAscend(func(i btree.Item) bool {
 		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
+		sumQuantity += pp.Quantity
 		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
 			newTree.ReplaceOrInsert(&DepthItem{
 				Price:           pp.Price,
 				QuantityPercent: quantity,
 				Quantity:        pp.Quantity,
-				SummaQuantity:   oldQuantity + pp.Quantity})
+				SummaQuantity:   sumQuantity})
 		}
 		return true // продовжуємо обхід
 	})
@@ -222,16 +223,17 @@ func (d *Depth) GetNormalizedAsks(minPercent ...float64) *btree.BTree {
 
 func (d *Depth) GetNormalizedBids(minPercent ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
-	oldQuantity := 0.0
-	d.BidAscend(func(i btree.Item) bool {
+	sumQuantity := 0.0
+	d.BidDescend(func(i btree.Item) bool {
 		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
+		sumQuantity += pp.Quantity
 		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
 			newTree.ReplaceOrInsert(&DepthItem{
 				Price:           pp.Price,
 				QuantityPercent: quantity,
 				Quantity:        pp.Quantity,
-				SummaQuantity:   oldQuantity + pp.Quantity})
+				SummaQuantity:   sumQuantity})
 		}
 		return true // продовжуємо обхід
 	})
