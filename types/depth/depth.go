@@ -8,8 +8,11 @@ import (
 )
 
 type (
-	QuantityType float64
-	DepthItem    struct {
+	QuantityItem struct {
+		Quantity float64
+		Price    float64
+	}
+	DepthItem struct {
 		Price    float64
 		Quantity float64
 	}
@@ -36,12 +39,12 @@ func (i *DepthItem) Equal(than btree.Item) bool {
 	return i.Price == than.(*DepthItem).Price
 }
 
-func (i QuantityType) Less(than btree.Item) bool {
-	return i < than.(QuantityType)
+func (i *QuantityItem) Less(than btree.Item) bool {
+	return i.Quantity < than.(*QuantityItem).Quantity
 }
 
-func (i QuantityType) Equal(than btree.Item) bool {
-	return i == than.(QuantityType)
+func (i *QuantityItem) Equal(than btree.Item) bool {
+	return i.Quantity == than.(*QuantityItem).Quantity
 }
 
 // GetAsks implements depth_interface.Depths.
@@ -59,7 +62,7 @@ func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
 	asks.Ascend(func(i btree.Item) bool {
 		d.asksSummaQuantity += i.(*DepthItem).Quantity
-		d.asksMinMax.ReplaceOrInsert(QuantityType(i.(*DepthItem).Quantity))
+		d.asksMinMax.ReplaceOrInsert(&QuantityItem{i.(*DepthItem).Quantity, i.(*DepthItem).Price})
 		return true
 	})
 }
@@ -69,7 +72,7 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 	bids.Ascend(func(i btree.Item) bool {
 		d.bidsSummaQuantity += i.(*DepthItem).Quantity
-		d.bidsMinMax.ReplaceOrInsert(QuantityType(i.(*DepthItem).Quantity))
+		d.bidsMinMax.ReplaceOrInsert(&QuantityItem{i.(*DepthItem).Quantity, i.(*DepthItem).Price})
 		return true
 	})
 }
@@ -130,7 +133,7 @@ func (d *Depth) SetAsk(price float64, quantity float64) {
 	}
 	d.asks.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.asksSummaQuantity += quantity
-	d.asksMinMax.ReplaceOrInsert(QuantityType(quantity))
+	d.asksMinMax.ReplaceOrInsert(&QuantityItem{quantity, price})
 }
 
 // SetBid implements depth_interface.Depths.
@@ -141,7 +144,7 @@ func (d *Depth) SetBid(price float64, quantity float64) {
 	}
 	d.bids.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.bidsSummaQuantity += quantity
-	d.bidsMinMax.ReplaceOrInsert(QuantityType(quantity))
+	d.bidsMinMax.ReplaceOrInsert(&QuantityItem{quantity, price})
 }
 
 // DeleteAsk implements depth_interface.Depths.
@@ -149,7 +152,7 @@ func (d *Depth) DeleteAsk(price float64) {
 	old := d.asks.Get(&DepthItem{Price: price})
 	if old != nil {
 		d.asksSummaQuantity -= old.(*DepthItem).Quantity
-		d.asksMinMax.Delete(QuantityType(old.(*DepthItem).Quantity))
+		d.asksMinMax.Delete(&QuantityItem{Quantity: old.(*DepthItem).Quantity})
 	}
 	d.asks.Delete(&DepthItem{Price: price})
 }
@@ -159,7 +162,7 @@ func (d *Depth) DeleteBid(price float64) {
 	old := d.bids.Get(&DepthItem{Price: price})
 	if old != nil {
 		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
-		d.bidsMinMax.Delete(QuantityType(old.(*DepthItem).Quantity))
+		d.bidsMinMax.Delete(&QuantityItem{Quantity: old.(*DepthItem).Quantity})
 	}
 	d.bids.Delete(&DepthItem{Price: price})
 }
@@ -274,35 +277,35 @@ func (d *Depth) Symbol() string {
 	return d.symbol
 }
 
-func (d *Depth) AskMin() (min float64, err error) {
+func (d *Depth) AskMin() (min *QuantityItem, err error) {
 	if d.asksMinMax.Len() == 0 {
 		err = errors.New("asksMinMax is empty")
 	}
-	min = float64(d.asksMinMax.Min().(QuantityType))
+	min = d.asksMinMax.Min().(*QuantityItem)
 	return
 }
 
-func (d *Depth) AskMax() (max float64, err error) {
+func (d *Depth) AskMax() (max *QuantityItem, err error) {
 	if d.asksMinMax.Len() == 0 {
 		err = errors.New("asksMinMax is empty")
 	}
-	max = float64(d.asksMinMax.Max().(QuantityType))
+	max = d.asksMinMax.Max().(*QuantityItem)
 	return
 }
 
-func (d *Depth) BidMin() (min float64, err error) {
+func (d *Depth) BidMin() (min *QuantityItem, err error) {
 	if d.bidsMinMax.Len() == 0 {
 		err = errors.New("asksMinMax is empty")
 	}
-	min = float64(d.bidsMinMax.Min().(QuantityType))
+	min = d.bidsMinMax.Min().(*QuantityItem)
 	return
 }
 
-func (d *Depth) BidMax() (max float64, err error) {
+func (d *Depth) BidMax() (max *QuantityItem, err error) {
 	if d.bidsMinMax.Len() == 0 {
 		err = errors.New("asksMinMax is empty")
 	}
-	max = float64(d.bidsMinMax.Max().(QuantityType))
+	max = d.bidsMinMax.Max().(*QuantityItem)
 	return
 }
 

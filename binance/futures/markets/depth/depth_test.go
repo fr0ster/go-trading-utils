@@ -99,9 +99,9 @@ func TestSetAsk(t *testing.T) {
 	ds.SetAsk(ask.Price, ask.Quantity)
 	assert.NotNil(t, 1.96, ds.GetAsk(1.96))
 	min, _ := ds.AskMin()
-	assert.Equal(t, 90.0, min)
+	assert.Equal(t, 90.0, min.Quantity)
 	max, _ := ds.AskMax()
-	assert.Equal(t, 217.9, max)
+	assert.Equal(t, 217.9, max.Quantity)
 }
 
 func TestSetBid(t *testing.T) {
@@ -112,9 +112,9 @@ func TestSetBid(t *testing.T) {
 	ds.SetBid(bid.Price, bid.Quantity)
 	assert.NotNil(t, 1.96, ds.GetBid(1.96))
 	min, _ := ds.BidMin()
-	assert.Equal(t, 130.4, min)
+	assert.Equal(t, 130.4, min.Quantity)
 	max, _ := ds.BidMax()
-	assert.Equal(t, 236.1, max)
+	assert.Equal(t, 236.1, max.Quantity)
 }
 
 func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
