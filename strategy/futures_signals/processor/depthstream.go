@@ -111,15 +111,9 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 		if event.LastUpdateID < depth.LastUpdateID {
 			return
 		}
-		if event.LastUpdateID >= int64(depth.LastUpdateID) {
-			if !(event.FirstUpdateID <= int64(depth.LastUpdateID) && event.LastUpdateID >= int64(depth.LastUpdateID)) {
-				if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
-					futures_depth.Init(depth, pp.client, depthN)
-				}
-				if event.LastUpdateID < depth.LastUpdateID {
-					return
-				}
-			}
+		if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
+			futures_depth.Init(depth, pp.client, depthN)
+		} else if event.PrevLastUpdateID == int64(depth.LastUpdateID) {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()
 				if err != nil {
