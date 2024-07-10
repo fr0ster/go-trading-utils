@@ -44,7 +44,6 @@ func (pp *PairProcessor) startDepthStream(
 func (pp *PairProcessor) DepthEventStart(
 	stop chan struct{},
 	levels DepthStreamLevel,
-	rate DepthStreamRate,
 	callBack binance.WsPartialDepthHandler) (
 	resetEvent chan error,
 	err error) {
