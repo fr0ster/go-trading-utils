@@ -4,12 +4,16 @@ import (
 	"errors"
 	"sync"
 
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
-
 	"github.com/google/btree"
 )
 
 type (
+	DepthItem struct {
+		Price           float64
+		QuantityPercent float64
+		Quantity        float64
+		SummaQuantity   float64
+	}
 	// DepthItemType - тип для зберігання заявок в стакані
 	Depth struct {
 		symbol            string
@@ -23,12 +27,12 @@ type (
 	}
 )
 
-func (i *Depth) Less(than btree.Item) bool {
-	return i.symbol < than.(*Depth).symbol
+func (i *DepthItem) Less(than btree.Item) bool {
+	return i.Price < than.(*DepthItem).Price
 }
 
-func (i *Depth) Equal(than btree.Item) bool {
-	return i.symbol == than.(*Depth).symbol
+func (i *DepthItem) Equal(than btree.Item) bool {
+	return i.Price == than.(*DepthItem).Price
 }
 
 // GetAsks implements depth_interface.Depths.
@@ -45,7 +49,7 @@ func (d *Depth) GetBids() *btree.BTree {
 func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
 	asks.Ascend(func(i btree.Item) bool {
-		d.asksSummaQuantity += i.(*pair_price_types.PairPrice).Quantity
+		d.asksSummaQuantity += i.(*DepthItem).Quantity
 		return true
 	})
 }
@@ -54,7 +58,7 @@ func (d *Depth) SetAsks(asks *btree.BTree) {
 func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 	bids.Ascend(func(i btree.Item) bool {
-		d.bidsSummaQuantity += i.(*pair_price_types.PairPrice).Quantity
+		d.bidsSummaQuantity += i.(*DepthItem).Quantity
 		return true
 	})
 }
@@ -91,7 +95,7 @@ func (d *Depth) BidDescend(iter func(btree.Item) bool) {
 
 // GetAsk implements depth_interface.Depths.
 func (d *Depth) GetAsk(price float64) btree.Item {
-	item := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	item := d.asks.Get(&DepthItem{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -100,7 +104,7 @@ func (d *Depth) GetAsk(price float64) btree.Item {
 
 // GetBid implements depth_interface.Depths.
 func (d *Depth) GetBid(price float64) btree.Item {
-	item := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	item := d.bids.Get(&DepthItem{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -109,40 +113,40 @@ func (d *Depth) GetBid(price float64) btree.Item {
 
 // SetAsk implements depth_interface.Depths.
 func (d *Depth) SetAsk(price float64, quantity float64) {
-	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	old := d.asks.Get(&DepthItem{Price: price})
 	if old != nil {
-		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		d.asksSummaQuantity -= old.(*DepthItem).Quantity
 	}
-	d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+	d.asks.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.asksSummaQuantity += quantity
 }
 
 // SetBid implements depth_interface.Depths.
 func (d *Depth) SetBid(price float64, quantity float64) {
-	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	old := d.bids.Get(&DepthItem{Price: price})
 	if old != nil {
-		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
 	}
-	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+	d.bids.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.bidsSummaQuantity += quantity
 }
 
 // DeleteAsk implements depth_interface.Depths.
 func (d *Depth) DeleteAsk(price float64) {
-	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	old := d.asks.Get(&DepthItem{Price: price})
 	if old != nil {
-		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		d.asksSummaQuantity -= old.(*DepthItem).Quantity
 	}
-	d.asks.Delete(&pair_price_types.PairPrice{Price: price})
+	d.asks.Delete(&DepthItem{Price: price})
 }
 
 // DeleteBid implements depth_interface.Depths.
 func (d *Depth) DeleteBid(price float64) {
-	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	old := d.bids.Get(&DepthItem{Price: price})
 	if old != nil {
-		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
 	}
-	d.bids.Delete(&pair_price_types.PairPrice{Price: price})
+	d.bids.Delete(&DepthItem{Price: price})
 }
 
 func (d *Depth) GetAsksSummaQuantity() float64 {
@@ -156,7 +160,7 @@ func (d *Depth) GetBidsSummaQuantity() float64 {
 // RestrictAsk implements depth_interface.Depths.
 func (d *Depth) RestrictAsk(price float64) {
 	d.asks.Ascend(func(i btree.Item) bool {
-		if i.(*pair_price_types.PairPrice).Price < price {
+		if i.(*DepthItem).Price < price {
 			d.asks.Delete(i)
 			return false
 		}
@@ -167,7 +171,7 @@ func (d *Depth) RestrictAsk(price float64) {
 // RestrictBid implements depth_interface.Depths.
 func (d *Depth) RestrictBid(price float64) {
 	d.bids.Ascend(func(i btree.Item) bool {
-		if i.(*pair_price_types.PairPrice).Price > price {
+		if i.(*DepthItem).Price > price {
 			d.bids.Delete(i)
 			return false
 		}
@@ -199,11 +203,16 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 
 func (d *Depth) GetNormalizedAsks(minPercent ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
+	oldQuantity := 0.0
 	d.AskAscend(func(i btree.Item) bool {
-		pp := i.(*pair_price_types.PairPrice)
+		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
 		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
-			newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: quantity})
+			newTree.ReplaceOrInsert(&DepthItem{
+				Price:           pp.Price,
+				QuantityPercent: quantity,
+				Quantity:        pp.Quantity,
+				SummaQuantity:   oldQuantity + pp.Quantity})
 		}
 		return true // продовжуємо обхід
 	})
@@ -213,11 +222,16 @@ func (d *Depth) GetNormalizedAsks(minPercent ...float64) *btree.BTree {
 
 func (d *Depth) GetNormalizedBids(minPercent ...float64) *btree.BTree {
 	newTree := btree.New(d.degree)
+	oldQuantity := 0.0
 	d.BidAscend(func(i btree.Item) bool {
-		pp := i.(*pair_price_types.PairPrice)
+		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
 		if len(minPercent) == 0 || minPercent[0] <= 0 || quantity >= minPercent[0] {
-			newTree.ReplaceOrInsert(&pair_price_types.PairPrice{Price: pp.Price, Quantity: quantity})
+			newTree.ReplaceOrInsert(&DepthItem{
+				Price:           pp.Price,
+				QuantityPercent: quantity,
+				Quantity:        pp.Quantity,
+				SummaQuantity:   oldQuantity + pp.Quantity})
 		}
 		return true // продовжуємо обхід
 	})
@@ -251,9 +265,9 @@ func New(degree int, symbol string) *Depth {
 	}
 }
 
-func Binance2BookTicker(binanceDepth interface{}) (*pair_price_types.PairPrice, error) {
+func Binance2BookTicker(binanceDepth interface{}) (*DepthItem, error) {
 	switch binanceDepth := binanceDepth.(type) {
-	case *pair_price_types.PairPrice:
+	case *DepthItem:
 		return binanceDepth, nil
 	}
 	return nil, errors.New("it's not a DepthItemType")
