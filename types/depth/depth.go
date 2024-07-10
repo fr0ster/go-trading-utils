@@ -224,9 +224,6 @@ type DepthFilter func(float64) bool
 func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...DepthFilter) func(i btree.Item) bool {
 	return func(i btree.Item) bool {
 		var filter DepthFilter
-		summa = new(float64)
-		max = new(float64)
-		min = new(float64)
 		pp := i.(*DepthItem)
 		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
 		if len(f) > 0 {
@@ -258,6 +255,9 @@ func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...De
 
 func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
 	tree = btree.New(d.degree)
+	summa = new(float64)
+	max = new(float64)
+	min = new(float64)
 	if len(f) > 0 {
 		d.AskAscend(d.getIterator(tree, summa, max, min, f[0]))
 	} else {
@@ -268,6 +268,9 @@ func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) (tree *btree.BTree, s
 
 func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
 	tree = btree.New(d.degree)
+	summa = new(float64)
+	max = new(float64)
+	min = new(float64)
 	if len(f) > 0 {
 		d.BidDescend(d.getIterator(tree, summa, max, min, f[0]))
 	} else {
