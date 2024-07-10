@@ -9,6 +9,7 @@ import (
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
+	"github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -97,9 +98,7 @@ func TestSetAsk(t *testing.T) {
 	ds.SetAsks(asks)
 	ask := pair_price_types.PairPrice{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
-	if ds.GetAsk(1.96) == nil {
-		t.Errorf("Failed to set ask")
-	}
+	assert.NotNil(t, 1.96, ds.GetAsk(1.96))
 }
 
 func TestSetBid(t *testing.T) {
@@ -108,19 +107,50 @@ func TestSetBid(t *testing.T) {
 	ds.SetBids(bids)
 	bid := pair_price_types.PairPrice{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
-	if ds.GetBid(1.96) == nil {
-		t.Errorf("Failed to set bid")
-	}
+	assert.NotNil(t, 1.96, ds.GetBid(1.96))
+}
+
+func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
+	ds.GetAsks().Ascend(func(i btree.Item) bool {
+		summaAsks += i.(*pair_price_types.PairPrice).Quantity
+		return true
+	})
+	ds.GetBids().Ascend(func(i btree.Item) bool {
+		summaBids += i.(*pair_price_types.PairPrice).Quantity
+		return true
+	})
+	return
 }
 
 func TestUpdateAsk(t *testing.T) {
-	asks, _ := getTestDepths()
+	asks, bids := getTestDepths()
 	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.SetAsks(asks)
-	ds.UpdateAsk(1.951, 300.0)
+	ds.SetBids(bids)
 	ask := ds.GetAsk(1.951)
+	bid := ds.GetBid(1.951)
+	summaAsks, summaBids := summaAsksAndBids(ds)
+	assert.Equal(t, 217.9, ask.(*pair_price_types.PairPrice).Quantity)
+	assert.Nil(t, bid)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
+	ds.UpdateAsk(1.951, 300.0)
+	ask = ds.GetAsk(1.951)
+	bid = ds.GetBid(1.951)
+	summaAsks, summaBids = summaAsksAndBids(ds)
 	assert.Equal(t, 300.0, ask.(*pair_price_types.PairPrice).Quantity)
-	assert.Equal(t, 1268.8000000000002, ds.GetAsksSummaQuantity())
+	assert.Nil(t, bid)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
+
+	ds.UpdateBid(1.951, 300.0)
+	ask = ds.GetAsk(1.951)
+	bid = ds.GetBid(1.951)
+	assert.Nil(t, ask)
+	assert.Equal(t, 300.0, bid.(*pair_price_types.PairPrice).Quantity)
+	summaAsks, summaBids = summaAsksAndBids(ds)
+	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
+	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
 }
 
 func TestUpdateBid(t *testing.T) {

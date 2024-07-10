@@ -126,7 +126,6 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 					return
 				}
 				depth.UpdateBid(price, quantity)
-				depth.DeleteAsk(price)
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
@@ -134,7 +133,6 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 					return
 				}
 				depth.UpdateAsk(price, quantity)
-				depth.DeleteBid(price)
 			}
 			depth.LastUpdateID = event.LastUpdateID
 		}

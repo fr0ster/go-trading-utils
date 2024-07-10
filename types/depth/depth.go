@@ -59,16 +59,6 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 	})
 }
 
-// DeleteAsk implements depth_interface.Depths.
-func (d *Depth) DeleteAsk(price float64) {
-	d.asks.Delete(&pair_price_types.PairPrice{Price: price})
-}
-
-// DeleteBid implements depth_interface.Depths.
-func (d *Depth) DeleteBid(price float64) {
-	d.bids.Delete(&pair_price_types.PairPrice{Price: price})
-}
-
 // ClearAsks implements depth_interface.Depths.
 func (d *Depth) ClearAsks() {
 	d.asks.Clear(false)
@@ -119,12 +109,40 @@ func (d *Depth) GetBid(price float64) btree.Item {
 
 // SetAsk implements depth_interface.Depths.
 func (d *Depth) SetAsk(price float64, quantity float64) {
+	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil {
+		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+	}
 	d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+	d.asksSummaQuantity += quantity
 }
 
 // SetBid implements depth_interface.Depths.
 func (d *Depth) SetBid(price float64, quantity float64) {
+	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil {
+		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+	}
 	d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+	d.bidsSummaQuantity += quantity
+}
+
+// DeleteAsk implements depth_interface.Depths.
+func (d *Depth) DeleteAsk(price float64) {
+	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil {
+		d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+	}
+	d.asks.Delete(&pair_price_types.PairPrice{Price: price})
+}
+
+// DeleteBid implements depth_interface.Depths.
+func (d *Depth) DeleteBid(price float64) {
+	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
+	if old != nil {
+		d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
+	}
+	d.bids.Delete(&pair_price_types.PairPrice{Price: price})
 }
 
 func (d *Depth) GetAsksSummaQuantity() float64 {
@@ -159,36 +177,22 @@ func (d *Depth) RestrictBid(price float64) {
 
 // UpdateAsk implements depth_interface.Depths.
 func (d *Depth) UpdateAsk(price float64, quantity float64) bool {
-	old := d.asks.Get(&pair_price_types.PairPrice{Price: price})
-	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
-		return false
-	}
 	if quantity == 0 {
-		d.asks.Delete(&pair_price_types.PairPrice{Price: price})
+		d.DeleteAsk(price)
 	} else {
-		if old != nil {
-			d.asksSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
-		}
-		d.asksSummaQuantity += quantity
-		d.asks.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+		d.SetAsk(price, quantity)
+		d.DeleteBid(price)
 	}
 	return true
 }
 
 // UpdateBid implements depth_interface.Depths.
 func (d *Depth) UpdateBid(price float64, quantity float64) bool {
-	old := d.bids.Get(&pair_price_types.PairPrice{Price: price})
-	if old != nil && old.(*pair_price_types.PairPrice).Quantity == quantity {
-		return false
-	}
 	if quantity == 0 {
-		d.bids.Delete(&pair_price_types.PairPrice{Price: price})
+		d.DeleteBid(price)
 	} else {
-		if old != nil {
-			d.bidsSummaQuantity -= old.(*pair_price_types.PairPrice).Quantity
-		}
-		d.bidsSummaQuantity += quantity
-		d.bids.ReplaceOrInsert(&pair_price_types.PairPrice{Price: price, Quantity: quantity})
+		d.SetBid(price, quantity)
+		d.DeleteAsk(price)
 	}
 	return true
 }
