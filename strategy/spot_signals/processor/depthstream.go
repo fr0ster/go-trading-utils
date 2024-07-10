@@ -104,7 +104,7 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 		if event.LastUpdateID < depth.LastUpdateID {
 			return
 		}
-		if event.LastUpdateID > int64(depth.LastUpdateID)+1 {
+		if event.LastUpdateID != int64(depth.LastUpdateID)+1 {
 			binance_depth.Init(depth, pp.client, depthN)
 		} else if event.LastUpdateID == int64(depth.LastUpdateID)+1 {
 			for _, bid := range event.Bids {
@@ -203,7 +203,7 @@ func (pp *PairProcessor) GetPartialDepthEventCallBack(
 		if event.LastUpdateID < depth.LastUpdateID {
 			return
 		}
-		if event.LastUpdateID > int64(depth.LastUpdateID)+1 {
+		if event.LastUpdateID != int64(depth.LastUpdateID)+1 {
 			binance_depth.Init(depth, pp.client, depthN)
 		} else if event.LastUpdateID == int64(depth.LastUpdateID)+1 {
 			for _, bid := range event.Bids {
