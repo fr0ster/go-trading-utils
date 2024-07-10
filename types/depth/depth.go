@@ -221,7 +221,7 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 
 type DepthFilter func(float64) bool
 
-func (d *Depth) getIterator(newTree *btree.BTree, f ...DepthFilter) func(i btree.Item) bool {
+func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...DepthFilter) func(i btree.Item) bool {
 	return func(i btree.Item) bool {
 		var filter DepthFilter
 		pp := i.(*DepthItem)
@@ -232,34 +232,45 @@ func (d *Depth) getIterator(newTree *btree.BTree, f ...DepthFilter) func(i btree
 			filter = func(float64) bool { return true }
 		}
 		if filter(quantity) {
-			newTree.ReplaceOrInsert(&DepthItem{
+			tree.ReplaceOrInsert(&DepthItem{
 				Price:    pp.Price,
 				Quantity: pp.Quantity})
+			if summa != nil {
+				*summa += pp.Quantity
+			}
+			if max != nil {
+				if *max < pp.Quantity {
+					*max = pp.Quantity
+				}
+			}
+			if min != nil {
+				if *min > pp.Quantity {
+					*min = pp.Quantity
+				}
+			}
 		}
 		return true // продовжуємо обхід
 	}
 }
 
-func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) *btree.BTree {
-	newTree := btree.New(d.degree)
+func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
+	tree = btree.New(d.degree)
 	if len(f) > 0 {
-		d.AskAscend(d.getIterator(newTree, f[0]))
+		d.AskAscend(d.getIterator(tree, summa, max, min, f[0]))
 	} else {
-		d.AskAscend(d.getIterator(newTree))
+		d.AskAscend(d.getIterator(tree, summa, max, min))
 	}
-
-	return newTree
+	return
 }
 
-func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) *btree.BTree {
-	newTree := btree.New(d.degree)
+func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
+	tree = btree.New(d.degree)
 	if len(f) > 0 {
-		d.BidDescend(d.getIterator(newTree, f[0]))
+		d.BidDescend(d.getIterator(tree, summa, max, min, f[0]))
 	} else {
-		d.BidDescend(d.getIterator(newTree))
+		d.BidDescend(d.getIterator(tree, summa, max, min))
 	}
-
-	return newTree
+	return
 }
 
 // Lock implements depth_interface.Depths.
