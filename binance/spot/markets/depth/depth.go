@@ -26,5 +26,6 @@ func Init(d *depth_types.Depth, client *binance.Client, limit int) (err error) {
 		price, quantity, _ := ask.Parse()
 		d.SetAsk(price, quantity)
 	}
+	d.LastUpdateID = res.LastUpdateID
 	return nil
 }
