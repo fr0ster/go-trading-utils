@@ -261,10 +261,12 @@ func RunSpotGridTrading(
 	}()
 	maintainedOrders := btree.New(2)
 	_, err = pairProcessor.UserDataEventStart(
+		stopEvent,
 		getCallBack_v1(
 			pairProcessor,
 			stopEvent,
-			maintainedOrders))
+			maintainedOrders),
+		nil)
 	if err != nil {
 		printError()
 		return err

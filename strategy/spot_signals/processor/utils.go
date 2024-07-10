@@ -1,4 +1,4 @@
-package spot_signals
+package processor
 
 import (
 	"time"
