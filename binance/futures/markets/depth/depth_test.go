@@ -98,6 +98,10 @@ func TestSetAsk(t *testing.T) {
 	ask := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
 	assert.NotNil(t, 1.96, ds.GetAsk(1.96))
+	min, _ := ds.AskMin()
+	assert.Equal(t, 90.0, min)
+	max, _ := ds.AskMax()
+	assert.Equal(t, 217.9, max)
 }
 
 func TestSetBid(t *testing.T) {
@@ -107,6 +111,10 @@ func TestSetBid(t *testing.T) {
 	bid := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
 	assert.NotNil(t, 1.96, ds.GetBid(1.96))
+	min, _ := ds.BidMin()
+	assert.Equal(t, 130.4, min)
+	max, _ := ds.BidMax()
+	assert.Equal(t, 236.1, max)
 }
 
 func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
