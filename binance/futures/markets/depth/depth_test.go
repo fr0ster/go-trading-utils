@@ -152,7 +152,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
 }
 
-func TestGetNormalizedDepth(t *testing.T) {
+func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
 	asks, bids := getTestDepths()
 	ds := depth_types.New(3, "SUSHIUSDT")
 	ds.SetBids(bids)
