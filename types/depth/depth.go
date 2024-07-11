@@ -278,7 +278,7 @@ func (d *Depth) GetTargetAsksBidPrice(targetSummaBid, targetSummaAsk float64) (a
 	summaBid := 0.0
 	getIterator := func(target float64, summa, price *float64) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
-			if *summa < target/100 {
+			if *summa < target {
 				*summa += i.(*DepthItem).Quantity
 				*price = i.(*DepthItem).Price
 				return true
