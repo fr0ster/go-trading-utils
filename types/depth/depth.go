@@ -253,28 +253,22 @@ func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...De
 	}
 }
 
-func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
+func (d *Depth) GetFilteredByPercentAsks(f ...DepthFilter) (tree *btree.BTree, summa, max, min float64) {
 	tree = btree.New(d.degree)
-	summa = new(float64)
-	max = new(float64)
-	min = new(float64)
 	if len(f) > 0 {
-		d.AskAscend(d.getIterator(tree, summa, max, min, f[0]))
+		d.AskAscend(d.getIterator(tree, &summa, &max, &min, f[0]))
 	} else {
-		d.AskAscend(d.getIterator(tree, summa, max, min))
+		d.AskAscend(d.getIterator(tree, &summa, &max, &min))
 	}
 	return
 }
 
-func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, summa, max, min *float64) {
+func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, summa, max, min float64) {
 	tree = btree.New(d.degree)
-	summa = new(float64)
-	max = new(float64)
-	min = new(float64)
 	if len(f) > 0 {
-		d.BidDescend(d.getIterator(tree, summa, max, min, f[0]))
+		d.BidDescend(d.getIterator(tree, &summa, &max, &min, f[0]))
 	} else {
-		d.BidDescend(d.getIterator(tree, summa, max, min))
+		d.BidDescend(d.getIterator(tree, &summa, &max, &min))
 	}
 	return
 }
