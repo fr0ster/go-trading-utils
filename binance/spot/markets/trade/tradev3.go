@@ -8,14 +8,23 @@ import (
 )
 
 func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
-	a.Lock()         // Locking the trades
-	defer a.Unlock() // Unlocking the trades
 	for _, val := range trd {
-		tradeV3, err := trade_types.Binance2TradesV3(val)
-		if err != nil {
-			return err
-		}
-		a.Update(tradeV3)
+		a.Update(&trade_types.TradeV3{
+			ID:              val.ID,
+			Symbol:          val.Symbol,
+			OrderID:         val.OrderID,
+			OrderListId:     val.OrderListId,
+			Price:           val.Price,
+			Quantity:        val.Quantity,
+			QuoteQuantity:   val.QuoteQuantity,
+			Commission:      val.Commission,
+			CommissionAsset: val.CommissionAsset,
+			Time:            val.Time,
+			IsBuyer:         val.IsBuyer,
+			IsMaker:         val.IsMaker,
+			IsBestMatch:     val.IsBestMatch,
+			IsIsolated:      val.IsIsolated,
+		})
 	}
 	return nil
 }

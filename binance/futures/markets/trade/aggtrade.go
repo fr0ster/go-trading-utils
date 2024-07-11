@@ -8,8 +8,6 @@ import (
 )
 
 func AggTradeInit(at *trade_types.AggTrades, client *futures.Client, symbolname string, limit int) (err error) {
-	at.Lock()         // Locking the aggTrades
-	defer at.Unlock() // Unlocking the aggTrades
 	res, err :=
 		client.NewAggTradesService().
 			Symbol(string(symbolname)).

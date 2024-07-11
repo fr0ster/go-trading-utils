@@ -8,8 +8,6 @@ import (
 )
 
 func AggTradeInit(at *trade_types.AggTrades, client *binance.Client, symbolname string, limit int) (err error) {
-	at.Lock()         // Locking the aggTrades
-	defer at.Unlock() // Unlocking the aggTrades
 	res, err :=
 		client.NewAggTradesService().
 			Symbol(string(symbolname)).
@@ -18,12 +16,17 @@ func AggTradeInit(at *trade_types.AggTrades, client *binance.Client, symbolname 
 	if err != nil {
 		return err
 	}
-	for _, val := range res {
-		aggTrade, err := trade_types.Binance2AggTrades(val)
-		if err != nil {
-			return err
-		}
-		at.Update(aggTrade)
+	for _, trade := range res {
+		at.Update(&trade_types.AggTrade{
+			AggTradeID:       trade.AggTradeID,
+			Price:            trade.Price,
+			Quantity:         trade.Quantity,
+			FirstTradeID:     trade.FirstTradeID,
+			LastTradeID:      trade.LastTradeID,
+			Timestamp:        trade.Timestamp,
+			IsBuyerMaker:     trade.IsBuyerMaker,
+			IsBestPriceMatch: trade.IsBestPriceMatch,
+		})
 	}
 	return nil
 }

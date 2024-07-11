@@ -8,8 +8,6 @@ import (
 )
 
 func tradesInit(trd []*futures.Trade, a *trade_types.Trades) (err error) {
-	a.Lock()         // Locking the trades
-	defer a.Unlock() // Unlocking the trades
 	for _, val := range trd {
 		a.Update(&trade_types.Trade{
 			ID:           val.ID,

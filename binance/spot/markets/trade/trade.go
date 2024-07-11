@@ -8,14 +8,16 @@ import (
 )
 
 func tradesInit(trd []*binance.Trade, a *trade_types.Trades) (err error) {
-	a.Lock()         // Locking the trades
-	defer a.Unlock() // Unlocking the trades
 	for _, val := range trd {
-		trade, err := trade_types.Binance2Trades(val)
-		if err != nil {
-			return err
-		}
-		a.Update(trade)
+		a.Update(&trade_types.Trade{
+			ID:           val.ID,
+			Price:        val.Price,
+			Quantity:     val.Quantity,
+			Time:         val.Time,
+			IsBuyerMaker: val.IsBuyerMaker,
+			IsBestMatch:  val.IsBestMatch,
+			IsIsolated:   val.IsIsolated,
+		})
 	}
 	return nil
 }
