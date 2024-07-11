@@ -273,6 +273,25 @@ func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, s
 	return
 }
 
+func (d *Depth) GetTargetAsksBidPrice(target float64) (asksPrice, bidsPrice float64) {
+	summaAsk := 0.0
+	summaBid := 0.0
+	getIterator := func(target float64, summa, price *float64) func(i btree.Item) bool {
+		return func(i btree.Item) bool {
+			if *summa < target/100 {
+				*summa += i.(*DepthItem).Quantity
+				*price = i.(*DepthItem).Price
+				return true
+			} else {
+				return false
+			}
+		}
+	}
+	d.GetAsks().Ascend(getIterator(d.GetAsksSummaQuantity()*target, &summaAsk, &asksPrice))
+	d.GetBids().Descend(getIterator(d.GetBidsSummaQuantity()*target, &summaBid, &bidsPrice))
+	return
+}
+
 // Lock implements depth_interface.Depths.
 func (d *Depth) Lock() {
 	d.mutex.Lock()
