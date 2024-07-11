@@ -152,6 +152,18 @@ func (rb *RingBuffer) IsFlat() bool {
 	return math.Abs(angle) < rb.threshold
 }
 
+func (rb *RingBuffer) IsFull() bool {
+	return rb.isFull
+}
+
+func (rb *RingBuffer) GetThreshold() float64 {
+	return rb.threshold
+}
+
+func (rb *RingBuffer) SetThreshold(threshold float64) {
+	rb.threshold = threshold
+}
+
 // Функція для розрахунку коефіцієнтів прямої методом найменших квадратів
 func LeastSquares(x, y []float64) (a, b float64) {
 	var sumX, sumY, sumXY, sumXX float64
