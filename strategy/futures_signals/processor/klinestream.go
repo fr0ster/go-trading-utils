@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	ring_buffer "github.com/fr0ster/go-trading-utils/types/ring_buffer"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -102,7 +103,7 @@ func (pp *PairProcessor) GetKlines(interval KlineStreamInterval, limit int) ([]*
 
 func (pp *PairProcessor) GetKlineCallBack(
 	maxRing,
-	minRing *RingBuffer) futures.WsKlineHandler {
+	minRing *ring_buffer.RingBuffer) futures.WsKlineHandler {
 	return func(event *futures.WsKlineEvent) {
 		high := utils.ConvStrToFloat64(event.Kline.High)
 		low := utils.ConvStrToFloat64(event.Kline.Low)

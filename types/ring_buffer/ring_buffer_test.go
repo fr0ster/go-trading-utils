@@ -1,15 +1,15 @@
-package processor_test
+package ring_buffer_test
 
 import (
 	"testing"
 
-	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
+	ring_buffer "github.com/fr0ster/go-trading-utils/types/ring_buffer"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-func getTestData(klines []float64) (rb *processor.RingBuffer) {
-	rb = processor.NewRingBuffer(5, 5)
+func getTestData(klines []float64) (rb *ring_buffer.RingBuffer) {
+	rb = ring_buffer.NewRingBuffer(5, 5)
 	for _, kline := range klines {
 		rb.Add(kline)
 	}
@@ -30,7 +30,7 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 			t.Errorf("Expected element at index %d to be %v, got %v", i, expected, elements[i])
 		}
 	}
-	rb = processor.NewRingBuffer(5, 5)
+	rb = ring_buffer.NewRingBuffer(5, 5)
 	rb.Add(100)
 	rb.Add(100)
 	rb.Add(100)
@@ -59,19 +59,19 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 func TestKlineRingBuffer_FindBestFitLine(t *testing.T) {
 	expectedElements := []float64{100, 100, 100, 100, 100}
 	rb := getTestData(expectedElements)
-	a, b := processor.FindBestFitLine(rb.GetElements())
+	a, b := ring_buffer.FindBestFitLine(rb.GetElements())
 	assert.Equal(t, 0.0, a)
 	assert.Equal(t, 100.0, b)
 
 	expectedElements = []float64{100, 101, 102, 103, 104}
 	rb = getTestData(expectedElements)
-	a, b = processor.FindBestFitLine(rb.GetElements())
+	a, b = ring_buffer.FindBestFitLine(rb.GetElements())
 	assert.Equal(t, 1.0, a)
 	assert.Equal(t, 100.0, b)
 
 	expectedElements = []float64{57923.8, 57407.2, 57935.9, 57818.7, 57822.5, 57417.5, 57742.3, 57558.5, 57620, 57472.5}
 	rb = getTestData(expectedElements)
-	a, b = processor.FindBestFitLine(rb.GetElements())
+	a, b = ring_buffer.FindBestFitLine(rb.GetElements())
 	assert.Equal(t, -1.23, utils.RoundToDecimalPlace(a, 2))
 	assert.Equal(t, 57564.619999999995, b)
 }
@@ -79,22 +79,22 @@ func TestKlineRingBuffer_FindBestFitLine(t *testing.T) {
 func TestSlopeToAngle(t *testing.T) {
 	a := 1.5
 	expectedAngle := 56.31
-	angle := utils.RoundToDecimalPlace(processor.SlopeToAngle(a), 2)
+	angle := utils.RoundToDecimalPlace(ring_buffer.SlopeToAngle(a), 2)
 	assert.Equal(t, expectedAngle, angle)
 
 	a = 0
 	expectedAngle = 0
-	angle = utils.RoundToDecimalPlace(processor.SlopeToAngle(a), 2)
+	angle = utils.RoundToDecimalPlace(ring_buffer.SlopeToAngle(a), 2)
 	assert.Equal(t, expectedAngle, angle)
 
 	a = 10
 	expectedAngle = 84.29
-	angle = utils.RoundToDecimalPlace(processor.SlopeToAngle(a), 2)
+	angle = utils.RoundToDecimalPlace(ring_buffer.SlopeToAngle(a), 2)
 	assert.Equal(t, expectedAngle, angle)
 
 	a = -1.23
 	expectedAngle = -50.89
-	angle = utils.RoundToDecimalPlace(processor.SlopeToAngle(a), 2)
+	angle = utils.RoundToDecimalPlace(ring_buffer.SlopeToAngle(a), 2)
 	assert.Equal(t, expectedAngle, angle)
 }
 

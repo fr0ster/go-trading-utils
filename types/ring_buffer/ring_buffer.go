@@ -1,4 +1,4 @@
-package processor
+package ring_buffer
 
 import (
 	"math"
