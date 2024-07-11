@@ -9,9 +9,10 @@ import (
 type RingBuffer struct {
 	elements                 []float64
 	elementsPercentageChange []float64
-	first                    float64
-	index                    int
+	first                    int
+	last                     int
 	size                     int
+	summa                    float64
 	threshold                float64
 	isFull                   bool
 }
@@ -26,24 +27,26 @@ func NewRingBuffer(size int, threshold float64) *RingBuffer {
 }
 
 func (rb *RingBuffer) Add(element float64) {
-	rb.elements[rb.index] = element
-	if rb.index == 0 && !rb.isFull {
-		rb.first = element
+	// Додаємо елемент та оновлюємо індекс останнього елемента
+	rb.summa += element - rb.elements[rb.last]
+	rb.elements[rb.last] = element
+	rb.elementsPercentageChange[rb.last] = utils.RoundToDecimalPlace(element/rb.elements[rb.first]*100, 6)
+	rb.last = (rb.last + 1) % rb.size
+	// Якщо буфер заповнений, зсуваємо індекс першого елемента
+	if rb.isFull {
+		rb.first = (rb.last + 1) % rb.size
 	}
-	rb.elementsPercentageChange[rb.index] = utils.RoundToDecimalPlace(element/rb.first*100, 6)
-	rb.index++
-	if rb.index == rb.size {
-		rb.first = element
-		rb.index = 0
+	// Перевіряємо, чи буфер став заповненим
+	if rb.last == rb.size-1 {
 		rb.isFull = true
 	}
 }
 
 func (rb *RingBuffer) GetElements() []float64 {
 	if !rb.isFull {
-		return rb.elements[:rb.index]
+		return rb.elements[:rb.last]
 	}
-	return append(rb.elements[rb.index:], rb.elements[:rb.index]...)
+	return append(rb.elements[rb.last:], rb.elements[:rb.last]...)
 }
 
 func (rb *RingBuffer) SetElements(elements []float64) {
@@ -74,9 +77,9 @@ func (rb *RingBuffer) GetFirstNElements(n int) []float64 {
 
 func (rb *RingBuffer) GetElementsPercentageChange() []float64 {
 	if !rb.isFull {
-		return rb.elementsPercentageChange[:rb.index]
+		return rb.elementsPercentageChange[:rb.last]
 	}
-	return append(rb.elementsPercentageChange[rb.index:], rb.elementsPercentageChange[:rb.index]...)
+	return append(rb.elementsPercentageChange[rb.last:], rb.elementsPercentageChange[:rb.last]...)
 }
 
 func (rb *RingBuffer) GetLastNElementsPercentageChange(n int) []float64 {
@@ -103,7 +106,11 @@ func (rb *RingBuffer) Length() int {
 	if rb.isFull {
 		return rb.size
 	}
-	return rb.index
+	return rb.last
+}
+
+func (rb *RingBuffer) Summa() float64 {
+	return rb.summa
 }
 
 func (rb *RingBuffer) GetTrend() (a, b, angle float64) {

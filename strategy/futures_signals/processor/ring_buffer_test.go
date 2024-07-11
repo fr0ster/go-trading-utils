@@ -30,6 +30,12 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 			t.Errorf("Expected element at index %d to be %v, got %v", i, expected, elements[i])
 		}
 	}
+	rb = processor.NewRingBuffer(5, 5)
+	rb.Add(100)
+	rb.Add(100)
+	rb.Add(100)
+	rb.Add(100)
+	rb.Add(100)
 
 	rb.Add(110)
 	rb.Add(120)
@@ -47,6 +53,7 @@ func TestKlineRingBuffer_Add(t *testing.T) {
 			t.Errorf("Expected element at index %d to be %v, got %v", i, expected, elements[i])
 		}
 	}
+	assert.Equal(t, 700.0, rb.Summa())
 }
 
 func TestKlineRingBuffer_FindBestFitLine(t *testing.T) {
