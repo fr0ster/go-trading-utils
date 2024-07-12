@@ -118,6 +118,8 @@ func (d *Depth) GetTargetAsksBidPrice(targetSummaAsk, targetSummaBid float64) (a
 			}
 		}
 	}
+	asks = &DepthItem{}
+	bids = &DepthItem{}
 	d.GetAsks().Ascend(getIterator(targetSummaAsk, asks))
 	d.GetBids().Descend(getIterator(targetSummaBid, bids))
 	return
