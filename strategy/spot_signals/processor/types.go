@@ -5,22 +5,26 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
+
+	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 )
 
 type (
-	nextPriceFunc    func(float64, int) float64
-	nextQuantityFunc func(float64, int) float64
-	testFunc         func(float64, float64) bool
-	Functions        struct {
-		NextPriceUp      nextPriceFunc
-		NextPriceDown    nextPriceFunc
-		NextQuantityUp   nextQuantityFunc
-		NextQuantityDown nextQuantityFunc
-		TestUp           testFunc
-		TestDown         testFunc
-	}
+	// nextPriceFunc    func(float64, int) float64
+	// nextQuantityFunc func(float64, int) float64
+	// testFunc         func(float64, float64) bool
+	// Functions        struct {
+	// 	NextPriceUp      nextPriceFunc
+	// 	NextPriceDown    nextPriceFunc
+	// 	NextQuantityUp   nextQuantityFunc
+	// 	NextQuantityDown nextQuantityFunc
+	// 	TestUp           testFunc
+	// 	TestDown         testFunc
+	// }
 	PairProcessor struct {
 		client        *binance.Client
 		exchangeInfo  *exchange_types.ExchangeInfo
@@ -28,6 +32,13 @@ type (
 		baseSymbol    string
 		targetSymbol  string
 		notional      float64
+		StepSize      float64
+		maxQty        float64
+		minQty        float64
+		minSteps      int
+		tickSize      float64
+		maxPrice      float64
+		minPrice      float64
 		stepSizeDelta float64
 
 		updateTime            time.Duration
@@ -51,12 +62,15 @@ type (
 		deltaPrice    float64
 		deltaQuantity float64
 
-		testUp           testFunc
-		testDown         testFunc
-		NextPriceUp      nextPriceFunc
-		NextPriceDown    nextPriceFunc
-		NextQuantityUp   nextQuantityFunc
-		NextQuantityDown nextQuantityFunc
+		progression             pairs_types.ProgressionType
+		GetDelta                progressions.DeltaType
+		NthTerm                 progressions.NthTermType
+		Sum                     progressions.SumType
+		FindNthTerm             progressions.FindNthTermType
+		FindLengthOfProgression progressions.FindLengthOfProgressionType
+		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
+
+		depth *depth_types.Depth
 	}
 )
 

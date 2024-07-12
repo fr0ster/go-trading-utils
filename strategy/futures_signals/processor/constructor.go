@@ -83,7 +83,7 @@ func NewPairProcessor(
 				stop,
 				pp.depth.GetLimitStream(),
 				pp.depth.GetRateStream(),
-				pp.GetDepthEventCallBack(pp.depth.GetLimitDepth(), pp.depth))
+				pp.GetDepthEventCallBack(pp.depth))
 		}
 	}
 

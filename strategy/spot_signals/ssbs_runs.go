@@ -146,24 +146,24 @@ func openPosition(
 			pairProcessor,
 			binance.SideTypeSell,
 			quantity,
-			pairProcessor.NextPriceUp(price, 0))
+			pairProcessor.NextPriceUp(price))
 		if err != nil {
 			printError()
 			return
 		}
 		logrus.Debugf("Spot %s: Set Sell order on price %v with quantity %v",
-			pairProcessor.GetPair(), pairProcessor.NextPriceUp(price, 0), quantity)
+			pairProcessor.GetPair(), pairProcessor.NextPriceUp(price), quantity)
 	} else {
 		logrus.Debugf("Spot %s: Target balance %v >= quantity %v",
 			pairProcessor.GetPair(), targetBalance, quantity)
 	}
-	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, pairProcessor.NextPriceDown(price, 0))
+	buyOrder, err = createOrderInGrid(pairProcessor, binance.SideTypeBuy, quantity, pairProcessor.NextPriceDown(price))
 	if err != nil {
 		printError()
 		return
 	}
 	logrus.Debugf("Spot %s: Set Buy order on price %v with quantity %v",
-		pairProcessor.GetPair(), pairProcessor.NextPriceDown(price, 0), quantity)
+		pairProcessor.GetPair(), pairProcessor.NextPriceDown(price), quantity)
 	return
 }
 
@@ -233,6 +233,7 @@ func RunSpotGridTrading(
 	)
 	// Створюємо обробник пари
 	pairProcessor, err := processor.NewPairProcessor(
+		stopEvent,
 		client,
 		symbol,
 		limitOnPosition,
@@ -241,8 +242,7 @@ func RunSpotGridTrading(
 		LowBound,
 		deltaPrice,
 		deltaQuantity,
-		callbackRate,
-		stopEvent)
+		callbackRate)
 	if err != nil {
 		printError()
 		return
