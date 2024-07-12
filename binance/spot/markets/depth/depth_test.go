@@ -119,6 +119,36 @@ func TestSetBid(t *testing.T) {
 	}
 }
 
+func TestRestrictAskAndBidDown(t *testing.T) {
+	asks, bids := getTestDepths()
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
+	ds.SetAsks(asks)
+	ds.SetBids(bids)
+	ds.RestrictAskDown(1.957)
+	ds.RestrictBidDown(1.949)
+	if ds.GetAsk(1.951) != nil {
+		t.Errorf("Failed to restrict ask")
+	}
+	if ds.GetBid(1.93) != nil {
+		t.Errorf("Failed to restrict bid")
+	}
+}
+
+func TestRestrictAskAndBidUp(t *testing.T) {
+	asks, bids := getTestDepths()
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
+	ds.SetAsks(asks)
+	ds.SetBids(bids)
+	ds.RestrictAskUp(1.952)
+	ds.RestrictBidUp(1.93)
+	if ds.GetAsk(1.953) != nil {
+		t.Errorf("Failed to restrict ask")
+	}
+	if ds.GetBid(1.931) != nil {
+		t.Errorf("Failed to restrict bid")
+	}
+}
+
 func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 	ds.GetAsks().Ascend(func(i btree.Item) bool {
 		summaAsks += i.(*depth_types.DepthItem).Quantity

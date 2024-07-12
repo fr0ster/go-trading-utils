@@ -20,8 +20,10 @@ type (
 		ClearBids()
 		DeleteAsk(price float64)
 		DeleteBid(price float64)
-		RestrictAsk(price float64)
-		RestrictBid(price float64)
+		RestrictAskUp(price float64)
+		RestrictBidUp(price float64)
+		RestrictAskDown(price float64)
+		RestrictBidDown(price float64)
 		UpdateAsk(price float64, quantity float64) bool
 		UpdateBid(price float64, quantity float64) bool
 	}
