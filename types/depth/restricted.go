@@ -128,7 +128,7 @@ func (d *Depth) GetTargetAsksBidPrice(targetSummaAsk, targetSummaBid float64) (a
 
 func (d *Depth) GetAsksSumma(price ...float64) (summa float64) {
 	d.GetAsks().Ascend(func(i btree.Item) bool {
-		if len(price) > 0 && i.(*DepthItem).Price > price[0] {
+		if len(price) > 0 && i.(*DepthItem).Price <= price[0] {
 			summa += i.(*DepthItem).Quantity
 			return true
 		} else {
@@ -140,7 +140,7 @@ func (d *Depth) GetAsksSumma(price ...float64) (summa float64) {
 
 func (d *Depth) GetBidsSumma(price ...float64) (summa float64) {
 	d.GetBids().Ascend(func(i btree.Item) bool {
-		if len(price) > 0 && i.(*DepthItem).Price < price[0] {
+		if len(price) > 0 && i.(*DepthItem).Price <= price[0] {
 			summa += i.(*DepthItem).Quantity
 			return true
 		} else {

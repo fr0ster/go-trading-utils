@@ -69,3 +69,15 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 	assert.Equal(t, 0.0, bids.Price)
 	assert.Equal(t, 0.0, summaBids)
 }
+
+func TestGetAsksAndBidSumma(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
+	assert.Equal(t, 60.0, d.GetAsksSummaQuantity())
+	assert.Equal(t, 150.0, d.GetBidsSummaQuantity())
+	summaAsks := d.GetAsksSumma(200.0)
+	assert.Equal(t, 30.0, summaAsks)
+	summaBids := d.GetBidsSumma(450.0)
+	assert.Equal(t, 40.0, summaBids)
+}
