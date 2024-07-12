@@ -149,3 +149,35 @@ func (d *Depth) GetBidsSumma(price ...float64) (summa float64) {
 	})
 	return
 }
+
+func (d *Depth) GetAsksMaxUpToPrice(price ...float64) (limit *DepthItem) {
+	limit = &DepthItem{}
+	d.GetAsks().Ascend(func(i btree.Item) bool {
+		if len(price) > 0 && i.(*DepthItem).Price <= price[0] {
+			if limit.Quantity < i.(*DepthItem).Quantity {
+				limit.Quantity = i.(*DepthItem).Quantity
+				limit.Price = i.(*DepthItem).Price
+			}
+			return true
+		} else {
+			return false
+		}
+	})
+	return
+}
+
+func (d *Depth) GetBidsMaxDownToPrice(price ...float64) (limit *DepthItem) {
+	limit = &DepthItem{}
+	d.GetBids().Descend(func(i btree.Item) bool {
+		if len(price) > 0 && i.(*DepthItem).Price >= price[0] {
+			if limit.Quantity < i.(*DepthItem).Quantity {
+				limit.Quantity = i.(*DepthItem).Quantity
+				limit.Price = i.(*DepthItem).Price
+			}
+			return true
+		} else {
+			return false
+		}
+	})
+	return
+}

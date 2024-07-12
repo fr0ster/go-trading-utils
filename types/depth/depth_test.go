@@ -81,3 +81,23 @@ func TestGetAsksAndBidSumma(t *testing.T) {
 	summaBids := d.GetBidsSumma(250.0)
 	assert.Equal(t, 10.0, summaBids)
 }
+
+func TestGetAsksMaxUpToPrice(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetAsksMaxUpToPrice method works correctly
+	limit := d.GetAsksMaxUpToPrice(450.0)
+	assert.NotNil(t, limit)
+	assert.Equal(t, 400.0, limit.Price)
+	assert.Equal(t, 10.0, limit.Quantity)
+}
+
+func TestGetBidsMaxUpToPrice(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetAsksMaxUpToPrice method works correctly when no price is provided
+	limit := d.GetBidsMaxDownToPrice(250)
+	assert.NotNil(t, limit)
+	assert.Equal(t, 300.0, limit.Price)
+	assert.Equal(t, 10.0, limit.Quantity)
+}
