@@ -28,7 +28,6 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
-	minSteps int,
 	callbackRate float64,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -52,8 +51,6 @@ func NewPairProcessor(
 		degree:       3,
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
-
-		minSteps: minSteps,
 
 		depth: nil,
 	}

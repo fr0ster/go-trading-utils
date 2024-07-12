@@ -24,7 +24,6 @@ type (
 		StepSize     float64
 		maxQty       float64
 		minQty       float64
-		minSteps     int
 		tickSize     float64
 		maxPrice     float64
 		minPrice     float64
