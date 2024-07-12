@@ -49,12 +49,12 @@ func TestSetAndGetBid(t *testing.T) {
 // Add more tests here based on your requirements
 
 func initDepths(depth *depth_types.Depth) {
-	depth.SetAsk(100.0, 10.0)
-	depth.SetAsk(200.0, 20.0)
-	depth.SetAsk(300.0, 30.0)
-	depth.SetBid(400.0, 40.0)
-	depth.SetBid(500.0, 50.0)
-	depth.SetBid(600.0, 60.0)
+	depth.SetAsk(600.0, 30.0)
+	depth.SetAsk(500.0, 20.0)
+	depth.SetAsk(400.0, 10.0)
+	depth.SetBid(300.0, 10.0)
+	depth.SetBid(200.0, 20.0)
+	depth.SetBid(100.0, 30.0)
 }
 
 func TestGetTargetAsksBidPrice(t *testing.T) {
@@ -64,10 +64,10 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 	asks, bids, summaAsks, summaBids := d.GetTargetAsksBidPrice(d.GetAsksSummaQuantity()*0.2, d.GetBidsSummaQuantity()*0.2)
 	assert.NotNil(t, asks)
 	assert.NotNil(t, bids)
-	assert.Equal(t, 100.0, asks.Price)
+	assert.Equal(t, 400.0, asks.Price)
 	assert.Equal(t, 10.0, summaAsks)
-	assert.Equal(t, 0.0, bids.Price)
-	assert.Equal(t, 0.0, summaBids)
+	assert.Equal(t, 300.0, bids.Price)
+	assert.Equal(t, 10.0, summaBids)
 }
 
 func TestGetAsksAndBidSumma(t *testing.T) {
@@ -75,9 +75,9 @@ func TestGetAsksAndBidSumma(t *testing.T) {
 	initDepths(d)
 	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
 	assert.Equal(t, 60.0, d.GetAsksSummaQuantity())
-	assert.Equal(t, 150.0, d.GetBidsSummaQuantity())
-	summaAsks := d.GetAsksSumma(200.0)
-	assert.Equal(t, 30.0, summaAsks)
-	summaBids := d.GetBidsSumma(450.0)
-	assert.Equal(t, 40.0, summaBids)
+	assert.Equal(t, 60.0, d.GetBidsSummaQuantity())
+	summaAsks := d.GetAsksSumma(450.0)
+	assert.Equal(t, 10.0, summaAsks)
+	summaBids := d.GetBidsSumma(250.0)
+	assert.Equal(t, 10.0, summaBids)
 }
