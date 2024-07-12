@@ -7,7 +7,6 @@ import (
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
@@ -49,7 +48,6 @@ type (
 		deltaPrice    float64
 		deltaQuantity float64
 
-		progression             pairs_types.ProgressionType
 		GetDelta                progressions.DeltaType
 		NthTerm                 progressions.NthTermType
 		Sum                     progressions.SumType
