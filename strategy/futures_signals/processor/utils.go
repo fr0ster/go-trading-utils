@@ -42,10 +42,12 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyDown bool,
 	err error) {
 	if pp.depth != nil {
-		priceUp, priceDown = pp.depth.GetTargetAsksBidPrice(
+		upDepthItem, DownDepthItem := pp.depth.GetTargetAsksBidPrice(
 			pp.depth.GetAsksSummaQuantity()*0.1,
 			pp.depth.GetBidsSummaQuantity()*0.1,
 		)
+		priceUp = upDepthItem.Price
+		priceDown = DownDepthItem.Price
 	} else {
 		priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 		priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
