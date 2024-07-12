@@ -54,7 +54,7 @@ type (
 		limitStream       DepthStreamLevel
 		rateStream        DepthStreamRate
 	}
-	DepthFilter func(float64) bool
+	DepthFilter func(*DepthItem) bool
 )
 
 func (i *DepthItem) Less(than btree.Item) bool {

@@ -56,13 +56,12 @@ func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...De
 	return func(i btree.Item) bool {
 		var filter DepthFilter
 		pp := i.(*DepthItem)
-		quantity := (pp.Quantity / d.asksSummaQuantity) * 100
 		if len(f) > 0 {
 			filter = f[0]
 		} else {
-			filter = func(float64) bool { return true }
+			filter = func(*DepthItem) bool { return true }
 		}
-		if filter(quantity) {
+		if filter(pp) {
 			tree.ReplaceOrInsert(&DepthItem{
 				Price:    pp.Price,
 				Quantity: pp.Quantity})
@@ -75,7 +74,7 @@ func (d *Depth) getIterator(tree *btree.BTree, summa, max, min *float64, f ...De
 				}
 			}
 			if min != nil {
-				if *min > pp.Quantity {
+				if *min > pp.Quantity || *min == 0 {
 					*min = pp.Quantity
 				}
 			}
@@ -177,6 +176,56 @@ func (d *Depth) GetBidsMaxDownToPrice(price ...float64) (limit *DepthItem) {
 			return true
 		} else {
 			return false
+		}
+	})
+	return
+}
+
+func (d *Depth) GetAsksMaxUpToSumma(target float64) (limit *DepthItem) {
+	limit = &DepthItem{}
+	summa := 0.0
+	d.GetAsks().Ascend(func(i btree.Item) bool {
+		summa += i.(*DepthItem).Quantity
+		if summa <= target {
+			if limit.Quantity < i.(*DepthItem).Quantity {
+				limit.Quantity = i.(*DepthItem).Quantity
+				limit.Price = i.(*DepthItem).Price
+			}
+			return true
+		} else {
+			return false
+		}
+	})
+	return
+}
+
+func (d *Depth) GetBidsMaxDownToSumma(target float64) (limit *DepthItem) {
+	limit = &DepthItem{}
+	summa := 0.0
+	d.GetBids().Descend(func(i btree.Item) bool {
+		summa += i.(*DepthItem).Quantity
+		if summa <= target {
+			if limit.Quantity < i.(*DepthItem).Quantity {
+				limit.Quantity = i.(*DepthItem).Quantity
+				limit.Price = i.(*DepthItem).Price
+			}
+			return true
+		} else {
+			return false
+		}
+	})
+	return
+}
+
+func (d *Depth) GetAsksMaxUpToLimit(f DepthFilter) (limit *DepthItem) {
+	limit = &DepthItem{}
+	d.GetAsks().Ascend(func(i btree.Item) bool {
+		if f(i.(*DepthItem)) {
+			limit.Quantity = i.(*DepthItem).Quantity
+			limit.Price = i.(*DepthItem).Price
+			return false
+		} else {
+			return true
 		}
 	})
 	return

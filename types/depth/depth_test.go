@@ -101,3 +101,69 @@ func TestGetBidsMaxUpToPrice(t *testing.T) {
 	assert.Equal(t, 300.0, limit.Price)
 	assert.Equal(t, 10.0, limit.Quantity)
 }
+
+func TestGetAsksMaxUpToSumma(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetAsksMaxUpToSumma method works correctly
+	limit := d.GetAsksMaxUpToSumma(35.0)
+	assert.NotNil(t, limit)
+	assert.Equal(t, 500.0, limit.Price)
+	assert.Equal(t, 20.0, limit.Quantity)
+}
+
+func TestGetBidsMaxDownToSumma(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetBidsMaxDownToSumma method works correctly
+	limit := d.GetBidsMaxDownToSumma(35.0)
+	assert.NotNil(t, limit)
+	assert.Equal(t, 200.0, limit.Price)
+	assert.Equal(t, 20.0, limit.Quantity)
+}
+
+func TestGetFilteredByPercentAsks(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetFilteredByPercentAsks method works correctly
+	filtered, summa, max, min := d.GetFilteredByPercentAsks(func(i *depth_types.DepthItem) bool {
+		return i.Quantity*100/d.GetAsksSummaQuantity() > 30
+	})
+	assert.NotNil(t, filtered)
+	assert.Equal(t, 2, filtered.Len())
+	assert.Equal(t, 50.0, summa)
+	assert.Equal(t, 30.0, max)
+	assert.Equal(t, 20.0, min)
+
+	filtered, summa, max, min = d.GetFilteredByPercentAsks(func(i *depth_types.DepthItem) bool {
+		return i.Quantity*100/d.GetAsksSummaQuantity() < 30
+	})
+	assert.NotNil(t, filtered)
+	assert.Equal(t, 1, filtered.Len())
+	assert.Equal(t, 10.0, summa)
+	assert.Equal(t, 10.0, max)
+	assert.Equal(t, 10.0, min)
+}
+
+func TestGetFilteredByPercentBids(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetFilteredByPercentBids method works correctly
+	filtered, summa, max, min := d.GetFilteredByPercentBids(func(i *depth_types.DepthItem) bool {
+		return i.Quantity*100/d.GetBidsSummaQuantity() > 30
+	})
+	assert.NotNil(t, filtered)
+	assert.Equal(t, 2, filtered.Len())
+	assert.Equal(t, 50.0, summa)
+	assert.Equal(t, 30.0, max)
+	assert.Equal(t, 20.0, min)
+
+	filtered, summa, max, min = d.GetFilteredByPercentBids(func(i *depth_types.DepthItem) bool {
+		return i.Quantity*100/d.GetBidsSummaQuantity() < 30
+	})
+	assert.NotNil(t, filtered)
+	assert.Equal(t, 1, filtered.Len())
+	assert.Equal(t, 10.0, summa)
+	assert.Equal(t, 10.0, max)
+	assert.Equal(t, 10.0, min)
+}
