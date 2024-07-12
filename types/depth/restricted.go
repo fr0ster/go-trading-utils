@@ -104,7 +104,7 @@ func (d *Depth) GetFilteredByPercentBids(f ...DepthFilter) (tree *btree.BTree, s
 	return
 }
 
-func (d *Depth) GetTargetAsksBidPrice(targetSummaBid, targetSummaAsk float64) (asksPrice, bidsPrice float64) {
+func (d *Depth) GetTargetAsksBidPrice(targetSummaAsk, targetSummaBid float64) (asksPrice, bidsPrice float64) {
 	summaAsk := 0.0
 	summaBid := 0.0
 	getIterator := func(target float64, summa, price *float64) func(i btree.Item) bool {
