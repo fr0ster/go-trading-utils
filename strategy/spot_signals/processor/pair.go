@@ -148,20 +148,6 @@ func (pp *PairProcessor) GetTickSizeExp() int {
 	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
 }
 
-func (pp *PairProcessor) roundPrice(price float64) float64 {
-	return utils.RoundToDecimalPlace(price, pp.GetTickSizeExp())
+func (pp *PairProcessor) GetNotional() float64 {
+	return pp.notional
 }
-
-func (pp *PairProcessor) roundQuantity(quantity float64) float64 {
-	return utils.RoundToDecimalPlace(quantity, pp.GetStepSizeExp())
-}
-
-// func (pp *PairProcessor) Debug(fl, id string) {
-// 	if logrus.GetLevel() == logrus.DebugLevel {
-// 		orders, _ := pp.GetOpenOrders()
-// 		logrus.Debugf("%s %s %s:", fl, id, pp.symbol.Symbol)
-// 		for _, order := range orders {
-// 			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
-// 		}
-// 	}
-// }

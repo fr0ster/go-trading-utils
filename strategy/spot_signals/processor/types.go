@@ -14,32 +14,20 @@ import (
 )
 
 type (
-	// nextPriceFunc    func(float64, int) float64
-	// nextQuantityFunc func(float64, int) float64
-	// testFunc         func(float64, float64) bool
-	// Functions        struct {
-	// 	NextPriceUp      nextPriceFunc
-	// 	NextPriceDown    nextPriceFunc
-	// 	NextQuantityUp   nextQuantityFunc
-	// 	NextQuantityDown nextQuantityFunc
-	// 	TestUp           testFunc
-	// 	TestDown         testFunc
-	// }
 	PairProcessor struct {
-		client        *binance.Client
-		exchangeInfo  *exchange_types.ExchangeInfo
-		symbol        *binance.Symbol
-		baseSymbol    string
-		targetSymbol  string
-		notional      float64
-		StepSize      float64
-		maxQty        float64
-		minQty        float64
-		minSteps      int
-		tickSize      float64
-		maxPrice      float64
-		minPrice      float64
-		stepSizeDelta float64
+		client       *binance.Client
+		exchangeInfo *exchange_types.ExchangeInfo
+		symbol       *binance.Symbol
+		baseSymbol   string
+		targetSymbol string
+		notional     float64
+		StepSize     float64
+		maxQty       float64
+		minQty       float64
+		minSteps     int
+		tickSize     float64
+		maxPrice     float64
+		minPrice     float64
 
 		updateTime            time.Duration
 		minuteOrderLimit      *exchange_types.RateLimits

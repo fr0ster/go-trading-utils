@@ -28,6 +28,7 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
+	minSteps int,
 	callbackRate float64,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -51,6 +52,8 @@ func NewPairProcessor(
 		degree:       3,
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
+
+		minSteps: minSteps,
 
 		depth: nil,
 	}
@@ -81,7 +84,12 @@ func NewPairProcessor(
 	pp.baseSymbol = pp.symbol.QuoteAsset
 	pp.targetSymbol = pp.symbol.BaseAsset
 	pp.notional = utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MinNotional)
-	pp.stepSizeDelta = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+	pp.StepSize = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
+	pp.maxQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity)
+	pp.minQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity)
+	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
+	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
+	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
 	// Перевіряємо ліміти на ордери та запити
 	pp.updateTime,

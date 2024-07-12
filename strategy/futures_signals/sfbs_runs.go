@@ -152,6 +152,7 @@ func Run(
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = grid.RunFuturesGridTradingV4(
 				client,                       // client
+				degree,                       // degree
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
 				pair.GetLimitOnTransaction(), // limitOnTransaction
@@ -174,6 +175,7 @@ func Run(
 			// Ціну визначаємо або дінамічно і кожний новий ордер який збільшує позицію
 			err = grid.RunFuturesGridTradingV5(
 				client,                       // client
+				degree,                       // degree
 				pair.GetPair(),               // pair
 				pair.GetLimitOnPosition(),    // limitOnPosition
 				pair.GetLimitOnTransaction(), // limitOnTransaction

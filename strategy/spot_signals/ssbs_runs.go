@@ -20,14 +20,6 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-const (
-	deltaUp    = 0.0005
-	deltaDown  = 0.0005
-	degree     = 3
-	limit      = 1000
-	reloadTime = 500 * time.Millisecond
-)
-
 func printError() {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		_, file, line, ok := runtime.Caller(1)
@@ -40,42 +32,36 @@ func printError() {
 }
 
 func RunSpotHolding(
-	config *config_types.ConfigFile,
 	client *binance.Client,
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
 }
 
 func RunSpotScalping(
-	config *config_types.ConfigFile,
 	client *binance.Client,
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
 }
 
 func RunSpotTrading(
-	config *config_types.ConfigFile,
 	client *binance.Client,
 	degree int,
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
 	updateTime time.Duration,
-	debug bool,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
@@ -214,7 +200,6 @@ func getCallBack_v1(
 }
 
 func RunSpotGridTrading(
-	config *config_types.ConfigFile,
 	client *binance.Client,
 	symbol string,
 	limitOnPosition float64,
@@ -223,7 +208,7 @@ func RunSpotGridTrading(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
-	leverage int,
+	minSteps int,
 	callbackRate float64,
 	stopEvent chan struct{},
 	wg *sync.WaitGroup) (err error) {
@@ -242,6 +227,7 @@ func RunSpotGridTrading(
 		LowBound,
 		deltaPrice,
 		deltaQuantity,
+		minSteps,
 		callbackRate)
 	if err != nil {
 		printError()
@@ -302,32 +288,56 @@ func Run(
 
 			// Відпрацьовуємо  Holding стратегію
 		} else if pair.GetStrategy() == pairs_types.HoldingStrategyType {
-			logrus.Error(RunSpotHolding(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
+			logrus.Error(
+				RunSpotHolding(
+					client,
+					degree,
+					limit,
+					pair,
+					stopEvent,
+					updateTime,
+					wg))
 
 			// Відпрацьовуємо Scalping стратегію
 		} else if pair.GetStrategy() == pairs_types.ScalpingStrategyType {
-			logrus.Error(RunSpotScalping(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
+			logrus.Error(
+				RunSpotScalping(
+					client,
+					degree,
+					limit,
+					pair,
+					stopEvent,
+					updateTime,
+					wg))
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
-			logrus.Error(RunSpotTrading(config, client, degree, limit, pair, stopEvent, updateTime, debug, wg))
+			logrus.Error(
+				RunSpotTrading(
+					client,
+					degree,
+					limit,
+					pair,
+					stopEvent,
+					updateTime,
+					wg))
 
 			// Відпрацьовуємо Grid стратегію
 		} else if pair.GetStrategy() == pairs_types.GridStrategyType {
-			logrus.Error(RunSpotGridTrading(
-				config,
-				client,
-				pair.GetPair(),
-				pair.GetLimitOnPosition(),
-				pair.GetLimitOnTransaction(),
-				pair.GetUpBound(),
-				pair.GetLowBound(),
-				pair.GetDeltaPrice(),
-				pair.GetDeltaQuantity(),
-				pair.GetLeverage(),
-				pair.GetCallbackRate(),
-				stopEvent,
-				wg))
+			logrus.Error(
+				RunSpotGridTrading(
+					client,
+					pair.GetPair(),
+					pair.GetLimitOnPosition(),
+					pair.GetLimitOnTransaction(),
+					pair.GetUpBound(),
+					pair.GetLowBound(),
+					pair.GetDeltaPrice(),
+					pair.GetDeltaQuantity(),
+					pair.GetMinSteps(), // minSteps
+					pair.GetCallbackRate(),
+					stopEvent,
+					wg))
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {

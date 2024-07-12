@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -28,6 +29,45 @@ func (pp *PairProcessor) Debug(fl, id string) {
 			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}
 	}
+}
+
+func (pp *PairProcessor) GetPrices(
+	price float64,
+	isDynamic bool) (
+	priceUp,
+	quantityUp,
+	priceDown,
+	quantityDown float64,
+	reduceOnlyUp bool,
+	reduceOnlyDown bool,
+	err error) {
+	if pp.depth != nil {
+		priceUp, priceDown = pp.depth.GetTargetAsksBidPrice(
+			pp.depth.GetAsksSummaQuantity()*0.1,
+			pp.depth.GetBidsSummaQuantity()*0.1,
+		)
+	} else {
+		priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
+		priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+	}
+	reduceOnlyUp = false
+	reduceOnlyDown = false
+
+	quantityUp = pp.RoundQuantity(pp.GetLimitOnTransaction() / priceUp)
+	quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() / priceDown)
+
+	if quantityUp == 0 && quantityDown == 0 {
+		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)
+		return
+	}
+	if quantityUp*priceUp < pp.GetNotional() {
+		err = fmt.Errorf("calculated quantity up %v * price up %v < notional %v", quantityUp, priceUp, pp.GetNotional())
+		return
+	} else if quantityDown*priceDown < pp.GetNotional() {
+		err = fmt.Errorf("calculated quantity down %v * price down %v < notional %v", quantityDown, priceDown, pp.GetNotional())
+		return
+	}
+	return
 }
 
 func LimitRead(degree int, symbols []string, client *binance.Client) (

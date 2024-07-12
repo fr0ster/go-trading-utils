@@ -10,6 +10,9 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
+
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -282,6 +285,7 @@ func initPosition_v4(
 
 func RunFuturesGridTradingV4(
 	client *futures.Client,
+	degree int,
 	pair string,
 	limitOnPosition float64,
 	limitOnTransaction float64,
@@ -306,6 +310,9 @@ func RunFuturesGridTradingV4(
 		timeOut_v4 = timeout[0]
 	}
 
+	depth := depth_types.New(degree, pair, depth_types.DepthAPILimit20)
+	futures_depth.Init(depth, client)
+
 	// Створюємо обробник пари
 	pairProcessor, err = processor.NewPairProcessor(
 		quit,
@@ -321,7 +328,8 @@ func RunFuturesGridTradingV4(
 		leverage,
 		minSteps,
 		callbackRate,
-		progression)
+		progression,
+		depth)
 	if err != nil {
 		printError()
 		return
