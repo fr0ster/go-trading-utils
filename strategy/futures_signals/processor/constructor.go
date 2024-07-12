@@ -13,12 +13,14 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 func NewPairProcessor(
+	stop chan struct{},
 	client *futures.Client,
 	symbol string,
 	limitOnPosition float64,
@@ -32,7 +34,7 @@ func NewPairProcessor(
 	minSteps int,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
-	stop chan struct{}) (pp *PairProcessor, err error) {
+	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
@@ -70,6 +72,19 @@ func NewPairProcessor(
 		deltaQuantity: deltaQuantity,
 
 		progression: progression,
+
+		depth: nil,
+	}
+
+	if len(depth) > 0 {
+		pp.depth = depth[0]
+		if pp.depth != nil {
+			pp.DepthEventStart(
+				stop,
+				pp.depth.GetLimitStream(),
+				pp.depth.GetRateStream(),
+				pp.GetDepthEventCallBack(pp.depth.GetLimitDepth(), pp.depth))
+		}
 	}
 
 	// Ініціалізуємо інформацію про пару

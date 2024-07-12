@@ -10,31 +10,9 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-const (
-	DepthStreamLevel5  DepthStreamLevel = 5
-	DepthStreamLevel10 DepthStreamLevel = 10
-	DepthStreamLevel20 DepthStreamLevel = 20
-	DepthAPILimit5     DepthAPILimit    = 5
-	DepthAPILimit10    DepthAPILimit    = 10
-	DepthAPILimit20    DepthAPILimit    = 20
-	DepthAPILimit50    DepthAPILimit    = 50
-	DepthAPILimit100   DepthAPILimit    = 100
-	DepthAPILimit500   DepthAPILimit    = 500
-	DepthAPILimit1000  DepthAPILimit    = 1000
-	DepthStreamRate100 DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
-	DepthStreamRate250 DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
-	DepthStreamRate500 DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
-)
-
-type (
-	DepthStreamLevel int
-	DepthAPILimit    int
-	DepthStreamRate  time.Duration
-)
-
 func (pp *PairProcessor) startDepthStream(
-	levels DepthStreamLevel,
-	rate DepthStreamRate,
+	levels depth_types.DepthStreamLevel,
+	rate depth_types.DepthStreamRate,
 	handler futures.WsDepthHandler,
 	errHandler futures.ErrHandler) (
 	doneC,
@@ -47,8 +25,8 @@ func (pp *PairProcessor) startDepthStream(
 
 func (pp *PairProcessor) DepthEventStart(
 	stop chan struct{},
-	levels DepthStreamLevel,
-	rate DepthStreamRate,
+	levels depth_types.DepthStreamLevel,
+	rate depth_types.DepthStreamRate,
 	callBack futures.WsDepthHandler) (
 	resetEvent chan error,
 	err error) {
@@ -100,11 +78,8 @@ func (pp *PairProcessor) DepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetDepthEventCallBack(
-	depthN int,
-	depth *depth_types.Depth,
-	summa ...*float64) futures.WsDepthHandler {
-	futures_depth.Init(depth, pp.client, depthN)
+func (pp *PairProcessor) GetDepthEventCallBack(depthN depth_types.DepthAPILimit, depth *depth_types.Depth) futures.WsDepthHandler {
+	futures_depth.Init(depth, pp.client)
 	return func(event *futures.WsDepthEvent) {
 		depth.Lock()         // Locking the depths
 		defer depth.Unlock() // Unlocking the depths
@@ -112,7 +87,7 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 			return
 		}
 		if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
-			futures_depth.Init(depth, pp.client, depthN)
+			futures_depth.Init(depth, pp.client)
 		} else if event.PrevLastUpdateID == int64(depth.LastUpdateID) {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()

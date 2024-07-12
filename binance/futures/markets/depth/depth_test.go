@@ -50,7 +50,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 func TestGetDepthNew(t *testing.T) {
 	// Add assertions to check the correctness of the returned map
 	// For example, check if the map is not empty
-	testDepthTree := depth_types.New(3, "SUSHIUSDT")
+	testDepthTree := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	// Add additional assertions if needed
 	assert.NotEmpty(t, testDepthTree)
 }
@@ -62,14 +62,14 @@ func TestInitDepthTree(t *testing.T) {
 	futures := futures.NewClient(api_key, secret_key)
 
 	// Add more test cases here
-	testDepthTree := depth_types.New(3, "SUSHIUSDT")
-	err := futures_depth.Init(testDepthTree, futures, 10)
+	testDepthTree := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
+	err := futures_depth.Init(testDepthTree, futures)
 	assert.NoError(t, err)
 }
 
 func TestGetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ask := ds.GetAsk(1.951)
 	if ask == nil {
@@ -83,7 +83,7 @@ func TestGetAsk(t *testing.T) {
 
 func TestGetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	bid := ds.GetBid(1.93)
 	if bid == nil {
@@ -93,7 +93,7 @@ func TestGetBid(t *testing.T) {
 
 func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ask := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
@@ -106,7 +106,7 @@ func TestSetAsk(t *testing.T) {
 
 func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	bid := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
@@ -131,7 +131,7 @@ func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 
 func TestUpdateAskAndBid(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 	ask := ds.GetAsk(1.951)
@@ -162,7 +162,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 
 func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	ds.SetAsks(asks)
 	normalizedAsks, _, _, _ := ds.GetFilteredByPercentAsks()
@@ -193,7 +193,7 @@ func TestDepthInterface(t *testing.T) {
 		assert.Equal(t, 300.0, ask.(*depth_types.DepthItem).Quantity)
 	}
 	_, bids := getTestDepths()
-	ds := depth_types.New(3, "SUSHIUSDT")
+	ds := depth_types.New(3, "SUSHIUSDT", depth_types.DepthAPILimit10, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	test(ds)
 }

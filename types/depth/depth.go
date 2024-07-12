@@ -3,8 +3,31 @@ package depth
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/google/btree"
+)
+
+const (
+	DepthStreamLevel5    DepthStreamLevel = 5
+	DepthStreamLevel10   DepthStreamLevel = 10
+	DepthStreamLevel20   DepthStreamLevel = 20
+	DepthAPILimit5       DepthAPILimit    = 5
+	DepthAPILimit10      DepthAPILimit    = 10
+	DepthAPILimit20      DepthAPILimit    = 20
+	DepthAPILimit50      DepthAPILimit    = 50
+	DepthAPILimit100     DepthAPILimit    = 100
+	DepthAPILimit500     DepthAPILimit    = 500
+	DepthAPILimit1000    DepthAPILimit    = 1000
+	DepthStreamRate100ms DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
+	DepthStreamRate250ms DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
+	DepthStreamRate500ms DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
+)
+
+type (
+	DepthStreamLevel int
+	DepthAPILimit    int
+	DepthStreamRate  time.Duration
 )
 
 type (
@@ -28,6 +51,9 @@ type (
 		bidsMinMax        *btree.BTree
 		mutex             *sync.Mutex
 		LastUpdateID      int64
+		limitDepth        DepthAPILimit
+		limitStream       DepthStreamLevel
+		rateStream        DepthStreamRate
 	}
 )
 
@@ -339,16 +365,48 @@ func (d *Depth) BidMax() (max *QuantityItem, err error) {
 	return
 }
 
+func (d *Depth) GetLimitDepth() DepthAPILimit {
+	return d.limitDepth
+}
+
+func (d *Depth) GetLimitStream() DepthStreamLevel {
+	return d.limitStream
+}
+
+func (d *Depth) GetRateStream() DepthStreamRate {
+	return d.rateStream
+}
+
 // DepthBTree - B-дерево для зберігання стакана заявок
-func New(degree int, symbol string) *Depth {
+func New(degree int, symbol string, limitDepth DepthAPILimit, rate ...DepthStreamRate) *Depth {
+	var (
+		limitStream DepthStreamLevel
+		rateStream  DepthStreamRate
+	)
+	switch limitDepth {
+	case DepthAPILimit5:
+		limitStream = DepthStreamLevel5
+	case DepthAPILimit10:
+		limitStream = DepthStreamLevel10
+	default:
+		limitStream = DepthStreamLevel20
+	}
+	if len(rate) == 0 {
+		rateStream = DepthStreamRate100ms
+	} else {
+		rateStream = rate[0]
+	}
 	return &Depth{
-		symbol:     symbol,
-		degree:     degree,
-		asks:       btree.New(degree),
-		asksMinMax: btree.New(degree),
-		bids:       btree.New(degree),
-		bidsMinMax: btree.New(degree),
-		mutex:      &sync.Mutex{},
+		symbol:      symbol,
+		degree:      degree,
+		asks:        btree.New(degree),
+		asksMinMax:  btree.New(degree),
+		bids:        btree.New(degree),
+		bidsMinMax:  btree.New(degree),
+		mutex:       &sync.Mutex{},
+		limitDepth:  limitDepth,
+		limitStream: limitStream,
+		rateStream:  rateStream,
 	}
 }
 

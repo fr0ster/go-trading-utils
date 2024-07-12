@@ -335,6 +335,7 @@ func RunFuturesGridTradingV5(
 
 	// Створюємо обробник пари
 	pairProcessor, err = processor.NewPairProcessor(
+		quit,
 		client,
 		pair,
 		limitOnPosition,
@@ -347,8 +348,7 @@ func RunFuturesGridTradingV5(
 		leverage,
 		minSteps,
 		callbackRate,
-		progression,
-		quit)
+		progression)
 	if err != nil {
 		printError()
 		return

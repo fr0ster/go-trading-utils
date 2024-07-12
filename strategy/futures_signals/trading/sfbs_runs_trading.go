@@ -352,6 +352,7 @@ func RunFuturesTrading(
 	futures.WebsocketKeepalive = true
 	// Створюємо обробник пари
 	pairProcessor, err = processor.NewPairProcessor(
+		quit,
 		client,
 		symbol,
 		limitOnPosition,
@@ -364,8 +365,7 @@ func RunFuturesTrading(
 		leverage,
 		minSteps,
 		callBackRate,
-		progression,
-		quit)
+		progression)
 	if err != nil {
 		printError()
 		return

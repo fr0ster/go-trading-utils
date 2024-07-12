@@ -4,11 +4,14 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+
+	"github.com/google/btree"
+
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
-	"github.com/google/btree"
 )
 
 const (
@@ -61,5 +64,7 @@ type (
 		FindNthTerm             progressions.FindNthTermType
 		FindLengthOfProgression progressions.FindLengthOfProgressionType
 		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
+
+		depth *depth_types.Depth
 	}
 )

@@ -7,11 +7,11 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 )
 
-func Init(d *depth_types.Depth, client *binance.Client, limit int) (err error) {
+func Init(d *depth_types.Depth, client *binance.Client) (err error) {
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(d.Symbol())).
-			Limit(limit).
+			Limit(int(d.GetLimitDepth())).
 			Do(context.Background())
 	if err != nil {
 		return err

@@ -93,11 +93,8 @@ func (pp *PairProcessor) DepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetDepthEventCallBack(
-	depthN int,
-	depth *depth_types.Depth,
-	summa ...*float64) binance.WsDepthHandler {
-	binance_depth.Init(depth, pp.client, depthN)
+func (pp *PairProcessor) GetDepthEventCallBack(depthN int, depth *depth_types.Depth) binance.WsDepthHandler {
+	binance_depth.Init(depth, pp.client)
 	return func(event *binance.WsDepthEvent) {
 		depth.Lock()         // Locking the depths
 		defer depth.Unlock() // Unlocking the depths
@@ -105,7 +102,7 @@ func (pp *PairProcessor) GetDepthEventCallBack(
 			return
 		}
 		if event.LastUpdateID != int64(depth.LastUpdateID)+1 {
-			binance_depth.Init(depth, pp.client, depthN)
+			binance_depth.Init(depth, pp.client)
 		} else if event.LastUpdateID == int64(depth.LastUpdateID)+1 {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()
@@ -192,11 +189,8 @@ func (pp *PairProcessor) PartialDepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetPartialDepthEventCallBack(
-	depthN int,
-	depth *depth_types.Depth,
-	summa ...*float64) binance.WsPartialDepthHandler {
-	binance_depth.Init(depth, pp.client, depthN)
+func (pp *PairProcessor) GetPartialDepthEventCallBack(depthN int, depth *depth_types.Depth) binance.WsPartialDepthHandler {
+	binance_depth.Init(depth, pp.client)
 	return func(event *binance.WsPartialDepthEvent) {
 		depth.Lock()         // Locking the depths
 		defer depth.Unlock() // Unlocking the depths
@@ -204,7 +198,7 @@ func (pp *PairProcessor) GetPartialDepthEventCallBack(
 			return
 		}
 		if event.LastUpdateID != int64(depth.LastUpdateID)+1 {
-			binance_depth.Init(depth, pp.client, depthN)
+			binance_depth.Init(depth, pp.client)
 		} else if event.LastUpdateID == int64(depth.LastUpdateID)+1 {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()
