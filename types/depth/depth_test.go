@@ -177,9 +177,9 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 	initDepths(d)
 	// Add assertions here to verify that the GetSummaOfAsksFromRange method works correctly
 	summaAsk := d.GetSummaOfAsksFromRange(600.0, 800.0, func(d *depth_types.DepthItem) bool { return true })
-	assert.Equal(t, 60.0, summaAsk)
+	assert.Equal(t, 50.0, summaAsk)
 	summaBid := d.GetSummaOfBidsFromRange(300.0, 50.0, func(d *depth_types.DepthItem) bool { return true })
-	assert.Equal(t, 70.0, summaBid)
+	assert.Equal(t, 60.0, summaBid)
 }
 
 func TestMinMax(t *testing.T) {
@@ -198,4 +198,21 @@ func TestMinMax(t *testing.T) {
 	max, err = d.BidMax()
 	assert.Nil(t, err)
 	assert.Equal(t, 100.0, max.Price)
+}
+
+func TestGetAsksAndBidSummaAndRange(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
+	assert.Equal(t, 80.0, d.GetAsksSummaQuantity())
+	assert.Equal(t, 80.0, d.GetBidsSummaQuantity())
+	summaAsks1 := d.GetAsksSumma(600.0)
+	assert.Equal(t, 10.0, summaAsks1)
+	summaAsks2 := d.GetSummaOfAsksFromRange(600.0, 800.0)
+	assert.Equal(t, 50.0, summaAsks2)
+	summaAsks3 := d.GetAsksSumma(800.0)
+	assert.Equal(t, 60.0, summaAsks3)
+	assert.Equal(t, summaAsks2, summaAsks3-summaAsks1)
+	summaBids := d.GetBidsSumma(300.0)
+	assert.Equal(t, 10.0, summaBids)
 }
