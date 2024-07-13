@@ -217,9 +217,15 @@ func (d *Depth) GetBidsMaxDownToSumma(target float64) (limit *DepthItem) {
 	return
 }
 
-func (d *Depth) GetSummaOfAsksFromRange(first, last float64, f DepthFilter) (askSumma float64) {
+func (d *Depth) GetSummaOfAsksFromRange(first, last float64, f ...DepthFilter) (askSumma float64) {
+	var filter DepthFilter
+	if len(f) > 0 {
+		filter = f[0]
+	} else {
+		filter = func(*DepthItem) bool { return true }
+	}
 	d.GetAsks().AscendGreaterOrEqual(&DepthItem{Price: first}, func(i btree.Item) bool {
-		if f(i.(*DepthItem)) && i.(*DepthItem).Price <= last {
+		if filter(i.(*DepthItem)) && i.(*DepthItem).Price <= last {
 			askSumma += i.(*DepthItem).Quantity
 		}
 		return true
@@ -227,9 +233,15 @@ func (d *Depth) GetSummaOfAsksFromRange(first, last float64, f DepthFilter) (ask
 	return
 }
 
-func (d *Depth) GetSummaOfBidsFromRange(first, last float64, f DepthFilter) (bidSumma float64) {
+func (d *Depth) GetSummaOfBidsFromRange(first, last float64, f ...DepthFilter) (bidSumma float64) {
+	var filter DepthFilter
+	if len(f) > 0 {
+		filter = f[0]
+	} else {
+		filter = func(*DepthItem) bool { return true }
+	}
 	d.GetBids().DescendLessOrEqual(&DepthItem{Price: first}, func(i btree.Item) bool {
-		if f(i.(*DepthItem)) && i.(*DepthItem).Price >= last {
+		if filter(i.(*DepthItem)) && i.(*DepthItem).Price >= last {
 			bidSumma += i.(*DepthItem).Quantity
 		}
 		return true
