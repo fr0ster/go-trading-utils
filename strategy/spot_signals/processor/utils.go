@@ -31,6 +31,24 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
+func (pp *PairProcessor) GetTargetPrices(price float64) (priceUp, priceDown float64, err error) {
+	if pp.depth != nil {
+		priceUp, priceDown = pp.depth.GetTargetPrices(pp.targetPercent)
+	} else {
+		err = fmt.Errorf("depth is nil")
+	}
+	return
+}
+
+func (pp *PairProcessor) GetLimitPrices(price float64) (priceUp, priceDown float64, err error) {
+	if pp.depth != nil {
+		priceUp, priceDown = pp.depth.GetTargetPrices(pp.limitPercent)
+	} else {
+		err = fmt.Errorf("depth is nil")
+	}
+	return
+}
+
 func (pp *PairProcessor) GetPrices(
 	price float64,
 	isDynamic bool) (
