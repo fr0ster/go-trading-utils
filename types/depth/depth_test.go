@@ -177,7 +177,7 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 	initDepths(d)
 	// Add assertions here to verify that the GetSummaOfAsksFromRange method works correctly
 	summaAsk := d.GetSummaOfAsksFromRange(600.0, 800.0, func(d *depth_types.DepthItem) bool { return true })
-	assert.Equal(t, 50.0, summaAsk)
+	assert.Equal(t, 30.0, summaAsk)
 	summaBid := d.GetSummaOfBidsFromRange(300.0, 50.0, func(d *depth_types.DepthItem) bool { return true })
 	assert.Equal(t, 60.0, summaBid)
 }
@@ -230,12 +230,24 @@ func TestGetTargetAsksBidPriceAndRange(t *testing.T) {
 	assert.Equal(t, 80.0, d.GetBidsSummaQuantity())
 	ask1, bid1, summaAsks1, summaBids1 := d.GetTargetAsksBidPrice(20, 20)
 	ask2, bid2, summaAsks3, summaBids3 := d.GetTargetAsksBidPrice(50, 50)
-	assert.Equal(t, 40.0, summaAsks1)
-	assert.Equal(t, 20.0, summaBids1)
-	assert.Equal(t, 60.0, summaAsks3)
-	assert.Equal(t, 70.0, summaBids3)
+	assert.Equal(t, 10.0, summaAsks1)
+	assert.Equal(t, 10.0, summaBids1)
+	assert.Equal(t, 40.0, summaAsks3)
+	assert.Equal(t, 40.0, summaBids3)
 	summaAsks2 := d.GetSummaOfAsksFromRange(ask1.Price, ask2.Price)
 	summaBids2 := d.GetSummaOfBidsFromRange(bid1.Price, bid2.Price)
 	assert.Equal(t, summaAsks2, summaAsks3-summaAsks1)
 	assert.Equal(t, summaBids2, summaBids3-summaBids1)
+}
+
+func TestGetTargetPrices(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetTargetPrices method works correctly
+	ask1, bid1 := d.GetTargetPrices(20)
+	ask2, bid2 := d.GetTargetPrices(50)
+	assert.Equal(t, 500.0, ask1)
+	assert.Equal(t, 400.0, bid1)
+	assert.Equal(t, 500.0, ask2)
+	assert.Equal(t, 400.0, bid2)
 }

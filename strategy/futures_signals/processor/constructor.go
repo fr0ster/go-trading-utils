@@ -32,6 +32,8 @@ func NewPairProcessor(
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
+	targetPercent float64,
+	limitPercent float64,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
@@ -73,7 +75,9 @@ func NewPairProcessor(
 
 		progression: progression,
 
-		depth: nil,
+		depth:         nil,
+		targetPercent: targetPercent,
+		limitPercent:  limitPercent,
 	}
 
 	if len(depth) > 0 {

@@ -106,17 +106,19 @@ func Run(
 			logrus.Error(
 				grid.RunSpotGridTrading(
 					client,
-					pair.GetPair(),
-					pair.GetLimitOnPosition(),
-					pair.GetLimitOnTransaction(),
-					pair.GetUpBound(),
-					pair.GetLowBound(),
-					pair.GetDeltaPrice(),
-					pair.GetDeltaQuantity(),
-					pair.GetMinSteps(), // minSteps
-					pair.GetCallbackRate(),
-					stopEvent,
-					wg))
+					pair.GetPair(),               // symbol
+					pair.GetLimitOnPosition(),    // limitOnPosition
+					pair.GetLimitOnTransaction(), // limitOnTransaction
+					pair.GetUpBound(),            // upBound
+					pair.GetLowBound(),           // lowBound
+					pair.GetDeltaPrice(),         // deltaPrice
+					pair.GetDeltaQuantity(),      // deltaQuantity
+					pair.GetMinSteps(),           // minSteps
+					10,                           // targetPercent
+					75,                           // limitPercent
+					pair.GetCallbackRate(),       // callbackRate
+					stopEvent,                    // stopEvent
+					wg))                          // wg
 
 			// Невідома стратегія, виводимо попередження та завершуємо програму
 		} else {

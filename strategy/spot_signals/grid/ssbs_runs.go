@@ -170,6 +170,8 @@ func RunSpotGridTrading(
 	deltaPrice float64,
 	deltaQuantity float64,
 	minSteps int,
+	targetPercent float64,
+	limitPercent float64,
 	callbackRate float64,
 	stopEvent chan struct{},
 	wg *sync.WaitGroup) (err error) {
@@ -188,6 +190,8 @@ func RunSpotGridTrading(
 		LowBound,
 		deltaPrice,
 		deltaQuantity,
+		targetPercent,
+		limitPercent,
 		callbackRate)
 	if err != nil {
 		printError()

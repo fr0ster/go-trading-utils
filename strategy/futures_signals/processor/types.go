@@ -65,6 +65,8 @@ type (
 		FindLengthOfProgression progressions.FindLengthOfProgressionType
 		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
 
-		depth *depth_types.Depth
+		depth         *depth_types.Depth
+		targetPercent float64
+		limitPercent  float64
 	}
 )

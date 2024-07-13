@@ -296,6 +296,8 @@ func RunFuturesGridTradingV4(
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
+	targetPercent float64,
+	limitPercent float64,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
@@ -327,6 +329,8 @@ func RunFuturesGridTradingV4(
 		marginType,
 		leverage,
 		minSteps,
+		targetPercent,
+		limitPercent,
 		callbackRate,
 		progression,
 		depth)

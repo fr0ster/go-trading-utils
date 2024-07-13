@@ -101,6 +101,8 @@ func RunFuturesGridTradingV1(
 	leverage int,
 	minSteps int,
 	percentsToStopSettingNewOrder float64,
+	targetPercent float64,
+	limitPercent float64,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
@@ -131,6 +133,8 @@ func RunFuturesGridTradingV1(
 		marginType,
 		leverage,
 		minSteps,
+		targetPercent,
+		limitPercent,
 		callbackRate,
 		progression)
 	if err != nil {

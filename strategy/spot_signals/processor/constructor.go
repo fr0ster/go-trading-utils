@@ -24,6 +24,8 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
+	targetPercent float64,
+	limitPercent float64,
 	callbackRate float64,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -48,7 +50,9 @@ func NewPairProcessor(
 		sleepingTime: 1 * time.Second,
 		timeOut:      1 * time.Hour,
 
-		depth: nil,
+		depth:         nil,
+		targetPercent: targetPercent,
+		limitPercent:  limitPercent,
 	}
 
 	if len(depth) > 0 {
