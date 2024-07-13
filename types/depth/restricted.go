@@ -107,8 +107,8 @@ func (d *Depth) GetTargetAsksBidPrice(targetSummaAsk, targetSummaBid float64) (a
 	getIterator := func(target float64, item *DepthItem, summaOut *float64) func(i btree.Item) bool {
 		summa := 0.0
 		return func(i btree.Item) bool {
-			summa += i.(*DepthItem).Quantity
 			if summa < target {
+				summa += i.(*DepthItem).Quantity
 				item.Price = i.(*DepthItem).Price
 				item.Quantity = i.(*DepthItem).Quantity
 				*summaOut = summa
@@ -127,7 +127,7 @@ func (d *Depth) GetTargetAsksBidPrice(targetSummaAsk, targetSummaBid float64) (a
 
 func (d *Depth) GetAsksSumma(price ...float64) (summa float64) {
 	d.GetAsks().Ascend(func(i btree.Item) bool {
-		if len(price) > 0 && i.(*DepthItem).Price < price[0] {
+		if len(price) > 0 && i.(*DepthItem).Price <= price[0] {
 			summa += i.(*DepthItem).Quantity
 			return true
 		} else {
@@ -139,7 +139,7 @@ func (d *Depth) GetAsksSumma(price ...float64) (summa float64) {
 
 func (d *Depth) GetBidsSumma(price ...float64) (summa float64) {
 	d.GetBids().Descend(func(i btree.Item) bool {
-		if len(price) > 0 && i.(*DepthItem).Price > price[0] {
+		if len(price) > 0 && i.(*DepthItem).Price >= price[0] {
 			summa += i.(*DepthItem).Quantity
 			return true
 		} else {
@@ -224,7 +224,7 @@ func (d *Depth) GetSummaOfAsksFromRange(first, last float64, f ...DepthFilter) (
 	} else {
 		filter = func(*DepthItem) bool { return true }
 	}
-	d.GetAsks().AscendRange(&DepthItem{Price: first}, &DepthItem{Price: last}, func(i btree.Item) bool {
+	d.GetAsks().DescendRange(&DepthItem{Price: last}, &DepthItem{Price: first}, func(i btree.Item) bool {
 		if filter(i.(*DepthItem)) {
 			askSumma += i.(*DepthItem).Quantity
 		}
@@ -240,7 +240,7 @@ func (d *Depth) GetSummaOfBidsFromRange(first, last float64, f ...DepthFilter) (
 	} else {
 		filter = func(*DepthItem) bool { return true }
 	}
-	d.GetBids().DescendRange(&DepthItem{Price: first}, &DepthItem{Price: last}, func(i btree.Item) bool {
+	d.GetBids().AscendRange(&DepthItem{Price: last}, &DepthItem{Price: first}, func(i btree.Item) bool {
 		if filter(i.(*DepthItem)) {
 			bidSumma += i.(*DepthItem).Quantity
 		}
