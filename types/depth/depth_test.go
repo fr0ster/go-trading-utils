@@ -181,3 +181,21 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 	summaBid := d.GetSummaOfBidsFromRange(300.0, 50.0, func(d *depth_types.DepthItem) bool { return true })
 	assert.Equal(t, 70.0, summaBid)
 }
+
+func TestMinMax(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the Min and Max methods work correctly
+	min, err := d.AskMin()
+	assert.Nil(t, err)
+	assert.Equal(t, 500.0, min.Price)
+	max, err := d.AskMax()
+	assert.Nil(t, err)
+	assert.Equal(t, 600.0, max.Price)
+	min, err = d.BidMin()
+	assert.Nil(t, err)
+	assert.Equal(t, 400.0, min.Price)
+	max, err = d.BidMax()
+	assert.Nil(t, err)
+	assert.Equal(t, 100.0, max.Price)
+}
