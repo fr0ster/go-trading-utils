@@ -100,6 +100,9 @@ type (
 		Value float64 `json:"value"` // Вартість позиції
 
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
+
+		PercentToTarget float64 `json:"percent_to_target"` // Відсоток до цільової позиції
+		PercentToLimit  float64 `json:"percent_to_limit"`  // Відсоток до ліміту на позицію
 	}
 )
 
@@ -255,6 +258,22 @@ func (pr *Pairs) GetCallbackRate() float64 {
 
 func (pr *Pairs) SetCallbackRate(rate float64) {
 	pr.CallbackRate = rate
+}
+
+func (pr *Pairs) GetPercentToTarget() float64 {
+	return pr.PercentToTarget
+}
+
+func (pr *Pairs) SetPercentToTarget(percent float64) {
+	pr.PercentToTarget = percent
+}
+
+func (pr *Pairs) GetPercentToLimit() float64 {
+	return pr.PercentToLimit
+}
+
+func (pr *Pairs) SetPercentToLimit(percent float64) {
+	pr.PercentToLimit = percent
 }
 
 func New(

@@ -62,6 +62,9 @@ const (
 
 	CallbackRate_1 = 0.1 // CallbackRate 0.1%
 
+	PercentToTarget_1 = 10 // Відсоток до цілі
+	PercentToLimit_1  = 75 // Відсоток до ліміту
+
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
 	Leverage_2   = 10                             // Плече 10
@@ -83,6 +86,9 @@ const (
 	Value_2         = 100.0 // Вартість для позиції
 
 	CallbackRate_2 = 0.5 // CallbackRate 0.5%
+
+	PercentToTarget_2 = 10 // Відсоток до цілі
+	PercentToLimit_2  = 75 // Відсоток до ліміту
 )
 
 var (
@@ -128,6 +134,8 @@ var (
 		DeltaQuantity:      DeltaQuantity_1,
 		Value:              Value_1,
 		CallbackRate:       CallbackRate_1,
+		PercentToTarget:    PercentToTarget_1,
+		PercentToLimit:     PercentToLimit_1,
 	}
 	pair_2 = &pairs_types.Pairs{
 		AccountType:        AccountType_2,
@@ -145,6 +153,8 @@ var (
 		DeltaQuantity:      DeltaQuantity_2,
 		Value:              Value_2,
 		CallbackRate:       CallbackRate_2,
+		PercentToTarget:    PercentToTarget_2,
+		PercentToLimit:     PercentToLimit_2,
 	}
 )
 
@@ -183,7 +193,9 @@ func getTestData() []byte {
 					"delta_price": ` + json.Number(strconv.FormatFloat(DeltaPrice_1, 'f', -1, 64)).String() + `,
 					"delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_1, 'f', -1, 64)).String() + `,
 					"value": ` + json.Number(strconv.FormatFloat(Value_1, 'f', -1, 64)).String() + `,
-					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_1, 'f', -1, 64)).String() + `
+					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_1, 'f', -1, 64)).String() + `,
+					"percent_to_target": ` + strconv.Itoa(PercentToTarget_1) + `,
+					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_1) + `
 				},
 				{
 					"account_type": "` + string(AccountType_2) + `",
@@ -200,7 +212,9 @@ func getTestData() []byte {
 					"delta_price": ` + json.Number(strconv.FormatFloat(Delta_Price_2, 'f', -1, 64)).String() + `,
 					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(DeltaQuantity_2, 'f', -1, 64)).String() + `,
 					"value": ` + json.Number(strconv.FormatFloat(Value_2, 'f', -1, 64)).String() + `,
-					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_2, 'f', -1, 64)).String() + `
+					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_2, 'f', -1, 64)).String() + `,
+					"percent_to_target": ` + strconv.Itoa(PercentToTarget_2) + `,
+					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_2) + `
 				}
 			]
 		}`)

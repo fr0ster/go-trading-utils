@@ -26,6 +26,8 @@ func getTestData() *btree.BTree {
 		Progression:        "GEOMETRIC",
 		Value:              200.0,
 		CallbackRate:       0.1, // CallbackRate 0.1%
+		PercentToTarget:    10,  // PercentToTarget 10%
+		PercentToLimit:     75,  // PercentToLimit 75%
 	})
 	res.ReplaceOrInsert(&pairs_types.Pairs{
 		AccountType:        pairs_types.USDTFutureType,
@@ -43,6 +45,8 @@ func getTestData() *btree.BTree {
 		Progression:        "GEOMETRIC",
 		Value:              200.0,
 		CallbackRate:       0.1, // CallbackRate 0.1%
+		PercentToTarget:    10,  // PercentToTarget 10%
+		PercentToLimit:     75,  // PercentToLimit 75%
 	})
 	return res
 }
@@ -102,6 +106,12 @@ func assertPair(
 
 	// Test GetCallbackRate
 	assert.Equal(t, 0.1, pair.GetCallbackRate())
+
+	// Test GetPercentToTarget
+	assert.Equal(t, 10.0, pair.GetPercentToTarget())
+
+	// Test GetPercentToLimit
+	assert.Equal(t, 75.0, pair.GetPercentToLimit())
 }
 
 func TestPairs(t *testing.T) {

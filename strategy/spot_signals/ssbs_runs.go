@@ -114,8 +114,8 @@ func Run(
 					pair.GetDeltaPrice(),         // deltaPrice
 					pair.GetDeltaQuantity(),      // deltaQuantity
 					pair.GetMinSteps(),           // minSteps
-					10,                           // targetPercent
-					75,                           // limitPercent
+					pair.GetPercentToTarget(),    // targetPercent
+					pair.GetPercentToLimit(),     // limitPercent
 					pair.GetCallbackRate(),       // callbackRate
 					stopEvent,                    // stopEvent
 					wg))                          // wg

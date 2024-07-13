@@ -73,8 +73,8 @@ func Run(
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
-				10,                           // targetPercent
-				75,                           // limitPercent
+				pair.GetPercentToTarget(),    // targetPercent
+				pair.GetPercentToLimit(),     // limitPercent
 				pair.GetCallbackRate(),       // callbackRate
 				futures.SideTypeBuy,          // upOrderSideOpen
 				futures.OrderTypeStop,        // upPositionNewOrderType
