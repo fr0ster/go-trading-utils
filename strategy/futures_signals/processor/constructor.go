@@ -179,8 +179,8 @@ func NewPairProcessor(
 		return
 	}
 	_ = pp.SetMarginType(marginType) // Встановлюємо тип маржі, як зміна не потрібна, помилку ігноруємо
-	res, _ := pp.SetLeverage(leverage)
-	if res.Leverage != leverage {
+	res, err := pp.SetLeverage(leverage)
+	if err == nil && res.Leverage != leverage {
 		err = fmt.Errorf("leverage %v is not supported", leverage)
 		return
 	}
