@@ -32,7 +32,7 @@ type (
 type (
 	QuantityItem struct {
 		Quantity float64
-		Price    float64
+		Depths   *btree.BTree
 	}
 	DepthItem struct {
 		Price    float64
@@ -55,6 +55,7 @@ type (
 		rateStream        DepthStreamRate
 	}
 	DepthFilter func(*DepthItem) bool
+	DepthTester func(result *DepthItem, target *DepthItem) bool
 )
 
 func (i *DepthItem) Less(than btree.Item) bool {

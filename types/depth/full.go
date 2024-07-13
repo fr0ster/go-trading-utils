@@ -19,7 +19,7 @@ func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
 	asks.Ascend(func(i btree.Item) bool {
 		d.asksSummaQuantity += i.(*DepthItem).Quantity
-		d.asksMinMax.ReplaceOrInsert(&QuantityItem{i.(*DepthItem).Quantity, i.(*DepthItem).Price})
+		d.AddAskMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
 		return true
 	})
 }
@@ -29,7 +29,7 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 	bids.Ascend(func(i btree.Item) bool {
 		d.bidsSummaQuantity += i.(*DepthItem).Quantity
-		d.bidsMinMax.ReplaceOrInsert(&QuantityItem{i.(*DepthItem).Quantity, i.(*DepthItem).Price})
+		d.AddBidMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
 		return true
 	})
 }
