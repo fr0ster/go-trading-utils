@@ -324,6 +324,7 @@ func RunFuturesGridTradingV5(
 	minSteps int,
 	targetPercent float64,
 	limitPercent float64,
+	limitDepth depth_types.DepthAPILimit,
 	callbackRate float64,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
@@ -338,7 +339,7 @@ func RunFuturesGridTradingV5(
 		timeOut_v5 = timeout[0]
 	}
 
-	depth := depth_types.New(degree, pair, false, targetPercent, limitPercent, depth_types.DepthAPILimit20)
+	depth := depth_types.New(degree, pair, false, targetPercent, limitPercent, limitDepth)
 	futures_depth.Init(depth, client)
 
 	// Створюємо обробник пари
