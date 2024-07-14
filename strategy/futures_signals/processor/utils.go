@@ -7,6 +7,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,28 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown float64, err erro
 	return
 }
 
+func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error) {
+	var (
+		askMax *depth_types.DepthItem
+		bidMax *depth_types.DepthItem
+	)
+	if pp.depth != nil {
+		askMax, err = pp.depth.AskMax()
+		if err != nil {
+			return
+		}
+		bidMax, err = pp.depth.BidMax()
+		if err != nil {
+			return
+		}
+		priceUp = askMax.Price
+		priceDown = bidMax.Price
+	} else {
+		err = fmt.Errorf("depth is nil")
+	}
+	return
+}
+
 func (pp *PairProcessor) GetPrices(
 	price float64,
 	risk *futures.PositionRisk,
@@ -51,7 +74,10 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyDown bool,
 	err error) {
 	if pp.depth != nil {
-		priceUp, priceDown, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
+		priceUp, priceDown, err = pp.GetTargetPrices()
+		if err != nil {
+			return
+		}
 	} else {
 		priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
 		priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
