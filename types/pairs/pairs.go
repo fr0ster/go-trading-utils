@@ -261,7 +261,11 @@ func (pr *Pairs) SetCallbackRate(rate float64) {
 }
 
 func (pr *Pairs) GetPercentToTarget() float64 {
-	return pr.PercentToTarget
+	if pr.PercentToTarget == 0 {
+		return 10
+	} else {
+		return pr.PercentToTarget
+	}
 }
 
 func (pr *Pairs) SetPercentToTarget(percent float64) {
@@ -269,7 +273,11 @@ func (pr *Pairs) SetPercentToTarget(percent float64) {
 }
 
 func (pr *Pairs) GetPercentToLimit() float64 {
-	return pr.PercentToLimit
+	if pr.PercentToLimit == 0 {
+		return 75
+	} else {
+		return pr.PercentToLimit
+	}
 }
 
 func (pr *Pairs) SetPercentToLimit(percent float64) {

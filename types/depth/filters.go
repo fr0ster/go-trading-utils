@@ -104,7 +104,7 @@ func (d *Depth) GetPercentToTarget() float64 {
 }
 
 func (d *Depth) GetPercentToLimit() float64 {
-	return d.asksSummaQuantity
+	return d.percentToLimit
 }
 
 // RestrictAskUp implements depth_interface.Depths.

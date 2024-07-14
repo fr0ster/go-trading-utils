@@ -324,12 +324,16 @@ func TestGetTargetPrices(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 75, depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetTargetPrices method works correctly
-	ask1, bid1 := d.GetTargetPrices(20)
-	ask2, bid2 := d.GetTargetPrices(50)
+	ask1, bid1, summaAsks1, summaBids1 := d.GetTargetPrices(20)
+	ask2, bid2, summaAsks2, summaBids2 := d.GetTargetPrices(50)
 	assert.Equal(t, 600.0, ask1)
 	assert.Equal(t, 500.0, bid1)
+	assert.Equal(t, 10.0, summaAsks1)
+	assert.Equal(t, 10.0, summaBids1)
 	assert.Equal(t, 700.0, ask2)
 	assert.Equal(t, 400.0, bid2)
+	assert.Equal(t, 30.0, summaAsks2)
+	assert.Equal(t, 30.0, summaBids2)
 }
 
 func TestGetAsk(t *testing.T) {
