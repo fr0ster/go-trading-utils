@@ -39,15 +39,6 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown float64, err erro
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error) {
-	if pp.depth != nil {
-		priceUp, priceDown, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToLimit())
-	} else {
-		err = fmt.Errorf("depth is nil")
-	}
-	return
-}
-
 func (pp *PairProcessor) GetPrices(
 	price float64,
 	risk *futures.PositionRisk,

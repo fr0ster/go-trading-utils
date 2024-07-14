@@ -103,10 +103,6 @@ func (d *Depth) GetPercentToTarget() float64 {
 	return d.percentRoTarget
 }
 
-func (d *Depth) GetPercentToLimit() float64 {
-	return d.percentToLimit
-}
-
 // RestrictAskUp implements depth_interface.Depths.
 func (d *Depth) RestrictAskUp(price float64) {
 	prices := make([]float64, 0)

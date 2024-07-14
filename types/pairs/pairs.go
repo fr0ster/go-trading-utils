@@ -103,7 +103,6 @@ type (
 		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 
 		PercentToTarget float64 `json:"percent_to_target"` // Відсоток до цільової позиції
-		PercentToLimit  float64 `json:"percent_to_limit"`  // Відсоток до ліміту на позицію
 		DepthsN         int     `json:"depths_n"`          // Глибина стакана
 	}
 )
@@ -274,18 +273,6 @@ func (pr *Pairs) SetPercentToTarget(percent float64) {
 	pr.PercentToTarget = percent
 }
 
-func (pr *Pairs) GetPercentToLimit() float64 {
-	if pr.PercentToLimit == 0 {
-		return 75
-	} else {
-		return pr.PercentToLimit
-	}
-}
-
-func (pr *Pairs) SetPercentToLimit(percent float64) {
-	pr.PercentToLimit = percent
-}
-
 func (pr *Pairs) GetDepthsN() depth_types.DepthAPILimit {
 	if pr.DepthsN == 0 {
 		return depth_types.DepthAPILimit(50)
@@ -320,7 +307,6 @@ func New(
 		Value:              0.0,
 		CallbackRate:       0.1,  // 0.1%
 		PercentToTarget:    10.0, // 10%
-		PercentToLimit:     75.0, // 75%
 		DepthsN:            50,   // 50
 	}
 }

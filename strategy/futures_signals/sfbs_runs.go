@@ -12,7 +12,6 @@ import (
 	trading "github.com/fr0ster/go-trading-utils/strategy/futures_signals/trading"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -75,7 +74,7 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetPercentToLimit(),     // limitPercent
+				pair.GetDepthsN(),            // limitDepth
 				pair.GetCallbackRate(),       // callbackRate
 				futures.SideTypeBuy,          // upOrderSideOpen
 				futures.OrderTypeStop,        // upPositionNewOrderType
@@ -173,12 +172,11 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetPercentToLimit(),     // limitPercent
-				depth_types.DepthAPILimit(pair.GetDepthsN()), // limitDepth
-				pair.GetCallbackRate(),                       // callbackRate
-				pair.GetProgression(),                        // progression
-				quit,                                         // quit
-				wg)                                           // wg
+				pair.GetDepthsN(),            // limitDepth
+				pair.GetCallbackRate(),       // callbackRate
+				pair.GetProgression(),        // progression
+				quit,                         // quit
+				wg)                           // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV5 {
 			// Відкриваємо позицію лімітними ордерами,
@@ -199,7 +197,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetPercentToLimit(),     // limitPercent
 				pair.GetDepthsN(),            // limitDepth
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression

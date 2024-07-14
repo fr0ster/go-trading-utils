@@ -13,7 +13,6 @@ func New(
 	symbol string,
 	isMinMax bool,
 	targetPercent float64,
-	limitPercent float64,
 	limitDepth DepthAPILimit,
 	rate ...DepthStreamRate) *Depth {
 	var (
@@ -51,7 +50,6 @@ func New(
 		limitStream:     limitStream,
 		rateStream:      rateStream,
 		percentRoTarget: targetPercent,
-		percentToLimit:  limitPercent,
 	}
 }
 
