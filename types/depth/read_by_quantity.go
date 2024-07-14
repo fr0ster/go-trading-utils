@@ -5,7 +5,7 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Depth) GetAsksBidFirstMaxAndSumma(targetSummaAsk, targetSummaBid float64, firstMax ...bool) (
+func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid float64, firstMax ...bool) (
 	asks,
 	bids *DepthItem,
 	summaAsks,
@@ -30,41 +30,5 @@ func (d *Depth) GetAsksBidFirstMaxAndSumma(targetSummaAsk, targetSummaBid float6
 	bids = &DepthItem{}
 	d.GetAsks().Ascend(getIterator(targetSummaAsk, asks, &summaAsks))
 	d.GetBids().Descend(getIterator(targetSummaBid, bids, &summaBids))
-	return
-}
-
-func (d *Depth) GetAsksMaxUpToSumma(targetSumma float64) (limit *DepthItem) {
-	limit = &DepthItem{}
-	summa := 0.0
-	d.GetAsks().Ascend(func(i btree.Item) bool {
-		summa += i.(*DepthItem).Quantity
-		if summa <= targetSumma {
-			if limit.Quantity < i.(*DepthItem).Quantity {
-				limit.Quantity = i.(*DepthItem).Quantity
-				limit.Price = i.(*DepthItem).Price
-			}
-			return true
-		} else {
-			return false
-		}
-	})
-	return
-}
-
-func (d *Depth) GetBidsMaxDownToSumma(targetSumma float64) (limit *DepthItem) {
-	limit = &DepthItem{}
-	summa := 0.0
-	d.GetBids().Descend(func(i btree.Item) bool {
-		summa += i.(*DepthItem).Quantity
-		if summa <= targetSumma {
-			if limit.Quantity < i.(*DepthItem).Quantity {
-				limit.Quantity = i.(*DepthItem).Quantity
-				limit.Price = i.(*DepthItem).Price
-			}
-			return true
-		} else {
-			return false
-		}
-	})
 	return
 }
