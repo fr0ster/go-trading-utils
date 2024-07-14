@@ -124,6 +124,38 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 	}()
 }
 
+func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
+	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
+	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
+	func() {
+		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(10, 10)
+		assert.Nil(t, err)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, 600.0, asks.Price)
+		assert.Equal(t, 10.0, asks.Quantity)
+		assert.Equal(t, 10.0, summaAsks)
+		assert.Equal(t, 500.0, bids.Price)
+		assert.Equal(t, 10.0, bids.Quantity)
+		assert.Equal(t, 10.0, summaBids)
+	}()
+	func() {
+		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(40, 40)
+		assert.Nil(t, err)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, 700.0, asks.Price)
+		assert.Equal(t, 20.0, asks.Quantity)
+		assert.Equal(t, 30.0, summaAsks)
+		assert.Equal(t, 400.0, bids.Price)
+		assert.Equal(t, 20.0, bids.Quantity)
+		assert.Equal(t, 30.0, summaBids)
+	}()
+}
+
 func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 75, depth_types.DepthAPILimit20, depth_types.DepthStreamRate100ms)
 	initDepths(d)
