@@ -28,6 +28,7 @@ func getTestData() *btree.BTree {
 		CallbackRate:       0.1, // CallbackRate 0.1%
 		PercentToTarget:    10,  // PercentToTarget 10%
 		PercentToLimit:     75,  // PercentToLimit 75%
+		DepthsN:            50,  // DepthsN 50
 	})
 	res.ReplaceOrInsert(&pairs_types.Pairs{
 		AccountType:        pairs_types.USDTFutureType,
@@ -47,6 +48,7 @@ func getTestData() *btree.BTree {
 		CallbackRate:       0.1, // CallbackRate 0.1%
 		PercentToTarget:    10,  // PercentToTarget 10%
 		PercentToLimit:     75,  // PercentToLimit 75%
+		DepthsN:            50,  // DepthsN 50
 	})
 	return res
 }
@@ -112,6 +114,9 @@ func assertPair(
 
 	// Test GetPercentToLimit
 	assert.Equal(t, 75.0, pair.GetPercentToLimit())
+
+	// Test GetDepthsN
+	assert.Equal(t, 50, pair.GetDepthsN())
 }
 
 func TestPairs(t *testing.T) {

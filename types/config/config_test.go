@@ -64,6 +64,7 @@ const (
 
 	PercentToTarget_1 = 10 // Відсоток до цілі
 	PercentToLimit_1  = 75 // Відсоток до ліміту
+	DepthsN_1         = 50 // Глибина
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
@@ -87,8 +88,9 @@ const (
 
 	CallbackRate_2 = 0.5 // CallbackRate 0.5%
 
-	PercentToTarget_2 = 10 // Відсоток до цілі
-	PercentToLimit_2  = 75 // Відсоток до ліміту
+	PercentToTarget_2 = 10  // Відсоток до цілі
+	PercentToLimit_2  = 75  // Відсоток до ліміту
+	DepthsN_2         = 500 // Глибина
 )
 
 var (
@@ -136,6 +138,7 @@ var (
 		CallbackRate:       CallbackRate_1,
 		PercentToTarget:    PercentToTarget_1,
 		PercentToLimit:     PercentToLimit_1,
+		DepthsN:            DepthsN_1,
 	}
 	pair_2 = &pairs_types.Pairs{
 		AccountType:        AccountType_2,
@@ -155,6 +158,7 @@ var (
 		CallbackRate:       CallbackRate_2,
 		PercentToTarget:    PercentToTarget_2,
 		PercentToLimit:     PercentToLimit_2,
+		DepthsN:            DepthsN_2,
 	}
 )
 
@@ -195,7 +199,8 @@ func getTestData() []byte {
 					"value": ` + json.Number(strconv.FormatFloat(Value_1, 'f', -1, 64)).String() + `,
 					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_1, 'f', -1, 64)).String() + `,
 					"percent_to_target": ` + strconv.Itoa(PercentToTarget_1) + `,
-					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_1) + `
+					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_1) + `,
+					"depths_n": ` + strconv.Itoa(DepthsN_1) + `
 				},
 				{
 					"account_type": "` + string(AccountType_2) + `",
@@ -214,7 +219,8 @@ func getTestData() []byte {
 					"value": ` + json.Number(strconv.FormatFloat(Value_2, 'f', -1, 64)).String() + `,
 					"callback_rate": ` + json.Number(strconv.FormatFloat(CallbackRate_2, 'f', -1, 64)).String() + `,
 					"percent_to_target": ` + strconv.Itoa(PercentToTarget_2) + `,
-					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_2) + `
+					"percent_to_limit": ` + strconv.Itoa(PercentToLimit_2) + `,
+					"depths_n": ` + strconv.Itoa(DepthsN_2) + `
 				}
 			]
 		}`)
@@ -255,6 +261,10 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 
 	assert.Equal(t, (checkingDate)[0].GetCallbackRate(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetCallbackRate())
 
+	assert.Equal(t, (checkingDate)[0].GetPercentToTarget(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetPercentToTarget())
+	assert.Equal(t, (checkingDate)[0].GetPercentToLimit(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetPercentToLimit())
+	assert.Equal(t, (checkingDate)[0].GetDepthsN(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetDepthsN())
+
 	assert.Equal(t, (checkingDate)[1].GetAccountType(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetAccountType())
 	assert.Equal(t, (checkingDate)[1].GetStrategy(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetStrategy())
 	assert.Equal(t, (checkingDate)[1].GetStage(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetStage())
@@ -274,6 +284,9 @@ func assertTest(t *testing.T, config config_interfaces.Configuration) {
 
 	assert.Equal(t, (checkingDate)[1].GetCallbackRate(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetCallbackRate())
 
+	assert.Equal(t, (checkingDate)[1].GetPercentToTarget(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetPercentToTarget())
+	assert.Equal(t, (checkingDate)[1].GetPercentToLimit(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetPercentToLimit())
+	assert.Equal(t, (checkingDate)[1].GetDepthsN(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetDepthsN())
 }
 
 func TestConfigFile_Load(t *testing.T) {
