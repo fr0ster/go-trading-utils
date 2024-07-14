@@ -15,11 +15,15 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid f
 		IsFirstMax = firstMax[0]
 	}
 	getIterator := func(target float64, item *DepthItem, summa *float64) func(i btree.Item) bool {
+		buffer := 0.0
 		return func(i btree.Item) bool {
-			if (*summa+i.(*DepthItem).Quantity) < target && (!IsFirstMax || i.(*DepthItem).Quantity >= item.Quantity) {
-				item.Price = i.(*DepthItem).Price
-				item.Quantity = i.(*DepthItem).Quantity
-				*summa += i.(*DepthItem).Quantity
+			if (*summa + i.(*DepthItem).Quantity) < target {
+				buffer += i.(*DepthItem).Quantity
+				if !IsFirstMax || i.(*DepthItem).Quantity >= item.Quantity {
+					item.Price = i.(*DepthItem).Price
+					item.Quantity = i.(*DepthItem).Quantity
+					*summa = buffer
+				}
 				return true
 			} else {
 				return false
