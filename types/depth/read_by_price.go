@@ -17,9 +17,9 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 		targetPrice float64,
 		item *DepthItem,
 		summa *float64,
-		fq func(float64, float64) bool) func(i btree.Item) bool {
+		f func(float64, float64) bool) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
-			if fq(i.(*DepthItem).Price, targetPrice) && (!IsFirstMax || i.(*DepthItem).Quantity >= item.Quantity) {
+			if f(i.(*DepthItem).Price, targetPrice) && (!IsFirstMax || i.(*DepthItem).Quantity >= item.Quantity) {
 				item.Price = i.(*DepthItem).Price
 				item.Quantity = i.(*DepthItem).Quantity
 				*summa += i.(*DepthItem).Quantity
@@ -36,12 +36,12 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 			targetPriceAsk,
 			asks,
 			&summaAsks,
-			func(price float64, target float64) bool { return price < target }))
+			func(price float64, target float64) bool { return price <= target }))
 	d.GetBids().Descend(
 		getIterator(
 			targetPriceBid,
 			bids,
 			&summaBids,
-			func(price float64, target float64) bool { return price > target }))
+			func(price float64, target float64) bool { return price >= target }))
 	return
 }
