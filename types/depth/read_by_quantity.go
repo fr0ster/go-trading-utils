@@ -53,7 +53,7 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetP
 	getIterator := func(targetPercent float64, max, item *DepthItem, summa *float64) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
 			*summa += i.(*DepthItem).Quantity
-			if (i.(*DepthItem).Quantity)*100/max.Quantity > targetPercent {
+			if (i.(*DepthItem).Quantity)*100/max.Quantity >= targetPercent {
 				item.Price = i.(*DepthItem).Price
 				item.Quantity = i.(*DepthItem).Quantity
 				return false
