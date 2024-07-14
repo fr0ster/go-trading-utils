@@ -148,8 +148,6 @@ func Run(
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
-				10,                           // targetPercent
-				75,                           // limitPercent
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit

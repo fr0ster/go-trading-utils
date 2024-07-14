@@ -8,10 +8,19 @@ import (
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
-func New(degree int, symbol string, limitDepth DepthAPILimit, rate ...DepthStreamRate) *Depth {
+func New(
+	degree int,
+	symbol string,
+	isMinMax bool,
+	targetPercent float64,
+	limitPercent float64,
+	limitDepth DepthAPILimit,
+	rate ...DepthStreamRate) *Depth {
 	var (
 		limitStream DepthStreamLevel
 		rateStream  DepthStreamRate
+		asksMinMax  *btree.BTree
+		bidsMinMax  *btree.BTree
 	)
 	switch limitDepth {
 	case DepthAPILimit5:
@@ -26,17 +35,23 @@ func New(degree int, symbol string, limitDepth DepthAPILimit, rate ...DepthStrea
 	} else {
 		rateStream = rate[0]
 	}
+	if isMinMax {
+		asksMinMax = btree.New(degree)
+		bidsMinMax = btree.New(degree)
+	}
 	return &Depth{
-		symbol:      symbol,
-		degree:      degree,
-		asks:        btree.New(degree),
-		asksMinMax:  btree.New(degree),
-		bids:        btree.New(degree),
-		bidsMinMax:  btree.New(degree),
-		mutex:       &sync.Mutex{},
-		limitDepth:  limitDepth,
-		limitStream: limitStream,
-		rateStream:  rateStream,
+		symbol:          symbol,
+		degree:          degree,
+		asks:            btree.New(degree),
+		asksMinMax:      asksMinMax,
+		bids:            btree.New(degree),
+		bidsMinMax:      bidsMinMax,
+		mutex:           &sync.Mutex{},
+		limitDepth:      limitDepth,
+		limitStream:     limitStream,
+		rateStream:      rateStream,
+		percentRoTarget: targetPercent,
+		percentToLimit:  limitPercent,
 	}
 }
 

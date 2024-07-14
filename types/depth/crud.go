@@ -27,7 +27,7 @@ func (d *Depth) SetAsk(price float64, quantity float64) {
 	old := d.asks.Get(&DepthItem{Price: price})
 	if old != nil {
 		d.asksSummaQuantity -= old.(*DepthItem).Quantity
-		d.asksMinMax.Delete(&QuantityItem{Quantity: old.(*DepthItem).Quantity})
+		d.DeleteAskMinMax(old.(*DepthItem).Quantity, old.(*DepthItem).Price)
 	}
 	d.asks.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.asksSummaQuantity += quantity
@@ -39,7 +39,7 @@ func (d *Depth) SetBid(price float64, quantity float64) {
 	old := d.bids.Get(&DepthItem{Price: price})
 	if old != nil {
 		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
-		d.bidsMinMax.Delete(&QuantityItem{Quantity: old.(*DepthItem).Quantity})
+		d.DeleteBidMinMax(old.(*DepthItem).Quantity, old.(*DepthItem).Price)
 	}
 	d.bids.ReplaceOrInsert(&DepthItem{Price: price, Quantity: quantity})
 	d.bidsSummaQuantity += quantity
@@ -86,4 +86,72 @@ func (d *Depth) UpdateBid(price float64, quantity float64) bool {
 		d.DeleteAsk(price)
 	}
 	return true
+}
+
+// RestrictAskUp implements depth_interface.Depths.
+func (d *Depth) RestrictAskUp(price float64) {
+	prices := make([]float64, 0)
+	d.asks.AscendGreaterOrEqual(&DepthItem{Price: price}, func(i btree.Item) bool {
+		prices = append(prices, i.(*DepthItem).Price)
+		return true
+	})
+	for _, p := range prices {
+		d.asks.Delete(&DepthItem{Price: p})
+	}
+}
+
+// RestrictBidUp implements depth_interface.Depths.
+func (d *Depth) RestrictBidUp(price float64) {
+	prices := make([]float64, 0)
+	d.bids.AscendGreaterOrEqual(&DepthItem{Price: price}, func(i btree.Item) bool {
+		prices = append(prices, i.(*DepthItem).Price)
+		return true
+	})
+	for _, p := range prices {
+		d.bids.Delete(&DepthItem{Price: p})
+	}
+}
+
+// RestrictAskDown implements depth_interface.Depths.
+func (d *Depth) RestrictAskDown(price float64) {
+	prices := make([]float64, 0)
+	d.asks.DescendLessOrEqual(&DepthItem{Price: price}, func(i btree.Item) bool {
+		prices = append(prices, i.(*DepthItem).Price)
+		return true
+	})
+	for _, p := range prices {
+		d.asks.Delete(&DepthItem{Price: p})
+	}
+}
+
+// RestrictBidDown implements depth_interface.Depths.
+func (d *Depth) RestrictBidDown(price float64) {
+	prices := make([]float64, 0)
+	d.bids.DescendLessOrEqual(&DepthItem{Price: price}, func(i btree.Item) bool {
+		prices = append(prices, i.(*DepthItem).Price)
+		return true
+	})
+	for _, p := range prices {
+		d.bids.Delete(&DepthItem{Price: p})
+	}
+}
+
+// AskAscend implements depth_interface.Depths.
+func (d *Depth) AskAscend(iter func(btree.Item) bool) {
+	d.asks.Ascend(iter)
+}
+
+// AskDescend implements depth_interface.Depths.
+func (d *Depth) AskDescend(iter func(btree.Item) bool) {
+	d.asks.Descend(iter)
+}
+
+// BidAscend implements depth_interface.Depths.
+func (d *Depth) BidAscend(iter func(btree.Item) bool) {
+	d.bids.Ascend(iter)
+}
+
+// BidDescend implements depth_interface.Depths.
+func (d *Depth) BidDescend(iter func(btree.Item) bool) {
+	d.bids.Descend(iter)
 }

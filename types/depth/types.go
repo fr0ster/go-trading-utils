@@ -53,6 +53,8 @@ type (
 		limitDepth        DepthAPILimit
 		limitStream       DepthStreamLevel
 		rateStream        DepthStreamRate
+		percentRoTarget   float64
+		percentToLimit    float64
 	}
 	DepthFilter func(*DepthItem) bool
 	DepthTester func(result *DepthItem, target *DepthItem) bool
