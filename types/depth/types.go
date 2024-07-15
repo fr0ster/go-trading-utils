@@ -30,6 +30,11 @@ type (
 )
 
 type (
+	DeviationItem struct {
+		Price     float64
+		Quantity  float64
+		Deviation float64
+	}
 	QuantityItem struct {
 		Quantity float64
 		Depths   *btree.BTree
@@ -43,9 +48,11 @@ type (
 		symbol            string
 		degree            int
 		asks              *btree.BTree
+		asksCountQuantity int
 		asksSummaQuantity float64
 		asksMinMax        *btree.BTree
 		bids              *btree.BTree
+		bidsCountQuantity int
 		bidsSummaQuantity float64
 		bidsMinMax        *btree.BTree
 		mutex             *sync.Mutex
@@ -65,6 +72,11 @@ func (i *DepthItem) Less(than btree.Item) bool {
 
 func (i *DepthItem) Equal(than btree.Item) bool {
 	return i.Price == than.(*DepthItem).Price
+}
+
+// GetAskDeviation implements depth_interface.Depths.
+func (d *DepthItem) GetQuantityDeviation(middle float64) float64 {
+	return d.Quantity - middle
 }
 
 func (i *QuantityItem) Less(than btree.Item) bool {

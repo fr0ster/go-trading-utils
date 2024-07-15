@@ -525,3 +525,45 @@ func TestDepthInterface(t *testing.T) {
 	ds.SetAsks(asks)
 	test(ds)
 }
+
+func TestAsksAndBidMiddleQuantity(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		initDepths(ds)
+		asksMiddle := ds.GetAsksMiddleQuantity()
+		assert.Equal(t, 18.0, asksMiddle)
+		bidsMiddle := ds.GetBidsMiddleQuantity()
+		assert.Equal(t, 18.0, bidsMiddle)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		asksMiddle := ds.GetAsksMiddleQuantity()
+		assert.Equal(t, 148.3375, asksMiddle)
+		bidsMiddle := ds.GetBidsMiddleQuantity()
+		assert.Equal(t, 171.42499999999998, bidsMiddle)
+	}()
+}
+
+func TestAsksAndBidStandardDeviation(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		initDepths(ds)
+		asksSquares := ds.GetAsksStandardDeviation()
+		assert.Equal(t, 7.483314773547883, asksSquares)
+		bidsSquares := ds.GetBidsStandardDeviation()
+		assert.Equal(t, 7.483314773547883, bidsSquares)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		asksSquares := ds.GetAsksStandardDeviation()
+		assert.Equal(t, 39.70157230828522, asksSquares)
+		bidsSquares := ds.GetBidsStandardDeviation()
+		assert.Equal(t, 30.873805644915233, bidsSquares)
+	}()
+}

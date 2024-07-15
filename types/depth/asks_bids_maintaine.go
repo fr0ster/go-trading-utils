@@ -1,6 +1,8 @@
 package depth
 
 import (
+	"math"
+
 	"github.com/google/btree"
 )
 
@@ -19,6 +21,7 @@ func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
 	asks.Ascend(func(i btree.Item) bool {
 		d.asksSummaQuantity += i.(*DepthItem).Quantity
+		d.asksCountQuantity++
 		d.AddAskMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
 		return true
 	})
@@ -29,6 +32,7 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 	bids.Ascend(func(i btree.Item) bool {
 		d.bidsSummaQuantity += i.(*DepthItem).Quantity
+		d.bidsCountQuantity++
 		d.AddBidMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
 		return true
 	})
@@ -62,4 +66,32 @@ func (d *Depth) BidAscend(iter func(btree.Item) bool) {
 // BidDescend implements depth_interface.Depths.
 func (d *Depth) BidDescend(iter func(btree.Item) bool) {
 	d.bids.Descend(iter)
+}
+
+func (d *Depth) GetAsksMiddleQuantity() float64 {
+	return d.asksSummaQuantity / float64(d.asksCountQuantity)
+}
+
+func (d *Depth) GetBidsMiddleQuantity() float64 {
+	return d.bidsSummaQuantity / float64(d.bidsCountQuantity)
+}
+
+func (d *Depth) GetAsksStandardDeviation() float64 {
+	summaSquares := 0.0
+	d.AskAscend(func(i btree.Item) bool {
+		depth := i.(*DepthItem)
+		summaSquares += depth.GetQuantityDeviation(d.GetAsksMiddleQuantity()) * depth.GetQuantityDeviation(d.GetAsksMiddleQuantity())
+		return true
+	})
+	return math.Sqrt(summaSquares / float64(d.AskCount()))
+}
+
+func (d *Depth) GetBidsStandardDeviation() float64 {
+	summaSquares := 0.0
+	d.BidDescend(func(i btree.Item) bool {
+		depth := i.(*DepthItem)
+		summaSquares += depth.GetQuantityDeviation(d.GetBidsMiddleQuantity()) * depth.GetQuantityDeviation(d.GetBidsMiddleQuantity())
+		return true
+	})
+	return math.Sqrt(summaSquares / float64(d.BidCount()))
 }
