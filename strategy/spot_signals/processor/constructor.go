@@ -24,6 +24,8 @@ func NewPairProcessor(
 	LowBound float64,
 	deltaPrice float64,
 	deltaQuantity float64,
+	targetPercent float64,
+	limitDepth depth_types.DepthAPILimit,
 	callbackRate float64,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -44,15 +46,6 @@ func NewPairProcessor(
 		timeOut: 1 * time.Hour,
 
 		depth: nil,
-	}
-
-	if len(depth) > 0 {
-		pp.depth = depth[0]
-		if pp.depth != nil {
-			pp.DepthEventStart(
-				stop,
-				pp.GetDepthEventCallBack(pp.depth))
-		}
 	}
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
@@ -78,6 +71,13 @@ func NewPairProcessor(
 	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
+
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, pp.tickSize)
+	if pp.depth != nil {
+		pp.DepthEventStart(
+			stop,
+			pp.GetDepthEventCallBack(pp.depth))
+	}
 
 	return
 }
