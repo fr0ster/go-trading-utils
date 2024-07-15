@@ -107,11 +107,3 @@ func (pp *PairProcessor) GetDepthEventCallBack(depth *depth_types.Depth) futures
 		}
 	}
 }
-
-func (pp *PairProcessor) GetDepth() *depth_types.Depth {
-	return pp.depth
-}
-
-func (pp *PairProcessor) SetDepth(depth *depth_types.Depth) {
-	pp.depth = depth
-}

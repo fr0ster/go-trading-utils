@@ -17,7 +17,7 @@ func TestInitDepthTree(t *testing.T) {
 	spot := binance.NewClient(api_key, secret_key)
 
 	// Add more test cases here
-	testDepthTree := depth_types.New(3, "SUSHIUSDT", false, 10, 100, depth_types.DepthStreamRate100ms)
+	testDepthTree := depth_types.New(3, "SUSHIUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
 	err := spot_depth.Init(testDepthTree, spot)
 	if err != nil {
 		t.Errorf("Failed to initialize depth tree: %v", err)

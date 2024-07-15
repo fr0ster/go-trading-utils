@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/fr0ster/go-trading-utils/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRoundToDecimalPlace(t *testing.T) {
@@ -27,8 +28,6 @@ func TestRoundToDecimalPlace(t *testing.T) {
 
 	for _, test := range tests {
 		result := utils.RoundToDecimalPlace(test.num, test.decimalPlaces)
-		if result != test.expectedResult {
-			t.Errorf("Expected %f, but got %f for input (%f, %f)", test.expectedResult, result, test.num, float64(test.decimalPlaces))
-		}
+		assert.Equal(t, test.expectedResult, result)
 	}
 }

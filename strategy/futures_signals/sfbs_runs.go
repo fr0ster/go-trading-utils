@@ -49,13 +49,13 @@ func Run(
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
-				10,                           // targetPercent
-				75,                           // limitPercent
-				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
-				pair.GetProgression(), // progression
-				quit,                  // quit
-				wg)                    // wg
+				pair.GetPercentToTarget(),                                     // targetPercent
+				pair.GetDepthsN(),                                             // limitDepth
+				pair.GetCallbackRate(),                                        // callbackRate
+				pair.GetProgression(),                                         // progression
+				quit,                                                          // quit
+				wg)                                                            // wg
 
 			// Відпрацьовуємо Trading стратегію
 		} else if pair.GetStrategy() == pairs_types.TradingStrategyType {
@@ -102,13 +102,13 @@ func Run(
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
-				10,                           // targetPercent
-				75,                           // limitPercent
-				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
-				pair.GetProgression(), // progression
-				quit,                  // quit
-				wg)                    // wg
+				pair.GetPercentToTarget(),                                     // targetPercent
+				pair.GetDepthsN(),                                             // limitPercent
+				pair.GetCallbackRate(),                                        // callbackRate
+				pair.GetProgression(),                                         // progression
+				quit,                                                          // quit
+				wg)                                                            // wg
 
 		} else if pair.GetStrategy() == pairs_types.GridStrategyTypeV2 {
 			err = grid.RunFuturesGridTradingV2(
@@ -148,6 +148,8 @@ func Run(
 				pair.GetMarginType(),         // marginType
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
+				pair.GetPercentToTarget(),    // targetPercent
+				pair.GetDepthsN(),            // limitDepth
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit

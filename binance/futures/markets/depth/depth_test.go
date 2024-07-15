@@ -18,7 +18,7 @@ func TestInitDepthTree(t *testing.T) {
 	futures := futures.NewClient(api_key, secret_key)
 
 	// Add more test cases here
-	testDepthTree := depth_types.New(3, "SUSHIUSDT", false, 10, 100, depth_types.DepthStreamRate100ms)
+	testDepthTree := depth_types.New(3, "SUSHIUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
 	err := futures_depth.Init(testDepthTree, futures)
 	assert.NoError(t, err)
 }

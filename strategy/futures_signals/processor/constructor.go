@@ -32,9 +32,10 @@ func NewPairProcessor(
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
+	targetPercent float64,
+	limitDepth depth_types.DepthAPILimit,
 	callbackRate float64,
-	progression pairs_types.ProgressionType,
-	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
+	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
@@ -71,19 +72,7 @@ func NewPairProcessor(
 		deltaQuantity: deltaQuantity,
 
 		progression: progression,
-
-		depth: nil,
-	}
-
-	if len(depth) > 0 {
-		pp.depth = depth[0]
-		if pp.depth != nil {
-			pp.DepthEventStart(
-				stop,
-				pp.depth.GetLimitStream(),
-				pp.depth.GetRateStream(),
-				pp.GetDepthEventCallBack(pp.depth))
-		}
+		depth:       nil,
 	}
 
 	// Ініціалізуємо інформацію про пару
@@ -184,6 +173,15 @@ func NewPairProcessor(
 			err = fmt.Errorf("leverage %v is not supported", leverage)
 			return
 		}
+	}
+
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, pp.tickSize)
+	if pp.depth != nil {
+		pp.DepthEventStart(
+			stop,
+			pp.depth.GetLimitStream(),
+			pp.depth.GetRateStream(),
+			pp.GetDepthEventCallBack(pp.depth))
 	}
 
 	return

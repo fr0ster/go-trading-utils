@@ -367,6 +367,8 @@ func RunFuturesTrading(
 		marginType,
 		leverage,
 		minSteps,
+		targetPercent,
+		limitDepth,
 		callBackRate,
 		progression)
 	if err != nil {
