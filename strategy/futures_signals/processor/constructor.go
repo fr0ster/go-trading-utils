@@ -175,7 +175,7 @@ func NewPairProcessor(
 		}
 	}
 
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, pp.tickSize)
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth)
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,

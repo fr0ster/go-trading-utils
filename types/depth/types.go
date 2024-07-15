@@ -62,7 +62,6 @@ type (
 		rateStream        DepthStreamRate
 		percentToTarget   float64
 		expBase           int
-		tickSize          int
 	}
 	DepthFilter func(*DepthItem) bool
 	DepthTester func(result *DepthItem, target *DepthItem) bool

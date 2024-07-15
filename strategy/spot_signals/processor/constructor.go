@@ -72,7 +72,7 @@ func NewPairProcessor(
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, pp.tickSize)
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth)
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,

@@ -18,7 +18,7 @@ func (d *Depth) getCoefficient(price float64) float64 {
 func (d *Depth) GetNormalizedPrice(price float64) float64 {
 	if max := d.asks.Max().(*DepthItem); max != nil {
 		coefficient := d.getCoefficient(max.Price)
-		return utils.RoundToDecimalPlace(price*coefficient, d.tickSize)
+		return utils.RoundToDecimalPlace(price*coefficient, 0)
 	} else {
 		return price
 	}

@@ -2,7 +2,6 @@ package depth
 
 import (
 	"errors"
-	"math"
 	"sync"
 
 	"github.com/google/btree"
@@ -15,7 +14,6 @@ func New(
 	isMinMax bool,
 	targetPercent float64,
 	limitDepth DepthAPILimit,
-	tickSize float64,
 	rate ...DepthStreamRate) *Depth {
 	var (
 		limitStream DepthStreamLevel
@@ -40,7 +38,6 @@ func New(
 		asksMinMax = btree.New(degree)
 		bidsMinMax = btree.New(degree)
 	}
-	tickStep := int(math.Abs(math.Log(1 / tickSize)))
 	return &Depth{
 		symbol:          symbol,
 		degree:          degree,
@@ -54,7 +51,6 @@ func New(
 		rateStream:      rateStream,
 		percentToTarget: targetPercent,
 		expBase:         3,
-		tickSize:        tickStep,
 	}
 }
 
