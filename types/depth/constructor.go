@@ -49,7 +49,7 @@ func New(
 		limitDepth:      limitDepth,
 		limitStream:     limitStream,
 		rateStream:      rateStream,
-		percentRoTarget: targetPercent,
+		percentToTarget: targetPercent,
 	}
 }
 

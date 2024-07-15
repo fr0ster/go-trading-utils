@@ -100,7 +100,7 @@ func (d *Depth) GetSummaOfBidsFromRange(first, last float64, f ...DepthFilter) (
 }
 
 func (d *Depth) GetPercentToTarget() float64 {
-	return d.percentRoTarget
+	return d.percentToTarget
 }
 
 // RestrictAskUp implements depth_interface.Depths.
