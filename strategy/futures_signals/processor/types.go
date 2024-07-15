@@ -21,42 +21,49 @@ const (
 
 type (
 	PairProcessor struct {
-		client       *futures.Client
+		// Дані про клієнта
+		client *futures.Client
+		// Налаштування та обмеження, реалізація
+		orderTypes map[futures.OrderType]bool
+		degree     int
+		timeOut    time.Duration
+
+		// Дані про біржу
 		exchangeInfo *exchange_types.ExchangeInfo
+
+		// Дані про пару
 		symbol       *futures.Symbol
+		pairInfo     *symbol_types.FuturesSymbol
 		baseSymbol   string
 		targetSymbol string
-		notional     float64
-		StepSize     float64
-		maxQty       float64
-		minQty       float64
-		minSteps     int
-		tickSize     float64
-		maxPrice     float64
-		minPrice     float64
-		up           *btree.BTree
-		down         *btree.BTree
 
+		// Дані про обмеження на пару
+		notional float64
+		StepSize float64
+		maxQty   float64
+		minQty   float64
+		tickSize float64
+		maxPrice float64
+		minPrice float64
+
+		// канал зупинки
 		stop chan struct{}
 
-		pairInfo           *symbol_types.FuturesSymbol
-		orderTypes         map[futures.OrderType]bool
-		degree             int
-		sleepingTime       time.Duration
-		timeOut            time.Duration
 		limitOnPosition    float64
 		limitOnTransaction float64
-		UpBoundPercent     float64
-		UpBound            float64
-		LowBoundPercent    float64
-		LowBound           float64
-		leverage           int
-		marginType         pairs_types.MarginType
-		callbackRate       float64
 
-		deltaPrice    float64
-		deltaQuantity float64
+		// Дінаміка ціни, використовувалось тіко для grid_v3
+		minSteps        int
+		up              *btree.BTree
+		down            *btree.BTree
+		UpBoundPercent  float64
+		UpBound         float64
+		LowBoundPercent float64
+		LowBound        float64
+		deltaPrice      float64
+		deltaQuantity   float64
 
+		// Прогресії, використовувалось тіко для grid_v3
 		progression             pairs_types.ProgressionType
 		GetDelta                progressions.DeltaType
 		NthTerm                 progressions.NthTermType
@@ -65,6 +72,12 @@ type (
 		FindLengthOfProgression progressions.FindLengthOfProgressionType
 		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
 
+		// Дані про позицію
+		leverage     int
+		marginType   pairs_types.MarginType
+		callbackRate float64
+
+		// Дані про стакан
 		depth *depth_types.Depth
 	}
 )

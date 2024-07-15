@@ -58,7 +58,7 @@ func (pp *PairProcessor) createOrder(
 		log.Printf(errorMsg, err)
 		return
 	}
-	if _, ok := pp.orderTypes[string(orderType)]; !ok && len(pp.orderTypes) != 0 {
+	if _, ok := pp.orderTypes[orderType]; !ok && len(pp.orderTypes) != 0 {
 		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pairInfo.Symbol)
 		return
 	}
@@ -183,7 +183,7 @@ func (pp *PairProcessor) CreateOrder(
 }
 
 func (pp *PairProcessor) CheckOrderType(orderType binance.OrderType) bool {
-	_, ok := pp.orderTypes[string(orderType)]
+	_, ok := pp.orderTypes[orderType]
 	return ok
 }
 

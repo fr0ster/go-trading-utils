@@ -14,40 +14,46 @@ import (
 
 type (
 	PairProcessor struct {
-		client       *binance.Client
+		// Дані про клієнта
+		client *binance.Client
+		// Налаштування та обмеження, реалізація
+		orderTypes map[binance.OrderType]bool
+		degree     int
+		timeOut    time.Duration
+
+		// Дані про біржу
 		exchangeInfo *exchange_types.ExchangeInfo
+
+		// Дані про пару
 		symbol       *binance.Symbol
+		pairInfo     *symbol_types.SpotSymbol
 		baseSymbol   string
 		targetSymbol string
-		notional     float64
-		StepSize     float64
-		maxQty       float64
-		minQty       float64
-		tickSize     float64
-		maxPrice     float64
-		minPrice     float64
 
-		updateTime            time.Duration
-		minuteOrderLimit      *exchange_types.RateLimits
-		dayOrderLimit         *exchange_types.RateLimits
-		minuteRawRequestLimit *exchange_types.RateLimits
+		// Дані про обмеження на пару
+		notional float64
+		StepSize float64
+		maxQty   float64
+		minQty   float64
+		tickSize float64
+		maxPrice float64
+		minPrice float64
 
+		// канал зупинки
 		stop chan struct{}
 
-		pairInfo           *symbol_types.SpotSymbol
-		orderTypes         map[string]bool
-		degree             int
-		sleepingTime       time.Duration
-		timeOut            time.Duration
 		limitOnPosition    float64
 		limitOnTransaction float64
-		UpBound            float64
-		LowBound           float64
-		callbackRate       float64
 
-		deltaPrice    float64
-		deltaQuantity float64
+		// Дінаміка ціни, використовувалось тіко для grid_v3
+		UpBoundPercent  float64
+		UpBound         float64
+		LowBoundPercent float64
+		LowBound        float64
+		deltaPrice      float64
+		deltaQuantity   float64
 
+		// Прогресії, використовувалось тіко для grid_v3
 		GetDelta                progressions.DeltaType
 		NthTerm                 progressions.NthTermType
 		Sum                     progressions.SumType
@@ -55,6 +61,10 @@ type (
 		FindLengthOfProgression progressions.FindLengthOfProgressionType
 		FindProgressionTthTerm  progressions.FindCubicProgressionTthTermType
 
+		// Дані про позицію
+		callbackRate float64
+
+		// Дані про стакан
 		depth *depth_types.Depth
 	}
 )

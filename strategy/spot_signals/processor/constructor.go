@@ -35,18 +35,13 @@ func NewPairProcessor(
 		client:       client,
 		exchangeInfo: exchangeInfo,
 
-		updateTime:            0,
-		minuteOrderLimit:      &exchange_types.RateLimits{},
-		dayOrderLimit:         &exchange_types.RateLimits{},
-		minuteRawRequestLimit: &exchange_types.RateLimits{},
-
 		stop: stop,
 
-		pairInfo:     nil,
-		orderTypes:   map[string]bool{},
-		degree:       3,
-		sleepingTime: 1 * time.Second,
-		timeOut:      1 * time.Hour,
+		pairInfo:   nil,
+		orderTypes: map[binance.OrderType]bool{},
+		degree:     3,
+		// sleepingTime: 1 * time.Second,
+		timeOut: 1 * time.Hour,
 
 		depth: nil,
 	}
@@ -64,9 +59,9 @@ func NewPairProcessor(
 		&symbol_types.SpotSymbol{Symbol: symbol}).(*symbol_types.SpotSymbol)
 
 	// Ініціалізуємо типи ордерів які можна використовувати для пари
-	pp.orderTypes = make(map[string]bool, 0)
+	pp.orderTypes = make(map[binance.OrderType]bool, 0)
 	for _, orderType := range pp.pairInfo.OrderTypes {
-		pp.orderTypes[orderType] = true
+		pp.orderTypes[binance.OrderType(orderType)] = true
 	}
 
 	// Буферизуємо інформацію про символ
@@ -83,13 +78,6 @@ func NewPairProcessor(
 	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
-
-	// Перевіряємо ліміти на ордери та запити
-	pp.updateTime,
-		pp.minuteOrderLimit,
-		pp.dayOrderLimit,
-		pp.minuteRawRequestLimit =
-		LimitRead(pp.degree, []string{pp.symbol.Symbol}, client)
 
 	return
 }

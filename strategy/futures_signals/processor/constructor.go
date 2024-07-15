@@ -56,7 +56,6 @@ func NewPairProcessor(
 		pairInfo:           nil,
 		orderTypes:         nil,
 		degree:             3,
-		sleepingTime:       1 * time.Second,
 		timeOut:            1 * time.Hour,
 		limitOnPosition:    limitOnPosition,
 		limitOnTransaction: limitOnTransaction,
