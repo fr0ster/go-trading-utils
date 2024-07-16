@@ -83,7 +83,7 @@ func NewPairProcessor(
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,
-			pp.GetDepthEventCallBack(pp.depth))
+			pp.GetDepthEventCallBack())
 	}
 
 	return

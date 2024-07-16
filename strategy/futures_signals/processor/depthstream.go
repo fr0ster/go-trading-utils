@@ -78,32 +78,36 @@ func (pp *PairProcessor) DepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetDepthEventCallBack(depth *depth_types.Depth) futures.WsDepthHandler {
-	futures_depth.Init(depth, pp.client)
+func (pp *PairProcessor) GetDepth() *depth_types.Depth {
+	return pp.depth
+}
+
+func (pp *PairProcessor) GetDepthEventCallBack() futures.WsDepthHandler {
+	futures_depth.Init(pp.depth, pp.client)
 	return func(event *futures.WsDepthEvent) {
-		depth.Lock()         // Locking the depths
-		defer depth.Unlock() // Unlocking the depths
-		if event.LastUpdateID < depth.LastUpdateID {
+		pp.depth.Lock()         // Locking the depths
+		defer pp.depth.Unlock() // Unlocking the depths
+		if event.LastUpdateID < pp.depth.LastUpdateID {
 			return
 		}
-		if event.PrevLastUpdateID != int64(depth.LastUpdateID) {
-			futures_depth.Init(depth, pp.client)
-		} else if event.PrevLastUpdateID == int64(depth.LastUpdateID) {
+		if event.PrevLastUpdateID != int64(pp.depth.LastUpdateID) {
+			futures_depth.Init(pp.depth, pp.client)
+		} else if event.PrevLastUpdateID == int64(pp.depth.LastUpdateID) {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()
 				if err != nil {
 					return
 				}
-				depth.UpdateBid(price, quantity)
+				pp.depth.UpdateBid(price, quantity)
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				depth.UpdateAsk(price, quantity)
+				pp.depth.UpdateAsk(price, quantity)
 			}
-			depth.LastUpdateID = event.LastUpdateID
+			pp.depth.LastUpdateID = event.LastUpdateID
 		}
 	}
 }
