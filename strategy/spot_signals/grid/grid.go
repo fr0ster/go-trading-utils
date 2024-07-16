@@ -13,6 +13,7 @@ import (
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -40,14 +41,14 @@ func getTickSizeExp(symbol *binance.Symbol) int {
 }
 
 func round(val float64, exp int) float64 {
-	return utils.RoundToDecimalPlace(val, exp)
+	return utils.RoundToDecimalPlace(float64(val), exp)
 }
 
 func initVars(
 	pairProcessor *processor.PairProcessor) (
 	symbol *binance.Symbol,
-	price,
-	quantity float64,
+	price types.PriceType,
+	quantity types.QuantityType,
 	tickSizeExp,
 	stepSizeExp int,
 	err error) {
@@ -68,11 +69,11 @@ func initVars(
 	// Отримання середньої ціни
 	price, _ = pairProcessor.GetCurrentPrice() // Отримання ціни по ринку для пари
 	price = roundPrice(price, symbol)
-	setQuantity := func(symbol *binance.Symbol) (quantity float64) {
-		quantity = round(pairProcessor.GetLimitOnTransaction()/price, stepSizeExp)
+	setQuantity := func(symbol *binance.Symbol) (quantity types.QuantityType) {
+		quantity = types.QuantityType(round(float64(pairProcessor.GetLimitOnTransaction()/price), stepSizeExp))
 		minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
-		if quantity*price < minNotional {
-			quantity = utils.RoundToDecimalPlace(minNotional/price, stepSizeExp)
+		if float64(quantity)*float64(price) < minNotional {
+			quantity = types.QuantityType(utils.RoundToDecimalPlace(minNotional/float64(price), stepSizeExp))
 		}
 		return
 	}
@@ -81,15 +82,15 @@ func initVars(
 }
 
 func openPosition(
-	price float64,
-	quantity float64,
+	price types.PriceType,
+	quantity types.QuantityType,
 	pairProcessor *processor.PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
 	var (
-		targetBalance float64
+		targetBalance types.PriceType
 	)
 	_, _ = pairProcessor.CancelAllOrders()
 	// Створюємо ордери на продаж
-	if targetBalance, err = pairProcessor.GetTargetBalance(); err == nil && targetBalance >= quantity {
+	if targetBalance, err = pairProcessor.GetTargetBalance(); err == nil && targetBalance >= types.PriceType(quantity)*price {
 		sellOrder, err = createOrderInGrid(
 			pairProcessor,
 			binance.SideTypeSell,
@@ -119,8 +120,8 @@ func openPosition(
 func createOrderInGrid(
 	pairProcessor *processor.PairProcessor,
 	side binance.SideType,
-	quantity,
-	price float64) (order *binance.CreateOrderResponse, err error) {
+	quantity types.QuantityType,
+	price types.PriceType) (order *binance.CreateOrderResponse, err error) {
 	order, err = pairProcessor.CreateOrder(
 		binance.OrderTypeLimit,     // orderType
 		side,                       // sideType
@@ -134,9 +135,9 @@ func createOrderInGrid(
 }
 
 // Округлення ціни до TickSize знаків після коми
-func roundPrice(val float64, symbol *binance.Symbol) float64 {
+func roundPrice(val types.PriceType, symbol *binance.Symbol) types.PriceType {
 	exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
-	return utils.RoundToDecimalPlace(val, exp)
+	return types.PriceType(utils.RoundToDecimalPlace(float64(val), exp))
 }
 
 func getCallBack_v1(
@@ -179,7 +180,7 @@ func RunSpotGridTrading(
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		quantity float64
+		quantity types.QuantityType
 	)
 	// Створюємо обробник пари
 	pairProcessor, err := processor.NewPairProcessor(

@@ -6,6 +6,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -47,11 +48,11 @@ type (
 
 		// Дінаміка ціни, використовувалось тіко для grid_v3
 		UpBoundPercent  float64
-		UpBound         float64
+		UpBound         types.PriceType
 		LowBoundPercent float64
-		LowBound        float64
-		deltaPrice      float64
-		deltaQuantity   float64
+		LowBound        types.PriceType
+		deltaPrice      types.PriceType
+		deltaQuantity   types.QuantityType
 
 		// Прогресії, використовувалось тіко для grid_v3
 		GetDelta                progressions.DeltaType

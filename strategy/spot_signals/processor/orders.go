@@ -10,6 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -35,15 +36,15 @@ func (pp *PairProcessor) createOrder(
 	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	sideType binance.SideType, // BUY, SELL
 	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
-	quantity float64, // BTC for example if we buy or sell BTC
-	quantityQty float64, // USDT for example if we buy or sell BTC
+	quantity types.QuantityType, // BTC for example if we buy or sell BTC
+	quantityQty types.PriceType, // USDT for example if we buy or sell BTC
 	// price for 1 BTC
 	// it's price of order execution for LIMIT, LIMIT_MAKER
 	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
 	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
-	price float64,
+	price types.PriceType,
 	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
-	stopPrice float64,
+	stopPrice types.PriceType,
 	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
 	trailingDelta int,
@@ -78,10 +79,10 @@ func (pp *PairProcessor) createOrder(
 		// MARKET	quantity or quoteOrderQty
 		if quantity != 0 {
 			service = service.
-				Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+				Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound))
 		} else if quantityQty != 0 {
 			service = service.
-				QuoteOrderQty(utils.ConvFloat64ToStr(quantityQty, quantityRound))
+				QuoteOrderQty(utils.ConvFloat64ToStr(float64(quantityQty), quantityRound))
 		} else {
 			err = fmt.Errorf("quantity or quoteOrderQty must be set")
 			return
@@ -90,19 +91,19 @@ func (pp *PairProcessor) createOrder(
 		// LIMIT	timeInForce, quantity, price
 		service = service.
 			TimeInForce(timeInForce).
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
-			Price(utils.ConvFloat64ToStr(price, priceRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
+			Price(utils.ConvFloat64ToStr(float64(price), priceRound))
 	} else if orderType == binance.OrderTypeLimitMaker {
 		// LIMIT_MAKER	quantity, price
 		service = service.
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
-			Price(utils.ConvFloat64ToStr(price, priceRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
+			Price(utils.ConvFloat64ToStr(float64(price), priceRound))
 	} else if orderType == binance.OrderTypeStopLoss || orderType == binance.OrderTypeTakeProfit {
 		// STOP_LOSS/TAKE_PROFIT quantity, stopPrice or trailingDelta
 		service = service.
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound))
 		if stopPrice != 0 {
-			service = service.StopPrice(utils.ConvFloat64ToStr(price, priceRound))
+			service = service.StopPrice(utils.ConvFloat64ToStr(float64(price), priceRound))
 		} else if trailingDelta != 0 {
 			service = service.TrailingDelta(strconv.Itoa(trailingDelta))
 		} else {
@@ -113,10 +114,10 @@ func (pp *PairProcessor) createOrder(
 		// STOP_LOSS_LIMIT/TAKE_PROFIT_LIMIT timeInForce, quantity, price, stopPrice or trailingDelta
 		service = service.
 			TimeInForce(timeInForce).
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
-			Price(utils.ConvFloat64ToStr(price, priceRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
+			Price(utils.ConvFloat64ToStr(float64(price), priceRound))
 		if stopPrice != 0 {
-			service = service.StopPrice(utils.ConvFloat64ToStr(price, priceRound))
+			service = service.StopPrice(utils.ConvFloat64ToStr(float64(price), priceRound))
 		} else if trailingDelta != 0 {
 			service = service.TrailingDelta(strconv.Itoa(trailingDelta))
 		} else {
@@ -137,7 +138,7 @@ func (pp *PairProcessor) createOrder(
 				return nil, err
 			}
 			for _, order := range orders {
-				if order.Symbol == pp.pairInfo.Symbol && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+				if order.Symbol == pp.pairInfo.Symbol && order.Side == sideType && order.Price == utils.ConvFloat64ToStr(float64(price), priceRound) {
 					return &binance.CreateOrderResponse{
 						Symbol:                   order.Symbol,
 						OrderID:                  order.OrderID,
@@ -166,15 +167,15 @@ func (pp *PairProcessor) CreateOrder(
 	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	sideType binance.SideType, // BUY, SELL
 	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
-	quantity float64, // BTC for example if we buy or sell BTC
-	quantityQty float64, // USDT for example if we buy or sell BTC
+	quantity types.QuantityType, // BTC for example if we buy or sell BTC
+	quantityQty types.PriceType, // USDT for example if we buy or sell BTC
 	// price for 1 BTC
 	// it's price of order execution for LIMIT, LIMIT_MAKER
 	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
 	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
-	price float64,
+	price types.PriceType,
 	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
-	stopPrice float64,
+	stopPrice types.PriceType,
 	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
 	trailingDelta int) (

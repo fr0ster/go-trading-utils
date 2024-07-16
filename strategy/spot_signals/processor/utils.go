@@ -8,19 +8,18 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
-	depth_item "github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 )
 
-func (pp *PairProcessor) RoundPrice(price float64) float64 {
-	return utils.RoundToDecimalPlace(price, pp.GetTickSizeExp())
+func (pp *PairProcessor) RoundPrice(price types.PriceType) types.PriceType {
+	return types.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
 }
 
-func (pp *PairProcessor) RoundQuantity(quantity float64) float64 {
-	return utils.RoundToDecimalPlace(quantity, pp.GetStepSizeExp())
+func (pp *PairProcessor) RoundQuantity(quantity types.QuantityType) types.QuantityType {
+	return types.QuantityType(utils.RoundToDecimalPlace(float64(quantity), pp.GetStepSizeExp()))
 }
 
 func (pp *PairProcessor) Debug(fl, id string) {
@@ -44,8 +43,8 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown types.PriceType, 
 
 func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown types.PriceType, err error) {
 	var (
-		askMax *depth_item.DepthItem
-		bidMax *depth_item.DepthItem
+		askMax *types.DepthItem
+		bidMax *types.DepthItem
 	)
 	if pp.depth != nil {
 		askMax, err = pp.depth.AskMax()
@@ -77,14 +76,14 @@ func (pp *PairProcessor) GetPrices(
 	if pp.depth != nil {
 		priceUp, priceDown, err = pp.GetTargetPrices()
 	} else {
-		priceUp = types.PriceType(pp.RoundPrice(float64(price) * (1 + pp.GetDeltaPrice())))
-		priceDown = types.PriceType(pp.RoundPrice(float64(price) * (1 - pp.GetDeltaPrice())))
+		priceUp = types.PriceType(pp.RoundPrice(price * (1 + pp.GetDeltaPrice())))
+		priceDown = types.PriceType(pp.RoundPrice(price * (1 - pp.GetDeltaPrice())))
 	}
 	reduceOnlyUp = false
 	reduceOnlyDown = false
 
-	quantityUp = types.QuantityType(pp.RoundQuantity(pp.GetLimitOnTransaction() / float64(priceUp)))
-	quantityDown = types.QuantityType(pp.RoundQuantity(pp.GetLimitOnTransaction() / float64(priceDown)))
+	quantityUp = types.QuantityType(pp.RoundQuantity(types.QuantityType(pp.GetLimitOnTransaction() / priceUp)))
+	quantityDown = types.QuantityType(pp.RoundQuantity(types.QuantityType(pp.GetLimitOnTransaction() / priceDown)))
 
 	if quantityUp == 0 && quantityDown == 0 {
 		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)

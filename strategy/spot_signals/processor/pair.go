@@ -8,6 +8,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -21,12 +22,12 @@ func (pp *PairProcessor) GetSymbol() *symbol_types.SpotSymbol {
 	return pp.pairInfo
 }
 
-func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
+func (pp *PairProcessor) GetCurrentPrice() (types.PriceType, error) {
 	price, err := pp.client.NewListPricesService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
 	}
-	return utils.ConvStrToFloat64(price[0].Price), nil
+	return types.PriceType(utils.ConvStrToFloat64(price[0].Price)), nil
 }
 
 func (pp *PairProcessor) GetPair() string {
@@ -63,50 +64,50 @@ func (pp *PairProcessor) GetTargetAsset() (asset *binance.Balance, err error) {
 	return nil, fmt.Errorf("can't find asset %s", pp.targetSymbol)
 }
 
-func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetBaseBalance() (balance types.PriceType, err error) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.Free))
 	return
 }
 
-func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetTargetBalance() (balance types.PriceType, err error) {
 	asset, err := pp.GetTargetAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.Free))
 	return
 }
 
-func (pp *PairProcessor) GetFreeBalance() (balance float64) {
+func (pp *PairProcessor) GetFreeBalance() (balance types.PriceType) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return 0
 	}
-	balance = utils.ConvStrToFloat64(asset.Free) // Convert string to float64
-	if balance > pp.limitOnPosition {
-		balance = pp.limitOnPosition
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.Free))
+	if balance > types.PriceType(pp.limitOnPosition) {
+		balance = types.PriceType(pp.limitOnPosition)
 	}
 	return
 }
 
-func (pp *PairProcessor) GetLimitOnTransaction() (limit float64) {
-	return pp.limitOnTransaction * pp.GetFreeBalance()
+func (pp *PairProcessor) GetLimitOnTransaction() (limit types.PriceType) {
+	return types.PriceType(pp.limitOnTransaction) * pp.GetFreeBalance()
 }
 
-func (pp *PairProcessor) SetBounds(price float64) {
-	pp.UpBound = price * (1 + pp.UpBoundPercent)
-	pp.LowBound = price * (1 - pp.LowBoundPercent)
+func (pp *PairProcessor) SetBounds(price types.PriceType) {
+	pp.UpBound = price * types.PriceType(1+pp.UpBoundPercent)
+	pp.LowBound = price * types.PriceType(1-pp.LowBoundPercent)
 }
 
-func (pp *PairProcessor) GetUpBound() float64 {
+func (pp *PairProcessor) GetUpBound() types.PriceType {
 	return pp.UpBound
 }
 
-func (pp *PairProcessor) GetLowBound() float64 {
+func (pp *PairProcessor) GetLowBound() types.PriceType {
 	return pp.LowBound
 }
 
@@ -118,24 +119,24 @@ func (pp *PairProcessor) SetCallbackRate(callbackRate float64) {
 	pp.callbackRate = callbackRate
 }
 
-func (pp *PairProcessor) GetDeltaPrice() float64 {
+func (pp *PairProcessor) GetDeltaPrice() types.PriceType {
 	return pp.deltaPrice
 }
 
-func (pp *PairProcessor) SetDeltaPrice(deltaPrice float64) {
+func (pp *PairProcessor) SetDeltaPrice(deltaPrice types.PriceType) {
 	pp.deltaPrice = deltaPrice
 }
 
-func (pp *PairProcessor) GetDeltaQuantity() float64 {
+func (pp *PairProcessor) GetDeltaQuantity() types.QuantityType {
 	return pp.deltaQuantity
 }
 
-func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetLockedBalance() (balance types.PriceType, err error) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.Locked) // Convert string to float64
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.Locked))
 	return
 }
 
