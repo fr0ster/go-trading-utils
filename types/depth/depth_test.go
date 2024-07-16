@@ -35,7 +35,7 @@ func TestSetAndGetAsk(t *testing.T) {
 
 	// Add assertions here to verify that the ask is set and retrieved correctly
 	assert.NotNil(t, ask)
-	assert.Equal(t, price, ask.(*types.DepthItem).Price)
+	assert.Equal(t, price, ask.(*types.DepthItem).GetPrice())
 }
 
 func TestSetAndGetBid(t *testing.T) {
@@ -48,7 +48,7 @@ func TestSetAndGetBid(t *testing.T) {
 
 	// Add assertions here to verify that the bid is set and retrieved correctly
 	assert.NotNil(t, bid)
-	assert.Equal(t, price, bid.(*types.DepthItem).Price)
+	assert.Equal(t, price, bid.(*types.DepthItem).GetPrice())
 }
 
 // Add more tests here based on your requirements
@@ -69,25 +69,25 @@ func initDepths(depth *depth_types.Depth) {
 func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 	bids = btree.New(3)
 	bidList := []types.DepthItem{
-		{Price: 1.92, Quantity: 150.2},
-		{Price: 1.93, Quantity: 155.4}, // local maxima
-		{Price: 1.94, Quantity: 150.0},
-		{Price: 1.941, Quantity: 130.4},
-		{Price: 1.947, Quantity: 172.1},
-		{Price: 1.948, Quantity: 187.4},
-		{Price: 1.949, Quantity: 236.1}, // local maxima
-		{Price: 1.95, Quantity: 189.8},
+		*types.NewDepthItem(1.92, 150.2),
+		*types.NewDepthItem(1.93, 155.4), // local maxima
+		*types.NewDepthItem(1.94, 150.0),
+		*types.NewDepthItem(1.941, 130.4),
+		*types.NewDepthItem(1.947, 172.1),
+		*types.NewDepthItem(1.948, 187.4),
+		*types.NewDepthItem(1.949, 236.1), // local maxima
+		*types.NewDepthItem(1.95, 189.8),
 	}
 	asks = btree.New(3)
 	askList := []types.DepthItem{
-		{Price: 1.951, Quantity: 217.9}, // local maxima
-		{Price: 1.952, Quantity: 179.4},
-		{Price: 1.953, Quantity: 180.9}, // local maxima
-		{Price: 1.954, Quantity: 148.5},
-		{Price: 1.955, Quantity: 120.0},
-		{Price: 1.956, Quantity: 110.0},
-		{Price: 1.957, Quantity: 140.0}, // local maxima
-		{Price: 1.958, Quantity: 90.0},
+		*types.NewDepthItem(1.951, 217.9), // local maxima
+		*types.NewDepthItem(1.952, 179.4),
+		*types.NewDepthItem(1.953, 180.9), // local maxima
+		*types.NewDepthItem(1.954, 148.5),
+		*types.NewDepthItem(1.955, 120.0),
+		*types.NewDepthItem(1.956, 110.0),
+		*types.NewDepthItem(1.957, 140.0), // local maxima
+		*types.NewDepthItem(1.958, 90.0),
 	}
 	for _, bid := range bidList {
 		bids.ReplaceOrInsert(&bid)
@@ -109,18 +109,18 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 		asks, bids, summaAsks, summaBids := d.GetAsksBidMaxAndSummaByQuantity(d.GetAsksSummaQuantity()*0.3, d.GetBidsSummaQuantity()*0.3)
 		assert.NotNil(t, asks)
 		assert.NotNil(t, bids)
-		assert.Equal(t, 600.0, asks.Price)
+		assert.Equal(t, 600.0, asks.GetPrice())
 		assert.Equal(t, 10.0, summaAsks)
-		assert.Equal(t, 500.0, bids.Price)
+		assert.Equal(t, 500.0, bids.GetPrice())
 		assert.Equal(t, 10.0, summaBids)
 	}()
 	func() {
 		asks, bids, summaAsks, summaBids := d.GetAsksBidMaxAndSummaByQuantity(d.GetAsksSummaQuantity()*0.3, d.GetBidsSummaQuantity()*0.3, true)
 		assert.NotNil(t, asks)
 		assert.NotNil(t, bids)
-		assert.Equal(t, 600.0, asks.Price)
+		assert.Equal(t, 600.0, asks.GetPrice())
 		assert.Equal(t, 10.0, summaAsks)
-		assert.Equal(t, 500.0, bids.Price)
+		assert.Equal(t, 500.0, bids.GetPrice())
 		assert.Equal(t, 10.0, summaBids)
 	}()
 }
@@ -136,11 +136,11 @@ func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, asks)
 		assert.NotNil(t, bids)
-		assert.Equal(t, 600.0, asks.Price)
-		assert.Equal(t, 10.0, asks.Quantity)
+		assert.Equal(t, 600.0, asks.GetPrice())
+		assert.Equal(t, 10.0, asks.GetQuantity())
 		assert.Equal(t, 10.0, summaAsks)
-		assert.Equal(t, 500.0, bids.Price)
-		assert.Equal(t, 10.0, bids.Quantity)
+		assert.Equal(t, 500.0, bids.GetPrice())
+		assert.Equal(t, 10.0, bids.GetQuantity())
 		assert.Equal(t, 10.0, summaBids)
 	}()
 	func() {
@@ -148,11 +148,11 @@ func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, asks)
 		assert.NotNil(t, bids)
-		assert.Equal(t, 700.0, asks.Price)
-		assert.Equal(t, 20.0, asks.Quantity)
+		assert.Equal(t, 700.0, asks.GetPrice())
+		assert.Equal(t, 20.0, asks.GetQuantity())
 		assert.Equal(t, 30.0, summaAsks)
-		assert.Equal(t, 400.0, bids.Price)
-		assert.Equal(t, 20.0, bids.Quantity)
+		assert.Equal(t, 400.0, bids.GetPrice())
+		assert.Equal(t, 20.0, bids.GetQuantity())
 		assert.Equal(t, 30.0, summaBids)
 	}()
 }
@@ -164,24 +164,24 @@ func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
 	maxAsks, maxBids, summaAsks, summaBids := d.GetAsksBidMaxAndSummaByPrice(850.0, 250.0)
-	assert.Equal(t, 800.0, maxAsks.Price)
+	assert.Equal(t, 800.0, maxAsks.GetPrice())
 	assert.Equal(t, 60.0, summaAsks)
-	assert.Equal(t, 300.0, maxBids.Price)
+	assert.Equal(t, 300.0, maxBids.GetPrice())
 	assert.Equal(t, 60.0, summaBids)
 	maxAsks, maxBids, summaAsks, summaBids = d.GetAsksBidMaxAndSummaByPrice(850.0, 250.0, true)
-	assert.Equal(t, 800.0, maxAsks.Price)
+	assert.Equal(t, 800.0, maxAsks.GetPrice())
 	assert.Equal(t, 60.0, summaAsks)
-	assert.Equal(t, 300.0, maxBids.Price)
+	assert.Equal(t, 300.0, maxBids.GetPrice())
 	assert.Equal(t, 60.0, summaBids)
 	maxAsks, maxBids, summaAsks, summaBids = d.GetAsksBidMaxAndSummaByPrice(950.0, 150.0)
-	assert.Equal(t, 900.0, maxAsks.Price)
+	assert.Equal(t, 900.0, maxAsks.GetPrice())
 	assert.Equal(t, 80.0, summaAsks)
-	assert.Equal(t, 200.0, maxBids.Price)
+	assert.Equal(t, 200.0, maxBids.GetPrice())
 	assert.Equal(t, 80.0, summaBids)
 	maxAsks, maxBids, summaAsks, summaBids = d.GetAsksBidMaxAndSummaByPrice(950.0, 150.0, true)
-	assert.Equal(t, 800.0, maxAsks.Price)
+	assert.Equal(t, 800.0, maxAsks.GetPrice())
 	assert.Equal(t, 60.0, summaAsks)
-	assert.Equal(t, 300.0, maxBids.Price)
+	assert.Equal(t, 300.0, maxBids.GetPrice())
 	assert.Equal(t, 60.0, summaBids)
 }
 
@@ -192,7 +192,7 @@ func TestGetFilteredByPercentAsks(t *testing.T) {
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
 	filtered, summa, max, min := d.GetFilteredByPercentAsks(func(i *types.DepthItem) bool {
-		return i.Quantity*100/d.GetAsksSummaQuantity() > 30
+		return i.GetQuantity()*100/d.GetAsksSummaQuantity() > 30
 	})
 	assert.NotNil(t, filtered)
 	assert.Equal(t, 1, filtered.Len())
@@ -201,7 +201,7 @@ func TestGetFilteredByPercentAsks(t *testing.T) {
 	assert.Equal(t, 30.0, min)
 
 	filtered, summa, max, min = d.GetFilteredByPercentAsks(func(i *types.DepthItem) bool {
-		return i.Quantity*100/d.GetAsksSummaQuantity() < 30
+		return i.GetQuantity()*100/d.GetAsksSummaQuantity() < 30
 	})
 	assert.NotNil(t, filtered)
 	assert.Equal(t, 4, filtered.Len())
@@ -217,7 +217,7 @@ func TestGetFilteredByPercentBids(t *testing.T) {
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
 	filtered, summa, max, min := d.GetFilteredByPercentBids(func(i *types.DepthItem) bool {
-		return i.Quantity*100/d.GetBidsSummaQuantity() > 30
+		return i.GetQuantity()*100/d.GetBidsSummaQuantity() > 30
 	})
 	assert.NotNil(t, filtered)
 	assert.Equal(t, 1, filtered.Len())
@@ -226,7 +226,7 @@ func TestGetFilteredByPercentBids(t *testing.T) {
 	assert.Equal(t, 30.0, min)
 
 	filtered, summa, max, min = d.GetFilteredByPercentBids(func(i *types.DepthItem) bool {
-		return i.Quantity*100/d.GetBidsSummaQuantity() < 30
+		return i.GetQuantity()*100/d.GetBidsSummaQuantity() < 30
 	})
 	assert.NotNil(t, filtered)
 	assert.Equal(t, 4, filtered.Len())
@@ -259,16 +259,16 @@ func TestMinMax(t *testing.T) {
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
 	min, err := d.AskMin()
 	assert.Nil(t, err)
-	assert.Equal(t, 600.0, min.Price)
+	assert.Equal(t, 600.0, min.GetPrice())
 	max, err := d.AskMax()
 	assert.Nil(t, err)
-	assert.Equal(t, 800.0, max.Price)
+	assert.Equal(t, 800.0, max.GetPrice())
 	min, err = d.BidMin()
 	assert.Nil(t, err)
-	assert.Equal(t, 500.0, min.Price)
+	assert.Equal(t, 500.0, min.GetPrice())
 	max, err = d.BidMax()
 	assert.Nil(t, err)
-	assert.Equal(t, 300.0, max.Price)
+	assert.Equal(t, 300.0, max.GetPrice())
 }
 
 func TestGetAsksAndBidSummaAndRange(t *testing.T) {
@@ -279,21 +279,21 @@ func TestGetAsksAndBidSummaAndRange(t *testing.T) {
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
 	func() {
 		maxAsk1, maxBid1, summaAsks1, summaBids1 := d.GetAsksBidMaxAndSummaByPrice(700.0, 400.0)
-		assert.Equal(t, 700.0, maxAsk1.Price)
-		assert.Equal(t, 20.0, maxAsk1.Quantity)
+		assert.Equal(t, 700.0, maxAsk1.GetPrice())
+		assert.Equal(t, 20.0, maxAsk1.GetQuantity())
 		assert.Equal(t, 30.0, summaAsks1)
-		assert.Equal(t, 400.0, maxBid1.Price)
-		assert.Equal(t, 20.0, maxBid1.Quantity)
+		assert.Equal(t, 400.0, maxBid1.GetPrice())
+		assert.Equal(t, 20.0, maxBid1.GetQuantity())
 		assert.Equal(t, 30.0, summaBids1)
 		maxAsk3, maxBid3, summaAsks3, summaBids3 := d.GetAsksBidMaxAndSummaByPrice(950.0, 150.0)
-		assert.Equal(t, 900.0, maxAsk3.Price)
-		assert.Equal(t, 20.0, maxAsk3.Quantity)
+		assert.Equal(t, 900.0, maxAsk3.GetPrice())
+		assert.Equal(t, 20.0, maxAsk3.GetQuantity())
 		assert.Equal(t, 80.0, summaAsks3)
-		assert.Equal(t, 200.0, maxBid3.Price)
-		assert.Equal(t, 20.0, maxBid3.Quantity)
+		assert.Equal(t, 200.0, maxBid3.GetPrice())
+		assert.Equal(t, 20.0, maxBid3.GetQuantity())
 		assert.Equal(t, 80.0, summaBids3)
-		summaAsks2, maxAsks2, minAsks2 := d.GetSummaOfAsksFromRange(maxAsk1.Price, maxAsk3.Price)
-		summaBids2, maxBid2, minBid2 := d.GetSummaOfBidsFromRange(maxBid1.Price, maxBid3.Price)
+		summaAsks2, maxAsks2, minAsks2 := d.GetSummaOfAsksFromRange(maxAsk1.GetPrice(), maxAsk3.GetPrice())
+		summaBids2, maxBid2, minBid2 := d.GetSummaOfBidsFromRange(maxBid1.GetPrice(), maxBid3.GetPrice())
 		assert.Equal(t, 30.0, maxAsks2)
 		assert.Equal(t, 20.0, minAsks2)
 		assert.Equal(t, 50.0, summaAsks2)
@@ -305,21 +305,21 @@ func TestGetAsksAndBidSummaAndRange(t *testing.T) {
 	}()
 	func() {
 		maxAsk1, maxBid1, summaAsks1, summaBids1 := d.GetAsksBidMaxAndSummaByPrice(700.0, 400.0, true)
-		assert.Equal(t, 700.0, maxAsk1.Price)
-		assert.Equal(t, 20.0, maxAsk1.Quantity)
+		assert.Equal(t, 700.0, maxAsk1.GetPrice())
+		assert.Equal(t, 20.0, maxAsk1.GetQuantity())
 		assert.Equal(t, 30.0, summaAsks1)
-		assert.Equal(t, 400.0, maxBid1.Price)
-		assert.Equal(t, 20.0, maxBid1.Quantity)
+		assert.Equal(t, 400.0, maxBid1.GetPrice())
+		assert.Equal(t, 20.0, maxBid1.GetQuantity())
 		assert.Equal(t, 30.0, summaBids1)
 		maxAsk3, maxBid3, summaAsks3, summaBids3 := d.GetAsksBidMaxAndSummaByPrice(950.0, 150.0, true)
-		assert.Equal(t, 800.0, maxAsk3.Price)
-		assert.Equal(t, 30.0, maxAsk3.Quantity)
+		assert.Equal(t, 800.0, maxAsk3.GetPrice())
+		assert.Equal(t, 30.0, maxAsk3.GetQuantity())
 		assert.Equal(t, 60.0, summaAsks3)
-		assert.Equal(t, 300.0, maxBid3.Price)
-		assert.Equal(t, 30.0, maxBid3.Quantity)
+		assert.Equal(t, 300.0, maxBid3.GetPrice())
+		assert.Equal(t, 30.0, maxBid3.GetQuantity())
 		assert.Equal(t, 60.0, summaBids3)
-		summaAsks2, maxAsks2, minAsks2 := d.GetSummaOfAsksFromRange(maxAsk1.Price, maxAsk3.Price)
-		summaBids2, maxBid2, minBid2 := d.GetSummaOfBidsFromRange(maxBid1.Price, maxBid3.Price)
+		summaAsks2, maxAsks2, minAsks2 := d.GetSummaOfAsksFromRange(maxAsk1.GetPrice(), maxAsk3.GetPrice())
+		summaBids2, maxBid2, minBid2 := d.GetSummaOfBidsFromRange(maxBid1.GetPrice(), maxBid3.GetPrice())
 		assert.Equal(t, 30.0, maxAsks2)
 		assert.Equal(t, 30.0, minAsks2)
 		assert.Equal(t, 30.0, summaAsks2)
@@ -343,10 +343,10 @@ func TestGetTargetAsksBidPriceAndRange(t *testing.T) {
 	assert.Equal(t, 10.0, summaBids1)
 	assert.Equal(t, 30.0, summaAsks3)
 	assert.Equal(t, 30.0, summaBids3)
-	summaAsks2, max, min := d.GetSummaOfAsksFromRange(ask1.Price, ask2.Price)
+	summaAsks2, max, min := d.GetSummaOfAsksFromRange(ask1.GetPrice(), ask2.GetPrice())
 	assert.Equal(t, 20.0, max)
 	assert.Equal(t, 20.0, min)
-	summaBids2, max, min := d.GetSummaOfBidsFromRange(bid1.Price, bid2.Price)
+	summaBids2, max, min := d.GetSummaOfBidsFromRange(bid1.GetPrice(), bid2.GetPrice())
 	assert.Equal(t, 20.0, max)
 	assert.Equal(t, 20.0, min)
 	assert.Equal(t, summaAsks2, summaAsks3-summaAsks1)
@@ -407,8 +407,8 @@ func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
-	ask := types.DepthItem{Price: 1.96, Quantity: 200.0}
-	ds.SetAsk(ask.Price, ask.Quantity)
+	ask := types.NewDepthItem(1.96, 200.0)
+	ds.SetAsk(ask.GetPrice(), ask.GetQuantity())
 	if ds.GetAsk(1.96) == nil {
 		t.Errorf("Failed to set ask")
 	}
@@ -418,8 +418,8 @@ func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
-	bid := types.DepthItem{Price: 1.96, Quantity: 200.0}
-	ds.SetBid(bid.Price, bid.Quantity)
+	bid := types.NewDepthItem(1.96, 200.0)
+	ds.SetBid(bid.GetPrice(), bid.GetQuantity())
 	if ds.GetBid(1.96) == nil {
 		t.Errorf("Failed to set bid")
 	}
@@ -457,11 +457,11 @@ func TestRestrictAskAndBidUp(t *testing.T) {
 
 func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 	ds.GetAsks().Ascend(func(i btree.Item) bool {
-		summaAsks += i.(*types.DepthItem).Quantity
+		summaAsks += i.(*types.DepthItem).GetQuantity()
 		return true
 	})
 	ds.GetBids().Ascend(func(i btree.Item) bool {
-		summaBids += i.(*types.DepthItem).Quantity
+		summaBids += i.(*types.DepthItem).GetQuantity()
 		return true
 	})
 	return
@@ -475,7 +475,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask := ds.GetAsk(1.951)
 	bid := ds.GetBid(1.951)
 	summaAsks, summaBids := summaAsksAndBids(ds)
-	assert.Equal(t, 217.9, ask.(*types.DepthItem).Quantity)
+	assert.Equal(t, 217.9, ask.(*types.DepthItem).GetQuantity())
 	assert.Nil(t, bid)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -483,7 +483,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask = ds.GetAsk(1.951)
 	bid = ds.GetBid(1.951)
 	summaAsks, summaBids = summaAsksAndBids(ds)
-	assert.Equal(t, 300.0, ask.(*types.DepthItem).Quantity)
+	assert.Equal(t, 300.0, ask.(*types.DepthItem).GetQuantity())
 	assert.Nil(t, bid)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -492,7 +492,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask = ds.GetAsk(1.951)
 	bid = ds.GetBid(1.951)
 	assert.Nil(t, ask)
-	assert.Equal(t, 300.0, bid.(*types.DepthItem).Quantity)
+	assert.Equal(t, 300.0, bid.(*types.DepthItem).GetQuantity())
 	summaAsks, summaBids = summaAsksAndBids(ds)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -525,10 +525,10 @@ func TestDepthInterface(t *testing.T) {
 	test := func(ds depth_interface.Depth) {
 		ds.UpdateBid(1.93, 300.0)
 		bid := ds.GetBid(1.93)
-		assert.Equal(t, 300.0, bid.(*types.DepthItem).Quantity)
+		assert.Equal(t, 300.0, bid.(*types.DepthItem).GetQuantity())
 		ds.UpdateAsk(1.951, 300.0)
 		ask := ds.GetAsk(1.951)
-		assert.Equal(t, 300.0, ask.(*types.DepthItem).Quantity)
+		assert.Equal(t, 300.0, ask.(*types.DepthItem).GetQuantity())
 	}
 	asks, bids := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
@@ -586,8 +586,8 @@ func TestAddAskAndBidNormalized(t *testing.T) {
 		ds.SetAsk(800, 100)
 		ds.SetAsk(850, 150)
 		askNorm1, _ := ds.GetNormalizedAsk(800)
-		assert.Equal(t, 800.0, askNorm1.Price)
-		assert.Equal(t, 250.0, askNorm1.Quantity)
+		assert.Equal(t, 800.0, askNorm1.GetPrice())
+		assert.Equal(t, 150.0, askNorm1.GetQuantity())
 	}()
 	func() {
 		asks, bids := getTestDepths()
@@ -595,8 +595,8 @@ func TestAddAskAndBidNormalized(t *testing.T) {
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		askNorm1, _ := ds.GetNormalizedAsk(1.953)
-		assert.Equal(t, 195.0, askNorm1.Price)
-		assert.Equal(t, 726.7, askNorm1.Quantity)
+		assert.Equal(t, 195.0, askNorm1.GetPrice())
+		assert.Equal(t, 148.5, askNorm1.GetQuantity())
 	}()
 }
 

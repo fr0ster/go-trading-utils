@@ -55,8 +55,8 @@ func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error
 		if err != nil {
 			return
 		}
-		priceUp = askMax.Price
-		priceDown = bidMax.Price
+		priceUp = askMax.GetPrice()
+		priceDown = bidMax.GetPrice()
 	} else {
 		err = fmt.Errorf("depth is nil")
 	}

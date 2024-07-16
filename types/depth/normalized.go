@@ -29,9 +29,9 @@ func (d *Depth) GetNormalizedPrice(price float64, RoundUp bool) (normalizedPrice
 		}
 	}
 	if max := d.asks.Max(); max != nil {
-		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).Price), 0)
+		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
 	} else if max := d.bids.Max(); max != nil {
-		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).Price), 0)
+		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
 	} else {
 		err = errors.New("asks and bids is empty")
 	}
@@ -43,7 +43,7 @@ func (d *Depth) GetNormalizedAsk(price float64) (item *types.NormalizedItem, err
 	if err != nil {
 		return
 	}
-	if val := d.askNormalized.Get(&types.NormalizedItem{Price: normalizedPrice}); val != nil {
+	if val := d.askNormalized.Get(d.NewNormalizedItem(normalizedPrice)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
 	return
@@ -54,7 +54,7 @@ func (d *Depth) GetNormalizedBid(price float64) (item *types.NormalizedItem, err
 	if err != nil {
 		return
 	}
-	if val := d.bidNormalized.Get(&types.NormalizedItem{Price: normalizedPrice}); val != nil {
+	if val := d.bidNormalized.Get(d.NewNormalizedItem(normalizedPrice)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
 	return
@@ -67,25 +67,20 @@ func (d *Depth) addNormalized(tree *btree.BTree, price float64, quantity float64
 		if err != nil {
 			return
 		}
-		depthItem := &types.DepthItem{Price: price, Quantity: quantity}
-		if old := tree.Get(&types.NormalizedItem{Price: normalizedPrice}); old != nil {
+		depthItem := types.NewDepthItem(price, quantity)
+		if old := tree.Get(d.NewNormalizedItem(normalizedPrice)); old != nil {
 			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
-				val.SetDepth(&types.DepthItem{Price: price, Quantity: quantity})
+				val.SetDepth(depthItem)
 			} else {
-				item := &types.QuantityItem{Quantity: quantity, Depths: btree.New(d.degree)}
+				item := d.NewQuantityItem(price, quantity)
 				item.SetDepth(depthItem)
 				old.(*types.NormalizedItem).SetMinMax(item)
 			}
 			old.(*types.NormalizedItem).SetDepth(depthItem)
-			old.(*types.NormalizedItem).Quantity += quantity
+			old.(*types.NormalizedItem).SetQuantity(quantity)
 		} else {
-			item := &types.NormalizedItem{
-				Price:     normalizedPrice,
-				Quantity:  quantity,
-				MinMax:    btree.New(d.degree),
-				DepthItem: btree.New(d.degree),
-			}
-			minMax := &types.QuantityItem{Quantity: quantity, Depths: btree.New(d.degree)}
+			item := d.NewNormalizedItem(normalizedPrice, quantity)
+			minMax := d.NewQuantityItem(price, quantity)
 			minMax.SetDepth(depthItem)
 			item.SetMinMax(minMax)
 			item.SetDepth(depthItem)
@@ -107,13 +102,11 @@ func (d *Depth) AddBidNormalized(price float64, quantity float64) error {
 
 func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity float64) (err error) {
 	if tree != nil {
-		depthItem := &types.DepthItem{Price: price, Quantity: quantity}
-		if old := tree.Get(&types.NormalizedItem{Price: price}); old != nil {
+		depthItem := types.NewDepthItem(price, quantity)
+		if old := tree.Get(d.NewNormalizedItem(price)); old != nil {
 			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
 				val.DeleteDepth(depthItem)
-				if val.Depths.Len() == 0 {
-					old.(*types.NormalizedItem).DeleteMinMax(val)
-				}
+				old.(*types.NormalizedItem).DeleteMinMax(val)
 			}
 			old.(*types.NormalizedItem).DeleteDepth(depthItem)
 		}
@@ -137,4 +130,12 @@ func (d *Depth) GetNormalizedAsks() *btree.BTree {
 
 func (d *Depth) GetNormalizedBids() *btree.BTree {
 	return d.bidNormalized
+}
+
+func (d *Depth) NewNormalizedItem(price float64, quantity ...float64) *types.NormalizedItem {
+	if len(quantity) > 0 {
+		return types.NewNormalizedItem(price, quantity[0], d.degree)
+	} else {
+		return types.NewNormalizedItem(price, 0, d.degree)
+	}
 }

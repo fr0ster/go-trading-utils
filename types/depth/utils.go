@@ -6,7 +6,7 @@ func (d *Depth) GetTargetPrices(percent float64) (priceUp, priceDown, summaAsks,
 		d.GetBidsSummaQuantity()*percent/100,
 		true,
 	)
-	priceUp = upDepthItem.Price
-	priceDown = DownDepthItem.Price
+	priceUp = upDepthItem.GetPrice()
+	priceDown = DownDepthItem.GetPrice()
 	return
 }

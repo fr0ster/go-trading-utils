@@ -18,11 +18,11 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid f
 	getIterator := func(target float64, item *types.DepthItem, summa *float64) func(i btree.Item) bool {
 		buffer := 0.0
 		return func(i btree.Item) bool {
-			if (*summa + i.(*types.DepthItem).Quantity) < target {
-				buffer += i.(*types.DepthItem).Quantity
-				if !IsFirstMax || i.(*types.DepthItem).Quantity >= item.Quantity {
-					item.Price = i.(*types.DepthItem).Price
-					item.Quantity = i.(*types.DepthItem).Quantity
+			if (*summa + i.(*types.DepthItem).GetQuantity()) < target {
+				buffer += i.(*types.DepthItem).GetQuantity()
+				if !IsFirstMax || i.(*types.DepthItem).GetQuantity() >= item.GetQuantity() {
+					item.SetPrice(i.(*types.DepthItem).GetPrice())
+					item.SetQuantity(i.(*types.DepthItem).GetQuantity())
 					*summa = buffer
 				}
 				return true
@@ -53,10 +53,10 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetP
 	}
 	getIterator := func(targetPercent float64, max, item *types.DepthItem, summa *float64) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
-			*summa += i.(*types.DepthItem).Quantity
-			if (i.(*types.DepthItem).Quantity)*100/max.Quantity >= targetPercent {
-				item.Price = i.(*types.DepthItem).Price
-				item.Quantity = i.(*types.DepthItem).Quantity
+			*summa += i.(*types.DepthItem).GetQuantity()
+			if (i.(*types.DepthItem).GetQuantity())*100/max.GetQuantity() >= targetPercent {
+				item.SetPrice(i.(*types.DepthItem).GetPrice())
+				item.SetQuantity(i.(*types.DepthItem).GetQuantity())
 				return false
 			} else {
 				return true

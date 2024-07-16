@@ -21,11 +21,11 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 		f func(float64, float64) bool) func(i btree.Item) bool {
 		buffer := 0.0
 		return func(i btree.Item) bool {
-			if f(i.(*types.DepthItem).Price, targetPrice) {
-				buffer += i.(*types.DepthItem).Quantity
-				if !IsFirstMax || i.(*types.DepthItem).Quantity >= item.Quantity {
-					item.Price = i.(*types.DepthItem).Price
-					item.Quantity = i.(*types.DepthItem).Quantity
+			if f(i.(*types.DepthItem).GetPrice(), targetPrice) {
+				buffer += i.(*types.DepthItem).GetQuantity()
+				if !IsFirstMax || i.(*types.DepthItem).GetQuantity() >= item.GetQuantity() {
+					item.SetPrice(i.(*types.DepthItem).GetPrice())
+					item.SetQuantity(i.(*types.DepthItem).GetQuantity())
 					*summa = buffer
 				}
 				return true

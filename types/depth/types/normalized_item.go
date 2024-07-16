@@ -6,39 +6,52 @@ import (
 
 type (
 	NormalizedItem struct {
-		Price     float64
-		Quantity  float64
-		MinMax    *btree.BTree
-		DepthItem *btree.BTree
+		degree   int
+		price    float64
+		quantity float64
+		minMax   *btree.BTree
+		depths   *btree.BTree
 	}
 )
 
 func (i *NormalizedItem) Less(than btree.Item) bool {
-	return i.Price < than.(*NormalizedItem).Price
+	return i.price < than.(*NormalizedItem).price
 }
 
 func (i *NormalizedItem) Equal(than btree.Item) bool {
-	return i.Price == than.(*NormalizedItem).Price
+	return i.price == than.(*NormalizedItem).price
+}
+
+func (i *NormalizedItem) GetPrice() float64 {
+	return i.price
+}
+
+func (i *NormalizedItem) GetQuantity() float64 {
+	return i.quantity
+}
+
+func (i *NormalizedItem) SetQuantity(quantity float64) {
+	i.quantity = quantity
 }
 
 func (i *NormalizedItem) GetDepth(price float64) (depthItem *DepthItem) {
-	if i.DepthItem != nil {
-		depthItem = i.DepthItem.Get(&DepthItem{Price: price}).(*DepthItem)
+	if i.depths != nil {
+		depthItem = i.depths.Get(NewDepthItem(price)).(*DepthItem)
 	}
 	return
 }
 
 func (i *NormalizedItem) SetDepth(depth *DepthItem) {
-	i.DepthItem.ReplaceOrInsert(depth)
+	i.depths.ReplaceOrInsert(depth)
 }
 
 func (i *NormalizedItem) DeleteDepth(depth *DepthItem) {
-	i.DepthItem.Delete(depth)
+	i.depths.Delete(depth)
 }
 
 func (i *NormalizedItem) GetMinMax(quantity float64) (minMax *QuantityItem) {
-	if i.MinMax != nil {
-		if val := i.MinMax.Get(&QuantityItem{Quantity: quantity}); val != nil {
+	if i.minMax != nil {
+		if val := i.minMax.Get(&QuantityItem{quantity: quantity}); val != nil {
 			minMax = val.(*QuantityItem)
 		}
 	}
@@ -46,9 +59,16 @@ func (i *NormalizedItem) GetMinMax(quantity float64) (minMax *QuantityItem) {
 }
 
 func (i *NormalizedItem) SetMinMax(minMax *QuantityItem) {
-	i.MinMax.ReplaceOrInsert(minMax)
+	i.minMax.ReplaceOrInsert(minMax)
 }
 
 func (i *NormalizedItem) DeleteMinMax(minMax *QuantityItem) {
-	i.MinMax.Delete(minMax)
+	i.minMax.Delete(minMax)
+}
+
+func NewNormalizedItem(price float64, quantity float64, degree int) *NormalizedItem {
+	item := &NormalizedItem{degree: degree, price: price, quantity: quantity, minMax: btree.New(degree), depths: btree.New(degree)}
+	item.SetDepth(NewDepthItem(price, quantity))
+	item.SetMinMax(NewQuantityItem(price, quantity, degree))
+	return item
 }
