@@ -3,10 +3,12 @@ package processor
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 
@@ -35,23 +37,7 @@ func NewPairProcessor(
 	exchangeInfo := exchange_types.New()
 	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
 	if err != nil {
-		apiErr, _ := utils.ParseAPIError(err)
-		switch apiErr.Code {
-		case -1003:
-			var bannedUntil string
-			_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP banned until %s", &bannedUntil)
-			if errScanf != nil {
-				return
-			}
-			timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
-			if errParse != nil {
-				return
-			}
-
-			// Для Go 1.17 і вище
-			bannedTime := time.UnixMilli(timestamp)
-			err = fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
-		}
+		err = ParseError(err)
 		return
 	}
 	pp = &PairProcessor{
@@ -63,8 +49,7 @@ func NewPairProcessor(
 		pairInfo:   nil,
 		orderTypes: map[binance.OrderType]bool{},
 		degree:     3,
-		// sleepingTime: 1 * time.Second,
-		timeOut: 1 * time.Hour,
+		timeOut:    1 * time.Hour,
 
 		depth: nil,
 	}
@@ -81,6 +66,7 @@ func NewPairProcessor(
 	// Буферизуємо інформацію про символ
 	pp.symbol, err = pp.GetSymbol().GetSpotSymbol()
 	if err != nil {
+		err = ParseError(err)
 		return
 	}
 	pp.baseSymbol = pp.symbol.QuoteAsset
@@ -101,4 +87,42 @@ func NewPairProcessor(
 	}
 
 	return
+}
+
+func printError() {
+	if logrus.GetLevel() == logrus.DebugLevel {
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			logrus.Errorf("Error occurred in file: %s at line: %d", file, line)
+		} else {
+			logrus.Errorf("Error occurred but could not get the caller information")
+		}
+	}
+}
+
+func ParseError(err error) error {
+	apiErr, _ := utils.ParseAPIError(err)
+	printError()
+	switch apiErr.Code {
+	case -1003:
+		var (
+			bannedIP    string
+			bannedUntil string
+		)
+		_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP(%s) banned until %s. Please use the websocket for live updates to avoid bans.",
+			&bannedIP, &bannedUntil)
+		if errScanf != nil {
+			return err
+		}
+		timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
+		if errParse != nil {
+			return err
+		}
+
+		// Для Go 1.17 і вище
+		bannedTime := time.UnixMilli(timestamp)
+		return fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
+	default:
+		return err
+	}
 }

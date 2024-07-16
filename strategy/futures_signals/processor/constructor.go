@@ -3,11 +3,13 @@ package processor
 import (
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
+	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
@@ -39,25 +41,8 @@ func NewPairProcessor(
 	callbackRate float64,
 	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
-	err = futures_exchange_info.Init(exchangeInfo, 3, client)
+	err = futures_exchange_info.RestrictedInit(exchangeInfo, 3, []string{symbol}, client)
 	if err != nil {
-		apiErr, _ := utils.ParseAPIError(err)
-		switch apiErr.Code {
-		case -1003:
-			var bannedUntil string
-			_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP banned until %s", &bannedUntil)
-			if errScanf != nil {
-				return
-			}
-			timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
-			if errParse != nil {
-				return
-			}
-
-			// Для Go 1.17 і вище
-			bannedTime := time.UnixMilli(timestamp)
-			err = fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
-		}
 		return
 	}
 	pp = &PairProcessor{
@@ -119,12 +104,6 @@ func NewPairProcessor(
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
-	currentPrice, err := pp.GetCurrentPrice()
-	if err != nil {
-		return
-	}
-	pp.SetBounds(currentPrice)
-
 	if pp.progression == pairs_types.ArithmeticProgression {
 		pp.NthTerm = progressions.ArithmeticProgressionNthTerm
 		pp.Sum = progressions.ArithmeticProgressionSum
@@ -183,6 +162,7 @@ func NewPairProcessor(
 		pp.FindProgressionTthTerm = progressions.FindHarmonicProgressionTthTerm
 	} else {
 		err = fmt.Errorf("progression type %v is not supported", pp.progression)
+		err = ParseError(err)
 		return
 	}
 	if leverage != 0 {
@@ -190,6 +170,7 @@ func NewPairProcessor(
 		res, _ := pp.SetLeverage(leverage)
 		if res.Leverage != leverage {
 			err = fmt.Errorf("leverage %v is not supported", leverage)
+			err = ParseError(err)
 			return
 		}
 	}
@@ -204,4 +185,42 @@ func NewPairProcessor(
 	}
 
 	return
+}
+
+func printError() {
+	if logrus.GetLevel() == logrus.DebugLevel {
+		_, file, line, ok := runtime.Caller(1)
+		if ok {
+			logrus.Errorf("Error occurred in file: %s at line: %d", file, line)
+		} else {
+			logrus.Errorf("Error occurred but could not get the caller information")
+		}
+	}
+}
+
+func ParseError(err error) error {
+	apiErr, _ := utils.ParseAPIError(err)
+	printError()
+	switch apiErr.Code {
+	case -1003:
+		var (
+			bannedIP    string
+			bannedUntil string
+		)
+		_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP(%s) banned until %s. Please use the websocket for live updates to avoid bans.",
+			&bannedIP, &bannedUntil)
+		if errScanf != nil {
+			return err
+		}
+		timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
+		if errParse != nil {
+			return err
+		}
+
+		// Для Go 1.17 і вище
+		bannedTime := time.UnixMilli(timestamp)
+		return fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
+	default:
+		return err
+	}
 }
