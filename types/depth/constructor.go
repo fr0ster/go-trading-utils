@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	"github.com/google/btree"
+
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
@@ -43,8 +45,10 @@ func New(
 		degree:          degree,
 		asks:            btree.New(degree),
 		asksMinMax:      asksMinMax,
+		askNormalized:   btree.New(degree),
 		bids:            btree.New(degree),
 		bidsMinMax:      bidsMinMax,
+		bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},
 		limitDepth:      limitDepth,
 		limitStream:     limitStream,
@@ -54,12 +58,12 @@ func New(
 	}
 }
 
-func Binance2BookTicker(binanceDepth interface{}) (*DepthItem, error) {
+func Binance2BookTicker(binanceDepth interface{}) (*types.DepthItem, error) {
 	switch binanceDepth := binanceDepth.(type) {
-	case *DepthItem:
+	case *types.DepthItem:
 		return binanceDepth, nil
 	}
-	return nil, errors.New("it's not a DepthItemType")
+	return nil, errors.New("it's not a types.DepthItemType")
 }
 
 // Symbol implements depth_interface.Depths.

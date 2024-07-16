@@ -30,20 +30,6 @@ type (
 )
 
 type (
-	DeviationItem struct {
-		Price     float64
-		Quantity  float64
-		Deviation float64
-	}
-	QuantityItem struct {
-		Quantity float64
-		Depths   *btree.BTree
-	}
-	DepthItem struct {
-		Price    float64
-		Quantity float64
-	}
-	// DepthItemType - тип для зберігання заявок в стакані
 	Depth struct {
 		symbol            string
 		degree            int
@@ -51,10 +37,12 @@ type (
 		asksCountQuantity int
 		asksSummaQuantity float64
 		asksMinMax        *btree.BTree
+		askNormalized     *btree.BTree
 		bids              *btree.BTree
 		bidsCountQuantity int
 		bidsSummaQuantity float64
 		bidsMinMax        *btree.BTree
+		bidNormalized     *btree.BTree
 		mutex             *sync.Mutex
 		LastUpdateID      int64
 		limitDepth        DepthAPILimit
@@ -63,30 +51,7 @@ type (
 		percentToTarget   float64
 		expBase           int
 	}
-	DepthFilter func(*DepthItem) bool
-	DepthTester func(result *DepthItem, target *DepthItem) bool
 )
-
-func (i *DepthItem) Less(than btree.Item) bool {
-	return i.Price < than.(*DepthItem).Price
-}
-
-func (i *DepthItem) Equal(than btree.Item) bool {
-	return i.Price == than.(*DepthItem).Price
-}
-
-// GetAskDeviation implements depth_interface.Depths.
-func (d *DepthItem) GetQuantityDeviation(middle float64) float64 {
-	return d.Quantity - middle
-}
-
-func (i *QuantityItem) Less(than btree.Item) bool {
-	return i.Quantity < than.(*QuantityItem).Quantity
-}
-
-func (i *QuantityItem) Equal(than btree.Item) bool {
-	return i.Quantity == than.(*QuantityItem).Quantity
-}
 
 // Lock implements depth_interface.Depths.
 func (d *Depth) Lock() {

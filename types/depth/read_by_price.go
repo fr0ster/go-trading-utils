@@ -1,12 +1,13 @@
 package depth
 
 import (
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	"github.com/google/btree"
 )
 
 func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid float64, firstMax ...bool) (
 	asks,
-	bids *DepthItem,
+	bids *types.DepthItem,
 	summaAsks,
 	summaBids float64) {
 	var IsFirstMax bool
@@ -15,16 +16,16 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 	}
 	getIterator := func(
 		targetPrice float64,
-		item *DepthItem,
+		item *types.DepthItem,
 		summa *float64,
 		f func(float64, float64) bool) func(i btree.Item) bool {
 		buffer := 0.0
 		return func(i btree.Item) bool {
-			if f(i.(*DepthItem).Price, targetPrice) {
-				buffer += i.(*DepthItem).Quantity
-				if !IsFirstMax || i.(*DepthItem).Quantity >= item.Quantity {
-					item.Price = i.(*DepthItem).Price
-					item.Quantity = i.(*DepthItem).Quantity
+			if f(i.(*types.DepthItem).Price, targetPrice) {
+				buffer += i.(*types.DepthItem).Quantity
+				if !IsFirstMax || i.(*types.DepthItem).Quantity >= item.Quantity {
+					item.Price = i.(*types.DepthItem).Price
+					item.Quantity = i.(*types.DepthItem).Quantity
 					*summa = buffer
 				}
 				return true
@@ -33,8 +34,8 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 			}
 		}
 	}
-	asks = &DepthItem{}
-	bids = &DepthItem{}
+	asks = &types.DepthItem{}
+	bids = &types.DepthItem{}
 	d.GetAsks().Ascend(
 		getIterator(
 			targetPriceAsk,

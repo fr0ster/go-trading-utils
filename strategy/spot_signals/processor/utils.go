@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	depth_item "github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
@@ -43,8 +43,8 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown float64, err erro
 
 func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error) {
 	var (
-		askMax *depth_types.DepthItem
-		bidMax *depth_types.DepthItem
+		askMax *depth_item.DepthItem
+		bidMax *depth_item.DepthItem
 	)
 	if pp.depth != nil {
 		askMax, err = pp.depth.AskMax()

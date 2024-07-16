@@ -1,12 +1,13 @@
 package depth
 
 import (
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	"github.com/google/btree"
 )
 
 // GetAsk implements depth_interface.Depths.
 func (d *Depth) GetAsk(price float64) btree.Item {
-	item := d.asks.Get(&DepthItem{Price: price})
+	item := d.asks.Get(&types.DepthItem{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -15,7 +16,7 @@ func (d *Depth) GetAsk(price float64) btree.Item {
 
 // GetBid implements depth_interface.Depths.
 func (d *Depth) GetBid(price float64) btree.Item {
-	item := d.bids.Get(&DepthItem{Price: price})
+	item := d.bids.Get(&types.DepthItem{Price: price})
 	if item == nil {
 		return nil
 	}
@@ -23,53 +24,59 @@ func (d *Depth) GetBid(price float64) btree.Item {
 }
 
 // SetAsk implements depth_interface.Depths.
-func (d *Depth) SetAsk(price float64, quantity float64) {
-	old := d.asks.Get(&DepthItem{Price: price})
+func (d *Depth) SetAsk(price float64, quantity float64) (err error) {
+	old := d.asks.Get(&types.DepthItem{Price: price})
 	if old != nil {
-		d.asksSummaQuantity -= old.(*DepthItem).Quantity
+		d.asksSummaQuantity -= old.(*types.DepthItem).Quantity
 		d.asksCountQuantity--
-		d.DeleteAskMinMax(old.(*DepthItem).Quantity, old.(*DepthItem).Price)
+		d.DeleteAskMinMax(old.(*types.DepthItem).Quantity, old.(*types.DepthItem).Price)
 	}
-	item := &DepthItem{Price: price, Quantity: quantity}
+	item := &types.DepthItem{Price: price, Quantity: quantity}
 	d.asks.ReplaceOrInsert(item)
 	d.asksSummaQuantity += quantity
 	d.asksCountQuantity++
 	d.AddAskMinMax(price, quantity)
+	err = d.AddAskNormalized(price, quantity)
+	return
 }
 
 // SetBid implements depth_interface.Depths.
-func (d *Depth) SetBid(price float64, quantity float64) {
-	old := d.bids.Get(&DepthItem{Price: price})
+func (d *Depth) SetBid(price float64, quantity float64) (err error) {
+	old := d.bids.Get(&types.DepthItem{Price: price})
 	if old != nil {
-		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
+		d.bidsSummaQuantity -= old.(*types.DepthItem).Quantity
 		d.bidsCountQuantity--
-		d.DeleteBidMinMax(old.(*DepthItem).Quantity, old.(*DepthItem).Price)
+		d.DeleteBidMinMax(old.(*types.DepthItem).Quantity, old.(*types.DepthItem).Price)
 	}
-	item := &DepthItem{Price: price, Quantity: quantity}
+	item := &types.DepthItem{Price: price, Quantity: quantity}
 	d.bids.ReplaceOrInsert(item)
 	d.bidsSummaQuantity += quantity
 	d.bidsCountQuantity++
 	d.AddBidMinMax(price, quantity)
+	err = d.AddBidNormalized(price, quantity)
+	return
 }
 
 // DeleteAsk implements depth_interface.Depths.
 func (d *Depth) DeleteAsk(price float64) {
-	old := d.asks.Get(&DepthItem{Price: price})
+	old := d.asks.Get(&types.DepthItem{Price: price})
 	if old != nil {
-		d.asksSummaQuantity -= old.(*DepthItem).Quantity
-		d.DeleteAskMinMax(price, old.(*DepthItem).Quantity)
+		d.asksSummaQuantity -= old.(*types.DepthItem).Quantity
+		d.DeleteAskMinMax(price, old.(*types.DepthItem).Quantity)
+		d.DeleteAskNormalized(price, old.(*types.DepthItem).Quantity)
 	}
-	d.asks.Delete(&DepthItem{Price: price})
+	d.asks.Delete(&types.DepthItem{Price: price})
 }
 
 // DeleteBid implements depth_interface.Depths.
 func (d *Depth) DeleteBid(price float64) {
-	old := d.bids.Get(&DepthItem{Price: price})
+	old := d.bids.Get(&types.DepthItem{Price: price})
 	if old != nil {
-		d.bidsSummaQuantity -= old.(*DepthItem).Quantity
-		d.DeleteBidMinMax(price, old.(*DepthItem).Quantity)
+		d.bidsSummaQuantity -= old.(*types.DepthItem).Quantity
+		d.DeleteBidMinMax(price, old.(*types.DepthItem).Quantity)
+		d.DeleteBidNormalized(price, old.(*types.DepthItem).Quantity)
 	}
-	d.bids.Delete(&DepthItem{Price: price})
+	d.bids.Delete(&types.DepthItem{Price: price})
 }
 
 // UpdateAsk implements depth_interface.Depths.

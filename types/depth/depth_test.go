@@ -8,6 +8,7 @@ import (
 
 	depth_interface "github.com/fr0ster/go-trading-utils/interfaces/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -34,7 +35,7 @@ func TestSetAndGetAsk(t *testing.T) {
 
 	// Add assertions here to verify that the ask is set and retrieved correctly
 	assert.NotNil(t, ask)
-	assert.Equal(t, price, ask.(*depth_types.DepthItem).Price)
+	assert.Equal(t, price, ask.(*types.DepthItem).Price)
 }
 
 func TestSetAndGetBid(t *testing.T) {
@@ -47,7 +48,7 @@ func TestSetAndGetBid(t *testing.T) {
 
 	// Add assertions here to verify that the bid is set and retrieved correctly
 	assert.NotNil(t, bid)
-	assert.Equal(t, price, bid.(*depth_types.DepthItem).Price)
+	assert.Equal(t, price, bid.(*types.DepthItem).Price)
 }
 
 // Add more tests here based on your requirements
@@ -67,7 +68,7 @@ func initDepths(depth *depth_types.Depth) {
 
 func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 	bids = btree.New(3)
-	bidList := []depth_types.DepthItem{
+	bidList := []types.DepthItem{
 		{Price: 1.92, Quantity: 150.2},
 		{Price: 1.93, Quantity: 155.4}, // local maxima
 		{Price: 1.94, Quantity: 150.0},
@@ -78,7 +79,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		{Price: 1.95, Quantity: 189.8},
 	}
 	asks = btree.New(3)
-	askList := []depth_types.DepthItem{
+	askList := []types.DepthItem{
 		{Price: 1.951, Quantity: 217.9}, // local maxima
 		{Price: 1.952, Quantity: 179.4},
 		{Price: 1.953, Quantity: 180.9}, // local maxima
@@ -190,7 +191,7 @@ func TestGetFilteredByPercentAsks(t *testing.T) {
 	// Add assertions here to verify that the GetFilteredByPercentAsks method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
-	filtered, summa, max, min := d.GetFilteredByPercentAsks(func(i *depth_types.DepthItem) bool {
+	filtered, summa, max, min := d.GetFilteredByPercentAsks(func(i *types.DepthItem) bool {
 		return i.Quantity*100/d.GetAsksSummaQuantity() > 30
 	})
 	assert.NotNil(t, filtered)
@@ -199,7 +200,7 @@ func TestGetFilteredByPercentAsks(t *testing.T) {
 	assert.Equal(t, 30.0, max)
 	assert.Equal(t, 30.0, min)
 
-	filtered, summa, max, min = d.GetFilteredByPercentAsks(func(i *depth_types.DepthItem) bool {
+	filtered, summa, max, min = d.GetFilteredByPercentAsks(func(i *types.DepthItem) bool {
 		return i.Quantity*100/d.GetAsksSummaQuantity() < 30
 	})
 	assert.NotNil(t, filtered)
@@ -215,7 +216,7 @@ func TestGetFilteredByPercentBids(t *testing.T) {
 	// Add assertions here to verify that the GetFilteredByPercentBids method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
-	filtered, summa, max, min := d.GetFilteredByPercentBids(func(i *depth_types.DepthItem) bool {
+	filtered, summa, max, min := d.GetFilteredByPercentBids(func(i *types.DepthItem) bool {
 		return i.Quantity*100/d.GetBidsSummaQuantity() > 30
 	})
 	assert.NotNil(t, filtered)
@@ -224,7 +225,7 @@ func TestGetFilteredByPercentBids(t *testing.T) {
 	assert.Equal(t, 30.0, max)
 	assert.Equal(t, 30.0, min)
 
-	filtered, summa, max, min = d.GetFilteredByPercentBids(func(i *depth_types.DepthItem) bool {
+	filtered, summa, max, min = d.GetFilteredByPercentBids(func(i *types.DepthItem) bool {
 		return i.Quantity*100/d.GetBidsSummaQuantity() < 30
 	})
 	assert.NotNil(t, filtered)
@@ -240,11 +241,11 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 	// Add assertions here to verify that the GetSummaOfAsksFromRange method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
 	assert.Equal(t, 90.0, d.GetBidsSummaQuantity())
-	summaAsk, max, min := d.GetSummaOfAsksFromRange(600.0, 800.0, func(d *depth_types.DepthItem) bool { return true })
+	summaAsk, max, min := d.GetSummaOfAsksFromRange(600.0, 800.0, func(d *types.DepthItem) bool { return true })
 	assert.Equal(t, 50.0, summaAsk)
 	assert.Equal(t, 30.0, max)
 	assert.Equal(t, 20.0, min)
-	summaBid, max, min := d.GetSummaOfBidsFromRange(300.0, 50.0, func(d *depth_types.DepthItem) bool { return true })
+	summaBid, max, min := d.GetSummaOfBidsFromRange(300.0, 50.0, func(d *types.DepthItem) bool { return true })
 	assert.Equal(t, 30.0, summaBid)
 	assert.Equal(t, 20.0, max)
 	assert.Equal(t, 10.0, min)
@@ -406,7 +407,7 @@ func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
-	ask := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
+	ask := types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetAsk(ask.Price, ask.Quantity)
 	if ds.GetAsk(1.96) == nil {
 		t.Errorf("Failed to set ask")
@@ -417,7 +418,7 @@ func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
-	bid := depth_types.DepthItem{Price: 1.96, Quantity: 200.0}
+	bid := types.DepthItem{Price: 1.96, Quantity: 200.0}
 	ds.SetBid(bid.Price, bid.Quantity)
 	if ds.GetBid(1.96) == nil {
 		t.Errorf("Failed to set bid")
@@ -456,11 +457,11 @@ func TestRestrictAskAndBidUp(t *testing.T) {
 
 func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 	ds.GetAsks().Ascend(func(i btree.Item) bool {
-		summaAsks += i.(*depth_types.DepthItem).Quantity
+		summaAsks += i.(*types.DepthItem).Quantity
 		return true
 	})
 	ds.GetBids().Ascend(func(i btree.Item) bool {
-		summaBids += i.(*depth_types.DepthItem).Quantity
+		summaBids += i.(*types.DepthItem).Quantity
 		return true
 	})
 	return
@@ -474,7 +475,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask := ds.GetAsk(1.951)
 	bid := ds.GetBid(1.951)
 	summaAsks, summaBids := summaAsksAndBids(ds)
-	assert.Equal(t, 217.9, ask.(*depth_types.DepthItem).Quantity)
+	assert.Equal(t, 217.9, ask.(*types.DepthItem).Quantity)
 	assert.Nil(t, bid)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -482,7 +483,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask = ds.GetAsk(1.951)
 	bid = ds.GetBid(1.951)
 	summaAsks, summaBids = summaAsksAndBids(ds)
-	assert.Equal(t, 300.0, ask.(*depth_types.DepthItem).Quantity)
+	assert.Equal(t, 300.0, ask.(*types.DepthItem).Quantity)
 	assert.Nil(t, bid)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -491,7 +492,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 	ask = ds.GetAsk(1.951)
 	bid = ds.GetBid(1.951)
 	assert.Nil(t, ask)
-	assert.Equal(t, 300.0, bid.(*depth_types.DepthItem).Quantity)
+	assert.Equal(t, 300.0, bid.(*types.DepthItem).Quantity)
 	summaAsks, summaBids = summaAsksAndBids(ds)
 	assert.Equal(t, utils.RoundToDecimalPlace(summaAsks, 6), utils.RoundToDecimalPlace(ds.GetAsksSummaQuantity(), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(summaBids, 6), utils.RoundToDecimalPlace(ds.GetBidsSummaQuantity(), 6))
@@ -506,14 +507,14 @@ func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
 	normalizedBids, _, _, _ := ds.GetFilteredByPercentBids()
 	assert.NotNil(t, normalizedAsks)
 	assert.NotNil(t, normalizedBids)
-	normalizedAsksArray := make([]depth_types.DepthItem, 0)
-	normalizedBidsArray := make([]depth_types.DepthItem, 0)
+	normalizedAsksArray := make([]types.DepthItem, 0)
+	normalizedBidsArray := make([]types.DepthItem, 0)
 	normalizedAsks.Ascend(func(i btree.Item) bool {
-		normalizedAsksArray = append(normalizedAsksArray, *i.(*depth_types.DepthItem))
+		normalizedAsksArray = append(normalizedAsksArray, *i.(*types.DepthItem))
 		return true
 	})
 	normalizedBids.Ascend(func(i btree.Item) bool {
-		normalizedBidsArray = append(normalizedBidsArray, *i.(*depth_types.DepthItem))
+		normalizedBidsArray = append(normalizedBidsArray, *i.(*types.DepthItem))
 		return true
 	})
 	assert.Equal(t, 8, len(normalizedAsksArray))
@@ -524,10 +525,10 @@ func TestDepthInterface(t *testing.T) {
 	test := func(ds depth_interface.Depth) {
 		ds.UpdateBid(1.93, 300.0)
 		bid := ds.GetBid(1.93)
-		assert.Equal(t, 300.0, bid.(*depth_types.DepthItem).Quantity)
+		assert.Equal(t, 300.0, bid.(*types.DepthItem).Quantity)
 		ds.UpdateAsk(1.951, 300.0)
 		ask := ds.GetAsk(1.951)
-		assert.Equal(t, 300.0, ask.(*depth_types.DepthItem).Quantity)
+		assert.Equal(t, 300.0, ask.(*types.DepthItem).Quantity)
 	}
 	asks, bids := getTestDepths()
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
@@ -582,19 +583,59 @@ func TestAddAskAndBidNormalize(t *testing.T) {
 	func() {
 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
 		initDepths(ds)
-		ask := ds.GetNormalizedPrice(800)
-		assert.Equal(t, 80.0, ask)
-		bid := ds.GetNormalizedPrice(300)
-		assert.Equal(t, 30.0, bid)
+		ask, _ := ds.GetNormalizedPrice(800, false)
+		assert.Equal(t, 800.0, ask)
+		bid, _ := ds.GetNormalizedPrice(300, true)
+		assert.Equal(t, 300.0, bid)
 	}()
 	func() {
 		asks, bids := getTestDepths()
 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
-		ask := ds.GetNormalizedPrice(1.955)
+		ask, _ := ds.GetNormalizedPrice(1.955, false)
 		assert.Equal(t, 196.0, ask)
-		bid := ds.GetNormalizedPrice(1.947)
+		bid, _ := ds.GetNormalizedPrice(1.947, true)
+		assert.Equal(t, 195.0, bid)
+	}()
+}
+
+func TestAddAskAndBidNormalized(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsk(1000, 10)
+		ds.SetAsk(800, 100)
+		ds.SetAsk(850, 150)
+		askNorm1, _ := ds.GetNormalizedAsk(800)
+		assert.Equal(t, 800.0, askNorm1.Price)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		askNorm1, _ := ds.GetNormalizedAsk(1.953)
+		assert.Equal(t, 195.0, askNorm1.Price)
+	}()
+}
+
+func TestGetNormalizedPrice(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		initDepths(ds)
+		ask, _ := ds.GetNormalizedPrice(850, false)
+		assert.Equal(t, 800.0, ask)
+		bid, _ := ds.GetNormalizedPrice(350, true)
+		assert.Equal(t, 400.0, bid)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		ask, _ := ds.GetNormalizedPrice(1.955, false)
+		assert.Equal(t, 196.0, ask)
+		bid, _ := ds.GetNormalizedPrice(1.947, true)
 		assert.Equal(t, 195.0, bid)
 	}()
 }

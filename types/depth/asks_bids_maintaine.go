@@ -4,6 +4,8 @@ import (
 	"math"
 
 	"github.com/google/btree"
+
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 // GetAsks implements depth_interface.Depths.
@@ -20,9 +22,10 @@ func (d *Depth) GetBids() *btree.BTree {
 func (d *Depth) SetAsks(asks *btree.BTree) {
 	d.asks = asks
 	asks.Ascend(func(i btree.Item) bool {
-		d.asksSummaQuantity += i.(*DepthItem).Quantity
+		d.asksSummaQuantity += i.(*types.DepthItem).Quantity
 		d.asksCountQuantity++
-		d.AddAskMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
+		d.AddAskMinMax(i.(*types.DepthItem).Price, i.(*types.DepthItem).Quantity)
+		d.AddAskNormalized(i.(*types.DepthItem).Price, i.(*types.DepthItem).Quantity)
 		return true
 	})
 }
@@ -31,9 +34,10 @@ func (d *Depth) SetAsks(asks *btree.BTree) {
 func (d *Depth) SetBids(bids *btree.BTree) {
 	d.bids = bids
 	bids.Ascend(func(i btree.Item) bool {
-		d.bidsSummaQuantity += i.(*DepthItem).Quantity
+		d.bidsSummaQuantity += i.(*types.DepthItem).Quantity
 		d.bidsCountQuantity++
-		d.AddBidMinMax(i.(*DepthItem).Price, i.(*DepthItem).Quantity)
+		d.AddBidMinMax(i.(*types.DepthItem).Price, i.(*types.DepthItem).Quantity)
+		d.AddBidNormalized(i.(*types.DepthItem).Price, i.(*types.DepthItem).Quantity)
 		return true
 	})
 }
@@ -79,7 +83,7 @@ func (d *Depth) GetBidsMiddleQuantity() float64 {
 func (d *Depth) GetAsksStandardDeviation() float64 {
 	summaSquares := 0.0
 	d.AskAscend(func(i btree.Item) bool {
-		depth := i.(*DepthItem)
+		depth := i.(*types.DepthItem)
 		summaSquares += depth.GetQuantityDeviation(d.GetAsksMiddleQuantity()) * depth.GetQuantityDeviation(d.GetAsksMiddleQuantity())
 		return true
 	})
@@ -89,7 +93,7 @@ func (d *Depth) GetAsksStandardDeviation() float64 {
 func (d *Depth) GetBidsStandardDeviation() float64 {
 	summaSquares := 0.0
 	d.BidDescend(func(i btree.Item) bool {
-		depth := i.(*DepthItem)
+		depth := i.(*types.DepthItem)
 		summaSquares += depth.GetQuantityDeviation(d.GetBidsMiddleQuantity()) * depth.GetQuantityDeviation(d.GetBidsMiddleQuantity())
 		return true
 	})

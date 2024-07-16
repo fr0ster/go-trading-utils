@@ -14,8 +14,8 @@ type (
 		BidDescend(iter func(btree.Item) bool)
 		GetAsk(price float64) btree.Item
 		GetBid(price float64) btree.Item
-		SetAsk(price float64, quantity float64)
-		SetBid(price float64, quantity float64)
+		SetAsk(price float64, quantity float64) error
+		SetBid(price float64, quantity float64) error
 		ClearAsks()
 		ClearBids()
 		DeleteAsk(price float64)
