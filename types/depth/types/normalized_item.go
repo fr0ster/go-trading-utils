@@ -1,12 +1,17 @@
 package types
 
 import (
+	"math"
+
 	"github.com/google/btree"
 )
 
 type (
 	NormalizedItem struct {
-		degree   int
+		// Службові дані
+		exp     int
+		roundUp bool
+		// Дані по ціні
 		price    float64
 		quantity float64
 		minMax   *btree.BTree
@@ -66,8 +71,47 @@ func (i *NormalizedItem) DeleteMinMax(minMax *QuantityItem) {
 	i.minMax.Delete(minMax)
 }
 
-func NewNormalizedItem(price float64, quantity float64, degree int) *NormalizedItem {
-	item := &NormalizedItem{degree: degree, price: price, quantity: quantity, minMax: btree.New(degree), depths: btree.New(degree)}
+func (d *NormalizedItem) GetNormalizedPrice() (normalizedPrice float64, err error) {
+	len := int(math.Log10(d.price)) + 1
+	rounded := 0.0
+	if len == d.exp {
+		normalizedPrice = d.price
+	} else if len > d.exp {
+		normalized := d.price * math.Pow(10, float64(-d.exp))
+		if d.roundUp {
+			rounded = math.Ceil(normalized)
+		} else {
+			rounded = math.Floor(normalized)
+		}
+		normalizedPrice = rounded * math.Pow(10, float64(d.exp))
+	} else {
+		normalized := d.price * math.Pow(10, float64(d.exp))
+		if d.roundUp {
+			rounded = math.Ceil(normalized)
+		} else {
+			rounded = math.Floor(normalized)
+		}
+		normalizedPrice = rounded * math.Pow(10, float64(-d.exp))
+	}
+	return
+}
+
+func NewNormalizedItem(price float64, degree int, exp int, roundUp bool, quantityIn ...float64) *NormalizedItem {
+	var quantity float64
+	if len(quantityIn) == 0 {
+		quantity = 0
+	} else {
+		quantity = quantityIn[0]
+	}
+	item := &NormalizedItem{
+		// Службові дані
+		exp:     exp,
+		roundUp: roundUp,
+		// Дані по ціні
+		price:    price,
+		quantity: quantity,
+		minMax:   btree.New(degree),
+		depths:   btree.New(degree)}
 	item.SetDepth(NewDepthItem(price, quantity))
 	item.SetMinMax(NewQuantityItem(price, quantity, degree))
 	return item

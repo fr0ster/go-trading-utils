@@ -52,6 +52,7 @@ func Run(
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetPercentToTarget(),                                     // targetPercent
 				pair.GetDepthsN(),                                             // limitDepth
+				2,                                                             // expBase
 				pair.GetCallbackRate(),                                        // callbackRate
 				pair.GetProgression(),                                         // progression
 				quit,                                                          // quit
@@ -75,6 +76,7 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
 				pair.GetDepthsN(),            // limitDepth
+				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				futures.SideTypeBuy,          // upOrderSideOpen
 				futures.OrderTypeStop,        // upPositionNewOrderType
@@ -105,6 +107,7 @@ func Run(
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetPercentToTarget(),                                     // targetPercent
 				pair.GetDepthsN(),                                             // limitPercent
+				2,                                                             // expBase
 				pair.GetCallbackRate(),                                        // callbackRate
 				pair.GetProgression(),                                         // progression
 				quit,                                                          // quit
@@ -125,6 +128,7 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				10,                           // targetPercent
 				75,                           // limitPercent
+				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				quit,                  // quit
@@ -150,6 +154,7 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
 				pair.GetDepthsN(),            // limitDepth
+				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit
@@ -175,6 +180,7 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
 				pair.GetDepthsN(),            // limitDepth
+				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit
@@ -200,6 +206,7 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
 				pair.GetDepthsN(),            // limitDepth
+				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit

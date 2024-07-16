@@ -2,59 +2,53 @@ package depth
 
 import (
 	"errors"
-	"math"
 
 	types "github.com/fr0ster/go-trading-utils/types/depth/types"
-	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
-func (d *Depth) GetNormalizedPrice(price float64, RoundUp bool) (normalizedPrice float64, err error) {
-	getNormalizedPrice := func(price float64, max float64) float64 {
-		len := int(math.Log10(max))
-		exp := 2
-		rounded := 0.0
-		if len == exp {
-			return price
-		} else if len > exp {
-			normalized := price * math.Pow(10, float64(-exp))
-			if RoundUp {
-				rounded = math.Ceil(normalized)
-			} else {
-				rounded = math.Floor(normalized)
-			}
-			return rounded * math.Pow(10, float64(exp))
-		} else {
-			return price * math.Pow(10, float64(exp))
-		}
-	}
-	if max := d.asks.Max(); max != nil {
-		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
-	} else if max := d.bids.Max(); max != nil {
-		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
-	} else {
-		err = errors.New("asks and bids is empty")
-	}
-	return
-}
+// func (d *Depth) GetNormalizedPrice(price float64, RoundUp bool) (normalizedPrice float64, err error) {
+// 	getNormalizedPrice := func(price float64, max float64) float64 {
+// 		len := int(math.Log10(max))
+// 		exp := 2
+// 		rounded := 0.0
+// 		if len == exp {
+// 			return price
+// 		} else if len > exp {
+// 			normalized := price * math.Pow(10, float64(-exp))
+// 			if RoundUp {
+// 				rounded = math.Ceil(normalized)
+// 			} else {
+// 				rounded = math.Floor(normalized)
+// 			}
+// 			return rounded * math.Pow(10, float64(exp))
+// 		} else {
+// 			return price * math.Pow(10, float64(exp))
+// 		}
+// 	}
+// 	if max := d.asks.Max(); max != nil {
+// 		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
+// 	} else if max := d.bids.Max(); max != nil {
+// 		normalizedPrice = utils.RoundToDecimalPlace(getNormalizedPrice(price, max.(*types.DepthItem).GetPrice()), 0)
+// 	} else {
+// 		err = errors.New("asks and bids is empty")
+// 	}
+// 	return
+// }
 
 func (d *Depth) GetNormalizedAsk(price float64) (item *types.NormalizedItem, err error) {
-	normalizedPrice, err := d.GetNormalizedPrice(price, false)
+	normalizedPrice, err := d.NewAskNormalizedItem(price).GetNormalizedPrice()
 	if err != nil {
 		return
 	}
-	if val := d.askNormalized.Get(d.NewNormalizedItem(normalizedPrice)); val != nil {
+	if val := d.askNormalized.Get(d.NewAskNormalizedItem(normalizedPrice)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
 	return
 }
 
 func (d *Depth) GetNormalizedBid(price float64) (item *types.NormalizedItem, err error) {
-	normalizedPrice, err := d.GetNormalizedPrice(price, true)
-	if err != nil {
-		return
-	}
-	if val := d.bidNormalized.Get(d.NewNormalizedItem(normalizedPrice)); val != nil {
+	if val := d.bidNormalized.Get(d.NewBidNormalizedItem(price)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
 	return
@@ -63,12 +57,12 @@ func (d *Depth) GetNormalizedBid(price float64) (item *types.NormalizedItem, err
 func (d *Depth) addNormalized(tree *btree.BTree, price float64, quantity float64, RoundUp bool) (err error) {
 	var normalizedPrice float64
 	if tree != nil {
-		normalizedPrice, err = d.GetNormalizedPrice(price, RoundUp)
+		normalizedPrice, err = d.newNormalizedItem(price, RoundUp, quantity).GetNormalizedPrice()
 		if err != nil {
 			return
 		}
 		depthItem := types.NewDepthItem(price, quantity)
-		if old := tree.Get(d.NewNormalizedItem(normalizedPrice)); old != nil {
+		if old := tree.Get(d.newNormalizedItem(normalizedPrice, RoundUp)); old != nil {
 			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
 				val.SetDepth(depthItem)
 			} else {
@@ -79,7 +73,7 @@ func (d *Depth) addNormalized(tree *btree.BTree, price float64, quantity float64
 			old.(*types.NormalizedItem).SetDepth(depthItem)
 			old.(*types.NormalizedItem).SetQuantity(quantity)
 		} else {
-			item := d.NewNormalizedItem(normalizedPrice, quantity)
+			item := d.newNormalizedItem(normalizedPrice, RoundUp, quantity)
 			minMax := d.NewQuantityItem(price, quantity)
 			minMax.SetDepth(depthItem)
 			item.SetMinMax(minMax)
@@ -100,10 +94,10 @@ func (d *Depth) AddBidNormalized(price float64, quantity float64) error {
 	return d.addNormalized(d.bidNormalized, price, quantity, true)
 }
 
-func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity float64) (err error) {
+func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity float64, roundUp bool) (err error) {
 	if tree != nil {
 		depthItem := types.NewDepthItem(price, quantity)
-		if old := tree.Get(d.NewNormalizedItem(price)); old != nil {
+		if old := tree.Get(d.newNormalizedItem(price, roundUp)); old != nil {
 			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
 				val.DeleteDepth(depthItem)
 				old.(*types.NormalizedItem).DeleteMinMax(val)
@@ -117,11 +111,11 @@ func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity floa
 }
 
 func (d *Depth) DeleteAskNormalized(price float64, quantity float64) error {
-	return d.deleteNormalized(d.askNormalized, price, quantity)
+	return d.deleteNormalized(d.askNormalized, price, quantity, false)
 }
 
 func (d *Depth) DeleteBidNormalized(price float64, quantity float64) error {
-	return d.deleteNormalized(d.bidNormalized, price, quantity)
+	return d.deleteNormalized(d.bidNormalized, price, quantity, true)
 }
 
 func (d *Depth) GetNormalizedAsks() *btree.BTree {
@@ -132,10 +126,21 @@ func (d *Depth) GetNormalizedBids() *btree.BTree {
 	return d.bidNormalized
 }
 
-func (d *Depth) NewNormalizedItem(price float64, quantity ...float64) *types.NormalizedItem {
+func (d *Depth) newNormalizedItem(price float64, roundUp bool, quantity ...float64) (normalized *types.NormalizedItem) {
 	if len(quantity) > 0 {
-		return types.NewNormalizedItem(price, quantity[0], d.degree)
+		normalized = types.NewNormalizedItem(price, d.degree, d.expBase, roundUp, quantity[0])
 	} else {
-		return types.NewNormalizedItem(price, 0, d.degree)
+		normalized = types.NewNormalizedItem(price, d.degree, d.expBase, roundUp)
 	}
+	return
+}
+
+func (d *Depth) NewAskNormalizedItem(price float64, quantity ...float64) (normalized *types.NormalizedItem) {
+	normalized = d.newNormalizedItem(price, false, quantity...)
+	return
+}
+
+func (d *Depth) NewBidNormalizedItem(price float64, quantity ...float64) (normalized *types.NormalizedItem) {
+	normalized = d.newNormalizedItem(price, true, quantity...)
+	return
 }

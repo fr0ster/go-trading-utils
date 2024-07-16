@@ -108,6 +108,7 @@ func RunFuturesGridTradingV2(
 	minSteps int,
 	targetPercent float64,
 	limitDepth depth_types.DepthAPILimit,
+	expBase int,
 	callbackRate float64,
 	percentsToStopSettingNewOrder float64,
 	quit chan struct{},
@@ -142,6 +143,7 @@ func RunFuturesGridTradingV2(
 		minSteps,
 		targetPercent,
 		limitDepth,
+		expBase,
 		callbackRate,
 		progression)
 	if err != nil {

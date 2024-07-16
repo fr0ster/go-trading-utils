@@ -173,6 +173,7 @@ func RunSpotGridTrading(
 	minSteps int,
 	targetPercent float64,
 	limitDepth depth_types.DepthAPILimit, // limitDepth
+	expBase int,
 	callbackRate float64,
 	stopEvent chan struct{},
 	wg *sync.WaitGroup) (err error) {
@@ -193,6 +194,7 @@ func RunSpotGridTrading(
 		deltaQuantity,
 		targetPercent,
 		limitDepth,
+		expBase,
 		callbackRate)
 	if err != nil {
 		printError()

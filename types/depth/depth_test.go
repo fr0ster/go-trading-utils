@@ -17,7 +17,7 @@ const (
 )
 
 func TestLockUnlock(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	d.Lock()
 	defer d.Unlock()
 
@@ -26,7 +26,7 @@ func TestLockUnlock(t *testing.T) {
 }
 
 func TestSetAndGetAsk(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	price := 100.0
 	quantity := 10.0
 
@@ -39,7 +39,7 @@ func TestSetAndGetAsk(t *testing.T) {
 }
 
 func TestSetAndGetBid(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	price := 200.0
 	quantity := 20.0
 
@@ -83,11 +83,11 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 		*types.NewDepthItem(1.951, 217.9), // local maxima
 		*types.NewDepthItem(1.952, 179.4),
 		*types.NewDepthItem(1.953, 180.9), // local maxima
-		*types.NewDepthItem(1.954, 148.5),
-		*types.NewDepthItem(1.955, 120.0),
-		*types.NewDepthItem(1.956, 110.0),
-		*types.NewDepthItem(1.957, 140.0), // local maxima
-		*types.NewDepthItem(1.958, 90.0),
+		*types.NewDepthItem(1.964, 148.5),
+		*types.NewDepthItem(1.965, 120.0),
+		*types.NewDepthItem(1.976, 110.0),
+		*types.NewDepthItem(1.977, 140.0), // local maxima
+		*types.NewDepthItem(1.988, 90.0),
 	}
 	for _, bid := range bidList {
 		bids.ReplaceOrInsert(&bid)
@@ -100,7 +100,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 }
 
 func TestGetTargetAsksBidPrice(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -126,7 +126,7 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 }
 
 func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -158,7 +158,7 @@ func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
 }
 
 func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -186,7 +186,7 @@ func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
 }
 
 func TestGetFilteredByPercentAsks(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetFilteredByPercentAsks method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -211,7 +211,7 @@ func TestGetFilteredByPercentAsks(t *testing.T) {
 }
 
 func TestGetFilteredByPercentBids(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetFilteredByPercentBids method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -236,7 +236,7 @@ func TestGetFilteredByPercentBids(t *testing.T) {
 }
 
 func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetSummaOfAsksFromRange method works correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -252,7 +252,7 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 }
 
 func TestMinMax(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the Min and Max methods work correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -272,7 +272,7 @@ func TestMinMax(t *testing.T) {
 }
 
 func TestGetAsksAndBidSummaAndRange(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -332,7 +332,7 @@ func TestGetAsksAndBidSummaAndRange(t *testing.T) {
 }
 
 func TestGetTargetAsksBidPriceAndRange(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetAsksSummaQuantity and GetBidsSummaQuantity methods work correctly
 	assert.Equal(t, 90.0, d.GetAsksSummaQuantity())
@@ -354,7 +354,7 @@ func TestGetTargetAsksBidPriceAndRange(t *testing.T) {
 }
 
 func TestGetTargetPrices(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 1, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	initDepths(d)
 	// Add assertions here to verify that the GetTargetPrices method works correctly
 	ask1, bid1, summaAsks1, summaBids1 := d.GetTargetPrices(20)
@@ -370,7 +370,7 @@ func TestGetTargetPrices(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, depth_types.DepthStreamRate100ms)
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
 	// Add assertions here to verify that the New method works correctly
 	assert.NotNil(t, d)
 	assert.Equal(t, "BTCUSDT", d.Symbol())
@@ -381,7 +381,7 @@ func TestNew(t *testing.T) {
 
 func TestGetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ask := ds.GetAsk(1.951)
 	if ask == nil {
@@ -395,7 +395,7 @@ func TestGetAsk(t *testing.T) {
 
 func TestGetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	bid := ds.GetBid(1.93)
 	if bid == nil {
@@ -405,7 +405,7 @@ func TestGetBid(t *testing.T) {
 
 func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ask := types.NewDepthItem(1.96, 200.0)
 	ds.SetAsk(ask.GetPrice(), ask.GetQuantity())
@@ -416,7 +416,7 @@ func TestSetAsk(t *testing.T) {
 
 func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	bid := types.NewDepthItem(1.96, 200.0)
 	ds.SetBid(bid.GetPrice(), bid.GetQuantity())
@@ -427,7 +427,7 @@ func TestSetBid(t *testing.T) {
 
 func TestRestrictAskAndBidDown(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 	ds.RestrictAskDown(1.957)
@@ -442,7 +442,7 @@ func TestRestrictAskAndBidDown(t *testing.T) {
 
 func TestRestrictAskAndBidUp(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 	ds.RestrictAskUp(1.952)
@@ -469,7 +469,7 @@ func summaAsksAndBids(ds *depth_types.Depth) (summaAsks, summaBids float64) {
 
 func TestUpdateAskAndBid(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetAsks(asks)
 	ds.SetBids(bids)
 	ask := ds.GetAsk(1.951)
@@ -500,7 +500,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 
 func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	ds.SetAsks(asks)
 	normalizedAsks, _, _, _ := ds.GetFilteredByPercentAsks()
@@ -531,7 +531,7 @@ func TestDepthInterface(t *testing.T) {
 		assert.Equal(t, 300.0, ask.(*types.DepthItem).GetQuantity())
 	}
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 	ds.SetBids(bids)
 	ds.SetAsks(asks)
 	test(ds)
@@ -539,7 +539,7 @@ func TestDepthInterface(t *testing.T) {
 
 func TestAsksAndBidMiddleQuantity(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 		initDepths(ds)
 		asksMiddle := ds.GetAsksMiddleQuantity()
 		assert.Equal(t, 18.0, asksMiddle)
@@ -548,7 +548,7 @@ func TestAsksAndBidMiddleQuantity(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		asksMiddle := ds.GetAsksMiddleQuantity()
@@ -560,7 +560,7 @@ func TestAsksAndBidMiddleQuantity(t *testing.T) {
 
 func TestAsksAndBidStandardDeviation(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 		initDepths(ds)
 		asksSquares := ds.GetAsksStandardDeviation()
 		assert.Equal(t, 7.483314773547883, asksSquares)
@@ -569,7 +569,7 @@ func TestAsksAndBidStandardDeviation(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 1, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		asksSquares := ds.GetAsksStandardDeviation()
@@ -581,7 +581,7 @@ func TestAsksAndBidStandardDeviation(t *testing.T) {
 
 func TestAddAskAndBidNormalized(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsk(1000, 10)
 		ds.SetAsk(800, 100)
 		ds.SetAsk(850, 150)
@@ -591,39 +591,18 @@ func TestAddAskAndBidNormalized(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		askNorm1, _ := ds.GetNormalizedAsk(1.953)
-		assert.Equal(t, 195.0, askNorm1.GetPrice())
-		assert.Equal(t, 148.5, askNorm1.GetQuantity())
-	}()
-}
-
-func TestGetNormalizedPrice(t *testing.T) {
-	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
-		initDepths(ds)
-		ask, _ := ds.GetNormalizedPrice(850, false)
-		assert.Equal(t, 800.0, ask)
-		bid, _ := ds.GetNormalizedPrice(350, true)
-		assert.Equal(t, 400.0, bid)
-	}()
-	func() {
-		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
-		ds.SetAsks(asks)
-		ds.SetBids(bids)
-		ask, _ := ds.GetNormalizedPrice(1.955, false)
-		assert.Equal(t, 196.0, ask)
-		bid, _ := ds.GetNormalizedPrice(1.947, true)
-		assert.Equal(t, 195.0, bid)
+		assert.Equal(t, 1.95, askNorm1.GetPrice())
+		assert.Equal(t, 180.9, askNorm1.GetQuantity())
 	}()
 }
 
 func TestGetNormalizedAsksAndBids(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
 		initDepths(ds)
 		asks := ds.GetNormalizedAsks()
 		assert.Equal(t, 5, asks.Len())
@@ -632,11 +611,11 @@ func TestGetNormalizedAsksAndBids(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		asksN := ds.GetNormalizedAsks()
-		assert.Equal(t, 2, asksN.Len())
+		assert.Equal(t, 4, asksN.Len())
 		bidsN := ds.GetNormalizedBids()
 		assert.Equal(t, 4, bidsN.Len())
 	}()

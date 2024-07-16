@@ -328,6 +328,7 @@ func RunFuturesTrading(
 	minSteps int,
 	targetPercent float64,
 	limitDepth depth_types.DepthAPILimit,
+	expBase int,
 	callBackRate float64,
 	upOrderSideOpen futures.SideType,
 	upPositionNewOrderType futures.OrderType,
@@ -369,6 +370,7 @@ func RunFuturesTrading(
 		minSteps,
 		targetPercent,
 		limitDepth,
+		expBase,
 		callBackRate,
 		progression)
 	if err != nil {

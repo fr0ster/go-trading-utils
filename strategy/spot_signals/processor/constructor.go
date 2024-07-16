@@ -26,6 +26,7 @@ func NewPairProcessor(
 	deltaQuantity float64,
 	targetPercent float64,
 	limitDepth depth_types.DepthAPILimit,
+	expBase int,
 	callbackRate float64,
 	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -72,7 +73,7 @@ func NewPairProcessor(
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth)
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,

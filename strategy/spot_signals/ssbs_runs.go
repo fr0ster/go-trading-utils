@@ -116,6 +116,7 @@ func Run(
 					pair.GetMinSteps(),           // minSteps
 					pair.GetPercentToTarget(),    // targetPercent
 					pair.GetDepthsN(),            // limitDepth
+					2,                            // expBase
 					pair.GetCallbackRate(),       // callbackRate
 					stopEvent,                    // stopEvent
 					wg))                          // wg

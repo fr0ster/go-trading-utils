@@ -34,6 +34,7 @@ func NewPairProcessor(
 	minSteps int,
 	targetPercent float64,
 	limitDepth depth_types.DepthAPILimit,
+	expBase int,
 	callbackRate float64,
 	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
@@ -175,7 +176,7 @@ func NewPairProcessor(
 		}
 	}
 
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth)
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,
