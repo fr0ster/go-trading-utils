@@ -3,6 +3,7 @@ package processor
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -42,7 +43,14 @@ func NewPairProcessor(
 			if errScanf != nil {
 				return
 			}
-			err = fmt.Errorf("banned until: %s", bannedUntil)
+			timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
+			if errParse != nil {
+				return
+			}
+
+			// Для Go 1.17 і вище
+			bannedTime := time.UnixMilli(timestamp)
+			err = fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
 		}
 		return
 	}
