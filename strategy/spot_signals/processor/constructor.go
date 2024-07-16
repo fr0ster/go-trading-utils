@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"math"
 	"time"
 
 	"github.com/adshao/go-binance/v2"
@@ -73,7 +74,7 @@ func NewPairProcessor(
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase+int(math.Log10(pp.tickSize)))
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,
