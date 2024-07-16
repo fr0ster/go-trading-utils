@@ -40,6 +40,16 @@ func NewPairProcessor(
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.Init(exchangeInfo, 3, client)
 	if err != nil {
+		apiErr, _ := utils.ParseAPIError(err)
+		switch apiErr.Code {
+		case -1003:
+			var bannedUntil string
+			_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP banned until %s", &bannedUntil)
+			if errScanf != nil {
+				return
+			}
+			err = fmt.Errorf("banned until: %s", bannedUntil)
+		}
 		return
 	}
 	pp = &PairProcessor{
@@ -103,16 +113,6 @@ func NewPairProcessor(
 
 	currentPrice, err := pp.GetCurrentPrice()
 	if err != nil {
-		apiErr, _ := utils.ParseAPIError(err)
-		switch apiErr.Code {
-		case -1003:
-			var bannedUntil string
-			_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP banned until %s", &bannedUntil)
-			if errScanf != nil {
-				return
-			}
-			err = fmt.Errorf("banned until: %s", bannedUntil)
-		}
 		return
 	}
 	pp.SetBounds(currentPrice)
