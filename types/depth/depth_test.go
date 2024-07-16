@@ -620,3 +620,24 @@ func TestGetNormalizedPrice(t *testing.T) {
 		assert.Equal(t, 195.0, bid)
 	}()
 }
+
+func TestGetNormalizedAsksAndBids(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		initDepths(ds)
+		asks := ds.GetNormalizedAsks()
+		assert.Equal(t, 5, asks.Len())
+		bids := ds.GetNormalizedBids()
+		assert.Equal(t, 5, bids.Len())
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		asksN := ds.GetNormalizedAsks()
+		assert.Equal(t, 2, asksN.Len())
+		bidsN := ds.GetNormalizedBids()
+		assert.Equal(t, 4, bidsN.Len())
+	}()
+}

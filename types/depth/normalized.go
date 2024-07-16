@@ -130,3 +130,11 @@ func (d *Depth) DeleteAskNormalized(price float64, quantity float64) error {
 func (d *Depth) DeleteBidNormalized(price float64, quantity float64) error {
 	return d.deleteNormalized(d.bidNormalized, price, quantity)
 }
+
+func (d *Depth) GetNormalizedAsks() *btree.BTree {
+	return d.askNormalized
+}
+
+func (d *Depth) GetNormalizedBids() *btree.BTree {
+	return d.bidNormalized
+}
