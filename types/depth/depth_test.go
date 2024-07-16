@@ -595,14 +595,14 @@ func TestAddAskAndBidNormalized(t *testing.T) {
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		askNorm1, _ := ds.GetNormalizedAsk(1.953)
-		assert.Equal(t, 1.95, askNorm1.GetPrice())
-		assert.Equal(t, 180.9, askNorm1.GetQuantity())
+		assert.Equal(t, 1.9, askNorm1.GetPrice())
+		assert.Equal(t, 90.0, askNorm1.GetQuantity())
 	}()
 }
 
 func TestGetNormalizedAsksAndBids(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 1, depth_types.DepthStreamRate100ms)
 		initDepths(ds)
 		asks := ds.GetNormalizedAsks()
 		assert.Equal(t, 5, asks.Len())
@@ -611,7 +611,7 @@ func TestGetNormalizedAsksAndBids(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 3, depth_types.DepthStreamRate100ms)
 		ds.SetAsks(asks)
 		ds.SetBids(bids)
 		asksN := ds.GetNormalizedAsks()

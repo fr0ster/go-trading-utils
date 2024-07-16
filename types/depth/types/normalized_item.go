@@ -3,6 +3,7 @@ package types
 import (
 	"math"
 
+	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/google/btree"
 )
 
@@ -75,7 +76,11 @@ func (d *NormalizedItem) GetNormalizedPrice() (normalizedPrice float64, err erro
 	len := int(math.Log10(d.price)) + 1
 	rounded := 0.0
 	if len == d.exp {
-		normalizedPrice = d.price
+		if d.roundUp {
+			normalizedPrice = math.Ceil(d.price)
+		} else {
+			normalizedPrice = math.Floor(d.price)
+		}
 	} else if len > d.exp {
 		normalized := d.price * math.Pow(10, float64(-d.exp))
 		if d.roundUp {
@@ -83,15 +88,15 @@ func (d *NormalizedItem) GetNormalizedPrice() (normalizedPrice float64, err erro
 		} else {
 			rounded = math.Floor(normalized)
 		}
-		normalizedPrice = rounded * math.Pow(10, float64(d.exp))
+		normalizedPrice = utils.RoundToDecimalPlace(rounded*math.Pow(10, float64(d.exp)), d.exp)
 	} else {
-		normalized := d.price * math.Pow(10, float64(d.exp))
+		normalized := d.price * math.Pow(10, float64(d.exp-1))
 		if d.roundUp {
 			rounded = math.Ceil(normalized)
 		} else {
 			rounded = math.Floor(normalized)
 		}
-		normalizedPrice = rounded * math.Pow(10, float64(-d.exp))
+		normalizedPrice = utils.RoundToDecimalPlace(rounded*math.Pow(10, float64(1-d.exp)), d.exp)
 	}
 	return
 }
