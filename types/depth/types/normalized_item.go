@@ -7,6 +7,7 @@ import (
 type (
 	NormalizedItem struct {
 		Price     float64
+		Quantity  float64
 		MinMax    *btree.BTree
 		DepthItem *btree.BTree
 	}

@@ -77,9 +77,11 @@ func (d *Depth) addNormalized(tree *btree.BTree, price float64, quantity float64
 				old.(*types.NormalizedItem).SetMinMax(item)
 			}
 			old.(*types.NormalizedItem).SetDepth(depthItem)
+			old.(*types.NormalizedItem).Quantity += quantity
 		} else {
 			item := &types.NormalizedItem{
 				Price:     normalizedPrice,
+				Quantity:  quantity,
 				MinMax:    btree.New(d.degree),
 				DepthItem: btree.New(d.degree),
 			}
