@@ -87,11 +87,11 @@ func (d *Depth) addNormalized(tree *btree.BTree, price float64, quantity float64
 }
 
 func (d *Depth) AddAskNormalized(price float64, quantity float64) error {
-	return d.addNormalized(d.askNormalized, price, quantity, false)
+	return d.addNormalized(d.askNormalized, price, quantity, true)
 }
 
 func (d *Depth) AddBidNormalized(price float64, quantity float64) error {
-	return d.addNormalized(d.bidNormalized, price, quantity, true)
+	return d.addNormalized(d.bidNormalized, price, quantity, false)
 }
 
 func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity float64, roundUp bool) (err error) {
@@ -111,11 +111,11 @@ func (d *Depth) deleteNormalized(tree *btree.BTree, price float64, quantity floa
 }
 
 func (d *Depth) DeleteAskNormalized(price float64, quantity float64) error {
-	return d.deleteNormalized(d.askNormalized, price, quantity, false)
+	return d.deleteNormalized(d.askNormalized, price, quantity, true)
 }
 
 func (d *Depth) DeleteBidNormalized(price float64, quantity float64) error {
-	return d.deleteNormalized(d.bidNormalized, price, quantity, true)
+	return d.deleteNormalized(d.bidNormalized, price, quantity, false)
 }
 
 func (d *Depth) GetNormalizedAsks() *btree.BTree {
@@ -136,11 +136,11 @@ func (d *Depth) newNormalizedItem(price float64, roundUp bool, quantity ...float
 }
 
 func (d *Depth) NewAskNormalizedItem(price float64, quantity ...float64) (normalized *types.NormalizedItem) {
-	normalized = d.newNormalizedItem(price, false, quantity...)
+	normalized = d.newNormalizedItem(price, true, quantity...)
 	return
 }
 
 func (d *Depth) NewBidNormalizedItem(price float64, quantity ...float64) (normalized *types.NormalizedItem) {
-	normalized = d.newNormalizedItem(price, true, quantity...)
+	normalized = d.newNormalizedItem(price, false, quantity...)
 	return
 }
