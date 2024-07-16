@@ -8,6 +8,7 @@ import (
 	"github.com/google/btree"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -49,7 +50,7 @@ type (
 		// канал зупинки
 		stop chan struct{}
 
-		limitOnPosition    float64
+		limitOnPosition    types.PriceType
 		limitOnTransaction float64
 
 		// Дінаміка ціни, використовувалось тіко для grid_v3
@@ -57,11 +58,11 @@ type (
 		up              *btree.BTree
 		down            *btree.BTree
 		UpBoundPercent  float64
-		UpBound         float64
+		UpBound         types.PriceType
 		LowBoundPercent float64
-		LowBound        float64
-		deltaPrice      float64
-		deltaQuantity   float64
+		LowBound        types.PriceType
+		deltaPrice      types.PriceType
+		deltaQuantity   types.QuantityType
 
 		// Прогресії, використовувалось тіко для grid_v3
 		progression             pairs_types.ProgressionType

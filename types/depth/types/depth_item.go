@@ -6,8 +6,8 @@ import (
 
 type (
 	DepthItem struct {
-		price    float64
-		quantity float64
+		price    PriceType
+		quantity QuantityType
 	}
 	DepthFilter func(*DepthItem) bool
 	DepthTester func(result *DepthItem, target *DepthItem) bool
@@ -21,28 +21,28 @@ func (i *DepthItem) Equal(than btree.Item) bool {
 	return i.price == than.(*DepthItem).price
 }
 
-func (i *DepthItem) GetPrice() float64 {
+func (i *DepthItem) GetPrice() PriceType {
 	return i.price
 }
 
-func (i *DepthItem) SetPrice(price float64) {
+func (i *DepthItem) SetPrice(price PriceType) {
 	i.price = price
 }
 
-func (i *DepthItem) GetQuantity() float64 {
+func (i *DepthItem) GetQuantity() QuantityType {
 	return i.quantity
 }
 
-func (i *DepthItem) SetQuantity(quantity float64) {
+func (i *DepthItem) SetQuantity(quantity QuantityType) {
 	i.quantity = quantity
 }
 
 // GetAskDeviation implements depth_interface.Depths.
-func (d *DepthItem) GetQuantityDeviation(middle float64) float64 {
-	return d.quantity - middle
+func (d *DepthItem) GetQuantityDeviation(middle QuantityType) float64 {
+	return float64(d.quantity - middle)
 }
 
-func NewDepthItem(price float64, quantity ...float64) *DepthItem {
+func NewDepthItem(price PriceType, quantity ...QuantityType) *DepthItem {
 	if len(quantity) > 0 {
 		return &DepthItem{price: price, quantity: quantity[0]}
 	} else {

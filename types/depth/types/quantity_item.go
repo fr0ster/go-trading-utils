@@ -6,7 +6,7 @@ import (
 
 type (
 	QuantityItem struct {
-		quantity float64
+		quantity QuantityType
 		depths   *btree.BTree
 	}
 )
@@ -23,7 +23,7 @@ func (i *QuantityItem) GetDepths() *btree.BTree {
 	return i.depths
 }
 
-func (i *QuantityItem) GetDepth(price float64) *DepthItem {
+func (i *QuantityItem) GetDepth(price PriceType) *DepthItem {
 	if val := i.depths.Get(NewDepthItem(price)); val != nil {
 		return val.(*DepthItem)
 	} else {
@@ -55,7 +55,7 @@ func (i *QuantityItem) DeleteDepth(depth *DepthItem) {
 	i.depths.Delete(depth)
 }
 
-func NewQuantityItem(price float64, quantity float64, degree int) *QuantityItem {
+func NewQuantityItem(price PriceType, quantity QuantityType, degree int) *QuantityItem {
 	item := &QuantityItem{quantity: quantity, depths: btree.New(degree)}
 	item.SetDepth(NewDepthItem(price, quantity))
 	return item

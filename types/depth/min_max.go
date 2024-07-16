@@ -6,7 +6,7 @@ import (
 	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
-func (d *Depth) AddAskMinMax(price float64, quantity float64) {
+func (d *Depth) AddAskMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.asksMinMax != nil {
 		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.asksMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
@@ -19,7 +19,7 @@ func (d *Depth) AddAskMinMax(price float64, quantity float64) {
 	}
 }
 
-func (d *Depth) DeleteAskMinMax(price float64, quantity float64) {
+func (d *Depth) DeleteAskMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.asksMinMax != nil {
 		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.asksMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
@@ -29,7 +29,7 @@ func (d *Depth) DeleteAskMinMax(price float64, quantity float64) {
 	}
 }
 
-func (d *Depth) AddBidMinMax(price float64, quantity float64) {
+func (d *Depth) AddBidMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.bidsMinMax != nil {
 		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.bidsMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
@@ -42,7 +42,7 @@ func (d *Depth) AddBidMinMax(price float64, quantity float64) {
 	}
 }
 
-func (d *Depth) DeleteBidMinMax(price float64, quantity float64) {
+func (d *Depth) DeleteBidMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.bidsMinMax != nil {
 		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.bidsMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
@@ -92,7 +92,7 @@ func (d *Depth) BidMax() (max *types.DepthItem, err error) {
 	return
 }
 
-func (d *Depth) NewQuantityItem(quantity float64, price ...float64) *types.QuantityItem {
+func (d *Depth) NewQuantityItem(quantity types.QuantityType, price ...types.PriceType) *types.QuantityItem {
 	if len(price) > 0 {
 		return types.NewQuantityItem(price[0], quantity, d.degree)
 	} else {

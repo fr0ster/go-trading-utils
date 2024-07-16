@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -54,12 +55,12 @@ func (pp *PairProcessor) createOrder(
 	orderType futures.OrderType,
 	sideType futures.SideType,
 	timeInForce futures.TimeInForceType,
-	quantity float64,
+	quantity types.QuantityType,
 	closePosition bool,
 	reduceOnly bool,
-	price float64,
-	stopPrice float64,
-	activationPrice float64,
+	price types.PriceType,
+	stopPrice types.PriceType,
+	activationPrice types.PriceType,
 	callbackRate float64,
 	times int,
 	oldErr ...error) (
@@ -98,23 +99,23 @@ func (pp *PairProcessor) createOrder(
 	// Type	Additional mandatory parameters
 	if orderType == futures.OrderTypeMarket {
 		// MARKET	quantity
-		service = service.Quantity(utils.ConvFloat64ToStr(quantity, quantityRound))
+		service = service.Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound))
 	} else if orderType == futures.OrderTypeLimit {
 		// LIMIT	timeInForce, quantity, price
 		service = service.
 			TimeInForce(timeInForce).
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
-			Price(utils.ConvFloat64ToStr(price, priceRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
+			Price(utils.ConvFloat64ToStr(float64(price), priceRound))
 	} else if orderType == futures.OrderTypeStop || orderType == futures.OrderTypeTakeProfit {
 		// STOP/TAKE_PROFIT	quantity, price, stopPrice
 		service = service.
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
-			Price(utils.ConvFloat64ToStr(price, priceRound)).
-			StopPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
+			Price(utils.ConvFloat64ToStr(float64(price), priceRound)).
+			StopPrice(utils.ConvFloat64ToStr(float64(stopPrice), priceRound))
 	} else if orderType == futures.OrderTypeStopMarket || orderType == futures.OrderTypeTakeProfitMarket {
 		// STOP_MARKET/TAKE_PROFIT_MARKET	stopPrice
 		service = service.
-			StopPrice(utils.ConvFloat64ToStr(stopPrice, priceRound))
+			StopPrice(utils.ConvFloat64ToStr(float64(stopPrice), priceRound))
 		if closePosition {
 			service = service.ClosePosition(closePosition)
 		}
@@ -122,11 +123,11 @@ func (pp *PairProcessor) createOrder(
 		// TRAILING_STOP_MARKET	quantity,callbackRate
 		service = service.
 			TimeInForce(futures.TimeInForceTypeGTC).
-			Quantity(utils.ConvFloat64ToStr(quantity, quantityRound)).
+			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
 			CallbackRate(utils.ConvFloat64ToStr(callbackRate, priceRound))
 		if stopPrice != 0 {
 			service = service.
-				ActivationPrice(utils.ConvFloat64ToStr(activationPrice, priceRound))
+				ActivationPrice(utils.ConvFloat64ToStr(float64(activationPrice), priceRound))
 		}
 	}
 	order, err = service.Do(context.Background())
@@ -156,7 +157,7 @@ func (pp *PairProcessor) createOrder(
 			for _, order := range orders {
 				if order.Symbol == pp.symbol.Symbol &&
 					order.Side == sideType &&
-					order.Price == utils.ConvFloat64ToStr(price, priceRound) {
+					order.Price == utils.ConvFloat64ToStr(float64(price), priceRound) {
 					return &futures.CreateOrderResponse{
 						Symbol:                  order.Symbol,
 						OrderID:                 order.OrderID,
@@ -212,12 +213,12 @@ func (pp *PairProcessor) CreateOrder(
 	orderType futures.OrderType,
 	sideType futures.SideType,
 	timeInForce futures.TimeInForceType,
-	quantity float64,
+	quantity types.QuantityType,
 	closePosition bool,
 	reduceOnly bool,
-	price float64,
-	stopPrice float64,
-	activationPrice float64,
+	price types.PriceType,
+	stopPrice types.PriceType,
+	activationPrice types.PriceType,
 	callbackRate float64) (
 	order *futures.CreateOrderResponse, err error) {
 	return pp.createOrder(

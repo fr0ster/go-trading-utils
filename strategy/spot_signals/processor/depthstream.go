@@ -8,6 +8,7 @@ import (
 
 	binance_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 const (
@@ -113,14 +114,14 @@ func (pp *PairProcessor) GetDepthEventCallBack() binance.WsDepthHandler {
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateBid(price, quantity)
+				pp.depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateAsk(price, quantity)
+				pp.depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
 			}
 			pp.depth.LastUpdateID = event.LastUpdateID
 		}
@@ -209,14 +210,14 @@ func (pp *PairProcessor) GetPartialDepthEventCallBack(depth *depth_types.Depth) 
 				if err != nil {
 					return
 				}
-				depth.UpdateBid(price, quantity)
+				depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				depth.UpdateAsk(price, quantity)
+				depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
 			}
 			depth.LastUpdateID = event.LastUpdateID
 		}

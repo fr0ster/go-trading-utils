@@ -17,6 +17,7 @@ import (
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -62,7 +63,7 @@ func NewPairProcessor(
 		orderTypes:         nil,
 		degree:             3,
 		timeOut:            1 * time.Hour,
-		limitOnPosition:    limitOnPosition,
+		limitOnPosition:    types.PriceType(limitOnPosition),
 		limitOnTransaction: limitOnTransaction,
 		UpBoundPercent:     UpBound,
 		UpBound:            0,
@@ -72,8 +73,8 @@ func NewPairProcessor(
 		marginType:         marginType,
 		callbackRate:       callbackRate,
 
-		deltaPrice:    deltaPrice,
-		deltaQuantity: deltaQuantity,
+		deltaPrice:    types.PriceType(deltaPrice),
+		deltaQuantity: types.QuantityType(deltaQuantity),
 
 		progression: progression,
 		depth:       nil,

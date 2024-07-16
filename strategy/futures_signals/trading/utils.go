@@ -8,6 +8,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 func openPosition(
@@ -19,14 +20,14 @@ func openPosition(
 	reduceOnlyUp bool,
 	closePositionDown bool,
 	reduceOnlyDown bool,
-	quantityUp float64,
-	quantityDown float64,
-	priceUp float64,
-	stopPriceUp float64,
-	activationPriceUp float64,
-	priceDown float64,
-	stopPriceDown float64,
-	activationPriceDown float64,
+	quantityUp types.QuantityType,
+	quantityDown types.QuantityType,
+	priceUp types.PriceType,
+	stopPriceUp types.PriceType,
+	activationPriceUp types.PriceType,
+	priceDown types.PriceType,
+	stopPriceDown types.PriceType,
+	activationPriceDown types.PriceType,
 	pairProcessor *processor.PairProcessor) (upOrder, downOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {

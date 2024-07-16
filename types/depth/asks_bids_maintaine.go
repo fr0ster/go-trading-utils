@@ -72,12 +72,12 @@ func (d *Depth) BidDescend(iter func(btree.Item) bool) {
 	d.bids.Descend(iter)
 }
 
-func (d *Depth) GetAsksMiddleQuantity() float64 {
-	return d.asksSummaQuantity / float64(d.asksCountQuantity)
+func (d *Depth) GetAsksMiddleQuantity() types.QuantityType {
+	return d.asksSummaQuantity / types.QuantityType(d.asksCountQuantity)
 }
 
-func (d *Depth) GetBidsMiddleQuantity() float64 {
-	return d.bidsSummaQuantity / float64(d.bidsCountQuantity)
+func (d *Depth) GetBidsMiddleQuantity() types.QuantityType {
+	return d.bidsSummaQuantity / types.QuantityType(d.bidsCountQuantity)
 }
 
 func (d *Depth) GetAsksStandardDeviation() float64 {

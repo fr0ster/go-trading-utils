@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/fr0ster/go-trading-utils/types"
+	depth_items "github.com/fr0ster/go-trading-utils/types/depth/types"
 	"github.com/fr0ster/go-trading-utils/types/grid"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,46 +24,46 @@ func TestGridOverTree(t *testing.T) {
 	raw := tree.Get(&grid.Record{Price: 10.5})
 	if raw != nil {
 		assert.Equal(t, int64(11), raw.(*grid.Record).GetOrderId())
-		assert.Equal(t, 10.5, raw.(*grid.Record).GetPrice())
-		assert.Equal(t, 5.0, raw.(*grid.Record).GetQuantity())
-		assert.Equal(t, 15.5, raw.(*grid.Record).GetUpPrice())
-		assert.Equal(t, 0.0, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, depth_items.PriceType(10.5), raw.(*grid.Record).GetPrice())
+		assert.Equal(t, depth_items.QuantityType(5.0), raw.(*grid.Record).GetQuantity())
+		assert.Equal(t, depth_items.PriceType(15.5), raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, depth_items.PriceType(0.0), raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeBuy, raw.(*grid.Record).GetOrderSide())
 	}
 	raw = tree.Get(&grid.Record{Price: 20.5})
 	if raw != nil {
 		assert.Equal(t, int64(0), raw.(*grid.Record).GetOrderId())
-		assert.Equal(t, 20.5, raw.(*grid.Record).GetPrice())
-		assert.Equal(t, 5.0, raw.(*grid.Record).GetQuantity())
-		assert.Equal(t, 25.5, raw.(*grid.Record).GetUpPrice())
-		assert.Equal(t, 15.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, depth_items.PriceType(20.5), raw.(*grid.Record).GetPrice())
+		assert.Equal(t, depth_items.QuantityType(5.0), raw.(*grid.Record).GetQuantity())
+		assert.Equal(t, depth_items.PriceType(25.5), raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, depth_items.PriceType(15.5), raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeNone, raw.(*grid.Record).GetOrderSide())
 	}
 	raw = tree.Get(&grid.Record{Price: 30.5})
 	if raw != nil {
 		assert.Equal(t, int64(13), raw.(*grid.Record).GetOrderId())
-		assert.Equal(t, 30.5, raw.(*grid.Record).GetPrice())
-		assert.Equal(t, 5.0, raw.(*grid.Record).GetQuantity())
-		assert.Equal(t, 0.0, raw.(*grid.Record).GetUpPrice())
-		assert.Equal(t, 25.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, depth_items.PriceType(30.5), raw.(*grid.Record).GetPrice())
+		assert.Equal(t, depth_items.QuantityType(5.0), raw.(*grid.Record).GetQuantity())
+		assert.Equal(t, depth_items.PriceType(0.0), raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, depth_items.PriceType(25.5), raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeSell, raw.(*grid.Record).GetOrderSide())
 	}
 	raw = tree.Get(&grid.Record{Price: 25.5})
 	if raw != nil {
 		assert.Equal(t, int64(7), raw.(*grid.Record).GetOrderId())
-		assert.Equal(t, 25.5, raw.(*grid.Record).GetPrice())
-		assert.Equal(t, 5.0, raw.(*grid.Record).GetQuantity())
-		assert.Equal(t, 30.5, raw.(*grid.Record).GetUpPrice())
-		assert.Equal(t, 20.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, depth_items.PriceType(25.5), raw.(*grid.Record).GetPrice())
+		assert.Equal(t, depth_items.QuantityType(5.0), raw.(*grid.Record).GetQuantity())
+		assert.Equal(t, depth_items.PriceType(30.5), raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, depth_items.PriceType(20.5), raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeSell, raw.(*grid.Record).GetOrderSide())
 	}
 	raw = tree.Get(&grid.Record{Price: 15.5})
 	if raw != nil {
 		assert.Equal(t, int64(4), raw.(*grid.Record).GetOrderId())
-		assert.Equal(t, 15.5, raw.(*grid.Record).GetPrice())
-		assert.Equal(t, 5.0, raw.(*grid.Record).GetQuantity())
-		assert.Equal(t, 20.5, raw.(*grid.Record).GetUpPrice())
-		assert.Equal(t, 10.5, raw.(*grid.Record).GetDownPrice())
+		assert.Equal(t, depth_items.PriceType(15.5), raw.(*grid.Record).GetPrice())
+		assert.Equal(t, depth_items.QuantityType(5.0), raw.(*grid.Record).GetQuantity())
+		assert.Equal(t, depth_items.PriceType(20.5), raw.(*grid.Record).GetUpPrice())
+		assert.Equal(t, depth_items.PriceType(10.5), raw.(*grid.Record).GetDownPrice())
 		assert.Equal(t, types.SideTypeBuy, raw.(*grid.Record).GetOrderSide())
 	}
 }

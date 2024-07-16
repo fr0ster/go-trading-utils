@@ -6,17 +6,17 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid float64, firstMax ...bool) (
+func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid types.QuantityType, firstMax ...bool) (
 	asks,
 	bids *types.DepthItem,
 	summaAsks,
-	summaBids float64) {
+	summaBids types.QuantityType) {
 	var IsFirstMax bool
 	if len(firstMax) > 0 {
 		IsFirstMax = firstMax[0]
 	}
-	getIterator := func(target float64, item *types.DepthItem, summa *float64) func(i btree.Item) bool {
-		buffer := 0.0
+	getIterator := func(target types.QuantityType, item *types.DepthItem, summa *types.QuantityType) func(i btree.Item) bool {
+		buffer := types.QuantityType(0.0)
 		return func(i btree.Item) bool {
 			if (*summa + i.(*types.DepthItem).GetQuantity()) < target {
 				buffer += i.(*types.DepthItem).GetQuantity()
@@ -41,7 +41,7 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetP
 	asks,
 	bids *types.DepthItem,
 	summaAsks,
-	summaBids float64,
+	summaBids types.QuantityType,
 	err error) {
 	maxAsks, err := d.AskMax()
 	if err != nil {
@@ -51,7 +51,7 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetP
 	if err != nil {
 		return
 	}
-	getIterator := func(targetPercent float64, max, item *types.DepthItem, summa *float64) func(i btree.Item) bool {
+	getIterator := func(targetPercent types.QuantityType, max, item *types.DepthItem, summa *types.QuantityType) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
 			*summa += i.(*types.DepthItem).GetQuantity()
 			if (i.(*types.DepthItem).GetQuantity())*100/max.GetQuantity() >= targetPercent {
@@ -65,7 +65,7 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetP
 	}
 	asks = &types.DepthItem{}
 	bids = &types.DepthItem{}
-	d.GetAsks().Ascend(getIterator(targetPercentAsk, maxAsks, asks, &summaAsks))
-	d.GetBids().Descend(getIterator(targetPercentBid, maxBids, bids, &summaBids))
+	d.GetAsks().Ascend(getIterator(types.QuantityType(targetPercentAsk), maxAsks, asks, &summaAsks))
+	d.GetBids().Descend(getIterator(types.QuantityType(targetPercentBid), maxBids, bids, &summaBids))
 	return
 }

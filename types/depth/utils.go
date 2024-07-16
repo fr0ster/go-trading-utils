@@ -1,9 +1,11 @@
 package depth
 
-func (d *Depth) GetTargetPrices(percent float64) (priceUp, priceDown, summaAsks, summaBids float64) {
+import "github.com/fr0ster/go-trading-utils/types/depth/types"
+
+func (d *Depth) GetTargetPrices(percent float64) (priceUp, priceDown types.PriceType, summaAsks, summaBids types.QuantityType) {
 	upDepthItem, DownDepthItem, summaAsks, summaBids := d.GetAsksBidMaxAndSummaByQuantity(
-		d.GetAsksSummaQuantity()*percent/100,
-		d.GetBidsSummaQuantity()*percent/100,
+		d.GetAsksSummaQuantity()*types.QuantityType(percent)/100,
+		d.GetBidsSummaQuantity()*types.QuantityType(percent)/100,
 		true,
 	)
 	priceUp = upDepthItem.GetPrice()

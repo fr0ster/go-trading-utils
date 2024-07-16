@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	depth_item "github.com/fr0ster/go-trading-utils/types/depth/types"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
@@ -32,7 +33,7 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown float64, err error) {
+func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown types.PriceType, err error) {
 	if pp.depth != nil {
 		priceUp, priceDown, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
 	} else {
@@ -41,7 +42,7 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown float64, err erro
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error) {
+func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown types.PriceType, err error) {
 	var (
 		askMax *depth_item.DepthItem
 		bidMax *depth_item.DepthItem
@@ -64,35 +65,35 @@ func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown float64, err error
 }
 
 func (pp *PairProcessor) GetPrices(
-	price float64,
+	price types.PriceType,
 	isDynamic bool) (
-	priceUp,
-	quantityUp,
-	priceDown,
-	quantityDown float64,
+	priceUp types.PriceType,
+	quantityUp types.QuantityType,
+	priceDown types.PriceType,
+	quantityDown types.QuantityType,
 	reduceOnlyUp bool,
 	reduceOnlyDown bool,
 	err error) {
 	if pp.depth != nil {
 		priceUp, priceDown, err = pp.GetTargetPrices()
 	} else {
-		priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
-		priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+		priceUp = types.PriceType(pp.RoundPrice(float64(price) * (1 + pp.GetDeltaPrice())))
+		priceDown = types.PriceType(pp.RoundPrice(float64(price) * (1 - pp.GetDeltaPrice())))
 	}
 	reduceOnlyUp = false
 	reduceOnlyDown = false
 
-	quantityUp = pp.RoundQuantity(pp.GetLimitOnTransaction() / priceUp)
-	quantityDown = pp.RoundQuantity(pp.GetLimitOnTransaction() / priceDown)
+	quantityUp = types.QuantityType(pp.RoundQuantity(pp.GetLimitOnTransaction() / float64(priceUp)))
+	quantityDown = types.QuantityType(pp.RoundQuantity(pp.GetLimitOnTransaction() / float64(priceDown)))
 
 	if quantityUp == 0 && quantityDown == 0 {
 		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)
 		return
 	}
-	if quantityUp*priceUp < pp.GetNotional() {
+	if float64(quantityUp)*float64(priceUp) < pp.GetNotional() {
 		err = fmt.Errorf("calculated quantity up %v * price up %v < notional %v", quantityUp, priceUp, pp.GetNotional())
 		return
-	} else if quantityDown*priceDown < pp.GetNotional() {
+	} else if float64(quantityDown)*float64(priceDown) < pp.GetNotional() {
 		err = fmt.Errorf("calculated quantity down %v * price down %v < notional %v", quantityDown, priceDown, pp.GetNotional())
 		return
 	}

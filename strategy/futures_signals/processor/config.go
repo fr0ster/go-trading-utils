@@ -1,30 +1,32 @@
 package processor
 
-func (pp *PairProcessor) GetDeltaPrice() float64 {
-	return pp.deltaPrice
+import "github.com/fr0ster/go-trading-utils/types/depth/types"
+
+func (pp *PairProcessor) GetDeltaPrice() types.PriceType {
+	return types.PriceType(pp.deltaPrice)
 }
 
-func (pp *PairProcessor) SetDeltaPrice(deltaPrice float64) {
+func (pp *PairProcessor) SetDeltaPrice(deltaPrice types.PriceType) {
 	pp.deltaPrice = deltaPrice
 }
 
-func (pp *PairProcessor) GetDeltaQuantity() float64 {
-	return pp.deltaQuantity
+func (pp *PairProcessor) GetDeltaQuantity() types.QuantityType {
+	return types.QuantityType(pp.deltaQuantity)
 }
 
-func (pp *PairProcessor) GetLimitOnTransaction() (limit float64) {
-	return pp.limitOnTransaction * pp.GetFreeBalance()
+func (pp *PairProcessor) GetLimitOnTransaction() (limit types.PriceType) {
+	return types.PriceType(pp.limitOnTransaction) * pp.GetFreeBalance()
 }
 
-func (pp *PairProcessor) SetBounds(price float64) {
-	pp.UpBound = price * (1 + pp.UpBoundPercent)
-	pp.LowBound = price * (1 - pp.LowBoundPercent)
+func (pp *PairProcessor) SetBounds(price types.PriceType) {
+	pp.UpBound = price * (1 + types.PriceType(pp.UpBoundPercent))
+	pp.LowBound = price * (1 - types.PriceType(pp.LowBoundPercent))
 }
 
-func (pp *PairProcessor) GetUpBound() float64 {
+func (pp *PairProcessor) GetUpBound() types.PriceType {
 	return pp.UpBound
 }
 
-func (pp *PairProcessor) GetLowBound() float64 {
+func (pp *PairProcessor) GetLowBound() types.PriceType {
 	return pp.LowBound
 }

@@ -8,6 +8,7 @@ import (
 
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 func (pp *PairProcessor) startDepthStream(
@@ -98,14 +99,14 @@ func (pp *PairProcessor) GetDepthEventCallBack() futures.WsDepthHandler {
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateBid(price, quantity)
+				pp.depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateAsk(price, quantity)
+				pp.depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
 			}
 			pp.depth.LastUpdateID = event.LastUpdateID
 		}

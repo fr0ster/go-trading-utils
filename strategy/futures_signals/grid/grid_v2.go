@@ -11,6 +11,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -25,9 +26,9 @@ func getCallBack_v2(
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
-		quantity     float64
-		locked       float64
-		currentPrice float64
+		quantity     types.QuantityType
+		locked       types.PriceType
+		currentPrice types.PriceType
 		risk         *futures.PositionRisk
 		err          error
 	)
@@ -38,7 +39,7 @@ func getCallBack_v2(
 		if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			grid.Lock()
 			// Знаходимо у гріді на якому був виконаний ордер
-			currentPrice = utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice)
+			currentPrice = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 			if !ok {
 				printError()
@@ -115,12 +116,12 @@ func RunFuturesGridTradingV2(
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
-		initPrice     float64
-		initPriceUp   float64
-		initPriceDown float64
-		quantity      float64
-		quantityUp    float64
-		quantityDown  float64
+		initPrice     types.PriceType
+		initPriceUp   types.PriceType
+		initPriceDown types.PriceType
+		quantity      types.QuantityType
+		quantityUp    types.QuantityType
+		quantityDown  types.QuantityType
 		minNotional   float64
 		grid          *grid_types.Grid
 		pairProcessor *processor.PairProcessor
@@ -154,7 +155,7 @@ func RunFuturesGridTradingV2(
 	if err != nil {
 		return err
 	}
-	if minNotional > pairProcessor.GetLimitOnTransaction() {
+	if minNotional > float64(pairProcessor.GetLimitOnTransaction()) {
 		printError()
 		return fmt.Errorf("minNotional %v more than current limitOnTransaction %v",
 			minNotional, pairProcessor.GetLimitOnTransaction())

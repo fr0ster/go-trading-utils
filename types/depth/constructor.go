@@ -84,10 +84,10 @@ func (d *Depth) GetRateStream() DepthStreamRate {
 	return d.rateStream
 }
 
-func (d *Depth) GetAsksSummaQuantity() float64 {
+func (d *Depth) GetAsksSummaQuantity() types.QuantityType {
 	return d.asksSummaQuantity
 }
 
-func (d *Depth) GetBidsSummaQuantity() float64 {
+func (d *Depth) GetBidsSummaQuantity() types.QuantityType {
 	return d.bidsSummaQuantity
 }

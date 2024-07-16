@@ -10,6 +10,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
@@ -30,10 +31,10 @@ func getCallBackTrading(
 	var (
 		sideUp    futures.SideType
 		typeUp    futures.OrderType
-		priceUp   float64
+		priceUp   types.PriceType
 		sideDown  futures.SideType
 		typeDown  futures.OrderType
-		priceDown float64
+		priceDown types.PriceType
 	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
@@ -58,18 +59,18 @@ func getCallBackTrading(
 					// Відкрили позицію long купівлею, закриваємо її продажем
 					sideUp = futures.SideTypeSell
 					typeUp = longPositionTPOrderType
-					priceUp = math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), currentPrice) * (1 + pairProcessor.GetDeltaPrice()*2)
+					priceUp = types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 + float64(pairProcessor.GetDeltaPrice())*2))
 					sideDown = futures.SideTypeSell
 					typeDown = longPositionSLOrderType
-					priceDown = utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 - pairProcessor.GetDeltaPrice())
+					priceDown = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 - float64(pairProcessor.GetDeltaPrice())))
 				} else if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 					// Відкрили позицію short продажею, закриваємо її купівлею
 					sideUp = futures.SideTypeBuy
 					typeUp = shortPositionSLOrderType
-					priceUp = utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + pairProcessor.GetDeltaPrice())
+					priceUp = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + float64(pairProcessor.GetDeltaPrice())))
 					sideDown = futures.SideTypeBuy
 					typeDown = shortPositionTPOrderType
-					priceDown = math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), currentPrice) * (1 - pairProcessor.GetDeltaPrice()*2)
+					priceDown = types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 - float64(pairProcessor.GetDeltaPrice())*2))
 				}
 				upOrder, downOrder, err := openPosition(
 					sideUp,
@@ -80,8 +81,8 @@ func getCallBackTrading(
 					true,
 					false,
 					true,
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty),
+					types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
+					types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
 					priceUp,
 					priceUp,
 					priceUp,
@@ -114,7 +115,7 @@ func getCallBackTrading(
 			} else if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 				pairProcessor.CancelAllOrders()
 				// Створюємо початкові ордери на продаж та купівлю
-				if pairProcessor.GetNotional() > pairProcessor.GetLimitOnTransaction() {
+				if pairProcessor.GetNotional() > float64(pairProcessor.GetLimitOnTransaction()) {
 					logrus.Errorf("Notional %v > LimitOnTransaction %v", pairProcessor.GetNotional(), pairProcessor.GetLimitOnTransaction())
 					printError()
 					close(quit)
@@ -128,8 +129,9 @@ func getCallBackTrading(
 					return
 				}
 				quantity := pairProcessor.RoundQuantity(
-					pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() *
-						float64(pairProcessor.GetLeverage()) / currentPrice))
+					pairProcessor.RoundQuantity(
+						types.QuantityType(
+							float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(currentPrice))))
 				_, _, err = openPosition(
 					upOrderSideOpen,
 					upPositionNewOrderType,
@@ -176,10 +178,10 @@ func getErrorHandlingTrading(
 			upNewOrder    futures.OrderType
 			downNewSide   futures.SideType
 			downNewOrder  futures.OrderType
-			initPriceUp   float64
-			initPriceDown float64
-			quantityUp    float64
-			quantityDown  float64
+			initPriceUp   types.PriceType
+			initPriceDown types.PriceType
+			quantityUp    types.QuantityType
+			quantityDown  types.QuantityType
 			err           error
 		)
 		openOrders, _ := pairProcessor.GetOpenOrders()
@@ -190,8 +192,8 @@ func getErrorHandlingTrading(
 				downNewSide,
 				downNewOrder,
 				initPriceUp,
-				quantityUp,
 				initPriceDown,
+				quantityUp,
 				quantityDown,
 				err = initNewTradingPosition(
 				upOrderSideOpen,
@@ -252,10 +254,10 @@ func initNewTradingPosition(
 	upNewOrder futures.OrderType,
 	downNewSide futures.SideType,
 	downNewOrder futures.OrderType,
-	initPriceUp float64,
-	initPriceDown float64,
-	quantityUp float64,
-	quantityDown float64,
+	initPriceUp types.PriceType,
+	initPriceDown types.PriceType,
+	quantityUp types.QuantityType,
+	quantityDown types.QuantityType,
 	err error) {
 
 	risk, err := pairProcessor.GetPositionRisk()
@@ -264,7 +266,7 @@ func initNewTradingPosition(
 		close(quit)
 		return
 	}
-	if pairProcessor.GetLimitOnTransaction() < pairProcessor.GetNotional() {
+	if float64(pairProcessor.GetLimitOnTransaction()) < pairProcessor.GetNotional() {
 		err = fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
 		printError()
 		close(quit)
@@ -287,11 +289,11 @@ func initNewTradingPosition(
 		return
 	}
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = -utils.ConvStrToFloat64(risk.PositionAmt)
-		quantityDown = -utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityUp = types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
+		quantityDown = types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = utils.ConvStrToFloat64(risk.PositionAmt)
-		quantityDown = utils.ConvStrToFloat64(risk.PositionAmt)
+		quantityUp = types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+		quantityDown = types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	}
 	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
 		risk,
@@ -346,10 +348,10 @@ func RunFuturesTrading(
 		upNewOrder    futures.OrderType
 		downNewSide   futures.SideType
 		downNewOrder  futures.OrderType
-		initPriceUp   float64
-		initPriceDown float64
-		quantityUp    float64
-		quantityDown  float64
+		initPriceUp   types.PriceType
+		initPriceDown types.PriceType
+		quantityUp    types.QuantityType
+		quantityDown  types.QuantityType
 		pairProcessor *processor.PairProcessor
 	)
 	defer wg.Done()
@@ -412,8 +414,8 @@ func RunFuturesTrading(
 		downNewSide,
 		downNewOrder,
 		initPriceUp,
-		quantityUp,
 		initPriceDown,
+		quantityUp,
 		quantityDown,
 		err = initNewTradingPosition(
 		upOrderSideOpen,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 )
 
 func Init(d *depth_types.Depth, client *binance.Client) (err error) {
@@ -19,12 +20,12 @@ func Init(d *depth_types.Depth, client *binance.Client) (err error) {
 	d.ClearBids()
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
-		d.SetBid(price, quantity)
+		d.SetBid(types.PriceType(price), types.QuantityType(quantity))
 	}
 	d.ClearAsks()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
-		d.SetAsk(price, quantity)
+		d.SetAsk(types.PriceType(price), types.QuantityType(quantity))
 	}
 	d.LastUpdateID = res.LastUpdateID
 	return nil

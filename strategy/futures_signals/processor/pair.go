@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types/depth/types"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -93,31 +94,31 @@ func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
 	return
 }
 
-func (pp *PairProcessor) GetFreeBalance() (balance float64) {
+func (pp *PairProcessor) GetFreeBalance() (balance types.PriceType) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return 0
 	}
-	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.AvailableBalance))
 	if balance > pp.limitOnPosition {
 		balance = pp.limitOnPosition
 	}
 	return
 }
 
-func (pp *PairProcessor) GetLockedBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetLockedBalance() (balance types.PriceType, err error) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	balance = types.PriceType(utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance))
 	return
 }
 
-func (pp *PairProcessor) GetCurrentPrice() (float64, error) {
+func (pp *PairProcessor) GetCurrentPrice() (types.PriceType, error) {
 	price, err := pp.client.NewListPricesService().Symbol(pp.symbol.Symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
 	}
-	return utils.ConvStrToFloat64(price[0].Price), nil
+	return types.PriceType(utils.ConvStrToFloat64(price[0].Price)), nil
 }

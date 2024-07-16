@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	"github.com/google/btree"
 )
 
@@ -35,12 +36,12 @@ type (
 		degree            int
 		asks              *btree.BTree
 		asksCountQuantity int
-		asksSummaQuantity float64
+		asksSummaQuantity types.QuantityType
 		asksMinMax        *btree.BTree
 		askNormalized     *btree.BTree
 		bids              *btree.BTree
 		bidsCountQuantity int
-		bidsSummaQuantity float64
+		bidsSummaQuantity types.QuantityType
 		bidsMinMax        *btree.BTree
 		bidNormalized     *btree.BTree
 		mutex             *sync.Mutex

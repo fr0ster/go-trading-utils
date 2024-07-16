@@ -5,21 +5,21 @@ import (
 	"github.com/google/btree"
 )
 
-func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid float64, firstMax ...bool) (
+func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid types.PriceType, firstMax ...bool) (
 	asks,
 	bids *types.DepthItem,
 	summaAsks,
-	summaBids float64) {
+	summaBids types.QuantityType) {
 	var IsFirstMax bool
 	if len(firstMax) > 0 {
 		IsFirstMax = firstMax[0]
 	}
 	getIterator := func(
-		targetPrice float64,
+		targetPrice types.PriceType,
 		item *types.DepthItem,
-		summa *float64,
-		f func(float64, float64) bool) func(i btree.Item) bool {
-		buffer := 0.0
+		summa *types.QuantityType,
+		f func(types.PriceType, types.PriceType) bool) func(i btree.Item) bool {
+		buffer := types.QuantityType(0.0)
 		return func(i btree.Item) bool {
 			if f(i.(*types.DepthItem).GetPrice(), targetPrice) {
 				buffer += i.(*types.DepthItem).GetQuantity()
@@ -41,12 +41,12 @@ func (d *Depth) GetAsksBidMaxAndSummaByPrice(targetPriceAsk, targetPriceBid floa
 			targetPriceAsk,
 			asks,
 			&summaAsks,
-			func(price float64, target float64) bool { return price <= target }))
+			func(price types.PriceType, target types.PriceType) bool { return price <= target }))
 	d.GetBids().Descend(
 		getIterator(
 			targetPriceBid,
 			bids,
 			&summaBids,
-			func(price float64, target float64) bool { return price >= target }))
+			func(price types.PriceType, target types.PriceType) bool { return price >= target }))
 	return
 }

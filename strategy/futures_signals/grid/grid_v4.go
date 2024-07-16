@@ -11,6 +11,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	types "github.com/fr0ster/go-trading-utils/types/depth/types"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -59,7 +60,7 @@ func getCallBack_v4(
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
 				err = createNextPair_v4(
-					utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice),
+					types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
 					pairProcessor)
 				if err != nil {
 					logrus.Errorf("Futures %s: %v", pairProcessor.GetPair(), err)
@@ -77,10 +78,10 @@ func getErrorHandling_v4(
 	quit chan struct{}) futures.ErrHandler {
 	return func(networkErr error) {
 		var (
-			initPriceUp    float64
-			initPriceDown  float64
-			quantityUp     float64
-			quantityDown   float64
+			initPriceUp    types.PriceType
+			initPriceDown  types.PriceType
+			quantityUp     types.QuantityType
+			quantityDown   types.QuantityType
 			reduceOnlyUp   bool
 			reduceOnlyDown bool
 		)
@@ -144,14 +145,14 @@ func getErrorHandling_v4(
 }
 
 func createNextPair_v4(
-	LastExecutedPrice float64,
+	LastExecutedPrice types.PriceType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk              *futures.PositionRisk
-		upPrice           float64
-		downPrice         float64
-		upQuantity        float64
-		downQuantity      float64
+		upPrice           types.PriceType
+		downPrice         types.PriceType
+		upQuantity        types.QuantityType
+		downQuantity      types.QuantityType
 		upClosePosition   bool
 		downClosePosition bool
 		upReduceOnly      bool
@@ -159,17 +160,19 @@ func createNextPair_v4(
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-	position := math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))
+	position := types.QuantityType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 	if breakEvenPrice == 0 {
 		breakEvenPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 	}
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+	if types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt)) < 0 {
 		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
-			upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
+			upQuantity = pairProcessor.RoundQuantity(
+				types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
 		}
-		downPrice = pairProcessor.NextPriceDown(math.Min(breakEvenPrice, LastExecutedPrice))
-		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
+		downPrice = pairProcessor.NextPriceDown(types.PriceType(math.Min(breakEvenPrice, float64(LastExecutedPrice))))
+		downQuantity = pairProcessor.RoundQuantity(
+			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		if downQuantity > position {
 			downQuantity = position
 		}
@@ -178,14 +181,16 @@ func createNextPair_v4(
 		upReduceOnly = false
 		downReduceOnly = true
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		upPrice = pairProcessor.NextPriceUp(math.Max(breakEvenPrice, LastExecutedPrice))
-		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
+		upPrice = pairProcessor.NextPriceUp(types.PriceType(math.Max(breakEvenPrice, float64(LastExecutedPrice))))
+		upQuantity = pairProcessor.RoundQuantity(
+			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
 		if upQuantity > position {
 			upQuantity = position
 		}
 		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-			downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
+			downQuantity = pairProcessor.RoundQuantity(
+				types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		}
 		upClosePosition = false
 		downClosePosition = false
@@ -194,8 +199,10 @@ func createNextPair_v4(
 	} else { // Немає позиції, відкриваємо нову
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-		upQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / upPrice)
-		downQuantity = pairProcessor.RoundQuantity(pairProcessor.GetLimitOnTransaction() * float64(pairProcessor.GetLeverage()) / downPrice)
+		upQuantity = pairProcessor.RoundQuantity(
+			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
+		downQuantity = pairProcessor.RoundQuantity(
+			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = false
@@ -230,15 +237,15 @@ func createNextPair_v4(
 }
 
 func initPosition_v4(
-	price float64,
+	price types.PriceType,
 	risk *futures.PositionRisk,
 	pairProcessor *processor.PairProcessor,
 	quit chan struct{}) {
 	var (
-		initPriceUp    float64
-		initPriceDown  float64
-		quantityUp     float64
-		quantityDown   float64
+		initPriceUp    types.PriceType
+		initPriceDown  types.PriceType
+		quantityUp     types.QuantityType
+		quantityDown   types.QuantityType
 		reduceOnlyUp   bool
 		reduceOnlyDown bool
 	)
@@ -361,7 +368,7 @@ func RunFuturesGridTradingV4(
 			case <-time.After(timeOut_v4):
 				if v4.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
-					free := pairProcessor.GetFreeBalance() * float64(pairProcessor.GetLeverage())
+					free := pairProcessor.GetFreeBalance() * types.PriceType(pairProcessor.GetLeverage())
 					risk, err := pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
