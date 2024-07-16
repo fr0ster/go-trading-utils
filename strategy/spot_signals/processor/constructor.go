@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -33,6 +34,16 @@ func NewPairProcessor(
 	exchangeInfo := exchange_types.New()
 	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
 	if err != nil {
+		apiErr, _ := utils.ParseAPIError(err)
+		switch apiErr.Code {
+		case -1003:
+			var bannedUntil string
+			_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP banned until %s", &bannedUntil)
+			if errScanf != nil {
+				return
+			}
+			err = fmt.Errorf("banned until: %s", bannedUntil)
+		}
 		return
 	}
 	pp = &PairProcessor{
