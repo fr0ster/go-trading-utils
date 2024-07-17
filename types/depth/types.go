@@ -38,19 +38,19 @@ type (
 		asksCountQuantity int
 		asksSummaQuantity types.QuantityType
 		asksMinMax        *btree.BTree
-		// askNormalized     *btree.BTree
+		askNormalized     *btree.BTree
 		bids              *btree.BTree
 		bidsCountQuantity int
 		bidsSummaQuantity types.QuantityType
 		bidsMinMax        *btree.BTree
-		// bidNormalized     *btree.BTree
-		mutex           *sync.Mutex
-		LastUpdateID    int64
-		limitDepth      DepthAPILimit
-		limitStream     DepthStreamLevel
-		rateStream      DepthStreamRate
-		percentToTarget float64
-		expBase         int
+		bidNormalized     *btree.BTree
+		mutex             *sync.Mutex
+		LastUpdateID      int64
+		limitDepth        DepthAPILimit
+		limitStream       DepthStreamLevel
+		rateStream        DepthStreamRate
+		percentToTarget   float64
+		expBase           int
 	}
 )
 

@@ -33,7 +33,7 @@ func (d *Depth) SetAsk(price types.PriceType, quantity types.QuantityType) (err 
 	}
 	d.asks.ReplaceOrInsert(types.NewDepthItem(price, quantity))
 	d.AddAskMinMax(price, quantity)
-	// err = d.AddAskNormalized(price, quantity)
+	err = d.AddAskNormalized(price, quantity)
 	return
 }
 
@@ -47,7 +47,7 @@ func (d *Depth) SetBid(price types.PriceType, quantity types.QuantityType) (err 
 	}
 	d.bids.ReplaceOrInsert(types.NewDepthItem(price, quantity))
 	d.AddBidMinMax(price, quantity)
-	// err = d.AddBidNormalized(price, quantity)
+	err = d.AddBidNormalized(price, quantity)
 	return
 }
 
@@ -57,8 +57,8 @@ func (d *Depth) DeleteAsk(price types.PriceType) {
 	if old != nil {
 		d.asksSummaQuantity -= old.(*types.DepthItem).GetQuantity()
 		d.asksCountQuantity--
-		// d.DeleteAskMinMax(price, old.(*types.DepthItem).GetQuantity())
-		// d.DeleteAskNormalized(price, old.(*types.DepthItem).GetQuantity())
+		d.DeleteAskMinMax(price, old.(*types.DepthItem).GetQuantity())
+		d.DeleteAskNormalized(price, old.(*types.DepthItem).GetQuantity())
 		d.asks.Delete(types.NewDepthItem(price))
 	}
 }
@@ -69,8 +69,8 @@ func (d *Depth) DeleteBid(price types.PriceType) {
 	if old != nil {
 		d.bidsSummaQuantity -= old.(*types.DepthItem).GetQuantity()
 		d.asksCountQuantity--
-		// d.DeleteBidMinMax(price, old.(*types.DepthItem).GetQuantity())
-		// d.DeleteBidNormalized(price, old.(*types.DepthItem).GetQuantity())
+		d.DeleteBidMinMax(price, old.(*types.DepthItem).GetQuantity())
+		d.DeleteBidNormalized(price, old.(*types.DepthItem).GetQuantity())
 		d.bids.Delete(types.NewDepthItem(price))
 	}
 }
