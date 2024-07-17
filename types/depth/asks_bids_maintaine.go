@@ -45,11 +45,15 @@ func (d *Depth) SetBids(bids *btree.BTree) {
 // ClearAsks implements depth_interface.Depths.
 func (d *Depth) ClearAsks() {
 	d.asks.Clear(false)
+	d.asksMinMax.Clear(false)
+	d.askNormalized.Clear(false)
 }
 
 // ClearBids implements depth_interface.Depths.
 func (d *Depth) ClearBids() {
 	d.bids.Clear(false)
+	d.bidsMinMax.Clear(false)
+	d.bidNormalized.Clear(false)
 }
 
 // AskAscend implements depth_interface.Depths.
