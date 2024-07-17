@@ -643,7 +643,7 @@ func TestAskAndBidDelete(t *testing.T) {
 	}()
 }
 
-func TestAskAndSummaQuantity(t *testing.T) {
+func TestAskAndBidSummaQuantity(t *testing.T) {
 	func() {
 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
 		ds.SetAsk(800, 100)
@@ -660,6 +660,23 @@ func TestAskAndSummaQuantity(t *testing.T) {
 		assert.Equal(t, types.QuantityType(600.0), ds.GetAsksSummaQuantity())
 		ds.SetAsk(740, 100)
 		assert.Equal(t, types.QuantityType(700.0), ds.GetAsksSummaQuantity())
+	}()
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds.SetBid(800, 100)
+		assert.Equal(t, types.QuantityType(100.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(790, 100)
+		assert.Equal(t, types.QuantityType(200.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(780, 100)
+		assert.Equal(t, types.QuantityType(300.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(770, 100)
+		assert.Equal(t, types.QuantityType(400.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(760, 100)
+		assert.Equal(t, types.QuantityType(500.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(750, 100)
+		assert.Equal(t, types.QuantityType(600.0), ds.GetBidsSummaQuantity())
+		ds.SetBid(740, 100)
+		assert.Equal(t, types.QuantityType(700.0), ds.GetBidsSummaQuantity())
 	}()
 }
 
@@ -766,4 +783,42 @@ func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 	})
 	assert.Equal(t, summaAsks1, summaAsks3)
 	assert.Equal(t, summaAsks2, summaAsks1)
+}
+
+func TestAskAndBidMinMaxQuantity(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		minTest := func() types.QuantityType {
+			min, err := ds.AskMin()
+			if err != nil {
+				return 0
+			}
+			return min.GetQuantity()
+		}
+		maxTest := func() types.QuantityType {
+			max, err := ds.AskMax()
+			if err != nil {
+				return 0
+			}
+			return max.GetQuantity()
+		}
+		ds.SetAsk(800, 100)
+		assert.Equal(t, types.QuantityType(100.0), minTest())
+		assert.Equal(t, types.QuantityType(100.0), maxTest())
+		ds.SetAsk(790, 200)
+		assert.Equal(t, types.QuantityType(100.0), minTest())
+		assert.Equal(t, types.QuantityType(200.0), maxTest())
+		ds.SetAsk(780, 300)
+		assert.Equal(t, types.QuantityType(100.0), minTest())
+		assert.Equal(t, types.QuantityType(300.0), maxTest())
+		ds.DeleteAsk(800)
+		assert.Equal(t, types.QuantityType(200.0), minTest())
+		assert.Equal(t, types.QuantityType(300.0), maxTest())
+		ds.DeleteAsk(790)
+		assert.Equal(t, types.QuantityType(300.0), minTest())
+		assert.Equal(t, types.QuantityType(300.0), maxTest())
+		ds.DeleteAsk(780)
+		assert.Equal(t, types.QuantityType(0.0), minTest())
+		assert.Equal(t, types.QuantityType(0.0), maxTest())
+	}()
 }

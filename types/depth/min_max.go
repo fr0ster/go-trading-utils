@@ -57,8 +57,11 @@ func (d *Depth) AskMin() (min *types.DepthItem, err error) {
 		err = errors.New("asksMinMax is nil")
 		return
 	}
-	quantity := d.asksMinMax.Min().(*types.QuantityItem)
-	min = quantity.GetDepthMin()
+	if quantity := d.asksMinMax.Min(); quantity != nil {
+		min = quantity.(*types.QuantityItem).GetDepthMin()
+	} else {
+		err = errors.New("asksMinMax is empty")
+	}
 	return
 }
 
@@ -67,28 +70,37 @@ func (d *Depth) AskMax() (max *types.DepthItem, err error) {
 		err = errors.New("asksMinMax is empty")
 		return
 	}
-	quantity := d.asksMinMax.Max().(*types.QuantityItem)
-	max = quantity.GetDepthMin()
+	if quantity := d.asksMinMax.Max(); quantity != nil {
+		max = quantity.(*types.QuantityItem).GetDepthMin()
+	} else {
+		err = errors.New("asksMinMax is empty")
+	}
 	return
 }
 
 func (d *Depth) BidMin() (min *types.DepthItem, err error) {
 	if d.bidsMinMax == nil {
-		err = errors.New("asksMinMax is empty")
+		err = errors.New("bidsMinMax is empty")
 		return
 	}
-	quantity := d.bidsMinMax.Min().(*types.QuantityItem)
-	min = quantity.GetDepthMax()
+	if quantity := d.bidsMinMax.Min(); quantity != nil {
+		min = quantity.(*types.QuantityItem).GetDepthMax()
+	} else {
+		err = errors.New("bidsMinMax is empty")
+	}
 	return
 }
 
 func (d *Depth) BidMax() (max *types.DepthItem, err error) {
 	if d.bidsMinMax == nil {
-		err = errors.New("asksMinMax is empty")
+		err = errors.New("bidsMinMax is empty")
 		return
 	}
-	quantity := d.bidsMinMax.Max().(*types.QuantityItem)
-	max = quantity.GetDepthMax()
+	if quantity := d.bidsMinMax.Max(); quantity != nil {
+		max = quantity.(*types.QuantityItem).GetDepthMax()
+	} else {
+		err = errors.New("bidsMinMax is empty")
+	}
 	return
 }
 
