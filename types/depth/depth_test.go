@@ -620,3 +620,19 @@ func TestGetNormalizedAsksAndBids(t *testing.T) {
 		assert.Equal(t, 1, asksNorm.Len())
 	}()
 }
+
+func TestAskAndBidDelete(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds.SetAsk(800, 100)
+		ds.SetAsk(750, 150)
+		ds.DeleteAsk(800)
+		ask := ds.GetAsk(800)
+		assert.Nil(t, ask)
+		assert.Equal(t, 1, ds.GetAsks().Len())
+		ds.DeleteAsk(750)
+		ask = ds.GetAsk(750)
+		assert.Nil(t, ask)
+		assert.Equal(t, 0, ds.GetAsks().Len())
+	}()
+}

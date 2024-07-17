@@ -70,7 +70,7 @@ func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.Quanti
 	if err != nil {
 		return
 	}
-	if d.askNormalized.Get(d.NewAskNormalizedItem(price)).(*types.NormalizedItem).IsEmpty() {
+	if d.askNormalized.Get(d.NewAskNormalizedItem(price)).(*types.NormalizedItem).IsShouldDelete() {
 		d.askNormalized.Delete(d.NewAskNormalizedItem(price))
 	}
 	return
@@ -81,7 +81,7 @@ func (d *Depth) DeleteBidNormalized(price types.PriceType, quantity types.Quanti
 	if err != nil {
 		return
 	}
-	if d.askNormalized.Get(d.NewBidNormalizedItem(price)).(*types.NormalizedItem).IsEmpty() {
+	if d.askNormalized.Get(d.NewBidNormalizedItem(price)).(*types.NormalizedItem).IsShouldDelete() {
 		d.bidNormalized.Delete(d.NewBidNormalizedItem(price))
 	}
 	return

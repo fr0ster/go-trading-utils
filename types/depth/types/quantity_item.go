@@ -58,8 +58,8 @@ func (i *QuantityItem) GetDepthMax() *DepthItem {
 	}
 }
 
-func (i *QuantityItem) IsEmpty() bool {
-	return (i.depths.Len() == 0)
+func (i *QuantityItem) IsShouldDelete() bool {
+	return i.depths == nil
 }
 
 // Конструктори

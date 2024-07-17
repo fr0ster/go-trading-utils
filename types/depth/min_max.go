@@ -22,7 +22,7 @@ func (d *Depth) DeleteAskMinMax(price types.PriceType, quantity types.QuantityTy
 	if d.asksMinMax != nil {
 		if old := d.asksMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
 			old.(*types.QuantityItem).Delete(price, quantity)
-			if old.(*types.QuantityItem).IsEmpty() {
+			if old.(*types.QuantityItem).IsShouldDelete() {
 				d.asksMinMax.Delete(old)
 			}
 		}
@@ -45,7 +45,7 @@ func (d *Depth) DeleteBidMinMax(price types.PriceType, quantity types.QuantityTy
 	if d.bidsMinMax != nil {
 		if old := d.bidsMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
 			old.(*types.QuantityItem).Delete(price, quantity)
-			if old.(*types.QuantityItem).IsEmpty() {
+			if old.(*types.QuantityItem).IsShouldDelete() {
 				d.bidsMinMax.Delete(old)
 			}
 		}
