@@ -14,12 +14,13 @@ func (d *Depth) GetNormalizedAsk(price types.PriceType) (item *types.NormalizedI
 	return
 }
 
-func (d *Depth) GetNormalizedAskSumma(price types.PriceType) (summa types.QuantityType) {
+func (d *Depth) GetNormalizedAskSumma(price types.PriceType) (summa, summaTest types.QuantityType) {
 	if d.askNormalized != nil {
 		askN, _ := d.GetNormalizedAsk(price)
 		if askN == nil {
 			return
 		}
+		summaTest = askN.GetQuantity()
 		askN.GetDepths().Ascend(func(i btree.Item) bool {
 			summa += i.(*types.DepthItem).GetQuantity()
 			return true
@@ -53,14 +54,15 @@ func (d *Depth) GetNormalizedBids() *btree.BTree {
 	return d.bidNormalized
 }
 
-func (d *Depth) GetNormalizedBidSumma(price types.PriceType) (summa types.QuantityType) {
+func (d *Depth) GetNormalizedBidSumma(price types.PriceType) (summa, summaTest types.QuantityType) {
 	if d.bidNormalized != nil {
 		bidN, _ := d.GetNormalizedBid(price)
 		if bidN == nil {
 			return
 		}
+		summaTest = bidN.GetQuantity()
 		bidN.GetDepths().Ascend(func(i btree.Item) bool {
-			summa += i.(*types.NormalizedItem).GetQuantity()
+			summa += i.(*types.DepthItem).GetQuantity()
 			return true
 		})
 	}
