@@ -61,12 +61,20 @@ func (i *NormalizedItem) SetQuantity(quantity QuantityType) {
 	i.quantity = quantity
 }
 
+func (i *NormalizedItem) GetMinMaxes() *btree.BTree {
+	return i.minMax
+}
+
 // Робота зі стаканом
 func (i *NormalizedItem) GetDepth(price PriceType) (depthItem *DepthItem) {
 	if i.depths != nil {
 		depthItem = i.depths.Get(NewDepthItem(price)).(*DepthItem)
 	}
 	return
+}
+
+func (i *NormalizedItem) GetDepths() *btree.BTree {
+	return i.depths
 }
 
 // Робота з Мінімальними та Максимальними значеннями

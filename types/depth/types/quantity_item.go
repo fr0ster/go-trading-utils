@@ -58,6 +58,10 @@ func (i *QuantityItem) GetDepthMax() *DepthItem {
 	}
 }
 
+func (i *QuantityItem) GetDepths() *btree.BTree {
+	return i.depths
+}
+
 func (i *QuantityItem) IsShouldDelete() bool {
 	return i.depths == nil
 }
