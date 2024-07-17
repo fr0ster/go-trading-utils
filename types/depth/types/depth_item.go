@@ -13,6 +13,7 @@ type (
 	DepthTester func(result *DepthItem, target *DepthItem) bool
 )
 
+// Функції для btree.Btree
 func (i *DepthItem) Less(than btree.Item) bool {
 	return i.price < than.(*DepthItem).price
 }
@@ -21,6 +22,7 @@ func (i *DepthItem) Equal(than btree.Item) bool {
 	return i.price == than.(*DepthItem).price
 }
 
+// CRUD
 func (i *DepthItem) GetPrice() PriceType {
 	return i.price
 }
@@ -37,11 +39,12 @@ func (i *DepthItem) SetQuantity(quantity QuantityType) {
 	i.quantity = quantity
 }
 
-// GetAskDeviation implements depth_interface.Depths.
+// Статистичні функції
 func (d *DepthItem) GetQuantityDeviation(middle QuantityType) float64 {
 	return float64(d.quantity - middle)
 }
 
+// Конструктори
 func NewDepthItem(price PriceType, quantity ...QuantityType) *DepthItem {
 	if len(quantity) > 0 {
 		return &DepthItem{price: price, quantity: quantity[0]}

@@ -24,23 +24,12 @@ func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedI
 
 func (d *Depth) addNormalized(tree *btree.BTree, price types.PriceType, quantity types.QuantityType, RoundUp bool) (err error) {
 	if tree != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := tree.Get(d.newNormalizedItem(price, RoundUp)); old != nil {
-			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
-				val.SetDepth(depthItem)
-			} else {
-				item := d.NewQuantityItem(quantity, price)
-				item.SetDepth(depthItem)
-				old.(*types.NormalizedItem).SetMinMax(item)
-			}
-			old.(*types.NormalizedItem).SetDepth(depthItem)
-			old.(*types.NormalizedItem).SetQuantity(old.(*types.NormalizedItem).GetQuantity() + quantity)
+			// MinMax && Depths
+			old.(*types.NormalizedItem).Add(price, quantity)
 		} else {
 			item := d.newNormalizedItem(price, RoundUp, quantity)
-			minMax := d.NewQuantityItem(quantity, price)
-			minMax.SetDepth(depthItem)
-			item.SetMinMax(minMax)
-			item.SetDepth(depthItem)
+			// item.Add(price, quantity)
 			tree.ReplaceOrInsert(item)
 		}
 	} else {
@@ -59,13 +48,8 @@ func (d *Depth) AddBidNormalized(price types.PriceType, quantity types.QuantityT
 
 func (d *Depth) deleteNormalized(tree *btree.BTree, price types.PriceType, quantity types.QuantityType, roundUp bool) (err error) {
 	if tree != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := tree.Get(d.newNormalizedItem(price, roundUp)); old != nil {
-			if val := old.(*types.NormalizedItem).GetMinMax(quantity); val != nil {
-				val.DeleteDepth(depthItem)
-				old.(*types.NormalizedItem).DeleteMinMax(val)
-			}
-			old.(*types.NormalizedItem).DeleteDepth(depthItem)
+			old.(*types.NormalizedItem).Delete(price, quantity)
 		}
 	} else {
 		err = errors.New("tree is nil")
@@ -73,20 +57,26 @@ func (d *Depth) deleteNormalized(tree *btree.BTree, price types.PriceType, quant
 	return
 }
 
-func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.QuantityType) error {
-	return d.deleteNormalized(d.askNormalized, price, quantity, true)
+func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.QuantityType) (err error) {
+	err = d.deleteNormalized(d.askNormalized, price, quantity, true)
+	if err != nil {
+		return
+	}
+	if d.askNormalized.Get(d.NewAskNormalizedItem(price)).(*types.NormalizedItem).IsEmpty() {
+		d.askNormalized.Delete(d.NewAskNormalizedItem(price))
+	}
+	return
 }
 
-func (d *Depth) DeleteBidNormalized(price types.PriceType, quantity types.QuantityType) error {
-	return d.deleteNormalized(d.bidNormalized, price, quantity, false)
-}
-
-func (d *Depth) GetNormalizedAsks() *btree.BTree {
-	return d.askNormalized
-}
-
-func (d *Depth) GetNormalizedBids() *btree.BTree {
-	return d.bidNormalized
+func (d *Depth) DeleteBidNormalized(price types.PriceType, quantity types.QuantityType) (err error) {
+	err = d.deleteNormalized(d.bidNormalized, price, quantity, false)
+	if err != nil {
+		return
+	}
+	if d.askNormalized.Get(d.NewBidNormalizedItem(price)).(*types.NormalizedItem).IsEmpty() {
+		d.bidNormalized.Delete(d.NewBidNormalizedItem(price))
+	}
+	return
 }
 
 func (d *Depth) newNormalizedItem(price types.PriceType, roundUp bool, quantity ...types.QuantityType) (normalized *types.NormalizedItem) {

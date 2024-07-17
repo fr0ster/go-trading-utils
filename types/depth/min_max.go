@@ -8,12 +8,11 @@ import (
 
 func (d *Depth) AddAskMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.asksMinMax != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.asksMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
-			old.(*types.QuantityItem).SetDepth(depthItem)
+			old.(*types.QuantityItem).Add(price, quantity)
 		} else {
 			item := d.NewQuantityItem(quantity, price)
-			item.SetDepth(depthItem)
+			item.Add(price, quantity)
 			d.asksMinMax.ReplaceOrInsert(item)
 		}
 	}
@@ -21,22 +20,22 @@ func (d *Depth) AddAskMinMax(price types.PriceType, quantity types.QuantityType)
 
 func (d *Depth) DeleteAskMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.asksMinMax != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.asksMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
-			old.(*types.QuantityItem).DeleteDepth(depthItem)
-			d.asksMinMax.Delete(old)
+			old.(*types.QuantityItem).Delete(price, quantity)
+			if old.(*types.QuantityItem).IsEmpty() {
+				d.asksMinMax.Delete(old)
+			}
 		}
 	}
 }
 
 func (d *Depth) AddBidMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.bidsMinMax != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.bidsMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
-			old.(*types.QuantityItem).SetDepth(depthItem)
+			old.(*types.QuantityItem).Add(price, quantity)
 		} else {
 			item := d.NewQuantityItem(quantity, price)
-			item.SetDepth(depthItem)
+			item.Add(price, quantity)
 			d.bidsMinMax.ReplaceOrInsert(item)
 		}
 	}
@@ -44,10 +43,11 @@ func (d *Depth) AddBidMinMax(price types.PriceType, quantity types.QuantityType)
 
 func (d *Depth) DeleteBidMinMax(price types.PriceType, quantity types.QuantityType) {
 	if d.bidsMinMax != nil {
-		depthItem := types.NewDepthItem(price, quantity)
 		if old := d.bidsMinMax.Get(d.NewQuantityItem(quantity)); old != nil {
-			old.(*types.QuantityItem).DeleteDepth(depthItem)
-			d.bidsMinMax.Delete(old)
+			old.(*types.QuantityItem).Delete(price, quantity)
+			if old.(*types.QuantityItem).IsEmpty() {
+				d.bidsMinMax.Delete(old)
+			}
 		}
 	}
 }
