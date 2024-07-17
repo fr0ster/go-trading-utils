@@ -2,7 +2,6 @@ package processor
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 	"strconv"
 	"time"
@@ -80,11 +79,7 @@ func NewPairProcessor(
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
 
 	// Ініціалізуємо стакан
-	if expBase < -int(math.Log10(pp.tickSize)) {
-		pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
-	} else {
-		pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase+int(math.Log10(pp.tickSize)))
-	}
+	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
 	if pp.depth != nil {
 		pp.DepthEventStart(
 			stop,

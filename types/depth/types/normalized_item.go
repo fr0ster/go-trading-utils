@@ -36,8 +36,8 @@ func (i *NormalizedItem) GetNormalizedPrice() PriceType {
 }
 
 func (i *NormalizedItem) Add(price PriceType, quantity QuantityType) {
-	normalizedPrice, err := getNormalizedPrice(price, i.exp, i.roundUp)
-	if err == nil && normalizedPrice == i.price {
+	normalizedPrice := getNormalizedPrice(price, i.exp, i.roundUp)
+	if normalizedPrice == i.price {
 		i.quantity += quantity
 		i.depths.ReplaceOrInsert(NewDepthItem(price, quantity))
 		i.minMax.ReplaceOrInsert(NewQuantityItem(normalizedPrice, quantity, i.degree))
@@ -96,33 +96,14 @@ func (i *NormalizedItem) IsShouldDelete() bool {
 	return false
 }
 
-func getNormalizedPrice(price PriceType, exp int, roundUp bool) (normalizedPrice PriceType, err error) {
-	len := int(math.Log10(float64(price))) + 1
-	rounded := 0.0
-	if len == exp {
-		if roundUp {
-			normalizedPrice = PriceType(math.Ceil(float64(price)))
-		} else {
-			normalizedPrice = PriceType(math.Floor(float64(price)))
-		}
-	} else if len > exp {
-		normalized := PriceType(float64(price) * math.Pow(10, float64(-exp)))
-		if roundUp {
-			rounded = math.Ceil(float64(normalized))
-		} else {
-			rounded = math.Floor(float64(normalized))
-		}
-		normalizedPrice = PriceType(utils.RoundToDecimalPlace(rounded*math.Pow(10, float64(exp)), exp))
+func getNormalizedPrice(price PriceType, exp int, roundUp bool) (normalizedPrice PriceType) {
+	rounded := float64(price) * math.Pow(10, -float64(exp))
+	if roundUp {
+		rounded = math.Ceil(rounded)
 	} else {
-		normalized := float64(price) * math.Pow(10, float64(exp-1))
-		if roundUp {
-			rounded = math.Ceil(normalized)
-		} else {
-			rounded = math.Floor(normalized)
-		}
-		normalizedPrice = PriceType(utils.RoundToDecimalPlace(rounded*math.Pow(10, float64(1-exp)), exp))
+		rounded = math.Floor(rounded)
 	}
-	return
+	return PriceType(utils.RoundToDecimalPlace(rounded*math.Pow(10, float64(exp)), int(math.Abs(float64(exp)))))
 }
 
 func NewNormalizedItem(price PriceType, degree int, exp int, roundUp bool, quantityIn ...QuantityType) *NormalizedItem {
@@ -132,10 +113,7 @@ func NewNormalizedItem(price PriceType, degree int, exp int, roundUp bool, quant
 	} else {
 		quantity = quantityIn[0]
 	}
-	normalizedPrice, err := getNormalizedPrice(price, exp, roundUp)
-	if err != nil {
-		return nil
-	}
+	normalizedPrice := getNormalizedPrice(price, exp, roundUp)
 	item := &NormalizedItem{
 		// Службові дані
 		degree:  degree,
