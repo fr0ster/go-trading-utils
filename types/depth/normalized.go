@@ -8,6 +8,8 @@ import (
 )
 
 func (d *Depth) GetNormalizedAsk(price types.PriceType) (item *types.NormalizedItem, err error) {
+	d.Lock()
+	defer d.Unlock()
 	if val := d.askNormalized.Get(d.NewAskNormalizedItem(price)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
@@ -15,6 +17,8 @@ func (d *Depth) GetNormalizedAsk(price types.PriceType) (item *types.NormalizedI
 }
 
 func (d *Depth) GetNormalizedAskSumma(price types.PriceType) (summa types.QuantityType) {
+	d.Lock()
+	defer d.Unlock()
 	if d.askNormalized != nil {
 		askN, _ := d.GetNormalizedAsk(price)
 		if askN == nil {
@@ -29,10 +33,14 @@ func (d *Depth) GetNormalizedAskSumma(price types.PriceType) (summa types.Quanti
 }
 
 func (d *Depth) GetNormalizedAsks() *btree.BTree {
+	d.Lock()
+	defer d.Unlock()
 	return d.askNormalized
 }
 
 func (d *Depth) GetNormalizedAsksSummaAll() (summa types.QuantityType) {
+	d.Lock()
+	defer d.Unlock()
 	if d.askNormalized != nil {
 		d.askNormalized.Ascend(func(i btree.Item) bool {
 			summa += i.(*types.NormalizedItem).GetQuantity()
@@ -43,6 +51,8 @@ func (d *Depth) GetNormalizedAsksSummaAll() (summa types.QuantityType) {
 }
 
 func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedItem, err error) {
+	d.Lock()
+	defer d.Unlock()
 	if val := d.bidNormalized.Get(d.NewBidNormalizedItem(price)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
@@ -50,10 +60,14 @@ func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedI
 }
 
 func (d *Depth) GetNormalizedBids() *btree.BTree {
+	d.Lock()
+	defer d.Unlock()
 	return d.bidNormalized
 }
 
 func (d *Depth) GetNormalizedBidSumma(price types.PriceType) (summa types.QuantityType) {
+	d.Lock()
+	defer d.Unlock()
 	if d.bidNormalized != nil {
 		bidN, _ := d.GetNormalizedBid(price)
 		if bidN == nil {
@@ -68,6 +82,8 @@ func (d *Depth) GetNormalizedBidSumma(price types.PriceType) (summa types.Quanti
 }
 
 func (d *Depth) GetNormalizedBidsSummaAll() (summa types.QuantityType) {
+	d.Lock()
+	defer d.Unlock()
 	if d.bidNormalized != nil {
 		d.bidNormalized.Ascend(func(i btree.Item) bool {
 			summa += i.(*types.NormalizedItem).GetQuantity()
@@ -94,10 +110,14 @@ func (d *Depth) addNormalized(tree *btree.BTree, price types.PriceType, quantity
 }
 
 func (d *Depth) AddAskNormalized(price types.PriceType, quantity types.QuantityType) error {
+	d.Lock()
+	defer d.Unlock()
 	return d.addNormalized(d.askNormalized, price, quantity, true)
 }
 
 func (d *Depth) AddBidNormalized(price types.PriceType, quantity types.QuantityType) error {
+	d.Lock()
+	defer d.Unlock()
 	return d.addNormalized(d.bidNormalized, price, quantity, false)
 }
 
@@ -113,6 +133,8 @@ func (d *Depth) deleteNormalized(tree *btree.BTree, price types.PriceType, quant
 }
 
 func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.QuantityType) (err error) {
+	d.Lock()
+	defer d.Unlock()
 	err = d.deleteNormalized(d.askNormalized, price, quantity, true)
 	if err != nil {
 		return
@@ -126,6 +148,8 @@ func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.Quanti
 }
 
 func (d *Depth) DeleteBidNormalized(price types.PriceType, quantity types.QuantityType) (err error) {
+	d.Lock()
+	defer d.Unlock()
 	err = d.deleteNormalized(d.bidNormalized, price, quantity, false)
 	if err != nil {
 		return

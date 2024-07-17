@@ -25,6 +25,8 @@ func (d *Depth) GetBid(price types.PriceType) btree.Item {
 
 // SetAsk implements depth_interface.Depths.
 func (d *Depth) SetAsk(price types.PriceType, quantity types.QuantityType) (err error) {
+	d.Lock()
+	defer d.Unlock()
 	if old := d.asks.Get(types.NewDepthItem(price)); old != nil {
 		d.asksSummaQuantity += quantity - old.(*types.DepthItem).GetQuantity()
 	} else {
@@ -39,6 +41,8 @@ func (d *Depth) SetAsk(price types.PriceType, quantity types.QuantityType) (err 
 
 // SetBid implements depth_interface.Depths.
 func (d *Depth) SetBid(price types.PriceType, quantity types.QuantityType) (err error) {
+	d.Lock()
+	defer d.Unlock()
 	if old := d.bids.Get(types.NewDepthItem(price)); old != nil {
 		d.bidsSummaQuantity += quantity - old.(*types.DepthItem).GetQuantity()
 	} else {
@@ -53,6 +57,8 @@ func (d *Depth) SetBid(price types.PriceType, quantity types.QuantityType) (err 
 
 // DeleteAsk implements depth_interface.Depths.
 func (d *Depth) DeleteAsk(price types.PriceType) {
+	d.Lock()
+	defer d.Unlock()
 	old := d.asks.Get(types.NewDepthItem(price))
 	if old != nil {
 		d.asksSummaQuantity -= old.(*types.DepthItem).GetQuantity()
@@ -65,6 +71,8 @@ func (d *Depth) DeleteAsk(price types.PriceType) {
 
 // DeleteBid implements depth_interface.Depths.
 func (d *Depth) DeleteBid(price types.PriceType) {
+	d.Lock()
+	defer d.Unlock()
 	old := d.bids.Get(types.NewDepthItem(price))
 	if old != nil {
 		d.bidsSummaQuantity -= old.(*types.DepthItem).GetQuantity()
