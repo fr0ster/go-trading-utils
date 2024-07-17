@@ -642,3 +642,57 @@ func TestAskAndBidDelete(t *testing.T) {
 		assert.Equal(t, 0, ds.GetAsks().Len())
 	}()
 }
+
+func TestAskAndSummaQuantity(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds.SetAsk(800, 100)
+		assert.Equal(t, types.QuantityType(100.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(790, 100)
+		assert.Equal(t, types.QuantityType(200.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(780, 100)
+		assert.Equal(t, types.QuantityType(300.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(770, 100)
+		assert.Equal(t, types.QuantityType(400.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(760, 100)
+		assert.Equal(t, types.QuantityType(500.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(750, 100)
+		assert.Equal(t, types.QuantityType(600.0), ds.GetAsksSummaQuantity())
+		ds.SetAsk(740, 100)
+		assert.Equal(t, types.QuantityType(700.0), ds.GetAsksSummaQuantity())
+	}()
+}
+
+func TestAskAndSummaNormalizedQuantity(t *testing.T) {
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+	test := func(price types.PriceType, quantity types.QuantityType) (summa, summaTest types.QuantityType) {
+		ds.SetAsk(price, quantity)
+		askN, _ := ds.GetNormalizedAsk(price)
+		summa = askN.GetQuantity()
+		summaTest = types.QuantityType(0)
+		ask, _ := ds.GetNormalizedAsk(price)
+		ask.GetDepths().Ascend(func(i btree.Item) bool {
+			summaTest += i.(*types.DepthItem).GetQuantity()
+			return true
+		})
+		return
+	}
+	summa, summaTest := test(800, 100)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	summa, summaTest = test(750, 100)
+	assert.Equal(t, types.QuantityType(200), summa)
+	assert.Equal(t, types.QuantityType(200), summaTest)
+	summa, summaTest = test(700, 100)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	summa, summaTest = test(650, 100)
+	assert.Equal(t, types.QuantityType(200), summa)
+	assert.Equal(t, types.QuantityType(200), summaTest)
+	summa, summaTest = test(600, 100)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	summa, summaTest = test(550, 100)
+	assert.Equal(t, types.QuantityType(200), summa)
+	assert.Equal(t, types.QuantityType(200), summaTest)
+}

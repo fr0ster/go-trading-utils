@@ -39,7 +39,7 @@ func (i *NormalizedItem) Add(price PriceType, quantity QuantityType) {
 	normalizedPrice, err := getNormalizedPrice(price, i.exp, i.roundUp)
 	if err == nil && normalizedPrice == i.price {
 		i.quantity += quantity
-		i.depths.ReplaceOrInsert(NewDepthItem(price, i.quantity))
+		i.depths.ReplaceOrInsert(NewDepthItem(price, quantity))
 		i.minMax.ReplaceOrInsert(NewQuantityItem(normalizedPrice, quantity, i.degree))
 	}
 }
