@@ -44,6 +44,7 @@ func NewPairProcessor(
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.RestrictedInit(exchangeInfo, 3, []string{symbol}, client)
 	if err != nil {
+		err = ParseError(err)
 		return
 	}
 	pp = &PairProcessor{
