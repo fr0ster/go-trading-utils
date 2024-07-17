@@ -17,10 +17,12 @@ func Init(d *depth_types.Depth, client *futures.Client) (err error) {
 	if err != nil {
 		return err
 	}
+	d.ClearBids()
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
 		d.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
 	}
+	d.ClearAsks()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
 		d.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
