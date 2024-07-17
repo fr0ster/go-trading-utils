@@ -669,12 +669,7 @@ func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 		ds.SetAsk(price, quantity)
 		askN, _ := ds.GetNormalizedAsk(price)
 		summa = askN.GetQuantity()
-		summaTest = types.QuantityType(0)
-		ask, _ := ds.GetNormalizedAsk(price)
-		ask.GetDepths().Ascend(func(i btree.Item) bool {
-			summaTest += i.(*types.DepthItem).GetQuantity()
-			return true
-		})
+		summaTest = ds.GetNormalizedAskSumma(price)
 		return
 	}
 	summa, summaTest := testSetAsk(800, 100)
@@ -714,14 +709,9 @@ func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 	testDeleteAsk := func(price types.PriceType) (askN *types.NormalizedItem, summa, summaTest types.QuantityType) {
 		ds.DeleteAsk(price)
 		askN, _ = ds.GetNormalizedAsk(price)
+		summaTest = ds.GetNormalizedAskSumma(price)
 		if askN != nil {
 			summa = askN.GetQuantity()
-			summaTest = types.QuantityType(0)
-			ask, _ := ds.GetNormalizedAsk(price)
-			ask.GetDepths().Ascend(func(i btree.Item) bool {
-				summaTest += i.(*types.DepthItem).GetQuantity()
-				return true
-			})
 		}
 		return
 	}

@@ -8,15 +8,38 @@ import (
 )
 
 func (d *Depth) GetNormalizedAsk(price types.PriceType) (item *types.NormalizedItem, err error) {
-	normalizedPrice := d.NewAskNormalizedItem(price).GetNormalizedPrice()
-	if val := d.askNormalized.Get(d.NewAskNormalizedItem(normalizedPrice)); val != nil {
+	if val := d.askNormalized.Get(d.NewAskNormalizedItem(price)); val != nil {
 		item = val.(*types.NormalizedItem)
+	}
+	return
+}
+
+func (d *Depth) GetNormalizedAskSumma(price types.PriceType) (summa types.QuantityType) {
+	if d.askNormalized != nil {
+		askN, _ := d.GetNormalizedAsk(price)
+		if askN == nil {
+			return
+		}
+		askN.GetDepths().Ascend(func(i btree.Item) bool {
+			summa += i.(*types.DepthItem).GetQuantity()
+			return true
+		})
 	}
 	return
 }
 
 func (d *Depth) GetNormalizedAsks() *btree.BTree {
 	return d.askNormalized
+}
+
+func (d *Depth) GetNormalizedAsksSummaAll() (summa types.QuantityType) {
+	if d.askNormalized != nil {
+		d.askNormalized.Ascend(func(i btree.Item) bool {
+			summa += i.(*types.NormalizedItem).GetQuantity()
+			return true
+		})
+	}
+	return
 }
 
 func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedItem, err error) {
@@ -28,6 +51,30 @@ func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedI
 
 func (d *Depth) GetNormalizedBids() *btree.BTree {
 	return d.bidNormalized
+}
+
+func (d *Depth) GetNormalizedBidSumma(price types.PriceType) (summa types.QuantityType) {
+	if d.bidNormalized != nil {
+		bidN, _ := d.GetNormalizedBid(price)
+		if bidN == nil {
+			return
+		}
+		bidN.GetDepths().Ascend(func(i btree.Item) bool {
+			summa += i.(*types.NormalizedItem).GetQuantity()
+			return true
+		})
+	}
+	return
+}
+
+func (d *Depth) GetNormalizedBidsSummaAll() (summa types.QuantityType) {
+	if d.bidNormalized != nil {
+		d.bidNormalized.Ascend(func(i btree.Item) bool {
+			summa += i.(*types.NormalizedItem).GetQuantity()
+			return true
+		})
+	}
+	return
 }
 
 func (d *Depth) addNormalized(tree *btree.BTree, price types.PriceType, quantity types.QuantityType, RoundUp bool) (err error) {

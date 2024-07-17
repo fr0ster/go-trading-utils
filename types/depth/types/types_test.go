@@ -22,6 +22,6 @@ func TestGetNormalizedPrice(t *testing.T) {
 	assert.Equal(t, types.PriceType(200.0), price)
 	price = types.NewNormalizedItem(1.552, 3, 2, true).GetNormalizedPrice()
 	assert.Equal(t, types.PriceType(1.6), price)
-	price = types.NewNormalizedItem(1.941, 3, 2, true).GetNormalizedPrice() // GetNormalizedPrice
+	price = types.NewNormalizedItem(1.941, 3, 2, true).GetNormalizedPrice()
 	assert.Equal(t, types.PriceType(2.0), price)
 }
