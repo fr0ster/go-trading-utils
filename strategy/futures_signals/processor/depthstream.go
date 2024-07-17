@@ -86,27 +86,33 @@ func (pp *PairProcessor) GetDepth() *depth_types.Depth {
 func (pp *PairProcessor) GetDepthEventCallBack() futures.WsDepthHandler {
 	futures_depth.Init(pp.depth, pp.client)
 	return func(event *futures.WsDepthEvent) {
-		pp.depth.Lock()         // Locking the depths
-		defer pp.depth.Unlock() // Unlocking the depths
+		// pp.depth.Lock()         // Locking the depths
+		// defer pp.depth.Unlock() // Unlocking the depths
 		if event.LastUpdateID < pp.depth.LastUpdateID {
 			return
 		}
 		if event.PrevLastUpdateID != int64(pp.depth.LastUpdateID) {
+			pp.depth.Lock() // Locking the depths
 			futures_depth.Init(pp.depth, pp.client)
+			pp.depth.Unlock() // Unlocking the depths
 		} else if event.PrevLastUpdateID == int64(pp.depth.LastUpdateID) {
 			for _, bid := range event.Bids {
 				price, quantity, err := bid.Parse()
 				if err != nil {
 					return
 				}
+				pp.depth.Lock() // Locking the depths
 				pp.depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.Unlock() // Unlocking the depths
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
+				pp.depth.Lock() // Locking the depths
 				pp.depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.Unlock() // Unlocking the depths
 			}
 			pp.depth.LastUpdateID = event.LastUpdateID
 		}
