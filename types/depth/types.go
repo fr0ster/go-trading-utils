@@ -63,3 +63,8 @@ func (d *Depth) Lock() {
 func (d *Depth) Unlock() {
 	d.mutex.Unlock()
 }
+
+// TryLock implements depth_interface.Depths.
+func (d *Depth) TryLock() bool {
+	return d.mutex.TryLock()
+}
