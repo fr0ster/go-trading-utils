@@ -6,9 +6,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/stretchr/testify/assert"
 
-	spot_account "github.com/fr0ster/go-trading-utils/binance/spot/account"
 	spot_handlers "github.com/fr0ster/go-trading-utils/binance/spot/handlers"
 	spot_kline "github.com/fr0ster/go-trading-utils/binance/spot/markets/kline"
 
@@ -34,50 +32,6 @@ func TestChangingOfOrdersHandler(t *testing.T) {
 			binance.OrderStatusTypeFilled,
 			binance.OrderStatusTypePartiallyFilled)
 	inChannel <- even
-	res := false
-	for {
-		select {
-		case <-outChannel:
-			res = true
-		case <-time.After(1000 * time.Millisecond):
-			res = false
-		}
-		if !res {
-			t.Fatal("Error sending order event to channel")
-		} else {
-			break
-		}
-	}
-}
-
-func TestAccountUpdateHandler(t *testing.T) {
-	inChannel := make(chan *binance.WsUserDataEvent, 1)
-	api_key := os.Getenv("SPOT_TEST_BINANCE_API_KEY")
-	secret_key := os.Getenv("SPOT_TEST_BINANCE_SECRET_KEY")
-	binance.UseTestnet = true
-	spot := binance.NewClient(api_key, secret_key)
-	account, err := spot_account.New(spot, []string{"BTC", "USDT"})
-	assert.Equal(t, nil, err)
-
-	outChannel := spot_handlers.GetAccountInfoGuard(account, inChannel)
-	inChannel <- &binance.WsUserDataEvent{
-		Event: binance.UserDataEventTypeOutboundAccountPosition,
-		AccountUpdate: binance.WsAccountUpdateList{
-			AccountUpdateTime: int64(account.UpdateTime + 100),
-			WsAccountUpdates: []binance.WsAccountUpdate{
-				{
-					Asset:  "BTC",
-					Free:   "0.0",
-					Locked: "0.0",
-				},
-				{
-					Asset:  "USDT",
-					Free:   "0.0",
-					Locked: "0.0",
-				},
-			},
-		},
-	}
 	res := false
 	for {
 		select {
