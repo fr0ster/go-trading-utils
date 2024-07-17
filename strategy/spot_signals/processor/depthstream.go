@@ -197,8 +197,8 @@ func (pp *PairProcessor) PartialDepthEventStart(
 func (pp *PairProcessor) GetPartialDepthEventCallBack(depth *depth_types.Depth) binance.WsPartialDepthHandler {
 	binance_depth.Init(depth, pp.client)
 	return func(event *binance.WsPartialDepthEvent) {
-		depth.Lock()         // Locking the depths
-		defer depth.Unlock() // Unlocking the depths
+		// depth.Lock()         // Locking the depths
+		// defer depth.Unlock() // Unlocking the depths
 		if event.LastUpdateID < depth.LastUpdateID {
 			return
 		}
