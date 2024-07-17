@@ -496,6 +496,12 @@ func TestUpdateAskAndBid(t *testing.T) {
 	summaAsks, summaBids = summaAsksAndBids(ds)
 	assert.Equal(t, utils.RoundToDecimalPlace(float64(summaAsks), 6), utils.RoundToDecimalPlace(float64(ds.GetAsksSummaQuantity()), 6))
 	assert.Equal(t, utils.RoundToDecimalPlace(float64(summaBids), 6), utils.RoundToDecimalPlace(float64(ds.GetBidsSummaQuantity()), 6))
+	ds.SetBid(2.0, 100)
+	assert.Equal(t, types.QuantityType(1771.3999999999999), ds.GetBidsSummaQuantity())
+	ds.DeleteBid(2.0)
+	assert.Equal(t, types.QuantityType(1671.3999999999999), ds.GetBidsSummaQuantity())
+	ds.DeleteBid(2.0)
+	assert.Equal(t, types.QuantityType(1671.3999999999999), ds.GetBidsSummaQuantity())
 }
 
 func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
