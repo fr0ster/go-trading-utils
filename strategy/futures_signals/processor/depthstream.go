@@ -86,8 +86,8 @@ func (pp *PairProcessor) GetDepth() *depth_types.Depth {
 func (pp *PairProcessor) GetDepthEventCallBack() futures.WsDepthHandler {
 	futures_depth.Init(pp.depth, pp.client)
 	return func(event *futures.WsDepthEvent) {
-		// pp.depth.Lock()         // Locking the depths
-		// defer pp.depth.Unlock() // Unlocking the depths
+		pp.depth.Lock()         // Locking the depths
+		defer pp.depth.Unlock() // Unlocking the depths
 		if event.LastUpdateID < pp.depth.LastUpdateID {
 			return
 		}
