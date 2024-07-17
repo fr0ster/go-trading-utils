@@ -15,11 +15,19 @@ func (d *Depth) GetNormalizedAsk(price types.PriceType) (item *types.NormalizedI
 	return
 }
 
+func (d *Depth) GetNormalizedAsks() *btree.BTree {
+	return d.askNormalized
+}
+
 func (d *Depth) GetNormalizedBid(price types.PriceType) (item *types.NormalizedItem, err error) {
 	if val := d.bidNormalized.Get(d.NewBidNormalizedItem(price)); val != nil {
 		item = val.(*types.NormalizedItem)
 	}
 	return
+}
+
+func (d *Depth) GetNormalizedBids() *btree.BTree {
+	return d.bidNormalized
 }
 
 func (d *Depth) addNormalized(tree *btree.BTree, price types.PriceType, quantity types.QuantityType, RoundUp bool) (err error) {

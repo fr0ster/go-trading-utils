@@ -602,3 +602,21 @@ func TestAddAskAndBidNormalized(t *testing.T) {
 		assert.Equal(t, types.QuantityType(1186.7), askNorm1.GetQuantity())
 	}()
 }
+
+func TestGetNormalizedAsksAndBids(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds.SetAsk(800, 100)
+		ds.SetAsk(750, 150)
+		asksNorm := ds.GetNormalizedAsks()
+		assert.Equal(t, 1, asksNorm.Len())
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
+		ds.SetAsks(asks)
+		ds.SetBids(bids)
+		asksNorm := ds.GetNormalizedAsks()
+		assert.Equal(t, 1, asksNorm.Len())
+	}()
+}
