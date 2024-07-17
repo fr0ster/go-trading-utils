@@ -37,6 +37,7 @@ func (d *Depth) GetAsksBidMaxAndSummaByQuantity(targetSummaAsk, targetSummaBid t
 	d.GetBids().Descend(getIterator(targetSummaBid, bids, &summaBids))
 	return
 }
+
 func (d *Depth) GetAsksBidMaxAndSummaByQuantityPercent(targetPercentAsk, targetPercentBid float64) (
 	asks,
 	bids *types.DepthItem,

@@ -42,14 +42,14 @@ func New(
 		bidsMinMax = btree.New(degree)
 	}
 	return &Depth{
-		symbol:          symbol,
-		degree:          degree,
-		asks:            btree.New(degree),
-		asksMinMax:      asksMinMax,
-		askNormalized:   btree.New(degree),
-		bids:            btree.New(degree),
-		bidsMinMax:      bidsMinMax,
-		bidNormalized:   btree.New(degree),
+		symbol:     symbol,
+		degree:     degree,
+		asks:       btree.New(degree),
+		asksMinMax: asksMinMax,
+		// askNormalized:   btree.New(degree),
+		bids:       btree.New(degree),
+		bidsMinMax: bidsMinMax,
+		// bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},
 		limitDepth:      limitDepth,
 		limitStream:     limitStream,
