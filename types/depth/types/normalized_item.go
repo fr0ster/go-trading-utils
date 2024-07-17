@@ -88,7 +88,12 @@ func (i *NormalizedItem) GetMinMax(quantity QuantityType) (minMax *QuantityItem)
 }
 
 func (i *NormalizedItem) IsShouldDelete() bool {
-	return i.depths == nil && i.minMax == nil
+	if i.depths == nil && i.minMax == nil {
+		return true
+	} else if i.depths != nil && i.depths.Len() == 0 && i.minMax != nil && i.minMax.Len() == 0 {
+		return true
+	}
+	return false
 }
 
 func getNormalizedPrice(price PriceType, exp int, roundUp bool) (normalizedPrice PriceType, err error) {

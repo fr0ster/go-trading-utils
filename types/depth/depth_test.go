@@ -665,7 +665,7 @@ func TestAskAndSummaQuantity(t *testing.T) {
 
 func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depth_types.DepthStreamRate100ms)
-	test := func(price types.PriceType, quantity types.QuantityType) (summa, summaTest types.QuantityType) {
+	testSetAsk := func(price types.PriceType, quantity types.QuantityType) (summa, summaTest types.QuantityType) {
 		ds.SetAsk(price, quantity)
 		askN, _ := ds.GetNormalizedAsk(price)
 		summa = askN.GetQuantity()
@@ -677,22 +677,91 @@ func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 		})
 		return
 	}
-	summa, summaTest := test(800, 100)
+	summa, summaTest := testSetAsk(800, 100)
 	assert.Equal(t, types.QuantityType(100), summa)
 	assert.Equal(t, types.QuantityType(100), summaTest)
-	summa, summaTest = test(750, 100)
+	summa, summaTest = testSetAsk(750, 100)
 	assert.Equal(t, types.QuantityType(200), summa)
 	assert.Equal(t, types.QuantityType(200), summaTest)
-	summa, summaTest = test(700, 100)
+	summa, summaTest = testSetAsk(700, 100)
 	assert.Equal(t, types.QuantityType(100), summa)
 	assert.Equal(t, types.QuantityType(100), summaTest)
-	summa, summaTest = test(650, 100)
+	summa, summaTest = testSetAsk(650, 100)
 	assert.Equal(t, types.QuantityType(200), summa)
 	assert.Equal(t, types.QuantityType(200), summaTest)
-	summa, summaTest = test(600, 100)
+	summa, summaTest = testSetAsk(600, 100)
 	assert.Equal(t, types.QuantityType(100), summa)
 	assert.Equal(t, types.QuantityType(100), summaTest)
-	summa, summaTest = test(550, 100)
+	summa, summaTest = testSetAsk(550, 100)
 	assert.Equal(t, types.QuantityType(200), summa)
 	assert.Equal(t, types.QuantityType(200), summaTest)
+
+	summaAsks1 := ds.GetAsksSummaQuantity()
+	summaAsks2 := types.QuantityType(0)
+	ds.GetAsks().Ascend(func(i btree.Item) bool {
+		summaAsks2 += i.(*types.DepthItem).GetQuantity()
+		return true
+	})
+	assert.Equal(t, summaAsks1, summaAsks2)
+	summaAsks3 := types.QuantityType(0)
+	ds.GetNormalizedAsks().Ascend(func(i btree.Item) bool {
+		summaAsks3 += i.(*types.NormalizedItem).GetQuantity()
+		return true
+	})
+	assert.Equal(t, summaAsks1, summaAsks3)
+	assert.Equal(t, summaAsks2, summaAsks1)
+
+	testDeleteAsk := func(price types.PriceType) (askN *types.NormalizedItem, summa, summaTest types.QuantityType) {
+		ds.DeleteAsk(price)
+		askN, _ = ds.GetNormalizedAsk(price)
+		if askN != nil {
+			summa = askN.GetQuantity()
+			summaTest = types.QuantityType(0)
+			ask, _ := ds.GetNormalizedAsk(price)
+			ask.GetDepths().Ascend(func(i btree.Item) bool {
+				summaTest += i.(*types.DepthItem).GetQuantity()
+				return true
+			})
+		}
+		return
+	}
+	askN, summa, summaTest := testDeleteAsk(800)
+	assert.NotNil(t, askN)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	askN, summa, summaTest = testDeleteAsk(750)
+	assert.Nil(t, askN)
+	assert.Equal(t, types.QuantityType(0), summa)
+	assert.Equal(t, types.QuantityType(0), summaTest)
+	askN, summa, summaTest = testDeleteAsk(700)
+	assert.NotNil(t, askN)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	askN, summa, summaTest = testDeleteAsk(650)
+	assert.Nil(t, askN)
+	assert.Equal(t, types.QuantityType(0), summa)
+	assert.Equal(t, types.QuantityType(0), summaTest)
+	askN, summa, summaTest = testDeleteAsk(600)
+	assert.NotNil(t, askN)
+	assert.Equal(t, types.QuantityType(100), summa)
+	assert.Equal(t, types.QuantityType(100), summaTest)
+	askN, summa, summaTest = testDeleteAsk(550)
+	assert.Nil(t, askN)
+	assert.Equal(t, types.QuantityType(0), summa)
+	assert.Equal(t, types.QuantityType(0), summaTest)
+
+	summaAsks1 = ds.GetAsksSummaQuantity()
+	summaAsks2 = types.QuantityType(0)
+	ds.GetAsks().Ascend(func(i btree.Item) bool {
+		summaAsks2 += i.(*types.DepthItem).GetQuantity()
+		return true
+	})
+	assert.Equal(t, summaAsks1, summaAsks2)
+	summaAsks3 = types.QuantityType(0)
+	ds.GetNormalizedAsks().Ascend(func(i btree.Item) bool {
+		summaAsks3 += i.(*types.NormalizedItem).GetQuantity()
+		return true
+	})
+	assert.Equal(t, summaAsks1, summaAsks3)
+	assert.Equal(t, summaAsks2, summaAsks1)
 }

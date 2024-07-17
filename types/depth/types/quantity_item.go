@@ -63,7 +63,7 @@ func (i *QuantityItem) GetDepths() *btree.BTree {
 }
 
 func (i *QuantityItem) IsShouldDelete() bool {
-	return i.depths == nil
+	return i.depths == nil || i.depths != nil && i.depths.Len() == 0
 }
 
 // Конструктори

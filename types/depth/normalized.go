@@ -58,9 +58,6 @@ func (d *Depth) deleteNormalized(tree *btree.BTree, price types.PriceType, quant
 	if tree != nil {
 		if old := tree.Get(d.newNormalizedItem(price, roundUp)); old != nil {
 			old.(*types.NormalizedItem).Delete(price, quantity)
-			if old.(*types.NormalizedItem).IsShouldDelete() {
-				tree.Delete(d.NewBidNormalizedItem(price))
-			}
 		}
 	} else {
 		err = errors.New("tree is nil")
@@ -73,11 +70,11 @@ func (d *Depth) DeleteAskNormalized(price types.PriceType, quantity types.Quanti
 	if err != nil {
 		return
 	}
-	// if old := d.askNormalized.Get(d.NewAskNormalizedItem(price)); old != nil {
-	// 	if old.(*types.NormalizedItem).IsShouldDelete() {
-	// 		d.askNormalized.Delete(d.NewAskNormalizedItem(price))
-	// 	}
-	// }
+	if old := d.askNormalized.Get(d.NewAskNormalizedItem(price)); old != nil {
+		if old.(*types.NormalizedItem).IsShouldDelete() {
+			d.askNormalized.Delete(d.NewAskNormalizedItem(price))
+		}
+	}
 	return
 }
 
@@ -86,11 +83,11 @@ func (d *Depth) DeleteBidNormalized(price types.PriceType, quantity types.Quanti
 	if err != nil {
 		return
 	}
-	// if old := d.askNormalized.Get(d.NewBidNormalizedItem(price)); old != nil {
-	// 	if old.(*types.NormalizedItem).IsShouldDelete() {
-	// 		d.bidNormalized.Delete(d.NewBidNormalizedItem(price))
-	// 	}
-	// }
+	if old := d.askNormalized.Get(d.NewBidNormalizedItem(price)); old != nil {
+		if old.(*types.NormalizedItem).IsShouldDelete() {
+			d.bidNormalized.Delete(d.NewBidNormalizedItem(price))
+		}
+	}
 	return
 }
 
