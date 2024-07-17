@@ -37,12 +37,12 @@ type (
 		asks              *btree.BTree
 		asksCountQuantity int
 		asksSummaQuantity types.QuantityType
-		asksMinMax        *btree.BTree
+		// asksMinMax        *btree.BTree
 		// askNormalized     *btree.BTree
 		bids              *btree.BTree
 		bidsCountQuantity int
 		bidsSummaQuantity types.QuantityType
-		bidsMinMax        *btree.BTree
+		// bidsMinMax        *btree.BTree
 		// bidNormalized     *btree.BTree
 		mutex           *sync.Mutex
 		LastUpdateID    int64

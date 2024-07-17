@@ -21,8 +21,8 @@ func New(
 	var (
 		limitStream DepthStreamLevel
 		rateStream  DepthStreamRate
-		asksMinMax  *btree.BTree
-		bidsMinMax  *btree.BTree
+		// asksMinMax  *btree.BTree
+		// bidsMinMax  *btree.BTree
 	)
 	switch limitDepth {
 	case DepthAPILimit5:
@@ -37,18 +37,18 @@ func New(
 	} else {
 		rateStream = rate[0]
 	}
-	if isMinMax {
-		asksMinMax = btree.New(degree)
-		bidsMinMax = btree.New(degree)
-	}
+	// if isMinMax {
+	// 	asksMinMax = btree.New(degree)
+	// 	bidsMinMax = btree.New(degree)
+	// }
 	return &Depth{
-		symbol:     symbol,
-		degree:     degree,
-		asks:       btree.New(degree),
-		asksMinMax: asksMinMax,
+		symbol: symbol,
+		degree: degree,
+		asks:   btree.New(degree),
+		// asksMinMax: asksMinMax,
 		// askNormalized:   btree.New(degree),
-		bids:       btree.New(degree),
-		bidsMinMax: bidsMinMax,
+		bids: btree.New(degree),
+		// bidsMinMax: bidsMinMax,
 		// bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},
 		limitDepth:      limitDepth,

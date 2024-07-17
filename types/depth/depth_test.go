@@ -125,37 +125,37 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 	}()
 }
 
-func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
-	initDepths(d)
-	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
-	assert.Equal(t, types.QuantityType(90.0), d.GetAsksSummaQuantity())
-	assert.Equal(t, types.QuantityType(90.0), d.GetBidsSummaQuantity())
-	func() {
-		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(10, 10)
-		assert.Nil(t, err)
-		assert.NotNil(t, asks)
-		assert.NotNil(t, bids)
-		assert.Equal(t, types.PriceType(600.0), asks.GetPrice())
-		assert.Equal(t, types.QuantityType(10.0), asks.GetQuantity())
-		assert.Equal(t, types.QuantityType(10.0), summaAsks)
-		assert.Equal(t, types.PriceType(500.0), bids.GetPrice())
-		assert.Equal(t, types.QuantityType(10.0), bids.GetQuantity())
-		assert.Equal(t, types.QuantityType(10.0), summaBids)
-	}()
-	func() {
-		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(40, 40)
-		assert.Nil(t, err)
-		assert.NotNil(t, asks)
-		assert.NotNil(t, bids)
-		assert.Equal(t, types.PriceType(700.0), asks.GetPrice())
-		assert.Equal(t, types.QuantityType(20.0), asks.GetQuantity())
-		assert.Equal(t, types.QuantityType(30.0), summaAsks)
-		assert.Equal(t, types.PriceType(400.0), bids.GetPrice())
-		assert.Equal(t, types.QuantityType(20.0), bids.GetQuantity())
-		assert.Equal(t, types.QuantityType(30.0), summaBids)
-	}()
-}
+// func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
+// 	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
+// 	initDepths(d)
+// 	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
+// 	assert.Equal(t, types.QuantityType(90.0), d.GetAsksSummaQuantity())
+// 	assert.Equal(t, types.QuantityType(90.0), d.GetBidsSummaQuantity())
+// 	func() {
+// 		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(10, 10)
+// 		assert.Nil(t, err)
+// 		assert.NotNil(t, asks)
+// 		assert.NotNil(t, bids)
+// 		assert.Equal(t, types.PriceType(600.0), asks.GetPrice())
+// 		assert.Equal(t, types.QuantityType(10.0), asks.GetQuantity())
+// 		assert.Equal(t, types.QuantityType(10.0), summaAsks)
+// 		assert.Equal(t, types.PriceType(500.0), bids.GetPrice())
+// 		assert.Equal(t, types.QuantityType(10.0), bids.GetQuantity())
+// 		assert.Equal(t, types.QuantityType(10.0), summaBids)
+// 	}()
+// 	func() {
+// 		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(40, 40)
+// 		assert.Nil(t, err)
+// 		assert.NotNil(t, asks)
+// 		assert.NotNil(t, bids)
+// 		assert.Equal(t, types.PriceType(700.0), asks.GetPrice())
+// 		assert.Equal(t, types.QuantityType(20.0), asks.GetQuantity())
+// 		assert.Equal(t, types.QuantityType(30.0), summaAsks)
+// 		assert.Equal(t, types.PriceType(400.0), bids.GetPrice())
+// 		assert.Equal(t, types.QuantityType(20.0), bids.GetQuantity())
+// 		assert.Equal(t, types.QuantityType(30.0), summaBids)
+// 	}()
+// }
 
 func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)
@@ -251,25 +251,25 @@ func TestGetSummaOfAsksAndBidFromRange(t *testing.T) {
 	assert.Equal(t, types.QuantityType(10.0), min)
 }
 
-func TestMinMax(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
-	initDepths(d)
-	// Add assertions here to verify that the Min and Max methods work correctly
-	assert.Equal(t, types.QuantityType(90.0), d.GetAsksSummaQuantity())
-	assert.Equal(t, types.QuantityType(90.0), d.GetBidsSummaQuantity())
-	min, err := d.AskMin()
-	assert.Nil(t, err)
-	assert.Equal(t, types.PriceType(600.0), min.GetPrice())
-	max, err := d.AskMax()
-	assert.Nil(t, err)
-	assert.Equal(t, types.PriceType(800.0), max.GetPrice())
-	min, err = d.BidMin()
-	assert.Nil(t, err)
-	assert.Equal(t, types.PriceType(500.0), min.GetPrice())
-	max, err = d.BidMax()
-	assert.Nil(t, err)
-	assert.Equal(t, types.PriceType(300.0), max.GetPrice())
-}
+// func TestMinMax(t *testing.T) {
+// 	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depth_types.DepthStreamRate100ms)
+// 	initDepths(d)
+// 	// Add assertions here to verify that the Min and Max methods work correctly
+// 	assert.Equal(t, types.QuantityType(90.0), d.GetAsksSummaQuantity())
+// 	assert.Equal(t, types.QuantityType(90.0), d.GetBidsSummaQuantity())
+// 	min, err := d.AskMin()
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, types.PriceType(600.0), min.GetPrice())
+// 	max, err := d.AskMax()
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, types.PriceType(800.0), max.GetPrice())
+// 	min, err = d.BidMin()
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, types.PriceType(500.0), min.GetPrice())
+// 	max, err = d.BidMax()
+// 	assert.Nil(t, err)
+// 	assert.Equal(t, types.PriceType(300.0), max.GetPrice())
+// }
 
 func TestGetAsksAndBidSummaAndRange(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depth_types.DepthStreamRate100ms)

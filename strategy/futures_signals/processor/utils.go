@@ -37,27 +37,27 @@ func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown types.PriceType, 
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown types.PriceType, err error) {
-	var (
-		askMax *types.DepthItem
-		bidMax *types.DepthItem
-	)
-	if pp.depth != nil {
-		askMax, err = pp.depth.AskMax()
-		if err != nil {
-			return
-		}
-		bidMax, err = pp.depth.BidMax()
-		if err != nil {
-			return
-		}
-		priceUp = askMax.GetPrice()
-		priceDown = bidMax.GetPrice()
-	} else {
-		err = fmt.Errorf("depth is nil")
-	}
-	return
-}
+// func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown types.PriceType, err error) {
+// 	var (
+// 		askMax *types.DepthItem
+// 		bidMax *types.DepthItem
+// 	)
+// 	if pp.depth != nil {
+// 		askMax, err = pp.depth.AskMax()
+// 		if err != nil {
+// 			return
+// 		}
+// 		bidMax, err = pp.depth.BidMax()
+// 		if err != nil {
+// 			return
+// 		}
+// 		priceUp = askMax.GetPrice()
+// 		priceDown = bidMax.GetPrice()
+// 	} else {
+// 		err = fmt.Errorf("depth is nil")
+// 	}
+// 	return
+// }
 
 func (pp *PairProcessor) GetPrices(
 	price types.PriceType,
