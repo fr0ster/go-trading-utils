@@ -57,7 +57,7 @@ func (d *Depth) DeleteAsk(price types.PriceType) {
 	if old != nil {
 		d.asksSummaQuantity -= old.(*types.DepthItem).GetQuantity()
 		d.asksCountQuantity--
-		d.DeleteAskMinMax(price, old.(*types.DepthItem).GetQuantity())
+		// d.DeleteAskMinMax(price, old.(*types.DepthItem).GetQuantity())
 		// d.DeleteAskNormalized(price, old.(*types.DepthItem).GetQuantity())
 		d.asks.Delete(types.NewDepthItem(price))
 	}
@@ -69,7 +69,7 @@ func (d *Depth) DeleteBid(price types.PriceType) {
 	if old != nil {
 		d.bidsSummaQuantity -= old.(*types.DepthItem).GetQuantity()
 		d.asksCountQuantity--
-		d.DeleteBidMinMax(price, old.(*types.DepthItem).GetQuantity())
+		// d.DeleteBidMinMax(price, old.(*types.DepthItem).GetQuantity())
 		// d.DeleteBidNormalized(price, old.(*types.DepthItem).GetQuantity())
 		d.bids.Delete(types.NewDepthItem(price))
 	}
