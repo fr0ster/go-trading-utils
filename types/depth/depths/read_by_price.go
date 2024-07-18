@@ -5,7 +5,7 @@ import (
 	"github.com/google/btree"
 )
 
-func (d *Depths) GetMaxAndSummaByPrice(targetPrice types.PriceType, up bool, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
+func (d *Depths) GetMaxAndSummaByPrice(targetPrice types.PriceType, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
 	var (
 		IsFirstMax      bool
 		ascendOrDescend func(iterator btree.ItemIterator)

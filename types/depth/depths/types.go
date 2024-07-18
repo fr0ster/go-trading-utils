@@ -22,6 +22,8 @@ const (
 	DepthStreamRate100ms DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
 	DepthStreamRate250ms DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
 	DepthStreamRate500ms DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
+	UP                   UpOrDown         = true
+	DOWN                 UpOrDown         = false
 )
 
 type (
@@ -31,9 +33,10 @@ type (
 )
 
 type (
-	Asks   struct{ tree *Depths }
-	Bids   struct{ tree *Depths }
-	Depths struct {
+	UpOrDown bool
+	Asks     struct{ tree *Depths }
+	Bids     struct{ tree *Depths }
+	Depths   struct {
 		symbol        string
 		degree        int
 		tree          *btree.BTree

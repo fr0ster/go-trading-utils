@@ -6,7 +6,7 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up bool, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
+func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
 	var IsFirstMax bool
 	if len(firstMax) > 0 {
 		IsFirstMax = firstMax[0]
@@ -36,11 +36,11 @@ func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up boo
 	return
 }
 
-func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up bool, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
+func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
 	return d.GetMaxAndSummaByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
 }
 
-func (d *Depths) GetMinMaxQuantity(up bool) (min, max *types.DepthItem) {
+func (d *Depths) GetMinMaxQuantity(up UpOrDown) (min, max *types.DepthItem) {
 	getIterator := func(min, max *types.DepthItem) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
 			if i.(*types.DepthItem).GetQuantity() >= max.GetQuantity() {
