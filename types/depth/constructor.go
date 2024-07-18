@@ -82,11 +82,3 @@ func (d *Depths) GetLimitStream() depths_types.DepthStreamLevel {
 func (d *Depths) GetRateStream() depths_types.DepthStreamRate {
 	return d.rateStream
 }
-
-// func (d *Depths) GetAsksSummaQuantity() types.QuantityType {
-// 	return d.asksSummaQuantity
-// }
-
-// func (d *Depths) GetBidsSummaQuantity() types.QuantityType {
-// 	return d.bidsSummaQuantity
-// }

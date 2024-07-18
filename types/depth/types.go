@@ -65,3 +65,7 @@ func (a *Depths) UpdateBid(item *items_types.Bid) bool {
 	a.asks.Delete(items_types.NewAsk(item.GetDepthItem().GetPrice(), item.GetDepthItem().GetQuantity()))
 	return a.bids.Update(item)
 }
+
+func (d *Depths) GetPercentToTarget() float64 {
+	return d.percentToTarget
+}
