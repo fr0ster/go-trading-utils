@@ -9,7 +9,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	types "github.com/fr0ster/go-trading-utils/types"
-	depth_items "github.com/fr0ster/go-trading-utils/types/depth/types"
+	depth_items "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"

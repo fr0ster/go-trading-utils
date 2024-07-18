@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 
 	"github.com/google/btree"
 )
@@ -273,15 +273,15 @@ func (pr *Pairs) SetPercentToTarget(percent float64) {
 	pr.PercentToTarget = percent
 }
 
-func (pr *Pairs) GetDepthsN() depth_types.DepthAPILimit {
+func (pr *Pairs) GetDepthsN() depths_types.DepthAPILimit {
 	if pr.DepthsN == 0 {
-		return depth_types.DepthAPILimit(50)
+		return depths_types.DepthAPILimit(50)
 	} else {
-		return depth_types.DepthAPILimit(pr.DepthsN)
+		return depths_types.DepthAPILimit(pr.DepthsN)
 	}
 }
 
-func (pr *Pairs) SetDepthsN(n depth_types.DepthAPILimit) {
+func (pr *Pairs) SetDepthsN(n depths_types.DepthAPILimit) {
 	pr.DepthsN = int(n)
 }
 

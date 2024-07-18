@@ -8,12 +8,13 @@ import (
 
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 func (pp *PairProcessor) startDepthStream(
-	levels depth_types.DepthStreamLevel,
-	rate depth_types.DepthStreamRate,
+	levels depths_types.DepthStreamLevel,
+	rate depths_types.DepthStreamRate,
 	handler futures.WsDepthHandler,
 	errHandler futures.ErrHandler) (
 	doneC,
@@ -26,8 +27,8 @@ func (pp *PairProcessor) startDepthStream(
 
 func (pp *PairProcessor) DepthEventStart(
 	stop chan struct{},
-	levels depth_types.DepthStreamLevel,
-	rate depth_types.DepthStreamRate,
+	levels depths_types.DepthStreamLevel,
+	rate depths_types.DepthStreamRate,
 	callBack futures.WsDepthHandler) (
 	resetEvent chan error,
 	err error) {
@@ -79,7 +80,7 @@ func (pp *PairProcessor) DepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetDepth() *depth_types.Depth {
+func (pp *PairProcessor) GetDepth() *depth_types.Depths {
 	return pp.depth
 }
 
@@ -99,14 +100,14 @@ func (pp *PairProcessor) GetDepthEventCallBack() futures.WsDepthHandler {
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			pp.depth.LastUpdateID = event.LastUpdateID
 		}

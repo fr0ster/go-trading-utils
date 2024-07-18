@@ -6,7 +6,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -66,7 +66,7 @@ type (
 		callbackRate float64
 
 		// Дані про стакан
-		depth *depth_types.Depth
+		depth *depth_types.Depths
 	}
 )
 

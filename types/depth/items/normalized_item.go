@@ -39,7 +39,7 @@ func (i *NormalizedItem) Add(price PriceType, quantity QuantityType) {
 	normalizedPrice := getNormalizedPrice(price, i.exp, i.roundUp)
 	if normalizedPrice == i.price {
 		i.quantity += quantity
-		i.depths.ReplaceOrInsert(NewDepthItem(price, quantity))
+		i.depths.ReplaceOrInsert(New(price, quantity))
 		i.minMax.ReplaceOrInsert(NewQuantityItem(normalizedPrice, quantity, i.degree))
 	}
 }
@@ -49,7 +49,7 @@ func (i *NormalizedItem) Delete(price PriceType, quantity QuantityType) {
 		i.quantity -= quantity
 	}
 	i.minMax.Delete(NewQuantityItem(price, quantity, i.degree))
-	i.depths.Delete(NewDepthItem(price))
+	i.depths.Delete(New(price))
 }
 
 // Робота з кількістю по нормалізованим ордерам, повинно дорівнувати суммі кількостей по всіх ордерах в стакані
@@ -68,7 +68,7 @@ func (i *NormalizedItem) GetMinMaxes() *btree.BTree {
 // Робота зі стаканом
 func (i *NormalizedItem) GetDepth(price PriceType) (depthItem *DepthItem) {
 	if i.depths != nil {
-		depthItem = i.depths.Get(NewDepthItem(price)).(*DepthItem)
+		depthItem = i.depths.Get(New(price)).(*DepthItem)
 	}
 	return
 }
@@ -126,7 +126,7 @@ func NewNormalizedItem(price PriceType, degree int, exp int, roundUp bool, quant
 		depths:   btree.New(degree)}
 	if quantity != 0 {
 		item.minMax.ReplaceOrInsert(NewQuantityItem(normalizedPrice, quantity, degree))
-		item.depths.ReplaceOrInsert(NewDepthItem(price, quantity))
+		item.depths.ReplaceOrInsert(New(price, quantity))
 	}
 	return item
 }

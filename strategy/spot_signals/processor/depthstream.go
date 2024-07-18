@@ -8,7 +8,7 @@ import (
 
 	binance_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 const (
@@ -94,7 +94,7 @@ func (pp *PairProcessor) DepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetDepth() *depth_types.Depth {
+func (pp *PairProcessor) GetDepth() *depth_types.Depths {
 	return pp.depth
 }
 
@@ -114,14 +114,14 @@ func (pp *PairProcessor) GetDepthEventCallBack() binance.WsDepthHandler {
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				pp.depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
+				pp.depth.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			pp.depth.LastUpdateID = event.LastUpdateID
 		}
@@ -194,7 +194,7 @@ func (pp *PairProcessor) PartialDepthEventStart(
 	return
 }
 
-func (pp *PairProcessor) GetPartialDepthEventCallBack(depth *depth_types.Depth) binance.WsPartialDepthHandler {
+func (pp *PairProcessor) GetPartialDepthEventCallBack(depth *depth_types.Depths) binance.WsPartialDepthHandler {
 	binance_depth.Init(depth, pp.client)
 	return func(event *binance.WsPartialDepthEvent) {
 		depth.Lock()         // Locking the depths
@@ -210,14 +210,14 @@ func (pp *PairProcessor) GetPartialDepthEventCallBack(depth *depth_types.Depth) 
 				if err != nil {
 					return
 				}
-				depth.UpdateBid(types.PriceType(price), types.QuantityType(quantity))
+				depth.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			for _, ask := range event.Asks {
 				price, quantity, err := ask.Parse()
 				if err != nil {
 					return
 				}
-				depth.UpdateAsk(types.PriceType(price), types.QuantityType(quantity))
+				depth.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))
 			}
 			depth.LastUpdateID = event.LastUpdateID
 		}

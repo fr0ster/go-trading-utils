@@ -2,7 +2,7 @@ package pair_price
 
 import (
 	"github.com/adshao/go-binance/v2/common"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )

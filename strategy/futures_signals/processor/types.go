@@ -8,7 +8,7 @@ import (
 	"github.com/google/btree"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -79,6 +79,6 @@ type (
 		callbackRate float64
 
 		// Дані про стакан
-		depth *depth_types.Depth
+		depth *depth_types.Depths
 	}
 )

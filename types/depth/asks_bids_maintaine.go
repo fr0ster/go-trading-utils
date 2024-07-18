@@ -1,105 +1,97 @@
 package depth
 
-import (
-	"math"
+// // GetAsks implements depth_interface.Depths.
+// func (d *Depths) GetAsks() *btree.BTree {
+// 	return d.asks
+// }
 
-	"github.com/google/btree"
+// // GetBids implements depth_interface.Depths.
+// func (d *Depths) GetBids() *btree.BTree {
+// 	return d.bids
+// }
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/types"
-)
+// // SetAsks implements depth_interface.Depths.
+// func (d *Depths) SetAsks(asks *btree.BTree) {
+// 	d.asks = asks
+// 	asks.Ascend(func(i btree.Item) bool {
+// 		d.asksSummaQuantity += i.(*types.DepthItem).GetQuantity()
+// 		d.asksCountQuantity++
+// 		d.AddAskMinMax(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
+// 		d.AddAskNormalized(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
+// 		return true
+// 	})
+// }
 
-// GetAsks implements depth_interface.Depths.
-func (d *Depth) GetAsks() *btree.BTree {
-	return d.asks
-}
+// // SetBids implements depth_interface.Depths.
+// func (d *Depths) SetBids(bids *btree.BTree) {
+// 	d.bids = bids
+// 	bids.Ascend(func(i btree.Item) bool {
+// 		d.bidsSummaQuantity += i.(*types.DepthItem).GetQuantity()
+// 		d.bidsCountQuantity++
+// 		d.AddBidMinMax(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
+// 		d.AddBidNormalized(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
+// 		return true
+// 	})
+// }
 
-// GetBids implements depth_interface.Depths.
-func (d *Depth) GetBids() *btree.BTree {
-	return d.bids
-}
+// // ClearAsks implements depth_interface.Depths.
+// func (d *Depths) ClearAsks() {
+// 	d.asks.Clear(false)
+// 	d.asksMinMax.Clear(false)
+// 	d.askNormalized.Clear(false)
+// }
 
-// SetAsks implements depth_interface.Depths.
-func (d *Depth) SetAsks(asks *btree.BTree) {
-	d.asks = asks
-	asks.Ascend(func(i btree.Item) bool {
-		d.asksSummaQuantity += i.(*types.DepthItem).GetQuantity()
-		d.asksCountQuantity++
-		d.AddAskMinMax(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
-		d.AddAskNormalized(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
-		return true
-	})
-}
+// // ClearBids implements depth_interface.Depths.
+// func (d *Depths) ClearBids() {
+// 	d.bids.Clear(false)
+// 	d.bidsMinMax.Clear(false)
+// 	d.bidNormalized.Clear(false)
+// }
 
-// SetBids implements depth_interface.Depths.
-func (d *Depth) SetBids(bids *btree.BTree) {
-	d.bids = bids
-	bids.Ascend(func(i btree.Item) bool {
-		d.bidsSummaQuantity += i.(*types.DepthItem).GetQuantity()
-		d.bidsCountQuantity++
-		d.AddBidMinMax(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
-		d.AddBidNormalized(i.(*types.DepthItem).GetPrice(), i.(*types.DepthItem).GetQuantity())
-		return true
-	})
-}
+// // AskAscend implements depth_interface.Depths.
+// func (d *Depths) AskAscend(iter func(btree.Item) bool) {
+// 	d.asks.Ascend(iter)
+// }
 
-// ClearAsks implements depth_interface.Depths.
-func (d *Depth) ClearAsks() {
-	d.asks.Clear(false)
-	d.asksMinMax.Clear(false)
-	d.askNormalized.Clear(false)
-}
+// // AskDescend implements depth_interface.Depths.
+// func (d *Depths) AskDescend(iter func(btree.Item) bool) {
+// 	d.asks.Descend(iter)
+// }
 
-// ClearBids implements depth_interface.Depths.
-func (d *Depth) ClearBids() {
-	d.bids.Clear(false)
-	d.bidsMinMax.Clear(false)
-	d.bidNormalized.Clear(false)
-}
+// // BidAscend implements depth_interface.Depths.
+// func (d *Depths) BidAscend(iter func(btree.Item) bool) {
+// 	d.bids.Ascend(iter)
+// }
 
-// AskAscend implements depth_interface.Depths.
-func (d *Depth) AskAscend(iter func(btree.Item) bool) {
-	d.asks.Ascend(iter)
-}
+// // BidDescend implements depth_interface.Depths.
+// func (d *Depths) BidDescend(iter func(btree.Item) bool) {
+// 	d.bids.Descend(iter)
+// }
 
-// AskDescend implements depth_interface.Depths.
-func (d *Depth) AskDescend(iter func(btree.Item) bool) {
-	d.asks.Descend(iter)
-}
+// func (d *Depths) GetAsksMiddleQuantity() types.QuantityType {
+// 	return d.asksSummaQuantity / types.QuantityType(d.asksCountQuantity)
+// }
 
-// BidAscend implements depth_interface.Depths.
-func (d *Depth) BidAscend(iter func(btree.Item) bool) {
-	d.bids.Ascend(iter)
-}
+// func (d *Depths) GetBidsMiddleQuantity() types.QuantityType {
+// 	return d.bidsSummaQuantity / types.QuantityType(d.bidsCountQuantity)
+// }
 
-// BidDescend implements depth_interface.Depths.
-func (d *Depth) BidDescend(iter func(btree.Item) bool) {
-	d.bids.Descend(iter)
-}
+// func (d *Depths) GetAsksStandardDeviation() float64 {
+// 	summaSquares := 0.0
+// 	d.AskAscend(func(i btree.Item) bool {
+// 		depth := i.(*types.DepthItem)
+// 		summaSquares += depth.GetQuantityDeviation(d.GetAsksMiddleQuantity()) * depth.GetQuantityDeviation(d.GetAsksMiddleQuantity())
+// 		return true
+// 	})
+// 	return math.Sqrt(summaSquares / float64(d.AskCount()))
+// }
 
-func (d *Depth) GetAsksMiddleQuantity() types.QuantityType {
-	return d.asksSummaQuantity / types.QuantityType(d.asksCountQuantity)
-}
-
-func (d *Depth) GetBidsMiddleQuantity() types.QuantityType {
-	return d.bidsSummaQuantity / types.QuantityType(d.bidsCountQuantity)
-}
-
-func (d *Depth) GetAsksStandardDeviation() float64 {
-	summaSquares := 0.0
-	d.AskAscend(func(i btree.Item) bool {
-		depth := i.(*types.DepthItem)
-		summaSquares += depth.GetQuantityDeviation(d.GetAsksMiddleQuantity()) * depth.GetQuantityDeviation(d.GetAsksMiddleQuantity())
-		return true
-	})
-	return math.Sqrt(summaSquares / float64(d.AskCount()))
-}
-
-func (d *Depth) GetBidsStandardDeviation() float64 {
-	summaSquares := 0.0
-	d.BidDescend(func(i btree.Item) bool {
-		depth := i.(*types.DepthItem)
-		summaSquares += depth.GetQuantityDeviation(d.GetBidsMiddleQuantity()) * depth.GetQuantityDeviation(d.GetBidsMiddleQuantity())
-		return true
-	})
-	return math.Sqrt(summaSquares / float64(d.BidCount()))
-}
+// func (d *Depths) GetBidsStandardDeviation() float64 {
+// 	summaSquares := 0.0
+// 	d.BidDescend(func(i btree.Item) bool {
+// 		depth := i.(*types.DepthItem)
+// 		summaSquares += depth.GetQuantityDeviation(d.GetBidsMiddleQuantity()) * depth.GetQuantityDeviation(d.GetBidsMiddleQuantity())
+// 		return true
+// 	})
+// 	return math.Sqrt(summaSquares / float64(d.BidCount()))
+// }

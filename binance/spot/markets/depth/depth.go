@@ -5,10 +5,10 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
-func Init(d *depth_types.Depth, client *binance.Client) (err error) {
+func Init(d *depth_types.Depths, client *binance.Client) (err error) {
 	res, err :=
 		client.NewDepthService().
 			Symbol(string(d.Symbol())).
@@ -17,15 +17,15 @@ func Init(d *depth_types.Depth, client *binance.Client) (err error) {
 	if err != nil {
 		return err
 	}
-	d.ClearBids()
+	d.GetBids().GetDepths().Clear()
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
-		d.SetBid(types.PriceType(price), types.QuantityType(quantity))
+		d.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 	}
-	d.ClearAsks()
+	d.GetAsks().GetDepths().Clear()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
-		d.SetAsk(types.PriceType(price), types.QuantityType(quantity))
+		d.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))
 	}
 	d.LastUpdateID = res.LastUpdateID
 	return nil

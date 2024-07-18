@@ -12,6 +12,7 @@ import (
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -29,10 +30,10 @@ func NewPairProcessor(
 	deltaPrice float64,
 	deltaQuantity float64,
 	targetPercent float64,
-	limitDepth depth_types.DepthAPILimit,
+	limitDepth depths_types.DepthAPILimit,
 	expBase int,
 	callbackRate float64,
-	depth ...*depth_types.Depth) (pp *PairProcessor, err error) {
+	depth ...*depth_types.Depths) (pp *PairProcessor, err error) {
 	exchangeInfo := exchange_types.New()
 	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
 	if err != nil {

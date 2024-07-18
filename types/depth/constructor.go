@@ -4,9 +4,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/google/btree"
-
-	types "github.com/fr0ster/go-trading-utils/types/depth/types"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
@@ -15,41 +14,41 @@ func New(
 	symbol string,
 	isMinMax bool,
 	targetPercent float64,
-	limitDepth DepthAPILimit,
+	limitDepth depths_types.DepthAPILimit,
 	expBase int,
-	rate ...DepthStreamRate) *Depth {
+	rate ...depths_types.DepthStreamRate) *Depths {
 	var (
-		limitStream DepthStreamLevel
-		rateStream  DepthStreamRate
-		asksMinMax  *btree.BTree
-		bidsMinMax  *btree.BTree
+		limitStream depths_types.DepthStreamLevel
+		rateStream  depths_types.DepthStreamRate
+		// asksMinMax  *btree.BTree
+		// bidsMinMax  *btree.BTree
 	)
 	switch limitDepth {
-	case DepthAPILimit5:
-		limitStream = DepthStreamLevel5
-	case DepthAPILimit10:
-		limitStream = DepthStreamLevel10
+	case depths_types.DepthAPILimit5:
+		limitStream = depths_types.DepthStreamLevel5
+	case depths_types.DepthAPILimit10:
+		limitStream = depths_types.DepthStreamLevel10
 	default:
-		limitStream = DepthStreamLevel20
+		limitStream = depths_types.DepthStreamLevel20
 	}
 	if len(rate) == 0 {
-		rateStream = DepthStreamRate100ms
+		rateStream = depths_types.DepthStreamRate100ms
 	} else {
 		rateStream = rate[0]
 	}
-	if isMinMax {
-		asksMinMax = btree.New(degree)
-		bidsMinMax = btree.New(degree)
-	}
-	return &Depth{
-		symbol:          symbol,
-		degree:          degree,
-		asks:            btree.New(degree),
-		asksMinMax:      asksMinMax,
-		askNormalized:   btree.New(degree),
-		bids:            btree.New(degree),
-		bidsMinMax:      bidsMinMax,
-		bidNormalized:   btree.New(degree),
+	// if isMinMax {
+	// 	asksMinMax = btree.New(degree)
+	// 	bidsMinMax = btree.New(degree)
+	// }
+	return &Depths{
+		symbol: symbol,
+		degree: degree,
+		asks:   depths_types.NewAsks(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		// asksMinMax:      asksMinMax,
+		// askNormalized:   btree.New(degree),
+		bids: depths_types.NewBids(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		// bidsMinMax:      bidsMinMax,
+		// bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},
 		limitDepth:      limitDepth,
 		limitStream:     limitStream,
@@ -68,26 +67,26 @@ func Binance2BookTicker(binanceDepth interface{}) (*types.DepthItem, error) {
 }
 
 // Symbol implements depth_interface.Depths.
-func (d *Depth) Symbol() string {
+func (d *Depths) Symbol() string {
 	return d.symbol
 }
 
-func (d *Depth) GetLimitDepth() DepthAPILimit {
+func (d *Depths) GetLimitDepth() depths_types.DepthAPILimit {
 	return d.limitDepth
 }
 
-func (d *Depth) GetLimitStream() DepthStreamLevel {
+func (d *Depths) GetLimitStream() depths_types.DepthStreamLevel {
 	return d.limitStream
 }
 
-func (d *Depth) GetRateStream() DepthStreamRate {
+func (d *Depths) GetRateStream() depths_types.DepthStreamRate {
 	return d.rateStream
 }
 
-func (d *Depth) GetAsksSummaQuantity() types.QuantityType {
-	return d.asksSummaQuantity
-}
+// func (d *Depths) GetAsksSummaQuantity() types.QuantityType {
+// 	return d.asksSummaQuantity
+// }
 
-func (d *Depth) GetBidsSummaQuantity() types.QuantityType {
-	return d.bidsSummaQuantity
-}
+// func (d *Depths) GetBidsSummaQuantity() types.QuantityType {
+// 	return d.bidsSummaQuantity
+// }

@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	types "github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"

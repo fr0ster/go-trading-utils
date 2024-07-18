@@ -1,7 +1,7 @@
 package depth
 
 import (
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/google/btree"
 )
 

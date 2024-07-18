@@ -17,7 +17,8 @@ import (
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -37,7 +38,7 @@ func NewPairProcessor(
 	leverage int,
 	minSteps int,
 	targetPercent float64,
-	limitDepth depth_types.DepthAPILimit,
+	limitDepth depths_types.DepthAPILimit,
 	expBase int,
 	callbackRate float64,
 	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {

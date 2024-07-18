@@ -22,7 +22,7 @@ func (i *QuantityItem) Equal(than btree.Item) bool {
 
 // CRUD
 func (i *QuantityItem) GetDepth(price PriceType) *DepthItem {
-	if val := i.depths.Get(NewDepthItem(price)); val != nil {
+	if val := i.depths.Get(New(price)); val != nil {
 		return val.(*DepthItem)
 	} else {
 		return nil
@@ -31,13 +31,13 @@ func (i *QuantityItem) GetDepth(price PriceType) *DepthItem {
 
 func (i *QuantityItem) Add(price PriceType, quantity QuantityType) {
 	if quantity == i.quantity {
-		i.depths.ReplaceOrInsert(NewDepthItem(price, quantity))
+		i.depths.ReplaceOrInsert(New(price, quantity))
 	}
 }
 
 func (i *QuantityItem) Delete(price PriceType, quantity QuantityType) {
 	if old := i.GetDepth(price); old != nil {
-		i.depths.Delete(NewDepthItem(price))
+		i.depths.Delete(New(price))
 	}
 }
 

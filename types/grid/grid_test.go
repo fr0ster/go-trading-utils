@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/fr0ster/go-trading-utils/types"
-	depth_items "github.com/fr0ster/go-trading-utils/types/depth/types"
+	depth_items "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/fr0ster/go-trading-utils/types/grid"
 	"github.com/stretchr/testify/assert"
 )

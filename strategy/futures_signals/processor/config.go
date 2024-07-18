@@ -1,6 +1,8 @@
 package processor
 
-import "github.com/fr0ster/go-trading-utils/types/depth/types"
+import (
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+)
 
 func (pp *PairProcessor) GetDeltaPrice() types.PriceType {
 	return types.PriceType(pp.deltaPrice)

@@ -3,10 +3,10 @@ package handlers
 import (
 	"github.com/adshao/go-binance/v2"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	"github.com/fr0ster/go-trading-utils/types/depth/types"
+	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
-func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDepthEvent) (out chan bool) {
+func GetDepthsUpdateGuard(depths *depth_types.Depths, source chan *binance.WsDepthEvent) (out chan bool) {
 	out = make(chan bool)
 	go func() {
 		var res bool = false
@@ -26,14 +26,14 @@ func GetDepthsUpdateGuard(depths *depth_types.Depth, source chan *binance.WsDept
 					if err != nil {
 						continue
 					}
-					res = depths.UpdateBid(types.PriceType(price), types.QuantityType(quantity)) || res
+					res = depths.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity))) || res
 				}
 				for _, ask := range event.Asks {
 					price, quantity, err := ask.Parse()
 					if err != nil {
 						continue
 					}
-					res = depths.UpdateAsk(types.PriceType(price), types.QuantityType(quantity)) || res
+					res = depths.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity))) || res
 				}
 				depths.LastUpdateID = event.LastUpdateID
 				depths.Unlock() // Unlocking the depths

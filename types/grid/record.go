@@ -2,7 +2,7 @@ package grid
 
 import (
 	"github.com/fr0ster/go-trading-utils/types"
-	depth_items "github.com/fr0ster/go-trading-utils/types/depth/types"
+	depth_items "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/google/btree"
 )
 
