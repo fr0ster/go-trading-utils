@@ -40,21 +40,26 @@ func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up bool, firstM
 	return d.GetMaxAndSummaByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
 }
 
-func (d *Depths) GetMaxQuantity(up bool) (item *types.DepthItem) {
-	getIterator := func(item *types.DepthItem) func(i btree.Item) bool {
+func (d *Depths) GetMinMaxQuantity(up bool) (min, max *types.DepthItem) {
+	getIterator := func(min, max *types.DepthItem) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
-			if i.(*types.DepthItem).GetQuantity() >= item.GetQuantity() {
-				item.SetPrice(i.(*types.DepthItem).GetPrice())
-				item.SetQuantity(i.(*types.DepthItem).GetQuantity())
+			if i.(*types.DepthItem).GetQuantity() >= max.GetQuantity() {
+				max.SetPrice(i.(*types.DepthItem).GetPrice())
+				max.SetQuantity(i.(*types.DepthItem).GetQuantity())
+			}
+			if i.(*types.DepthItem).GetQuantity() < min.GetQuantity() || min.GetQuantity() == 0 {
+				min.SetPrice(i.(*types.DepthItem).GetPrice())
+				min.SetQuantity(i.(*types.DepthItem).GetQuantity())
 			}
 			return true
 		}
 	}
-	item = &types.DepthItem{}
+	max = &types.DepthItem{}
+	min = &types.DepthItem{}
 	if up {
-		d.GetTree().Ascend(getIterator(item))
+		d.GetTree().Ascend(getIterator(min, max))
 	} else {
-		d.GetTree().Descend(getIterator(item))
+		d.GetTree().Descend(getIterator(min, max))
 	}
 	return
 }
