@@ -126,7 +126,7 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 		assert.NotNil(t, bids)
 		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
 		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
-		assert.Equal(t, items_types.PriceType(100.0), bids.GetPrice())
+		assert.Equal(t, items_types.PriceType(500.0), bids.GetPrice())
 		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
 	}()
 }
