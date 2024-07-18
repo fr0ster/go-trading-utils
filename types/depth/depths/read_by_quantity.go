@@ -37,7 +37,19 @@ func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up UpO
 }
 
 func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
-	return d.GetMaxAndSummaByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
+	item, summa = d.GetMaxAndSummaByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
+	if summa == 0 {
+		if up {
+			if val := d.GetTree().Min(); val != nil {
+				return d.GetMaxAndSummaByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1+target/100), up, firstMax...)
+			}
+		} else {
+			if val := d.GetTree().Max(); val != nil {
+				return d.GetMaxAndSummaByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1-target/100), up, firstMax...)
+			}
+		}
+	}
+	return
 }
 
 func (d *Depths) GetMinMaxQuantity(up UpOrDown) (min, max *types.DepthItem) {

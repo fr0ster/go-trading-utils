@@ -149,48 +149,48 @@ func TestGetMaxAndSummaByQuantityPercent(t *testing.T) {
 		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
 	}()
 	func() {
+		asks, summaAsks := d.GetAsks().GetDepths().GetMaxAndSummaByQuantityPercent(5, depths_types.UP)
+		bids, summaBids := d.GetBids().GetDepths().GetMaxAndSummaByQuantityPercent(5, depths_types.DOWN)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
+		assert.Equal(t, items_types.PriceType(500.0), bids.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
+	}()
+}
+
+func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
+	assert.Equal(t, items_types.QuantityType(90.0), d.GetAsks().GetDepths().GetSummaQuantity())
+	assert.Equal(t, items_types.QuantityType(90.0), d.GetBids().GetDepths().GetSummaQuantity())
+	func() {
 		asks, summaAsks := d.GetAsks().GetDepths().GetMaxAndSummaByQuantityPercent(30, depths_types.UP)
 		bids, summaBids := d.GetBids().GetDepths().GetMaxAndSummaByQuantityPercent(30, depths_types.DOWN)
 		assert.NotNil(t, asks)
 		assert.NotNil(t, bids)
 		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), asks.GetQuantity())
 		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
-		assert.Equal(t, items_types.PriceType(100.0), bids.GetPrice())
+		assert.Equal(t, items_types.PriceType(500.0), bids.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), bids.GetQuantity())
 		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
 	}()
+	func() {
+		asks, summaAsks := d.GetAsks().GetDepths().GetMaxAndSummaByQuantityPercent(40, depths_types.UP)
+		bids, summaBids := d.GetBids().GetDepths().GetMaxAndSummaByQuantityPercent(40, depths_types.DOWN)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, items_types.PriceType(700.0), asks.GetPrice())
+		assert.Equal(t, items_types.QuantityType(20.0), asks.GetQuantity())
+		assert.Equal(t, items_types.QuantityType(30.0), summaAsks)
+		assert.Equal(t, items_types.PriceType(400.0), bids.GetPrice())
+		assert.Equal(t, items_types.QuantityType(20.0), bids.GetQuantity())
+		assert.Equal(t, items_types.QuantityType(30.0), summaBids)
+	}()
 }
-
-// func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
-// 	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 	initDepths(d)
-// 	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
-// 	assert.Equal(t, items_types.QuantityType(90.0), d.GetAsks().GetSummaQuantity())
-// 	assert.Equal(t, items_types.QuantityType(90.0), d.GetBids().GetSummaQuantity())
-// 	func() {
-// 		asks, bids, summaAsks, summaBids, err := d.GetAsks().GetMaxAndSummaByQuantityPercent(10, 10)
-// 		assert.Nil(t, err)
-// 		assert.NotNil(t, asks)
-// 		assert.NotNil(t, bids)
-// 		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
-// 		assert.Equal(t, items_types.QuantityType(10.0), asks.GetQuantity())
-// 		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
-// 		assert.Equal(t, items_types.PriceType(500.0), bids.GetPrice())
-// 		assert.Equal(t, items_types.QuantityType(10.0), bids.GetQuantity())
-// 		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
-// 	}()
-// 	func() {
-// 		asks, bids, summaAsks, summaBids, err := d.GetAsksBidMaxAndSummaByQuantityPercent(40, 40)
-// 		assert.Nil(t, err)
-// 		assert.NotNil(t, asks)
-// 		assert.NotNil(t, bids)
-// 		assert.Equal(t, items_types.PriceType(700.0), asks.GetPrice())
-// 		assert.Equal(t, items_types.QuantityType(20.0), asks.GetQuantity())
-// 		assert.Equal(t, items_types.QuantityType(30.0), summaAsks)
-// 		assert.Equal(t, items_types.PriceType(400.0), bids.GetPrice())
-// 		assert.Equal(t, items_types.QuantityType(20.0), bids.GetQuantity())
-// 		assert.Equal(t, items_types.QuantityType(30.0), summaBids)
-// 	}()
-// }
 
 // func TestGetAsksAndBidsMaxUpToPrice(t *testing.T) {
 // 	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
@@ -545,28 +545,28 @@ func TestUpdateAskAndBid(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(1671.3999999999999), ds.GetBids().GetDepths().GetSummaQuantity())
 }
 
-// func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
-// 	asks, bids := getTestDepths()
-// 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 	ds.SetBids(bids)
-// 	ds.SetAsks(asks)
-// 	normalizedAsks, _, _, _ := ds.GetFilteredByPercentAsks()
-// 	normalizedBids, _, _, _ := ds.GetFilteredByPercentBids()
-// 	assert.NotNil(t, normalizedAsks)
-// 	assert.NotNil(t, normalizedBids)
-// 	normalizedAsksArray := make([]items_types.DepthItem, 0)
-// 	normalizedBidsArray := make([]items_types.DepthItem, 0)
-// 	normalizedAsks.Ascend(func(i btree.Item) bool {
-// 		normalizedAsksArray = append(normalizedAsksArray, *i.(*items_types.DepthItem))
-// 		return true
-// 	})
-// 	normalizedBids.Ascend(func(i btree.Item) bool {
-// 		normalizedBidsArray = append(normalizedBidsArray, *i.(*items_types.DepthItem))
-// 		return true
-// 	})
-// 	assert.Equal(t, 8, len(normalizedAsksArray))
-// 	assert.Equal(t, 8, len(normalizedBidsArray))
-// }
+func TestGetFilteredByPercentAsksAndBids(t *testing.T) {
+	asks, bids := getTestDepths()
+	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+	ds.GetBids().SetTree(bids)
+	ds.GetAsks().SetTree(asks)
+	normalizedAsks, _, _, _ := ds.GetAsks().GetDepths().GetFilteredByPercent()
+	normalizedBids, _, _, _ := ds.GetBids().GetDepths().GetFilteredByPercent()
+	assert.NotNil(t, normalizedAsks)
+	assert.NotNil(t, normalizedBids)
+	normalizedAsksArray := make([]items_types.DepthItem, 0)
+	normalizedBidsArray := make([]items_types.DepthItem, 0)
+	normalizedAsks.Ascend(func(i btree.Item) bool {
+		normalizedAsksArray = append(normalizedAsksArray, *i.(*items_types.DepthItem))
+		return true
+	})
+	normalizedBids.Ascend(func(i btree.Item) bool {
+		normalizedBidsArray = append(normalizedBidsArray, *i.(*items_types.DepthItem))
+		return true
+	})
+	assert.Equal(t, 8, len(normalizedAsksArray))
+	assert.Equal(t, 8, len(normalizedBidsArray))
+}
 
 // func TestDepthInterface(t *testing.T) {
 // 	test := func(ds depth_interface.Depth) {
@@ -579,52 +579,52 @@ func TestUpdateAskAndBid(t *testing.T) {
 // 	}
 // 	asks, bids := getTestDepths()
 // 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 	ds.SetBids(bids)
-// 	ds.SetAsks(asks)
+// 	ds.GetBids().SetTree(bids)
+// 	ds.GetAsks().SetTree(asks)
 // 	test(ds)
 // }
 
-// func TestAsksAndBidMiddleQuantity(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 		initDepths(ds)
-// 		asksMiddle := ds.GetAsksMiddleQuantity()
-// 		assert.Equal(t, items_types.QuantityType(18.0), asksMiddle)
-// 		bidsMiddle := ds.GetBidsMiddleQuantity()
-// 		assert.Equal(t, items_types.QuantityType(18.0), bidsMiddle)
-// 	}()
-// 	func() {
-// 		asks, bids := getTestDepths()
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsks(asks)
-// 		ds.SetBids(bids)
-// 		asksMiddle := ds.GetAsksMiddleQuantity()
-// 		assert.Equal(t, items_types.QuantityType(148.3375), asksMiddle)
-// 		bidsMiddle := ds.GetBidsMiddleQuantity()
-// 		assert.Equal(t, items_types.QuantityType(171.42499999999998), bidsMiddle)
-// 	}()
-// }
+func TestAsksAndBidMiddleQuantity(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+		initDepths(ds)
+		asksMiddle := ds.GetAsks().GetDepths().GetMiddleQuantity()
+		assert.Equal(t, items_types.QuantityType(18.0), asksMiddle)
+		bidsMiddle := ds.GetBids().GetDepths().GetMiddleQuantity()
+		assert.Equal(t, items_types.QuantityType(18.0), bidsMiddle)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+		ds.GetAsks().SetTree(asks)
+		ds.GetBids().SetTree(bids)
+		asksMiddle := ds.GetAsks().GetDepths().GetMiddleQuantity()
+		assert.Equal(t, items_types.QuantityType(148.3375), asksMiddle)
+		bidsMiddle := ds.GetBids().GetDepths().GetMiddleQuantity()
+		assert.Equal(t, items_types.QuantityType(171.42499999999998), bidsMiddle)
+	}()
+}
 
-// func TestAsksAndBidStandardDeviation(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 		initDepths(ds)
-// 		asksSquares := ds.GetAsksStandardDeviation()
-// 		assert.Equal(t, 7.483314773547883, asksSquares)
-// 		bidsSquares := ds.GetBidsStandardDeviation()
-// 		assert.Equal(t, 7.483314773547883, bidsSquares)
-// 	}()
-// 	func() {
-// 		asks, bids := getTestDepths()
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsks(asks)
-// 		ds.SetBids(bids)
-// 		asksSquares := ds.GetAsksStandardDeviation()
-// 		assert.Equal(t, 39.70157230828522, asksSquares)
-// 		bidsSquares := ds.GetBidsStandardDeviation()
-// 		assert.Equal(t, 30.873805644915233, bidsSquares)
-// 	}()
-// }
+func TestAsksAndBidStandardDeviation(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+		initDepths(ds)
+		asksSquares := ds.GetAsks().GetDepths().GetStandardDeviation()
+		assert.Equal(t, 7.483314773547883, asksSquares)
+		bidsSquares := ds.GetBids().GetDepths().GetStandardDeviation()
+		assert.Equal(t, 7.483314773547883, bidsSquares)
+	}()
+	func() {
+		asks, bids := getTestDepths()
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
+		ds.GetAsks().SetTree(asks)
+		ds.GetBids().SetTree(bids)
+		asksSquares := ds.GetAsks().GetDepths().GetStandardDeviation()
+		assert.Equal(t, 39.70157230828522, asksSquares)
+		bidsSquares := ds.GetBids().GetDepths().GetStandardDeviation()
+		assert.Equal(t, 30.873805644915237, bidsSquares)
+	}()
+}
 
 // func TestAddAskAndBidNormalized(t *testing.T) {
 // 	func() {
@@ -668,58 +668,58 @@ func TestUpdateAskAndBid(t *testing.T) {
 // 	}()
 // }
 
-// func TestAskAndBidDelete(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsk(800, 100)
-// 		ds.SetAsk(750, 150)
-// 		ds.DeleteAsk(800)
-// 		ask := ds.GetAsk(800)
-// 		assert.Nil(t, ask)
-// 		assert.Equal(t, 1, ds.GetAsks().Len())
-// 		ds.DeleteAsk(750)
-// 		ask = ds.GetAsk(750)
-// 		assert.Nil(t, ask)
-// 		assert.Equal(t, 0, ds.GetAsks().Len())
-// 	}()
-// }
+func TestAskAndBidDelete(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
+		ds.GetAsks().Set(items_types.NewAsk(800, 100))
+		ds.GetAsks().Set(items_types.NewAsk(750, 150))
+		ds.GetAsks().Delete(items_types.NewAsk(800))
+		ask := ds.GetAsks().Get(items_types.NewAsk(800))
+		assert.Nil(t, ask)
+		assert.Equal(t, 1, ds.GetAsks().GetTree().Len())
+		ds.GetAsks().Delete(items_types.NewAsk(750))
+		ask = ds.GetAsks().Get(items_types.NewAsk(750))
+		assert.Nil(t, ask)
+		assert.Equal(t, 0, ds.GetAsks().GetTree().Len())
+	}()
+}
 
-// func TestAskAndBidSummaQuantity(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsk(800, 100)
-// 		assert.Equal(t, items_types.QuantityType(100.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(790, 100)
-// 		assert.Equal(t, items_types.QuantityType(200.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(780, 100)
-// 		assert.Equal(t, items_types.QuantityType(300.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(770, 100)
-// 		assert.Equal(t, items_types.QuantityType(400.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(760, 100)
-// 		assert.Equal(t, items_types.QuantityType(500.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(750, 100)
-// 		assert.Equal(t, items_types.QuantityType(600.0), ds.GetAsksSummaQuantity())
-// 		ds.SetAsk(740, 100)
-// 		assert.Equal(t, items_types.QuantityType(700.0), ds.GetAsksSummaQuantity())
-// 	}()
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetBid(800, 100)
-// 		assert.Equal(t, items_types.QuantityType(100.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(790, 100)
-// 		assert.Equal(t, items_types.QuantityType(200.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(780, 100)
-// 		assert.Equal(t, items_types.QuantityType(300.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(770, 100)
-// 		assert.Equal(t, items_types.QuantityType(400.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(760, 100)
-// 		assert.Equal(t, items_types.QuantityType(500.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(750, 100)
-// 		assert.Equal(t, items_types.QuantityType(600.0), ds.GetBidsSummaQuantity())
-// 		ds.SetBid(740, 100)
-// 		assert.Equal(t, items_types.QuantityType(700.0), ds.GetBidsSummaQuantity())
-// 	}()
-// }
+func TestAskAndBidSummaQuantity(t *testing.T) {
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
+		ds.GetAsks().Set(items_types.NewAsk(800, 100))
+		assert.Equal(t, items_types.QuantityType(100.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(790, 100))
+		assert.Equal(t, items_types.QuantityType(200.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(780, 100))
+		assert.Equal(t, items_types.QuantityType(300.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(770, 100))
+		assert.Equal(t, items_types.QuantityType(400.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(760, 100))
+		assert.Equal(t, items_types.QuantityType(500.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(750, 100))
+		assert.Equal(t, items_types.QuantityType(600.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+		ds.GetAsks().Set(items_types.NewAsk(740, 100))
+		assert.Equal(t, items_types.QuantityType(700.0), ds.GetAsks().GetDepths().GetSummaQuantity())
+	}()
+	func() {
+		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
+		ds.GetBids().Set(items_types.NewBid(800, 100))
+		assert.Equal(t, items_types.QuantityType(100.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(790, 100))
+		assert.Equal(t, items_types.QuantityType(200.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(780, 100))
+		assert.Equal(t, items_types.QuantityType(300.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(770, 100))
+		assert.Equal(t, items_types.QuantityType(400.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(760, 100))
+		assert.Equal(t, items_types.QuantityType(500.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(750, 100))
+		assert.Equal(t, items_types.QuantityType(600.0), ds.GetBids().GetDepths().GetSummaQuantity())
+		ds.GetBids().Set(items_types.NewBid(740, 100))
+		assert.Equal(t, items_types.QuantityType(700.0), ds.GetBids().GetDepths().GetSummaQuantity())
+	}()
+}
 
 // func TestAskAndSummaNormalizedQuantity(t *testing.T) {
 // 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
