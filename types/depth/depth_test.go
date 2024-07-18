@@ -129,6 +129,35 @@ func TestGetTargetAsksBidPrice(t *testing.T) {
 	}()
 }
 
+func TestGetMaxAndSummaByQuantityPercent(t *testing.T) {
+	// GetMaxAndSummaByQuantityPercent
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetTargetAsksBidPrice method works correctly
+	assert.Equal(t, items_types.QuantityType(90.0), d.GetAsks().GetDepths().GetSummaQuantity())
+	assert.Equal(t, items_types.QuantityType(90.0), d.GetBids().GetDepths().GetSummaQuantity())
+	func() {
+		asks, summaAsks := d.GetAsks().GetDepths().GetMaxAndSummaByQuantityPercent(30, true)
+		bids, summaBids := d.GetBids().GetDepths().GetMaxAndSummaByQuantityPercent(30, false)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
+		assert.Equal(t, items_types.PriceType(500.0), bids.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
+	}()
+	func() {
+		asks, summaAsks := d.GetAsks().GetDepths().GetMaxAndSummaByQuantityPercent(30, true)
+		bids, summaBids := d.GetBids().GetDepths().GetMaxAndSummaByQuantityPercent(30, true)
+		assert.NotNil(t, asks)
+		assert.NotNil(t, bids)
+		assert.Equal(t, items_types.PriceType(600.0), asks.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaAsks)
+		assert.Equal(t, items_types.PriceType(100.0), bids.GetPrice())
+		assert.Equal(t, items_types.QuantityType(10.0), summaBids)
+	}()
+}
+
 // func TestGetAsksBidMaxAndSummaByQuantityPercent(t *testing.T) {
 // 	d := depth_types.New(degree, "BTCUSDT", true, 10, 75, 2, depths_types.DepthStreamRate100ms)
 // 	initDepths(d)

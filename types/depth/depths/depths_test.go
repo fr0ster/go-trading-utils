@@ -164,3 +164,19 @@ func TestGetAndSetBids(t *testing.T) {
 	assert.Equal(t, item_types.PriceType(100), depth.Get(item_types.NewBid(100)).GetDepthItem().GetPrice())
 	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.NewBid(600))).GetDepthItem().GetPrice())
 }
+
+func TestGetMaxQuantity(t *testing.T) {
+	// TODO: Add test cases.
+	depth := depths_types.NewBids(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth.Set(item_types.NewBid(100, 10))
+	depth.Set(item_types.NewBid(200, 20))
+	depth.Set(item_types.NewBid(300, 30))
+	depth.Set(item_types.NewBid(400, 20))
+	depth.Set(item_types.NewBid(500, 10))
+
+	assert.Equal(t, item_types.QuantityType(30), depth.GetDepths().GetMaxQuantity(true).GetQuantity())
+	assert.Equal(t, item_types.PriceType(300), depth.GetDepths().GetMaxQuantity(true).GetPrice())
+
+	assert.Equal(t, item_types.QuantityType(30), depth.GetDepths().GetMaxQuantity(false).GetQuantity())
+	assert.Equal(t, item_types.PriceType(300), depth.GetDepths().GetMaxQuantity(false).GetPrice())
+}
