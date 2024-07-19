@@ -1,22 +1,31 @@
 package bids
 
 import (
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	"github.com/google/btree"
 )
+
+// Get implements depth_interface.Depths.
+func (d *Bids) GetTree() *btree.BTree {
+	return d.tree.GetTree()
+}
+
+// Set implements depth_interface.Depths.
+func (d *Bids) SetTree(tree *btree.BTree) {
+	d.tree.SetTree(tree)
+}
 
 // Clear implements depth_interface.Depths.
 func (d *Bids) Clear() {
 	d.tree.Clear()
 }
 
-func (d *Bids) GetMiddleQuantity() types.QuantityType {
-	return d.tree.GetMiddleQuantity()
+// RestrictUp implements depth_interface.Depths.
+func (d *Bids) RestrictUp(price items_types.PriceType) {
+	d.tree.RestrictUp(price)
 }
 
-func (d *Bids) GetMiddleValue() types.ValueType {
-	return d.tree.GetMiddleValue()
-}
-
-func (d *Bids) GetStandardDeviation() float64 {
-	return d.tree.GetStandardDeviation()
+// RestrictDown implements depth_interface.Depths.
+func (d *Bids) RestrictDown(price items_types.PriceType) {
+	d.tree.RestrictDown(price)
 }

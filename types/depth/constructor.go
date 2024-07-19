@@ -45,10 +45,10 @@ func New(
 	return &Depths{
 		symbol: symbol,
 		degree: degree,
-		asks:   asks_types.NewAsks(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		asks:   asks_types.New(degree, symbol, targetPercent, limitDepth, expBase, rate...),
 		// asksMinMax:      asksMinMax,
 		// askNormalized:   btree.New(degree),
-		bids: bids_types.NewBids(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		bids: bids_types.New(degree, symbol, targetPercent, limitDepth, expBase, rate...),
 		// bidsMinMax:      bidsMinMax,
 		// bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},

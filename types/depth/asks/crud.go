@@ -1,30 +1,8 @@
 package asks
 
 import (
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
-	"github.com/google/btree"
 )
-
-func NewAsks(
-	degree int,
-	symbol string,
-	targetPercent float64,
-	limitDepth depths_types.DepthAPILimit,
-	expBase int,
-	rate ...depths_types.DepthStreamRate) *Asks {
-	return &Asks{tree: depths_types.New(degree, symbol, targetPercent, limitDepth, expBase, rate...)}
-}
-
-// Get implements depth_interface.Depths.
-func (d *Asks) GetTree() *btree.BTree {
-	return d.tree.GetTree()
-}
-
-// Set implements depth_interface.Depths.
-func (d *Asks) SetTree(tree *btree.BTree) {
-	d.tree.SetTree(tree)
-}
 
 func (a *Asks) Get(item *items_types.Ask) *items_types.Ask {
 	if val := a.tree.Get((*items_types.DepthItem)(item)); val != nil {
@@ -46,9 +24,14 @@ func (a *Asks) Update(item *items_types.Ask) bool {
 	return a.tree.Update((*items_types.DepthItem)(item))
 }
 
-// Обертки вокруг методів з Depths
+// Count implements depth_interface.Depths.
 func (d *Asks) Count() int {
 	return d.tree.Count()
+}
+
+// Symbol implements depth_interface.Depths.
+func (d *Asks) Symbol() string {
+	return d.tree.Symbol()
 }
 
 func (d *Asks) GetSummaQuantity() items_types.QuantityType {
@@ -57,4 +40,16 @@ func (d *Asks) GetSummaQuantity() items_types.QuantityType {
 
 func (d *Asks) GetSummaValue() items_types.ValueType {
 	return d.tree.GetSummaValue()
+}
+
+func (d *Asks) GetMiddleQuantity() items_types.QuantityType {
+	return d.tree.GetMiddleQuantity()
+}
+
+func (d *Asks) GetMiddleValue() items_types.ValueType {
+	return d.tree.GetMiddleValue()
+}
+
+func (d *Asks) GetStandardDeviation() float64 {
+	return d.tree.GetStandardDeviation()
 }

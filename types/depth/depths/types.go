@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/google/btree"
 )
 
@@ -40,8 +40,8 @@ type (
 		tree          *btree.BTree
 		mutex         *sync.Mutex
 		countQuantity int
-		summaQuantity types.QuantityType
-		summaValue    types.ValueType
+		summaQuantity items_types.QuantityType
+		summaValue    items_types.ValueType
 		limitStream   DepthStreamLevel
 		rateStream    DepthStreamRate
 	}

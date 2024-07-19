@@ -1,12 +1,26 @@
 package depths
 
 import (
-	"math"
-
 	"github.com/google/btree"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
+
+// Get implements depth_interface.Depths.
+func (d *Depths) GetTree() *btree.BTree {
+	return d.tree
+}
+
+// Set implements depth_interface.Depths.
+func (d *Depths) SetTree(tree *btree.BTree) {
+	d.tree = tree
+	d.tree.Ascend(func(i btree.Item) bool {
+		d.summaQuantity += i.(*items_types.DepthItem).GetQuantity()
+		d.summaValue += i.(*items_types.DepthItem).GetValue()
+		d.countQuantity++
+		return true
+	})
+}
 
 // Clear implements depth_interface.Depths.
 func (d *Depths) Clear() {
@@ -16,20 +30,26 @@ func (d *Depths) Clear() {
 	d.countQuantity = 0
 }
 
-func (d *Depths) GetMiddleQuantity() types.QuantityType {
-	return d.summaQuantity / types.QuantityType(d.countQuantity)
-}
-
-func (d *Depths) GetMiddleValue() types.ValueType {
-	return d.summaValue / types.ValueType(d.countQuantity)
-}
-
-func (d *Depths) GetStandardDeviation() float64 {
-	summaSquares := 0.0
-	d.GetTree().Ascend(func(i btree.Item) bool {
-		depth := i.(*types.DepthItem)
-		summaSquares += depth.GetQuantityDeviation(d.GetMiddleQuantity()) * depth.GetQuantityDeviation(d.GetMiddleQuantity())
+// RestrictUp implements depth_interface.Depths.
+func (d *Depths) RestrictUp(price items_types.PriceType) {
+	prices := make([]items_types.PriceType, 0)
+	d.tree.AscendGreaterOrEqual(items_types.New(price), func(i btree.Item) bool {
+		prices = append(prices, i.(*items_types.DepthItem).GetPrice())
 		return true
 	})
-	return math.Sqrt(summaSquares / float64(d.Count()))
+	for _, p := range prices {
+		d.tree.Delete(items_types.New(p))
+	}
+}
+
+// RestrictDown implements depth_interface.Depths.
+func (d *Depths) RestrictDown(price items_types.PriceType) {
+	prices := make([]items_types.PriceType, 0)
+	d.tree.DescendLessOrEqual(items_types.New(price), func(i btree.Item) bool {
+		prices = append(prices, i.(*items_types.DepthItem).GetPrice())
+		return true
+	})
+	for _, p := range prices {
+		d.tree.Delete(items_types.New(p))
+	}
 }

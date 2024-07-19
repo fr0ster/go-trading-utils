@@ -1,16 +1,16 @@
 package depth
 
 import (
-	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 func (d *Depths) GetTargetPrices(percent float64) (
 	priceUp,
-	priceDown items.PriceType,
+	priceDown items_types.PriceType,
 	summaAsks,
-	summaBids items.ValueType,
+	summaBids items_types.ValueType,
 	summaQuantityAsks,
-	summaQuantityBids items.QuantityType) {
+	summaQuantityBids items_types.QuantityType) {
 	upDepthItem, summaAsks, summaQuantityAsks := d.GetAsks().GetMaxAndSummaByValuePercent(percent)
 	DownDepthItem, summaBids, summaQuantityBids := d.GetBids().GetMaxAndSummaByValuePercent(percent)
 	priceUp = upDepthItem.GetPrice()
@@ -19,15 +19,15 @@ func (d *Depths) GetTargetPrices(percent float64) (
 }
 func (d *Depths) GetLimitPrices() (
 	priceUp,
-	priceDown items.PriceType,
+	priceDown items_types.PriceType,
 	summaValueAsks,
-	summaValueBids items.ValueType,
+	summaValueBids items_types.ValueType,
 	summaQuantityAsks,
-	summaQuantityBids items.QuantityType) {
+	summaQuantityBids items_types.QuantityType) {
 
 	var (
-		askMax *items.DepthItem
-		bidMax *items.DepthItem
+		askMax *items_types.DepthItem
+		bidMax *items_types.DepthItem
 	)
 	_, askMax = d.GetAsks().GetMinMaxByQuantity()
 	_, bidMax = d.GetBids().GetMinMaxByQuantity()

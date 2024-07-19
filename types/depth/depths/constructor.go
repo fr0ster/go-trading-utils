@@ -3,7 +3,6 @@ package depths
 import (
 	"sync"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/google/btree"
 )
 
@@ -42,20 +41,4 @@ func New(
 		limitStream:   limitStream,
 		rateStream:    rateStream,
 	}
-}
-
-// Get implements depth_interface.Depths.
-func (d *Depths) GetTree() *btree.BTree {
-	return d.tree
-}
-
-// Set implements depth_interface.Depths.
-func (d *Depths) SetTree(tree *btree.BTree) {
-	d.tree = tree
-	d.tree.Ascend(func(i btree.Item) bool {
-		d.summaQuantity += i.(*types.DepthItem).GetQuantity()
-		d.summaValue += i.(*types.DepthItem).GetValue()
-		d.countQuantity++
-		return true
-	})
 }

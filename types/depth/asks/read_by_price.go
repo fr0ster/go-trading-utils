@@ -1,17 +1,17 @@
 package asks
 
 import (
-	depths "github.com/fr0ster/go-trading-utils/types/depth/depths"
-	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
-func (d *Asks) GetMaxAndSummaByPrice(targetPrice items.PriceType, firstMax ...bool) (
-	item *items.DepthItem,
-	value items.ValueType,
-	quantity items.QuantityType) {
-	return d.tree.GetMaxAndSummaByPrice(targetPrice, depths.UP, firstMax...)
+func (d *Asks) GetMaxAndSummaByPrice(targetPrice items_types.PriceType, firstMax ...bool) (
+	item *items_types.DepthItem,
+	value items_types.ValueType,
+	quantity items_types.QuantityType) {
+	return d.tree.GetMaxAndSummaByPrice(targetPrice, depths_types.UP, firstMax...)
 }
 
-func (d *Asks) GetMinMaxByPrice() (min, max *items.DepthItem) {
-	return d.tree.GetMinMaxByPrice(depths.DOWN)
+func (d *Asks) GetMinMaxByPrice() (min, max *items_types.DepthItem) {
+	return d.tree.GetMinMaxByPrice(depths_types.DOWN)
 }
