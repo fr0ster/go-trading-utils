@@ -54,6 +54,7 @@ func (d *Depths) SetTree(tree *btree.BTree) {
 	d.tree = tree
 	d.tree.Ascend(func(i btree.Item) bool {
 		d.summaQuantity += i.(*types.DepthItem).GetQuantity()
+		d.summaValue += i.(*types.DepthItem).GetValue()
 		d.countQuantity++
 		return true
 	})

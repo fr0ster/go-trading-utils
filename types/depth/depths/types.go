@@ -34,8 +34,6 @@ type (
 
 type (
 	UpOrDown bool
-	Asks     struct{ tree *Depths }
-	Bids     struct{ tree *Depths }
 	Depths   struct {
 		symbol        string
 		degree        int
@@ -43,6 +41,7 @@ type (
 		mutex         *sync.Mutex
 		countQuantity int
 		summaQuantity types.QuantityType
+		summaValue    types.ValueType
 		limitStream   DepthStreamLevel
 		rateStream    DepthStreamRate
 	}

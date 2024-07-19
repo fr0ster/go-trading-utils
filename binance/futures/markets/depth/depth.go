@@ -22,7 +22,7 @@ func Init(d *depth_types.Depths, client *futures.Client) (err error) {
 		price, quantity, _ := bid.Parse()
 		d.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 	}
-	d.GetAsks().GetDepths().Clear()
+	d.GetAsks().Clear()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
 		d.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))

@@ -1,7 +1,8 @@
 package depth
 
 import (
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
+	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
@@ -10,8 +11,8 @@ type (
 		Lock()
 		Unlock()
 		TryLock() bool
-		GetAsks() *depths_types.Asks
-		GetBids() *depths_types.Bids
+		GetAsks() *asks_types.Asks
+		GetBids() *bids_types.Bids
 		// AskAscend(iter func(btree.Item) bool)
 		// AskDescend(iter func(btree.Item) bool)
 		// BidAscend(iter func(btree.Item) bool)

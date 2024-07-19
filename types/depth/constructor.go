@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 
+	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
+	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
@@ -43,10 +45,10 @@ func New(
 	return &Depths{
 		symbol: symbol,
 		degree: degree,
-		asks:   depths_types.NewAsks(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		asks:   asks_types.NewAsks(degree, symbol, targetPercent, limitDepth, expBase, rate...),
 		// asksMinMax:      asksMinMax,
 		// askNormalized:   btree.New(degree),
-		bids: depths_types.NewBids(degree, symbol, targetPercent, limitDepth, expBase, rate...),
+		bids: bids_types.NewBids(degree, symbol, targetPercent, limitDepth, expBase, rate...),
 		// bidsMinMax:      bidsMinMax,
 		// bidNormalized:   btree.New(degree),
 		mutex:           &sync.Mutex{},

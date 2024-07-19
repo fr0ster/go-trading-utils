@@ -17,12 +17,12 @@ func Init(d *depth_types.Depths, client *binance.Client) (err error) {
 	if err != nil {
 		return err
 	}
-	d.GetBids().GetDepths().Clear()
+	d.GetBids().Clear()
 	for _, bid := range res.Bids {
 		price, quantity, _ := bid.Parse()
 		d.GetBids().Update(types.NewBid(types.PriceType(price), types.QuantityType(quantity)))
 	}
-	d.GetAsks().GetDepths().Clear()
+	d.GetAsks().Clear()
 	for _, ask := range res.Asks {
 		price, quantity, _ := ask.Parse()
 		d.GetAsks().Update(types.NewAsk(types.PriceType(price), types.QuantityType(quantity)))

@@ -17,8 +17,10 @@ func (a *Depths) Get(item *types.DepthItem) *types.DepthItem {
 func (d *Depths) Set(item *types.DepthItem) (err error) {
 	if old := d.tree.Get(item); old != nil {
 		d.summaQuantity += item.GetQuantity() - old.(*types.DepthItem).GetQuantity()
+		d.summaValue += item.GetValue() - old.(*types.DepthItem).GetValue()
 	} else {
 		d.summaQuantity += item.GetQuantity()
+		d.summaValue += item.GetValue()
 		d.countQuantity++
 	}
 	d.tree.ReplaceOrInsert(item)
@@ -30,6 +32,7 @@ func (d *Depths) Delete(item *types.DepthItem) {
 	old := d.tree.Get(item)
 	if old != nil {
 		d.summaQuantity -= old.(*types.DepthItem).GetQuantity()
+		d.summaValue -= old.(*types.DepthItem).GetValue()
 		d.countQuantity--
 		d.tree.Delete(item)
 	}
@@ -57,4 +60,8 @@ func (d *Depths) Symbol() string {
 
 func (d *Depths) GetSummaQuantity() types.QuantityType {
 	return d.summaQuantity
+}
+
+func (d *Depths) GetSummaValue() types.ValueType {
+	return d.summaValue
 }

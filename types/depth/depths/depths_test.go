@@ -40,62 +40,6 @@ func TestDepthsGetAndReplaceOrInsert(t *testing.T) {
 	assert.Equal(t, item_types.QuantityType(200), (depth.Get(item_types.New(600))).GetQuantity())
 }
 
-func TestAsksGetAndReplaceOrInsert(t *testing.T) {
-	// TODO: Add test cases.
-	asks := depths_types.NewAsks(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	asks.Set(item_types.NewAsk(100, 10))
-	asks.Set(item_types.NewAsk(200, 20))
-	asks.Set(item_types.NewAsk(300, 30))
-	asks.Set(item_types.NewAsk(400, 40))
-	asks.Set(item_types.NewAsk(500, 50))
-
-	assert.Equal(t, 5, asks.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), asks.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), (asks.Get(item_types.NewAsk(100))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (asks.Get(item_types.NewAsk(600))).GetDepthItem().GetPrice())
-
-	assert.Equal(t, item_types.QuantityType(10), asks.Get(item_types.NewAsk(100)).GetDepthItem().GetQuantity())
-	asks.Get(item_types.NewAsk(100)).GetDepthItem().SetQuantity(200)
-	assert.Equal(t, item_types.PriceType(100), asks.Get(item_types.NewAsk(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.QuantityType(200), asks.Get(item_types.NewAsk(100)).GetDepthItem().GetQuantity())
-
-	item := asks.Get(item_types.NewAsk(100))
-	item.GetDepthItem().SetPrice(600)
-	asks.Delete(item)
-	asks.Set(item_types.NewAsk(item.GetDepthItem().GetPrice(), item.GetDepthItem().GetQuantity()))
-	assert.Equal(t, item_types.PriceType(0), (asks.Get(item_types.NewAsk(100))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(600), (asks.Get(item_types.NewAsk(600))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.QuantityType(200), (asks.Get(item_types.NewAsk(600))).GetDepthItem().GetQuantity())
-}
-
-func TestBidsGetAndReplaceOrInsert(t *testing.T) {
-	// TODO: Add test cases.
-	bids := depths_types.NewBids(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	bids.Set(item_types.NewBid(100, 10))
-	bids.Set(item_types.NewBid(200, 20))
-	bids.Set(item_types.NewBid(300, 30))
-	bids.Set(item_types.NewBid(400, 40))
-	bids.Set(item_types.NewBid(500, 50))
-
-	assert.Equal(t, 5, bids.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), bids.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), (bids.Get(item_types.NewBid(100))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (bids.Get(item_types.NewBid(600))).GetDepthItem().GetPrice())
-
-	assert.Equal(t, item_types.QuantityType(10), bids.Get(item_types.NewBid(100)).GetDepthItem().GetQuantity())
-	bids.Get(item_types.NewBid(100)).GetDepthItem().SetQuantity(200)
-	assert.Equal(t, item_types.PriceType(100), bids.Get(item_types.NewBid(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.QuantityType(200), bids.Get(item_types.NewBid(100)).GetDepthItem().GetQuantity())
-
-	item := bids.Get(item_types.NewBid(100))
-	item.GetDepthItem().SetPrice(600)
-	bids.Delete(item)
-	bids.Set(item_types.NewBid(item.GetDepthItem().GetPrice(), item.GetDepthItem().GetQuantity()))
-	assert.Equal(t, item_types.PriceType(0), (bids.Get(item_types.NewBid(100))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(600), (bids.Get(item_types.NewBid(600))).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.QuantityType(200), (bids.Get(item_types.NewBid(600))).GetDepthItem().GetQuantity())
-}
-
 func TestGetAndSetDepths(t *testing.T) {
 	// TODO: Add test cases.
 	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
@@ -119,70 +63,50 @@ func TestGetAndSetDepths(t *testing.T) {
 	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.New(600))).GetPrice())
 }
 
-func TestGetAndSetAsks(t *testing.T) {
+func TestGetMaxAndSummaValueByPrice(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.NewAsks(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	depth.Set(item_types.NewAsk(100, 10))
-	depth.Set(item_types.NewAsk(200, 20))
-	depth.Set(item_types.NewAsk(300, 30))
-	depth.Set(item_types.NewAsk(400, 40))
-	depth.Set(item_types.NewAsk(500, 50))
+	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth.Set(item_types.New(100, 10))
+	depth.Set(item_types.New(200, 20))
+	depth.Set(item_types.New(300, 30))
+	depth.Set(item_types.New(400, 20))
+	depth.Set(item_types.New(500, 10))
 
-	assert.Equal(t, 5, depth.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), depth.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), depth.Get(item_types.NewAsk(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.NewAsk(600))).GetDepthItem().GetPrice())
+	assert.Equal(t, 5, depth.Count())
+	assert.Equal(t, item_types.ValueType(27000), depth.GetSummaValue())
 
-	otherDepth := depths_types.NewAsks(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	otherDepth.SetTree(depth.GetTree())
+	item, summa := depth.GetMaxAndSummaValueByPrice(100, depths_types.UP)
+	assert.Equal(t, item_types.PriceType(100), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(10), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(1000), item.GetValue())
+	assert.Equal(t, item_types.ValueType(1000), summa)
 
-	assert.Equal(t, 5, depth.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), depth.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), depth.Get(item_types.NewAsk(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.NewAsk(600))).GetDepthItem().GetPrice())
-}
+	item, summa = depth.GetMaxAndSummaValueByPrice(300, depths_types.UP)
+	assert.Equal(t, item_types.PriceType(300), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(30), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(9000), item.GetValue())
+	assert.Equal(t, item_types.ValueType(14000), summa)
 
-func TestGetAndSetBids(t *testing.T) {
-	// TODO: Add test cases.
-	depth := depths_types.NewBids(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	depth.Set(item_types.NewBid(100, 10))
-	depth.Set(item_types.NewBid(200, 20))
-	depth.Set(item_types.NewBid(300, 30))
-	depth.Set(item_types.NewBid(400, 40))
-	depth.Set(item_types.NewBid(500, 50))
+	item, summa = depth.GetMaxAndSummaValueByPrice(500, depths_types.UP)
+	assert.Equal(t, item_types.PriceType(500), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(10), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(5000), item.GetValue())
+	assert.Equal(t, item_types.ValueType(27000), summa)
 
-	assert.Equal(t, 5, depth.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), depth.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), depth.Get(item_types.NewBid(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.NewBid(600))).GetDepthItem().GetPrice())
+	item, summa = depth.GetMaxAndSummaValueByPrice(100, depths_types.DOWN)
+	assert.Equal(t, item_types.PriceType(100), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(10), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(1000), item.GetValue())
+	assert.Equal(t, item_types.ValueType(27000), summa)
 
-	otherDepth := depths_types.NewAsks(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	otherDepth.SetTree(depth.GetTree())
+	item, summa = depth.GetMaxAndSummaValueByPrice(300, depths_types.DOWN)
+	assert.Equal(t, item_types.PriceType(300), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(30), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(22000), summa)
 
-	assert.Equal(t, 5, depth.GetDepths().Count())
-	assert.Equal(t, item_types.QuantityType(150), depth.GetDepths().GetSummaQuantity())
-	assert.Equal(t, item_types.PriceType(100), depth.Get(item_types.NewBid(100)).GetDepthItem().GetPrice())
-	assert.Equal(t, item_types.PriceType(0), (depth.Get(item_types.NewBid(600))).GetDepthItem().GetPrice())
-}
-
-func TestGetMaxQuantity(t *testing.T) {
-	// TODO: Add test cases.
-	depth := depths_types.NewBids(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
-	depth.Set(item_types.NewBid(100, 10))
-	depth.Set(item_types.NewBid(200, 20))
-	depth.Set(item_types.NewBid(300, 30))
-	depth.Set(item_types.NewBid(400, 20))
-	depth.Set(item_types.NewBid(500, 10))
-
-	min, max := depth.GetDepths().GetMinMaxQuantity(true)
-	assert.Equal(t, item_types.QuantityType(30), max.GetQuantity())
-	assert.Equal(t, item_types.PriceType(300), max.GetPrice())
-	assert.Equal(t, item_types.QuantityType(10), min.GetQuantity())
-	assert.Equal(t, item_types.PriceType(100), min.GetPrice())
-
-	min, max = depth.GetDepths().GetMinMaxQuantity(false)
-	assert.Equal(t, item_types.QuantityType(30), max.GetQuantity())
-	assert.Equal(t, item_types.PriceType(300), max.GetPrice())
-	assert.Equal(t, item_types.QuantityType(10), min.GetQuantity())
-	assert.Equal(t, item_types.PriceType(500), min.GetPrice())
+	item, summa = depth.GetMaxAndSummaValueByPrice(500, depths_types.DOWN)
+	assert.Equal(t, item_types.PriceType(500), item.GetPrice())
+	assert.Equal(t, item_types.QuantityType(10), item.GetQuantity())
+	assert.Equal(t, item_types.ValueType(5000), item.GetValue())
+	assert.Equal(t, item_types.ValueType(5000), summa)
 }

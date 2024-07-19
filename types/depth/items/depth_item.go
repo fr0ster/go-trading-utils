@@ -78,6 +78,14 @@ func (i *DepthItem) GetQuantity() QuantityType {
 	}
 }
 
+func (i *DepthItem) GetValue() ValueType {
+	if i != nil {
+		return ValueType(i.quantity) * ValueType(i.price)
+	} else {
+		return 0
+	}
+}
+
 func (i *DepthItem) SetQuantity(quantity QuantityType) {
 	if i != nil {
 		i.quantity = quantity

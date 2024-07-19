@@ -7,7 +7,6 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
-	depths "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items "github.com/fr0ster/go-trading-utils/types/depth/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -45,8 +44,8 @@ func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType, e
 		bidMax *items.DepthItem
 	)
 	if pp.depth != nil {
-		_, askMax = pp.depth.GetAsks().GetDepths().GetMinMaxQuantity(depths.UP)
-		_, bidMax = pp.depth.GetBids().GetDepths().GetMinMaxQuantity(depths.DOWN)
+		_, askMax = pp.depth.GetAsks().GetMinMaxQuantity()
+		_, bidMax = pp.depth.GetBids().GetMinMaxQuantity()
 		priceUp = askMax.GetPrice()
 		priceDown = bidMax.GetPrice()
 	} else {

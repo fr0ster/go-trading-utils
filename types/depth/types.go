@@ -3,6 +3,8 @@ package depth
 import (
 	"sync"
 
+	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
+	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
@@ -11,13 +13,13 @@ type (
 	Depths struct {
 		symbol string
 		degree int
-		asks   *depths_types.Asks
+		asks   *asks_types.Asks
 		// asks              *btree.BTree
 		// asksCountQuantity int
 		// asksSummaQuantity types.QuantityType
 		// asksMinMax        *btree.BTree
 		// askNormalized     *btree.BTree
-		bids *depths_types.Bids
+		bids *bids_types.Bids
 		// bids              *btree.BTree
 		// bidsCountQuantity int
 		// bidsSummaQuantity types.QuantityType
@@ -48,11 +50,11 @@ func (d *Depths) TryLock() bool {
 	return d.mutex.TryLock()
 }
 
-func (d *Depths) GetAsks() *depths_types.Asks {
+func (d *Depths) GetAsks() *asks_types.Asks {
 	return d.asks
 }
 
-func (d *Depths) GetBids() *depths_types.Bids {
+func (d *Depths) GetBids() *bids_types.Bids {
 	return d.bids
 }
 

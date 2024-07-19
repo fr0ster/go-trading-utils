@@ -6,20 +6,20 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
+func (d *Depths) GetMaxAndSummaQuantityByQuantity(targetSumma types.QuantityType, up UpOrDown, firstMax ...bool) (item *types.DepthItem, quantity types.QuantityType) {
 	var IsFirstMax bool
 	if len(firstMax) > 0 {
 		IsFirstMax = firstMax[0]
 	}
-	getIterator := func(target types.QuantityType, item *types.DepthItem, summa *types.QuantityType) func(i btree.Item) bool {
+	getIterator := func(target types.QuantityType, item *types.DepthItem, quantity *types.QuantityType) func(i btree.Item) bool {
 		buffer := types.QuantityType(0.0)
 		return func(i btree.Item) bool {
-			if (*summa + i.(*types.DepthItem).GetQuantity()) < target {
+			if (*quantity + i.(*types.DepthItem).GetQuantity()) < target {
 				buffer += i.(*types.DepthItem).GetQuantity()
 				if !IsFirstMax || i.(*types.DepthItem).GetQuantity() >= item.GetQuantity() {
 					item.SetPrice(i.(*types.DepthItem).GetPrice())
 					item.SetQuantity(i.(*types.DepthItem).GetQuantity())
-					*summa = buffer
+					*quantity = buffer
 				}
 				return true
 			} else {
@@ -29,23 +29,23 @@ func (d *Depths) GetMaxAndSummaByQuantity(targetSumma types.QuantityType, up UpO
 	}
 	item = &types.DepthItem{}
 	if up {
-		d.GetTree().Ascend(getIterator(targetSumma, item, &summa))
+		d.GetTree().Ascend(getIterator(targetSumma, item, &quantity))
 	} else {
-		d.GetTree().Descend(getIterator(targetSumma, item, &summa))
+		d.GetTree().Descend(getIterator(targetSumma, item, &quantity))
 	}
 	return
 }
 
-func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (item *types.DepthItem, summa types.QuantityType) {
-	item, summa = d.GetMaxAndSummaByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
-	if summa == 0 {
+func (d *Depths) GetMaxAndSummaQuantityByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (item *types.DepthItem, quantity types.QuantityType) {
+	item, quantity = d.GetMaxAndSummaQuantityByQuantity(types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
+	if quantity == 0 {
 		if up {
 			if val := d.GetTree().Min(); val != nil {
-				return d.GetMaxAndSummaByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1+target/100), up, firstMax...)
+				return d.GetMaxAndSummaQuantityByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1+target/100), up, firstMax...)
 			}
 		} else {
 			if val := d.GetTree().Max(); val != nil {
-				return d.GetMaxAndSummaByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1-target/100), up, firstMax...)
+				return d.GetMaxAndSummaQuantityByPrice(val.(*types.DepthItem).GetPrice()*types.PriceType(1-target/100), up, firstMax...)
 			}
 		}
 	}
