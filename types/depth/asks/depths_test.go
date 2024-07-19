@@ -73,7 +73,7 @@ func TestGetMaxQuantity(t *testing.T) {
 	depth.Set(item_types.NewAsk(400, 20))
 	depth.Set(item_types.NewAsk(500, 10))
 
-	min, max := depth.GetMinMaxQuantity()
+	min, max := depth.GetMinMaxByQuantity()
 	assert.Equal(t, item_types.QuantityType(30), max.GetQuantity())
 	assert.Equal(t, item_types.PriceType(300), max.GetPrice())
 	assert.Equal(t, item_types.QuantityType(10), min.GetQuantity())

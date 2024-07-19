@@ -11,8 +11,8 @@ func (d *Depths) GetTargetPrices(percent float64) (
 	summaBids items.ValueType,
 	summaQuantityAsks,
 	summaQuantityBids items.QuantityType) {
-	upDepthItem, summaAsks, summaQuantityAsks := d.GetAsks().GetMaxAndSummaValueByPercent(percent)
-	DownDepthItem, summaBids, summaQuantityBids := d.GetBids().GetMaxAndSummaValueByPercent(percent)
+	upDepthItem, summaAsks, summaQuantityAsks := d.GetAsks().GetMaxAndSummaByValuePercent(percent)
+	DownDepthItem, summaBids, summaQuantityBids := d.GetBids().GetMaxAndSummaByValuePercent(percent)
 	priceUp = upDepthItem.GetPrice()
 	priceDown = DownDepthItem.GetPrice()
 	return
@@ -29,11 +29,11 @@ func (d *Depths) GetLimitPrices() (
 		askMax *items.DepthItem
 		bidMax *items.DepthItem
 	)
-	_, askMax = d.GetAsks().GetMinMaxQuantity()
-	_, bidMax = d.GetBids().GetMinMaxQuantity()
+	_, askMax = d.GetAsks().GetMinMaxByQuantity()
+	_, bidMax = d.GetBids().GetMinMaxByQuantity()
 	priceUp = askMax.GetPrice()
 	priceDown = bidMax.GetPrice()
-	_, summaValueAsks, summaQuantityAsks = d.GetAsks().GetMaxAndSummaValueByPrice(priceUp)
-	_, summaValueBids, summaQuantityBids = d.GetBids().GetMaxAndSummaValueByPrice(priceDown)
+	_, summaValueAsks, summaQuantityAsks = d.GetAsks().GetMaxAndSummaByPrice(priceUp)
+	_, summaValueBids, summaQuantityBids = d.GetBids().GetMaxAndSummaByPrice(priceDown)
 	return
 }

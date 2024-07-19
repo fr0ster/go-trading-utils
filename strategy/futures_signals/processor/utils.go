@@ -44,8 +44,8 @@ func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType, e
 		bidMax *items.DepthItem
 	)
 	if pp.depth != nil {
-		_, askMax = pp.depth.GetAsks().GetMinMaxQuantity()
-		_, bidMax = pp.depth.GetBids().GetMinMaxQuantity()
+		_, askMax = pp.depth.GetAsks().GetMinMaxByQuantity()
+		_, bidMax = pp.depth.GetBids().GetMinMaxByQuantity()
 		priceUp = askMax.GetPrice()
 		priceDown = bidMax.GetPrice()
 	} else {
