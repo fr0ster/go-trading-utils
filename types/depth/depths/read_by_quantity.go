@@ -17,7 +17,7 @@ func (d *Depths) GetMaxAndSummaByQuantity(targetSumma items.QuantityType, up UpO
 	getIterator := func(target items.QuantityType, item *items.DepthItem, value *items.ValueType, quantity *items.QuantityType) func(i btree.Item) bool {
 		buffer := items.QuantityType(0.0)
 		return func(i btree.Item) bool {
-			if (*quantity + i.(*items.DepthItem).GetQuantity()) < target {
+			if (*quantity + i.(*items.DepthItem).GetQuantity()) <= target {
 				buffer += i.(*items.DepthItem).GetQuantity()
 				if !IsFirstMax || i.(*items.DepthItem).GetQuantity() >= item.GetQuantity() {
 					item.SetPrice(i.(*items.DepthItem).GetPrice())

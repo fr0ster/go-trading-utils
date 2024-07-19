@@ -21,7 +21,7 @@ func (d *Depths) GetMaxAndSummaByValue(targetSumma items.ValueType, up UpOrDown,
 		summaQuantity *items.QuantityType) func(i btree.Item) bool {
 		buffer := items.ValueType(0.0)
 		return func(i btree.Item) bool {
-			if (*summaValue + i.(*items.DepthItem).GetValue()) < target {
+			if (*summaValue + i.(*items.DepthItem).GetValue()) <= target {
 				buffer += i.(*items.DepthItem).GetValue()
 				if !IsFirstMax || i.(*items.DepthItem).GetQuantity() >= item.GetQuantity() {
 					item.SetPrice(i.(*items.DepthItem).GetPrice())
@@ -46,10 +46,10 @@ func (d *Depths) GetMaxAndSummaByValue(targetSumma items.ValueType, up UpOrDown,
 
 func (d *Depths) GetMaxAndSummaByValuePercent(target float64, up UpOrDown, firstMax ...bool) (
 	item *items.DepthItem,
-	summaValue items.ValueType,
-	summaQuantity items.QuantityType) {
-	item, summaValue, summaQuantity = d.GetMaxAndSummaByValue(items.ValueType(float64(d.GetSummaValue())*target/100), up, firstMax...)
-	if summaValue == 0 {
+	value items.ValueType,
+	quantity items.QuantityType) {
+	item, value, quantity = d.GetMaxAndSummaByValue(items.ValueType(float64(d.GetSummaValue())*target/100), up, firstMax...)
+	if value == 0 {
 		if up {
 			if val := d.GetTree().Min(); val != nil {
 				return d.GetMaxAndSummaByPrice(val.(*items.DepthItem).GetPrice()*items.PriceType(1+target/100), up, firstMax...)
