@@ -410,6 +410,17 @@ func TestGetTargetPrices(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(30.0), summaBids2)
 }
 
+func TestGetLimitPrices(t *testing.T) {
+	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
+	initDepths(d)
+	// Add assertions here to verify that the GetTargetPrices method works correctly
+	ask1, bid1, summaAsks1, summaBids1 := d.GetLimitPrices()
+	assert.Equal(t, items_types.PriceType(800.0), ask1)
+	assert.Equal(t, items_types.PriceType(300.0), bid1)
+	assert.Equal(t, items_types.QuantityType(60.0), summaAsks1)
+	assert.Equal(t, items_types.QuantityType(60.0), summaBids1)
+}
+
 func TestNew(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
 	// Add assertions here to verify that the New method works correctly
@@ -626,48 +637,6 @@ func TestAsksAndBidStandardDeviation(t *testing.T) {
 	}()
 }
 
-// func TestAddAskAndBidNormalized(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsk(800, 100)
-// 		ds.SetAsk(750, 150)
-// 		askNorm1, _ := ds.GetNormalizedAsk(800)
-// 		assert.Equal(t, items_types.PriceType(800.0), askNorm1.GetNormalizedPrice())
-// 		assert.Equal(t, items_types.QuantityType(250.0), askNorm1.GetQuantity())
-// 		ds.DeleteAsk(800)
-// 		askNorm1, _ = ds.GetNormalizedAsk(800)
-// 		assert.Equal(t, items_types.PriceType(800.0), askNorm1.GetNormalizedPrice())
-// 		assert.Equal(t, items_types.QuantityType(150.0), askNorm1.GetQuantity())
-// 	}()
-// 	func() {
-// 		asks, bids := getTestDepths()
-// 		ds := depth_types.New(degree, "DOGEUSDT", true, 10, 100, -1, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsks(asks)
-// 		ds.SetBids(bids)
-// 		askNorm1, _ := ds.GetNormalizedAsk(1.953)
-// 		assert.Equal(t, items_types.PriceType(2.0), askNorm1.GetNormalizedPrice())
-// 		assert.Equal(t, items_types.QuantityType(1186.7), askNorm1.GetQuantity())
-// 	}()
-// }
-
-// func TestGetNormalizedAsksAndBids(t *testing.T) {
-// 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsk(800, 100)
-// 		ds.SetAsk(750, 150)
-// 		asksNorm := ds.GetNormalizedAsks()
-// 		assert.Equal(t, 1, asksNorm.Len())
-// 	}()
-// 	func() {
-// 		asks, bids := getTestDepths()
-// 		ds := depth_types.New(degree, "DOGEUSDT", true, 10, 100, -1, depths_types.DepthStreamRate100ms)
-// 		ds.SetAsks(asks)
-// 		ds.SetBids(bids)
-// 		asksNorm := ds.GetNormalizedAsks()
-// 		assert.Equal(t, 1, asksNorm.Len())
-// 	}()
-// }
-
 func TestAskAndBidDelete(t *testing.T) {
 	func() {
 		ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
@@ -720,111 +689,6 @@ func TestAskAndBidSummaQuantity(t *testing.T) {
 		assert.Equal(t, items_types.QuantityType(700.0), ds.GetBids().GetDepths().GetSummaQuantity())
 	}()
 }
-
-// func TestAskAndSummaNormalizedQuantity(t *testing.T) {
-// 	ds := depth_types.New(degree, "BTCUSDT", true, 10, 100, 2, depths_types.DepthStreamRate100ms)
-// 	testSetAsk := func(price items_types.PriceType, quantity items_types.QuantityType) (summa, summaTest, summaTest2 items_types.QuantityType) {
-// 		ds.SetAsk(price, quantity)
-// 		askN, _ := ds.GetNormalizedAsk(price)
-// 		summa = askN.GetQuantity()
-// 		summaTest, summaTest2 = ds.GetNormalizedAskSumma(price)
-// 		return
-// 	}
-// 	summa, summaTest, summaTest2 := testSetAsk(800, 100)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	summa, summaTest, summaTest2 = testSetAsk(750, 100)
-// 	assert.Equal(t, items_types.QuantityType(200), summa)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest2)
-// 	summa, summaTest, summaTest2 = testSetAsk(700, 100)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	summa, summaTest, summaTest2 = testSetAsk(650, 100)
-// 	assert.Equal(t, items_types.QuantityType(200), summa)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest2)
-// 	summa, summaTest, summaTest2 = testSetAsk(600, 100)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	summa, summaTest, summaTest2 = testSetAsk(550, 100)
-// 	assert.Equal(t, items_types.QuantityType(200), summa)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(200), summaTest2)
-
-// 	summaAsks1 := ds.GetAsksSummaQuantity()
-// 	summaAsks2 := items_types.QuantityType(0)
-// 	ds.GetAsks().Ascend(func(i btree.Item) bool {
-// 		summaAsks2 += i.(*items_types.DepthItem).GetQuantity()
-// 		return true
-// 	})
-// 	assert.Equal(t, summaAsks1, summaAsks2)
-// 	summaAsks3 := items_types.QuantityType(0)
-// 	ds.GetNormalizedAsks().Ascend(func(i btree.Item) bool {
-// 		summaAsks3 += i.(*items_types.NormalizedItem).GetQuantity()
-// 		return true
-// 	})
-// 	assert.Equal(t, summaAsks1, summaAsks3)
-// 	assert.Equal(t, summaAsks2, summaAsks1)
-
-// 	testDeleteAsk := func(price items_types.PriceType) (askN *items_types.NormalizedItem, summa, summaTest, summaTest2 items_types.QuantityType) {
-// 		ds.DeleteAsk(price)
-// 		askN, _ = ds.GetNormalizedAsk(price)
-// 		summaTest, summaTest2 = ds.GetNormalizedAskSumma(price)
-// 		if askN != nil {
-// 			summa = askN.GetQuantity()
-// 		}
-// 		return
-// 	}
-// 	askN, summa, summaTest, summaTest2 := testDeleteAsk(800)
-// 	assert.NotNil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	askN, summa, summaTest, summaTest2 = testDeleteAsk(750)
-// 	assert.Nil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(0), summa)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest2)
-// 	askN, summa, summaTest, summaTest2 = testDeleteAsk(700)
-// 	assert.NotNil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	askN, summa, summaTest, summaTest2 = testDeleteAsk(650)
-// 	assert.Nil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(0), summa)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest2)
-// 	askN, summa, summaTest, summaTest2 = testDeleteAsk(600)
-// 	assert.NotNil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(100), summa)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(100), summaTest2)
-// 	askN, summa, summaTest, summaTest2 = testDeleteAsk(550)
-// 	assert.Nil(t, askN)
-// 	assert.Equal(t, items_types.QuantityType(0), summa)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest)
-// 	assert.Equal(t, items_types.QuantityType(0), summaTest2)
-
-// 	summaAsks1 = ds.GetAsksSummaQuantity()
-// 	summaAsks2 = items_types.QuantityType(0)
-// 	ds.GetAsks().Ascend(func(i btree.Item) bool {
-// 		summaAsks2 += i.(*items_types.DepthItem).GetQuantity()
-// 		return true
-// 	})
-// 	assert.Equal(t, summaAsks1, summaAsks2)
-// 	summaAsks3 = items_types.QuantityType(0)
-// 	ds.GetNormalizedAsks().Ascend(func(i btree.Item) bool {
-// 		summaAsks3 += i.(*items_types.NormalizedItem).GetQuantity()
-// 		return true
-// 	})
-// 	assert.Equal(t, summaAsks1, summaAsks3)
-// 	assert.Equal(t, summaAsks2, summaAsks1)
-// }
 
 // func TestAskAndBidMinMaxQuantity(t *testing.T) {
 // 	func() {
