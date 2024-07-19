@@ -5,13 +5,6 @@ import (
 	items "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
-// func (d *Bids) GetMaxAndSummaValueByPrice(targetPrice items.PriceType, firstMax ...bool) (
-// 	item *items.DepthItem,
-// 	summaValue items.ValueType,
-// 	summaQuantity items.QuantityType) {
-// 	return d.tree.GetMaxAndSummaValueByPrice(targetPrice, depths.DOWN, firstMax...)
-// }
-
 // Відбираємо по сумі
 func (d *Bids) GetMaxAndSummaValue(targetSumma items.ValueType, firstMax ...bool) (
 	item *items.DepthItem,
