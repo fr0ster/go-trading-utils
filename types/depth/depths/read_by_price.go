@@ -73,3 +73,30 @@ func (d *Depths) GetMinMaxByPrice(up UpOrDown) (min, max *items_types.DepthItem)
 	}
 	return
 }
+
+func (d *Depths) GetSummaByPriceRange(first, last items_types.PriceType, f ...items_types.DepthFilter) (
+	value items_types.ValueType,
+	quantity items_types.QuantityType) {
+	var (
+		filter func(*items_types.DepthItem) bool
+		ranger func(lessOrEqual, greaterThan btree.Item, iterator btree.ItemIterator)
+	)
+	if len(f) > 0 {
+		filter = f[0]
+	} else {
+		filter = func(*items_types.DepthItem) bool { return true }
+	}
+	if first <= last {
+		ranger = d.GetTree().DescendRange
+	} else {
+		ranger = d.GetTree().AscendRange
+	}
+	ranger(items_types.New(last), items_types.New(first), func(i btree.Item) bool {
+		if filter(i.(*items_types.DepthItem)) {
+			quantity += i.(*items_types.DepthItem).GetQuantity()
+			value += i.(*items_types.DepthItem).GetValue()
+		}
+		return true
+	})
+	return
+}

@@ -37,12 +37,17 @@ type (
 	Depths   struct {
 		symbol        string
 		degree        int
-		tree          *btree.BTree
-		mutex         *sync.Mutex
+		expBase       int
+		targetPercent float64
+		limitDepth    DepthAPILimit
+		limitStream   DepthStreamLevel
+		rateStream    DepthStreamRate
+
+		tree  *btree.BTree
+		mutex *sync.Mutex
+
 		countQuantity int
 		summaQuantity items_types.QuantityType
 		summaValue    items_types.ValueType
-		limitStream   DepthStreamLevel
-		rateStream    DepthStreamRate
 	}
 )

@@ -56,11 +56,6 @@ func (d *Depths) Count() int {
 	return d.countQuantity
 }
 
-// Symbol implements depth_interface.Depths.
-func (d *Depths) Symbol() string {
-	return d.symbol
-}
-
 func (d *Depths) GetSummaQuantity() items_types.QuantityType {
 	return d.summaQuantity
 }

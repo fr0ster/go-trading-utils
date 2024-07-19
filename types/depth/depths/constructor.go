@@ -34,11 +34,46 @@ func New(
 	return &Depths{
 		symbol:        symbol,
 		degree:        degree,
-		tree:          btree.New(degree),
-		mutex:         &sync.Mutex{},
-		countQuantity: 0,
-		summaQuantity: 0,
+		expBase:       expBase,
+		targetPercent: targetPercent,
+		limitDepth:    limitDepth,
 		limitStream:   limitStream,
 		rateStream:    rateStream,
+
+		tree:  btree.New(degree),
+		mutex: &sync.Mutex{},
+
+		countQuantity: 0,
+		summaQuantity: 0,
+		summaValue:    0,
 	}
+}
+
+// Depths -
+func (d *Depths) Symbol() string {
+	return d.symbol
+}
+
+func (d *Depths) Degree() int {
+	return d.degree
+}
+
+func (d *Depths) ExpBase() int {
+	return d.expBase
+}
+
+func (d *Depths) TargetPercent() float64 {
+	return d.targetPercent
+}
+
+func (d *Depths) LimitDepth() DepthAPILimit {
+	return d.limitDepth
+}
+
+func (d *Depths) LimitStream() DepthStreamLevel {
+	return d.limitStream
+}
+
+func (d *Depths) RateStream() DepthStreamRate {
+	return d.rateStream
 }

@@ -29,11 +29,6 @@ func (d *Asks) Count() int {
 	return d.tree.Count()
 }
 
-// Symbol implements depth_interface.Depths.
-func (d *Asks) Symbol() string {
-	return d.tree.Symbol()
-}
-
 func (d *Asks) GetSummaQuantity() items_types.QuantityType {
 	return d.tree.GetSummaQuantity()
 }

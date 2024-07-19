@@ -418,3 +418,23 @@ func TestGetMinMaxByValue(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(30), max.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), max.GetValue())
 }
+
+func TestGetFiltered(t *testing.T) {
+	// TODO: Add test cases.
+	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth.Set(items_types.New(100, 10))
+	depth.Set(items_types.New(200, 20))
+	depth.Set(items_types.New(300, 30))
+	depth.Set(items_types.New(400, 20))
+	depth.Set(items_types.New(500, 10))
+
+	assert.Equal(t, 5, depth.Count())
+	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
+
+	filtered := depth.GetFiltered(func(item *items_types.DepthItem) bool {
+		return item.GetQuantity() > 10
+	})
+	assert.Equal(t, 3, filtered.Count())
+	assert.Equal(t, items_types.PriceType(300), filtered.Get(items_types.New(300)).GetPrice())
+	assert.Equal(t, items_types.PriceType(400), filtered.Get(items_types.New(400)).GetPrice())
+}
