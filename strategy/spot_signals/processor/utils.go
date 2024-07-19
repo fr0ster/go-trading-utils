@@ -34,7 +34,7 @@ func (pp *PairProcessor) Debug(fl, id string) {
 
 func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown items.PriceType, err error) {
 	if pp.depth != nil {
-		priceUp, priceDown, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
+		priceUp, priceDown, _, _, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
 	} else {
 		err = fmt.Errorf("depth is nil")
 	}
