@@ -3,6 +3,7 @@ package processor
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"runtime"
 	"strconv"
 	"time"
@@ -202,28 +203,29 @@ func printError() {
 	}
 }
 
+func ParserErr1003(msg string) (ip, time string, err error) {
+	re := regexp.MustCompile(`IP\(([\d\.]+)\) banned until (\d+)`)
+	matches := re.FindStringSubmatch(msg)
+	if len(matches) < 3 {
+		return "", "", fmt.Errorf("failed to parse")
+	}
+	ip, time = matches[1], matches[2]
+	return
+}
+
 func ParseError(err error) error {
 	apiErr, _ := utils.ParseAPIError(err)
 	printError()
 	switch apiErr.Code {
 	case -1003:
-		var (
-			bannedIP    string
-			bannedUntil string
-		)
-		_, errScanf := fmt.Sscanf(apiErr.Msg, "Way too many requests; IP(%s) banned until %s. Please use the websocket for live updates to avoid bans.",
-			&bannedIP, &bannedUntil)
-		if errScanf != nil {
-			return err
-		}
-		timestamp, errParse := strconv.ParseInt(bannedUntil, 10, 64)
+		ip, timeStr, err := ParserErr1003(apiErr.Msg)
+		timestamp, errParse := strconv.ParseInt(timeStr, 10, 64)
 		if errParse != nil {
 			return err
 		}
 
-		// Для Go 1.17 і вище
 		bannedTime := time.UnixMilli(timestamp)
-		return fmt.Errorf("way too many requests; IP banned until: %s", bannedTime)
+		return fmt.Errorf("way too many requests; IP %s banned until: %s", ip, bannedTime)
 	default:
 		return err
 	}
