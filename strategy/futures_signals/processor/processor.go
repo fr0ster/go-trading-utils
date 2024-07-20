@@ -149,11 +149,11 @@ func (pp *PairProcessor) InitPositionGridDown(price types.PriceType) (
 }
 
 func (pp *PairProcessor) NextPriceUp(price types.PriceType) types.PriceType {
-	return pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
+	return pp.RoundPrice(price * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient()))
 }
 
 func (pp *PairProcessor) NextPriceDown(price types.PriceType) types.PriceType {
-	return pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+	return pp.RoundPrice(price * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient()))
 }
 
 func (pp *PairProcessor) NextQuantityUp(quantity types.QuantityType) types.QuantityType {

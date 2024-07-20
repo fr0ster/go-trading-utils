@@ -3,11 +3,11 @@ package processor
 import types "github.com/fr0ster/go-trading-utils/types/depth/items"
 
 func (pp *PairProcessor) NextPriceUp(price types.PriceType) types.PriceType {
-	return types.PriceType(pp.RoundPrice(price * (1 + pp.GetDeltaPrice())))
+	return types.PriceType(pp.RoundPrice(price * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient())))
 }
 
 func (pp *PairProcessor) NextPriceDown(price types.PriceType) types.PriceType {
-	return types.PriceType(pp.RoundPrice(price * (1 - pp.GetDeltaPrice())))
+	return types.PriceType(pp.RoundPrice(price * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient())))
 }
 
 func (pp *PairProcessor) NextQuantityUp(quantity types.QuantityType) types.QuantityType {

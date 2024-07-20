@@ -33,6 +33,36 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
+func (pp *PairProcessor) GetNextUpCoefficient() items.PriceType {
+	if pp.depth.GetAsks() == nil ||
+		pp.depth.GetBids() == nil ||
+		pp.depth.GetAsks().GetSummaValue() == 0 ||
+		pp.depth.GetBids().GetSummaValue() == 0 {
+		return 1
+	}
+	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		return 1
+	} else {
+		return coefficients
+	}
+}
+
+func (pp *PairProcessor) GetNextDownCoefficient() items.PriceType {
+	if pp.depth.GetAsks() == nil ||
+		pp.depth.GetBids() == nil ||
+		pp.depth.GetAsks().GetSummaValue() == 0 ||
+		pp.depth.GetBids().GetSummaValue() == 0 {
+		return 1
+	}
+	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		return coefficients
+	} else {
+		return 1
+	}
+}
+
 func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceUp, priceDown items.PriceType, err error) {
 	var currentPrice items.PriceType
 	if len(price) == 0 {
@@ -43,17 +73,8 @@ func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceUp, pri
 	} else {
 		currentPrice = price[0]
 	}
-	coefficients := float64(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
-	if coefficients > 1 {
-		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
-		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*items.PriceType(coefficients)))
-	} else if coefficients < 1 {
-		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()/items.PriceType(coefficients)))
-		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
-	} else {
-		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
-		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
-	}
+	priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient()))
+	priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient()))
 	return
 }
 
