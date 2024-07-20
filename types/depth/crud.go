@@ -40,28 +40,41 @@ func (d *Depths) GetNextDownCoefficient() items_types.PricePercentType {
 	}
 }
 
-func (d *Depths) NextPriceUp(percent items_types.PricePercentType, price ...items_types.PriceType) items_types.PriceType {
+func (d *Depths) NextPriceUp(percent items_types.PricePercentType, price ...items_types.PriceType) (next items_types.PriceType) {
 	var asksFilter items_types.DepthFilter
 	if len(price) > 0 {
 		asksFilter = func(i *items_types.DepthItem) bool {
 			return i.GetPrice() > price[0]
 		}
 		if val := d.asks.GetFiltered(asksFilter); val != nil {
-			return val.NextPriceUp(percent * d.GetNextUpCoefficient())
+			next = val.NextPriceUp(percent * d.GetNextUpCoefficient())
 		}
+	} else {
+		next = d.asks.NextPriceUp(percent)
 	}
-	return d.asks.NextPriceUp(percent)
+	_, max := d.asks.GetMinMaxByValue()
+	if next < max.GetPrice() {
+		next = max.GetPrice()
+	}
+	return
 }
 
-func (d *Depths) NextPriceDown(percent items_types.PricePercentType, price ...items_types.PriceType) items_types.PriceType {
+func (d *Depths) NextPriceDown(percent items_types.PricePercentType, price ...items_types.PriceType) (next items_types.PriceType) {
 	var bidsFilter items_types.DepthFilter
 	if len(price) > 0 {
 		bidsFilter = func(i *items_types.DepthItem) bool {
 			return i.GetPrice() < price[0]
 		}
 		if val := d.bids.GetFiltered(bidsFilter); val != nil {
-			return val.NextPriceDown(percent * d.GetNextDownCoefficient())
+			next = val.NextPriceDown(percent * d.GetNextDownCoefficient())
+
 		}
+	} else {
+		next = d.bids.NextPriceDown(percent)
 	}
-	return d.bids.NextPriceDown(percent)
+	_, max := d.bids.GetMinMaxByValue()
+	if next > max.GetPrice() {
+		next = max.GetPrice()
+	}
+	return
 }
