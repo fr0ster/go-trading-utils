@@ -61,6 +61,6 @@ func (d *Bids) GetStandardDeviation() float64 {
 	return d.tree.GetStandardDeviation()
 }
 
-func (d *Bids) NextPriceDown(percent float64) items_types.PriceType {
+func (d *Bids) NextPriceDown(percent items_types.PricePercentType) items_types.PriceType {
 	return d.tree.NextPriceDown(percent)
 }

@@ -5,11 +5,11 @@ import (
 )
 
 func (pp *PairProcessor) NextPriceUp(price ...items.PriceType) items.PriceType {
-	return pp.RoundPrice(pp.GetDepth().NextPriceUp(float64(pp.GetDeltaPrice()), price...))
+	return pp.RoundPrice(pp.GetDepth().NextPriceUp(items.PricePercentType(pp.GetDeltaPrice()), price...))
 }
 
 func (pp *PairProcessor) NextPriceDown(price ...items.PriceType) items.PriceType {
-	return pp.RoundPrice(pp.GetDepth().NextPriceDown(float64(pp.GetDeltaPrice()), price...))
+	return pp.RoundPrice(pp.GetDepth().NextPriceDown(items.PricePercentType(pp.GetDeltaPrice()), price...))
 }
 
 func (pp *PairProcessor) NextQuantityUp(quantity items.QuantityType) items.QuantityType {
