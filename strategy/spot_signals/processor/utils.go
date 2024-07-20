@@ -32,28 +32,39 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown items.PriceType, err error) {
-	if pp.depth != nil {
-		priceUp, priceDown, _, _, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
+func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceUp, priceDown items.PriceType, err error) {
+	var currentPrice items.PriceType
+	if len(price) == 0 {
+		currentPrice, err = pp.GetCurrentPrice()
+		if err != nil {
+			return
+		}
 	} else {
-		err = fmt.Errorf("depth is nil")
+		currentPrice = price[0]
+	}
+	coefficients := float64(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*items.PriceType(coefficients)))
+	} else if coefficients < 1 {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()/items.PriceType(coefficients)))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
+	} else {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
 	}
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType, err error) {
+func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType) {
 	var (
 		askMax *items.DepthItem
 		bidMax *items.DepthItem
 	)
-	if pp.depth != nil {
-		_, askMax = pp.depth.GetAsks().GetMinMaxByQuantity()
-		_, bidMax = pp.depth.GetBids().GetMinMaxByQuantity()
-		priceUp = askMax.GetPrice()
-		priceDown = bidMax.GetPrice()
-	} else {
-		err = fmt.Errorf("depth is nil")
-	}
+	_, askMax = pp.depth.GetAsks().GetMinMaxByQuantity()
+	_, bidMax = pp.depth.GetBids().GetMinMaxByQuantity()
+	priceUp = askMax.GetPrice()
+	priceDown = bidMax.GetPrice()
 	return
 }
 

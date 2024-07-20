@@ -3,11 +3,15 @@ package processor
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
+	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
+
 	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	exchange "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -29,28 +33,39 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetTargetPrices() (priceUp, priceDown items.PriceType, err error) {
-	if pp.depth != nil {
-		priceUp, priceDown, _, _, _, _ = pp.depth.GetTargetPrices(pp.depth.GetPercentToTarget())
+func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceUp, priceDown items.PriceType, err error) {
+	var currentPrice items.PriceType
+	if len(price) == 0 {
+		currentPrice, err = pp.GetCurrentPrice()
+		if err != nil {
+			return
+		}
 	} else {
-		err = fmt.Errorf("depth is nil")
+		currentPrice = price[0]
+	}
+	coefficients := float64(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*items.PriceType(coefficients)))
+	} else if coefficients < 1 {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()/items.PriceType(coefficients)))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
+	} else {
+		priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()))
+		priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()))
 	}
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType, err error) {
+func (pp *PairProcessor) GetLimitPrices() (priceUp, priceDown items.PriceType) {
 	var (
 		askMax *items.DepthItem
 		bidMax *items.DepthItem
 	)
-	if pp.depth != nil {
-		_, askMax = pp.depth.GetAsks().GetMinMaxByQuantity()
-		_, bidMax = pp.depth.GetBids().GetMinMaxByQuantity()
-		priceUp = askMax.GetPrice()
-		priceDown = bidMax.GetPrice()
-	} else {
-		err = fmt.Errorf("depth is nil")
-	}
+	_, askMax = pp.depth.GetAsks().GetMinMaxByValue()
+	_, bidMax = pp.depth.GetBids().GetMinMaxByValue()
+	priceUp = askMax.GetPrice()
+	priceDown = bidMax.GetPrice()
 	return
 }
 
@@ -65,14 +80,9 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyUp bool,
 	reduceOnlyDown bool,
 	err error) {
-	if pp.depth != nil {
-		priceUp, priceDown, err = pp.GetTargetPrices()
-		if err != nil {
-			return
-		}
-	} else {
-		priceUp = pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
-		priceDown = pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+	priceUp, priceDown, err = pp.GetTargetPrices()
+	if err != nil {
+		return
 	}
 	reduceOnlyUp = false
 	reduceOnlyDown = false
@@ -152,5 +162,20 @@ func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
 			downOrderType = longPositionSLOrderType
 		}
 	}
+	return
+}
+
+func LimitRead(degree int, symbols []string, client *futures.Client) (
+	updateTime time.Duration,
+	minuteOrderLimit *exchange.RateLimits,
+	dayOrderLimit *exchange.RateLimits,
+	minuteRawRequestLimit *exchange.RateLimits) {
+	exchangeInfo := exchange.New()
+	futures_exchange_info.RestrictedInit(exchangeInfo, degree, symbols, client)
+
+	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
+	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
+	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
+	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
 	return
 }

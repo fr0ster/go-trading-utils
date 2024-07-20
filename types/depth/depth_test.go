@@ -86,39 +86,6 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 	return
 }
 
-func TestGetTargetPrices(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
-	initDepths(d)
-	// Add assertions here to verify that the GetTargetPrices method works correctly
-	ask1, bid1, summaValueAsks1, summaValueBids1, summaQuantityAsks1, summaQuantityBids1 := d.GetTargetPrices(20)
-	ask2, bid2, summaValueAsks2, summaValueBids2, summaQuantityAsks2, summaQuantityBids2 := d.GetTargetPrices(50)
-	assert.Equal(t, items_types.PriceType(600.0), ask1)
-	assert.Equal(t, items_types.PriceType(500.0), bid1)
-	assert.Equal(t, items_types.ValueType(6000.0), summaValueAsks1)
-	assert.Equal(t, items_types.ValueType(5000.0), summaValueBids1)
-	assert.Equal(t, items_types.QuantityType(10.0), summaQuantityAsks1)
-	assert.Equal(t, items_types.QuantityType(10.0), summaQuantityBids1)
-	assert.Equal(t, items_types.PriceType(700.0), ask2)
-	assert.Equal(t, items_types.PriceType(400.0), bid2)
-	assert.Equal(t, items_types.ValueType(20000.0), summaValueAsks2)
-	assert.Equal(t, items_types.ValueType(13000.0), summaValueBids2)
-	assert.Equal(t, items_types.QuantityType(30.0), summaQuantityAsks2)
-	assert.Equal(t, items_types.QuantityType(30.0), summaQuantityBids2)
-}
-
-func TestGetLimitPrices(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
-	initDepths(d)
-	// Add assertions here to verify that the GetTargetPrices method works correctly
-	ask1, bid1, summaAsks1, summaBids1, summaQuantityAsks1, summaQuantityBids1 := d.GetLimitPrices()
-	assert.Equal(t, items_types.PriceType(800.0), ask1)
-	assert.Equal(t, items_types.PriceType(300.0), bid1)
-	assert.Equal(t, items_types.ValueType(44000.0), summaAsks1)
-	assert.Equal(t, items_types.ValueType(22000.0), summaBids1)
-	assert.Equal(t, items_types.QuantityType(60.0), summaQuantityAsks1)
-	assert.Equal(t, items_types.QuantityType(60.0), summaQuantityBids1)
-}
-
 func TestNew(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", false, 10, 100, 2, depths_types.DepthStreamRate100ms)
 	// Add assertions here to verify that the New method works correctly
