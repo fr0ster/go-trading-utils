@@ -77,12 +77,12 @@ func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, p
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices() (priceTargetDown, priceTargetUp, priceDown, priceUp items.PriceType, err error) {
+func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items.PriceType, err error) {
 	var (
 		askMax *items.DepthItem
 		bidMax *items.DepthItem
 	)
-	priceTargetUp, priceTargetDown, err = pp.GetTargetPrices()
+	priceTargetUp, priceTargetDown, err = pp.GetTargetPrices(price...)
 	if err != nil {
 		return
 	}
@@ -109,7 +109,7 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyUp bool,
 	reduceOnlyDown bool,
 	err error) {
-	priceDown, priceUp, err = pp.GetTargetPrices()
+	priceDown, priceUp, err = pp.GetTargetPrices(price)
 	if err != nil {
 		return
 	}
