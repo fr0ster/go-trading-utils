@@ -127,13 +127,11 @@ func (d *Depths) GetStandardDeviation() float64 {
 }
 
 func (pp *Depths) NextPriceUp(percent items_types.PricePercentType) items_types.PriceType {
-	delta, _ := pp.GetDeltaPrice()
 	min, _ := pp.GetMinPrice()
-	return min.GetPrice() + delta*items_types.PriceType(percent)/100
+	return min.GetPrice() * (1 + items_types.PriceType(percent)/100)
 }
 
 func (pp *Depths) NextPriceDown(percent items_types.PricePercentType) items_types.PriceType {
-	delta, _ := pp.GetDeltaPrice()
 	max, _ := pp.GetMaxPrice()
-	return max.GetPrice() - delta*items_types.PriceType(percent)/100
+	return max.GetPrice() * (1 - items_types.PriceType(percent)/100)
 }
