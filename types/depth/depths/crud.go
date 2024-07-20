@@ -122,6 +122,6 @@ func (pp *Depths) NextPriceUp(percent float64) items_types.PriceType {
 
 func (pp *Depths) NextPriceDown(percent float64) items_types.PriceType {
 	delta, _ := pp.GetDeltaPrice()
-	max, _ := pp.GetMinPrice()
+	max, _ := pp.GetMaxPrice()
 	return max.GetPrice() - delta*items_types.PriceType(percent)/100
 }
