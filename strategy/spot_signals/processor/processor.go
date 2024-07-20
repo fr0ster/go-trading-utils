@@ -1,19 +1,21 @@
 package processor
 
-import types "github.com/fr0ster/go-trading-utils/types/depth/items"
+import (
+	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+)
 
-func (pp *PairProcessor) NextPriceUp(price types.PriceType) types.PriceType {
-	return types.PriceType(pp.RoundPrice(price * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient())))
+func (pp *PairProcessor) NextPriceUp(price ...items.PriceType) items.PriceType {
+	return pp.RoundPrice(pp.GetDepth().NextPriceUp(float64(pp.GetDeltaPrice()), price...))
 }
 
-func (pp *PairProcessor) NextPriceDown(price types.PriceType) types.PriceType {
-	return types.PriceType(pp.RoundPrice(price * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient())))
+func (pp *PairProcessor) NextPriceDown(price ...items.PriceType) items.PriceType {
+	return pp.RoundPrice(pp.GetDepth().NextPriceDown(float64(pp.GetDeltaPrice()), price...))
 }
 
-func (pp *PairProcessor) NextQuantityUp(quantity types.QuantityType) types.QuantityType {
+func (pp *PairProcessor) NextQuantityUp(quantity items.QuantityType) items.QuantityType {
 	return pp.RoundQuantity(quantity * (1 + pp.GetDeltaQuantity()))
 }
 
-func (pp *PairProcessor) NextQuantityDown(quantity types.QuantityType) types.QuantityType {
+func (pp *PairProcessor) NextQuantityDown(quantity items.QuantityType) items.QuantityType {
 	return pp.RoundQuantity(quantity * (1 - pp.GetDeltaQuantity()))
 }

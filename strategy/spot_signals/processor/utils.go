@@ -63,17 +63,8 @@ func (pp *PairProcessor) GetNextDownCoefficient() items.PriceType {
 }
 
 func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, priceUp items.PriceType, err error) {
-	var currentPrice items.PriceType
-	if len(price) == 0 {
-		currentPrice, err = pp.GetCurrentPrice()
-		if err != nil {
-			return
-		}
-	} else {
-		currentPrice = price[0]
-	}
-	priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient()))
-	priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient()))
+	priceUp = pp.NextPriceUp(price...)
+	priceDown = pp.NextPriceDown(price...)
 	return
 }
 

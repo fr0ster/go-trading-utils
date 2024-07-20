@@ -111,8 +111,6 @@ func (d *Depths) NextPriceUp(percent float64, price ...items_types.PriceType) it
 		}
 		if val := d.asks.GetFiltered(asksFilter); val != nil {
 			return val.NextPriceUp(percent)
-		} else {
-			return price[0] * items_types.PriceType(1+percent)
 		}
 	}
 	return d.asks.NextPriceUp(percent)
@@ -126,8 +124,6 @@ func (d *Depths) NextPriceDown(percent float64, price ...items_types.PriceType) 
 		}
 		if val := d.bids.GetFiltered(bidsFilter); val != nil {
 			return val.NextPriceDown(percent)
-		} else {
-			return price[0] * items_types.PriceType(1-percent)
 		}
 	}
 	return d.bids.NextPriceDown(percent)
