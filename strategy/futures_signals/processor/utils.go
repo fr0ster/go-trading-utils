@@ -83,7 +83,7 @@ func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDo
 		askMax *items.DepthItem
 		bidMax *items.DepthItem
 	)
-	priceTargetUp, priceTargetDown, err = pp.GetTargetPrices(price...)
+	priceTargetDown, priceTargetUp, err = pp.GetTargetPrices(price...)
 	if err != nil {
 		return
 	}
