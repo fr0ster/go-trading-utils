@@ -6,7 +6,7 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Depths) GetMaxAndSummaByQuantity(targetSumma items_types.QuantityType, up UpOrDown, firstMax ...bool) (
+func (d *Depths) GetSummaByQuantity(targetSumma items_types.QuantityType, up UpOrDown, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
@@ -40,19 +40,19 @@ func (d *Depths) GetMaxAndSummaByQuantity(targetSumma items_types.QuantityType, 
 	return
 }
 
-func (d *Depths) GetMaxAndSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (
+func (d *Depths) GetSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
-	item, value, quantity = d.GetMaxAndSummaByQuantity(items_types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
+	item, value, quantity = d.GetSummaByQuantity(items_types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
 	if quantity == 0 {
 		if up {
 			if val := d.GetTree().Min(); val != nil {
-				return d.GetMaxAndSummaByPrice(val.(*items_types.DepthItem).GetPrice()*items_types.PriceType(1+target/100), up, firstMax...)
+				return d.GetSummaByPrice(val.(*items_types.DepthItem).GetPrice()*items_types.PriceType(1+target/100), up, firstMax...)
 			}
 		} else {
 			if val := d.GetTree().Max(); val != nil {
-				return d.GetMaxAndSummaByPrice(val.(*items_types.DepthItem).GetPrice()*items_types.PriceType(1-target/100), up, firstMax...)
+				return d.GetSummaByPrice(val.(*items_types.DepthItem).GetPrice()*items_types.PriceType(1-target/100), up, firstMax...)
 			}
 		}
 	}

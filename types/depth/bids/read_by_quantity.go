@@ -6,18 +6,18 @@ import (
 )
 
 // Відбираємо по сумі
-func (d *Bids) GetMaxAndSummaByQuantity(targetSumma items_types.QuantityType, firstMax ...bool) (
+func (d *Bids) GetSummaByQuantity(targetSumma items_types.QuantityType, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
-	return d.tree.GetMaxAndSummaByQuantity(targetSumma, depths_types.DOWN, firstMax...)
+	return d.tree.GetSummaByQuantity(targetSumma, depths_types.DOWN, firstMax...)
 }
 
-func (d *Bids) GetMaxAndSummaByQuantityPercent(target float64, firstMax ...bool) (
+func (d *Bids) GetSummaByQuantityPercent(target float64, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
-	return d.tree.GetMaxAndSummaByQuantityPercent(target, depths_types.DOWN, firstMax...)
+	return d.tree.GetSummaByQuantityPercent(target, depths_types.DOWN, firstMax...)
 }
 
 func (d *Bids) GetMinMaxByQuantity() (min, max *items_types.DepthItem) {

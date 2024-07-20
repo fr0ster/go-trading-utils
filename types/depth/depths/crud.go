@@ -72,6 +72,20 @@ func (d *Depths) GetMiddleValue() items_types.ValueType {
 	return d.summaValue / items_types.ValueType(d.countQuantity)
 }
 
+func (d *Depths) GetMinPrice() items_types.PriceType {
+	if val := d.GetTree().Min(); val != nil {
+		return val.(*items_types.DepthItem).GetPrice()
+	}
+	return 0
+}
+
+func (d *Depths) GetMaxPrice() items_types.PriceType {
+	if val := d.GetTree().Max(); val != nil {
+		return val.(*items_types.DepthItem).GetPrice()
+	}
+	return 0
+}
+
 func (d *Depths) GetStandardDeviation() float64 {
 	summaSquares := 0.0
 	d.GetTree().Ascend(func(i btree.Item) bool {

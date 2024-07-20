@@ -5,11 +5,18 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
-func (d *Asks) GetMaxAndSummaByPrice(targetPrice items_types.PriceType, firstMax ...bool) (
+func (d *Asks) GetSummaByPrice(targetPrice items_types.PriceType, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
-	return d.tree.GetMaxAndSummaByPrice(targetPrice, depths_types.UP, firstMax...)
+	return d.tree.GetSummaByPrice(targetPrice, depths_types.UP, firstMax...)
+}
+
+func (d *Asks) GetSummaByPricePercent(targetPrice float64, firstMax ...bool) (
+	item *items_types.DepthItem,
+	value items_types.ValueType,
+	quantity items_types.QuantityType) {
+	return d.tree.GetSummaByPricePercent(targetPrice, depths_types.DOWN, firstMax...)
 }
 
 func (d *Asks) GetMinMaxByPrice() (min, max *items_types.DepthItem) {

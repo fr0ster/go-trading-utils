@@ -77,42 +77,42 @@ func TestGetMaxAndSummaByPrice(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	item, value, quantity := depth.GetMaxAndSummaByPrice(150, depths_types.UP)
+	item, value, quantity := depth.GetSummaByPrice(150, depths_types.UP)
 	assert.Equal(t, items_types.PriceType(100), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(1000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(1000), value)
 	assert.Equal(t, items_types.QuantityType(10), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByPrice(250, depths_types.UP) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByPrice(250, depths_types.UP) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByPrice(350, depths_types.UP) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByPrice(350, depths_types.UP) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(14000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByPrice(250, depths_types.DOWN) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByPrice(250, depths_types.DOWN) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(22000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByPrice(350, depths_types.DOWN) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByPrice(350, depths_types.DOWN) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByPrice(450, depths_types.DOWN) // 90 * 0.25 = 22.5
+	item, value, quantity = depth.GetSummaByPrice(450, depths_types.DOWN) // 90 * 0.25 = 22.5
 	assert.Equal(t, items_types.PriceType(500), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(5000), item.GetValue())
@@ -159,42 +159,42 @@ func TestGetMaxAndSummaByQuantity(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	item, value, quantity := depth.GetMaxAndSummaByQuantity(25, depths_types.UP) // 90 * 0.25 = 22.5
+	item, value, quantity := depth.GetSummaByQuantity(25, depths_types.UP) // 90 * 0.25 = 22.5
 	assert.Equal(t, items_types.PriceType(100), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(1000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(1000), value)
 	assert.Equal(t, items_types.QuantityType(10), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantity(50, depths_types.UP) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByQuantity(50, depths_types.UP) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantity(70, depths_types.UP) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByQuantity(70, depths_types.UP) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(14000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantity(70, depths_types.DOWN) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByQuantity(70, depths_types.DOWN) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(22000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantity(50, depths_types.DOWN) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByQuantity(50, depths_types.DOWN) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantity(25, depths_types.DOWN) // 90 * 0.25 = 22.5
+	item, value, quantity = depth.GetSummaByQuantity(25, depths_types.DOWN) // 90 * 0.25 = 22.5
 	assert.Equal(t, items_types.PriceType(500), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(5000), item.GetValue())
@@ -214,42 +214,42 @@ func TestGetMaxAndSummaByQuantityPercent(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	item, value, quantity := depth.GetMaxAndSummaByQuantityPercent(25, depths_types.UP) // 90 * 0.25 = 22.5
+	item, value, quantity := depth.GetSummaByQuantityPercent(25, depths_types.UP) // 90 * 0.25 = 22.5
 	assert.Equal(t, items_types.PriceType(100), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(1000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(1000), value)
 	assert.Equal(t, items_types.QuantityType(10), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantityPercent(50, depths_types.UP) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByQuantityPercent(50, depths_types.UP) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantityPercent(75, depths_types.UP) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByQuantityPercent(75, depths_types.UP) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(14000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantityPercent(75, depths_types.DOWN) // 90 * 0.75 = 67.5
+	item, value, quantity = depth.GetSummaByQuantityPercent(75, depths_types.DOWN) // 90 * 0.75 = 67.5
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(22000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantityPercent(50, depths_types.DOWN) // 90 * 0.5 = 45
+	item, value, quantity = depth.GetSummaByQuantityPercent(50, depths_types.DOWN) // 90 * 0.5 = 45
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByQuantityPercent(25, depths_types.DOWN) // 90 * 0.25 = 22.5
+	item, value, quantity = depth.GetSummaByQuantityPercent(25, depths_types.DOWN) // 90 * 0.25 = 22.5
 	assert.Equal(t, items_types.PriceType(500), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(5000), item.GetValue())
@@ -296,42 +296,42 @@ func TestGetMaxAndSummaByValue(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	item, value, quantity := depth.GetMaxAndSummaByValue(7000, depths_types.UP) // 27000 * 0.25 = 6750
+	item, value, quantity := depth.GetSummaByValue(7000, depths_types.UP) // 27000 * 0.25 = 6750
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValue(13000, depths_types.UP) // 27000 * 0.5 = 13500
+	item, value, quantity = depth.GetSummaByValue(13000, depths_types.UP) // 27000 * 0.5 = 13500
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValue(20000, depths_types.UP) // 27000 * 0.75 = 20250
+	item, value, quantity = depth.GetSummaByValue(20000, depths_types.UP) // 27000 * 0.75 = 20250
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(14000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValue(20000, depths_types.DOWN) // 27000 * 0.75 = 20250
+	item, value, quantity = depth.GetSummaByValue(20000, depths_types.DOWN) // 27000 * 0.75 = 20250
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValue(13000, depths_types.DOWN) // 27000 * 0.5 = 13500
+	item, value, quantity = depth.GetSummaByValue(13000, depths_types.DOWN) // 27000 * 0.5 = 13500
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValue(6000, depths_types.DOWN) // 27000 * 0.25 = 6750
+	item, value, quantity = depth.GetSummaByValue(6000, depths_types.DOWN) // 27000 * 0.25 = 6750
 	assert.Equal(t, items_types.PriceType(500), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(5000), item.GetValue())
@@ -351,42 +351,42 @@ func TestGetMaxAndSummaByValuePercent(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	item, value, quantity := depth.GetMaxAndSummaByValuePercent(25, depths_types.UP) // 27000 * 0.25 = 6750
+	item, value, quantity := depth.GetSummaByValuePercent(25, depths_types.UP) // 27000 * 0.25 = 6750
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValuePercent(50, depths_types.UP) // 27000 * 0.5 = 13500
+	item, value, quantity = depth.GetSummaByValuePercent(50, depths_types.UP) // 27000 * 0.5 = 13500
 	assert.Equal(t, items_types.PriceType(200), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(4000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(5000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValuePercent(75, depths_types.UP) // 27000 * 0.75 = 20250
+	item, value, quantity = depth.GetSummaByValuePercent(75, depths_types.UP) // 27000 * 0.75 = 20250
 	assert.Equal(t, items_types.PriceType(300), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(30), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(14000), value)
 	assert.Equal(t, items_types.QuantityType(60), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValuePercent(75, depths_types.DOWN) // 27000 * 0.75 = 20250
+	item, value, quantity = depth.GetSummaByValuePercent(75, depths_types.DOWN) // 27000 * 0.75 = 20250
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValuePercent(50, depths_types.DOWN) // 27000 * 0.5 = 13500
+	item, value, quantity = depth.GetSummaByValuePercent(50, depths_types.DOWN) // 27000 * 0.5 = 13500
 	assert.Equal(t, items_types.PriceType(400), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(20), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(8000), item.GetValue())
 	assert.Equal(t, items_types.ValueType(13000), value)
 	assert.Equal(t, items_types.QuantityType(30), quantity)
 
-	item, value, quantity = depth.GetMaxAndSummaByValuePercent(25, depths_types.DOWN) // 27000 * 0.25 = 6750
+	item, value, quantity = depth.GetSummaByValuePercent(25, depths_types.DOWN) // 27000 * 0.25 = 6750
 	assert.Equal(t, items_types.PriceType(500), item.GetPrice())
 	assert.Equal(t, items_types.QuantityType(10), item.GetQuantity())
 	assert.Equal(t, items_types.ValueType(5000), item.GetValue())
