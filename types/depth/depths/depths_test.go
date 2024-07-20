@@ -3,9 +3,11 @@ package depths_test
 import (
 	"testing"
 
+	"github.com/google/btree"
+	"github.com/stretchr/testify/assert"
+
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -437,4 +439,19 @@ func TestGetFiltered(t *testing.T) {
 	assert.Equal(t, 3, filtered.Count())
 	assert.Equal(t, items_types.PriceType(300), filtered.Get(items_types.New(300)).GetPrice())
 	assert.Equal(t, items_types.PriceType(400), filtered.Get(items_types.New(400)).GetPrice())
+	summa := items_types.ValueType(0.0)
+	filtered.GetTree().Ascend(func(i btree.Item) bool {
+		summa += i.(*items_types.DepthItem).GetValue()
+		return true
+	})
+	assert.Equal(t, items_types.ValueType(21000), summa)
+	min, max := filtered.GetMinMaxByPrice(depths_types.UP)
+	assert.Equal(t, items_types.PriceType(200), min.GetPrice())
+	assert.Equal(t, items_types.PriceType(400), max.GetPrice())
+	min, max = filtered.GetMinMaxByQuantity(depths_types.UP)
+	assert.Equal(t, items_types.PriceType(200), min.GetPrice())
+	assert.Equal(t, items_types.PriceType(300), max.GetPrice())
+	min, max = filtered.GetMinMaxByValue(depths_types.UP)
+	assert.Equal(t, items_types.PriceType(200), min.GetPrice())
+	assert.Equal(t, items_types.PriceType(300), max.GetPrice())
 }
