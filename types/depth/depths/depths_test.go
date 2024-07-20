@@ -431,7 +431,7 @@ func TestGetFiltered(t *testing.T) {
 	assert.Equal(t, 5, depth.Count())
 	assert.Equal(t, items_types.ValueType(27000), depth.GetSummaValue())
 
-	filtered := depth.GetFiltered(func(item *items_types.DepthItem) bool {
+	filtered := depth.GetFiltered(depths_types.UP, func(item *items_types.DepthItem) bool {
 		return item.GetQuantity() > 10
 	})
 	assert.Equal(t, 3, filtered.Count())

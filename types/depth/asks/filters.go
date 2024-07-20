@@ -1,12 +1,13 @@
 package asks
 
 import (
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 func (d *Asks) GetFiltered(f ...items_types.DepthFilter) (asks *Asks) {
 	asks = New(d.Degree(), d.Symbol(), d.TargetPercent(), d.LimitDepth(), d.ExpBase(), d.RateStream())
-	asks.SetTree(d.tree.GetFiltered(f...).GetTree())
+	asks.SetTree(d.tree.GetFiltered(depths_types.UP, f...).GetTree())
 	return
 }
 

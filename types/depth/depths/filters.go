@@ -5,7 +5,7 @@ import (
 	"github.com/google/btree"
 )
 
-func (d *Depths) GetFiltered(f ...items_types.DepthFilter) (tree *Depths) {
+func (d *Depths) GetFiltered(up UpOrDown, filter ...items_types.DepthFilter) (tree *Depths) {
 	getIterator := func(tree *Depths, f ...items_types.DepthFilter) func(i btree.Item) bool {
 		return func(i btree.Item) bool {
 			var filter items_types.DepthFilter
@@ -22,6 +22,10 @@ func (d *Depths) GetFiltered(f ...items_types.DepthFilter) (tree *Depths) {
 		}
 	}
 	tree = New(d.degree, d.symbol, d.targetPercent, d.limitDepth, d.expBase, d.rateStream)
-	d.GetTree().Ascend(getIterator(tree, f...))
+	if up {
+		d.GetTree().Ascend(getIterator(tree, filter...))
+	} else {
+		d.GetTree().Descend(getIterator(tree, filter...))
+	}
 	return
 }

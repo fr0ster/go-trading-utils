@@ -11,8 +11,9 @@ type (
 		price    PriceType
 		quantity QuantityType
 	}
-	DepthFilter func(*DepthItem) bool
-	DepthTester func(result *DepthItem, target *DepthItem) bool
+	DepthFilter   func(*DepthItem) bool
+	DepthTester   func(result *DepthItem, target *DepthItem) bool
+	DepthIterator func(iterator btree.ItemIterator)
 )
 
 // Функції для btree.Btree
