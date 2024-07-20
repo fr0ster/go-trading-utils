@@ -79,10 +79,6 @@ func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, p
 }
 
 func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items.PriceType, err error) {
-	var (
-		askMax *items.DepthItem
-		bidMax *items.DepthItem
-	)
 	priceTargetDown, priceTargetUp, err = pp.GetTargetPrices(price...)
 	if err != nil {
 		return
@@ -93,8 +89,13 @@ func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDo
 	bidsFilter := func(i *items.DepthItem) bool {
 		return i.GetPrice() < priceTargetDown
 	}
-	_, askMax = pp.depth.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()
-	_, bidMax = pp.depth.GetBids().GetFiltered(bidsFilter).GetMinMaxByValue()
+	priceAsks := pp.depth.GetAsks().GetTree().Max()
+	priceBids := pp.depth.GetBids().GetTree().Min()
+	logrus.Debugf("priceAsks %v priceBids %v", priceAsks, priceBids)
+	asks := pp.depth.GetAsks().GetFiltered(asksFilter)
+	_, askMax := asks.GetMinMaxByValue()
+	bids := pp.depth.GetBids().GetFiltered(bidsFilter)
+	_, bidMax := bids.GetMinMaxByValue()
 	priceUp = askMax.GetPrice()
 	priceDown = bidMax.GetPrice()
 	return
