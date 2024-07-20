@@ -13,7 +13,7 @@ func (d *Bids) GetSummaByQuantity(targetSumma items_types.QuantityType, firstMax
 	return d.tree.GetSummaByQuantity(targetSumma, depths_types.DOWN, firstMax...)
 }
 
-func (d *Bids) GetSummaByQuantityPercent(target float64, firstMax ...bool) (
+func (d *Bids) GetSummaByQuantityPercent(target items_types.PricePercentType, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {

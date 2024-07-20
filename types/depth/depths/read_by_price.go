@@ -52,7 +52,7 @@ func (d *Depths) GetSummaByPrice(targetPrice items_types.PriceType, up UpOrDown,
 	return
 }
 
-func (d *Depths) GetSummaByPricePercent(target float64, up UpOrDown, firstMax ...bool) (
+func (d *Depths) GetSummaByPricePercent(target items_types.PricePercentType, up UpOrDown, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
@@ -65,7 +65,7 @@ func (d *Depths) GetSummaByPricePercent(target float64, up UpOrDown, firstMax ..
 	if err != nil {
 		return
 	}
-	delta := items_types.PriceType(math.Abs(float64(max.GetPrice()-min.GetPrice()) * target / 100))
+	delta := items_types.PriceType(math.Abs(float64(max.GetPrice()-min.GetPrice()) * float64(target) / 100))
 	if up {
 		price = min.GetPrice() + delta
 	} else {

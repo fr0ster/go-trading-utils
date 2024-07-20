@@ -104,6 +104,18 @@ func (d *Depths) GetDeltaPrice() (delta items_types.PriceType, err error) {
 	return
 }
 
+func (d *Depths) GetDeltaPricePercent() (delta items_types.PricePercentType, err error) {
+	deltaPrice, err := d.GetDeltaPrice()
+	if err != nil {
+		return
+	}
+	min, err := d.GetMinPrice()
+	if err != nil {
+		return
+	}
+	return items_types.PricePercentType(deltaPrice/min.GetPrice()) * 100, nil
+}
+
 func (d *Depths) GetStandardDeviation() float64 {
 	summaSquares := 0.0
 	d.GetTree().Ascend(func(i btree.Item) bool {

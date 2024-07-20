@@ -40,11 +40,11 @@ func (d *Depths) GetSummaByQuantity(targetSumma items_types.QuantityType, up UpO
 	return
 }
 
-func (d *Depths) GetSummaByQuantityPercent(target float64, up UpOrDown, firstMax ...bool) (
+func (d *Depths) GetSummaByQuantityPercent(target items_types.PricePercentType, up UpOrDown, firstMax ...bool) (
 	item *items_types.DepthItem,
 	value items_types.ValueType,
 	quantity items_types.QuantityType) {
-	item, value, quantity = d.GetSummaByQuantity(items_types.QuantityType(float64(d.GetSummaQuantity())*target/100), up, firstMax...)
+	item, value, quantity = d.GetSummaByQuantity(items_types.QuantityType(float64(d.GetSummaQuantity())*float64(target)/100), up, firstMax...)
 	if quantity == 0 {
 		if up {
 			if val := d.GetTree().Min(); val != nil {
