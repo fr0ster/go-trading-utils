@@ -50,7 +50,7 @@ func (d *Depths) NextPriceUp(percent items_types.PricePercentType, price ...item
 			next = val.NextPriceUp(percent * d.GetNextUpCoefficient())
 		}
 	} else {
-		next = d.asks.NextPriceUp(percent)
+		next = d.asks.NextPriceUp(percent * d.GetNextUpCoefficient())
 	}
 	_, max := d.asks.GetMinMaxByValue()
 	if next < max.GetPrice() {
@@ -70,7 +70,7 @@ func (d *Depths) NextPriceDown(percent items_types.PricePercentType, price ...it
 
 		}
 	} else {
-		next = d.bids.NextPriceDown(percent)
+		next = d.bids.NextPriceDown(percent * d.GetNextDownCoefficient())
 	}
 	_, max := d.bids.GetMinMaxByValue()
 	if next > max.GetPrice() {
