@@ -7,7 +7,7 @@ import (
 	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
@@ -60,9 +60,9 @@ func New(
 	}
 }
 
-func Binance2BookTicker(binanceDepth interface{}) (*types.DepthItem, error) {
+func Binance2BookTicker(binanceDepth interface{}) (*items_types.DepthItem, error) {
 	switch binanceDepth := binanceDepth.(type) {
-	case *types.DepthItem:
+	case *items_types.DepthItem:
 		return binanceDepth, nil
 	}
 	return nil, errors.New("it's not a types.DepthItemType")
@@ -83,4 +83,52 @@ func (d *Depths) GetLimitStream() depths_types.DepthStreamLevel {
 
 func (d *Depths) GetRateStream() depths_types.DepthStreamRate {
 	return d.rateStream
+}
+
+func (d *Depths) GetNextUpCoefficient() items_types.PriceType {
+	coefficients := items_types.PriceType(d.GetAsks().GetSummaValue() / d.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		return coefficients
+	} else {
+		return 1
+	}
+}
+
+func (d *Depths) GetNextDownCoefficient() items_types.PriceType {
+	coefficients := items_types.PriceType(d.GetAsks().GetSummaValue() / d.GetBids().GetSummaValue())
+	if coefficients > 1 {
+		return coefficients
+	} else {
+		return 1
+	}
+}
+
+func (d *Depths) NextPriceUp(percent float64, price ...items_types.PriceType) items_types.PriceType {
+	var asksFilter items_types.DepthFilter
+	if len(price) > 0 {
+		asksFilter = func(i *items_types.DepthItem) bool {
+			return i.GetPrice() > price[0]
+		}
+		if val := d.asks.GetFiltered(asksFilter); val != nil {
+			return val.NextPriceUp(percent)
+		} else {
+			return price[0] * items_types.PriceType(1+percent)
+		}
+	}
+	return d.asks.NextPriceUp(percent)
+}
+
+func (d *Depths) NextPriceDown(percent float64, price ...items_types.PriceType) items_types.PriceType {
+	var bidsFilter items_types.DepthFilter
+	if len(price) > 0 {
+		bidsFilter = func(i *items_types.DepthItem) bool {
+			return i.GetPrice() < price[0]
+		}
+		if val := d.bids.GetFiltered(bidsFilter); val != nil {
+			return val.NextPriceDown(percent)
+		} else {
+			return price[0] * items_types.PriceType(1-percent)
+		}
+	}
+	return d.bids.NextPriceDown(percent)
 }

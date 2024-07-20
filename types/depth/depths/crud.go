@@ -1,6 +1,7 @@
 package depths
 
 import (
+	"fmt"
 	"math"
 
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
@@ -72,18 +73,35 @@ func (d *Depths) GetMiddleValue() items_types.ValueType {
 	return d.summaValue / items_types.ValueType(d.countQuantity)
 }
 
-func (d *Depths) GetMinPrice() items_types.PriceType {
+func (d *Depths) GetMinPrice() (min *items_types.DepthItem, err error) {
 	if val := d.GetTree().Min(); val != nil {
-		return val.(*items_types.DepthItem).GetPrice()
+		min = val.(*items_types.DepthItem)
+	} else {
+		err = fmt.Errorf("Depths is empty")
 	}
-	return 0
+	return
 }
 
-func (d *Depths) GetMaxPrice() items_types.PriceType {
+func (d *Depths) GetMaxPrice() (max *items_types.DepthItem, err error) {
 	if val := d.GetTree().Max(); val != nil {
-		return val.(*items_types.DepthItem).GetPrice()
+		max = val.(*items_types.DepthItem)
+	} else {
+		err = fmt.Errorf("Depths is empty")
 	}
-	return 0
+	return
+}
+
+func (d *Depths) GetDeltaPrice() (delta items_types.PriceType, err error) {
+	max, err := d.GetMaxPrice()
+	if err != nil {
+		return
+	}
+	min, err := d.GetMinPrice()
+	if err != nil {
+		return
+	}
+	delta = max.GetPrice() - min.GetPrice()
+	return
 }
 
 func (d *Depths) GetStandardDeviation() float64 {
@@ -94,4 +112,16 @@ func (d *Depths) GetStandardDeviation() float64 {
 		return true
 	})
 	return math.Sqrt(summaSquares / float64(d.Count()))
+}
+
+func (pp *Depths) NextPriceUp(percent float64) items_types.PriceType {
+	delta, _ := pp.GetDeltaPrice()
+	min, _ := pp.GetMinPrice()
+	return min.GetPrice() + delta*items_types.PriceType(percent)/100
+}
+
+func (pp *Depths) NextPriceDown(percent float64) items_types.PriceType {
+	delta, _ := pp.GetDeltaPrice()
+	max, _ := pp.GetMinPrice()
+	return max.GetPrice() - delta*items_types.PriceType(percent)/100
 }

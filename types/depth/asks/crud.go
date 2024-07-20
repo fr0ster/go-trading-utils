@@ -45,6 +45,22 @@ func (d *Asks) GetMiddleValue() items_types.ValueType {
 	return d.tree.GetMiddleValue()
 }
 
+func (d *Asks) GetMinPrice() (min *items_types.DepthItem, err error) {
+	return d.tree.GetMinPrice()
+}
+
+func (d *Asks) GetMaxPrice() (max *items_types.DepthItem, err error) {
+	return d.tree.GetMaxPrice()
+}
+
+func (d *Asks) GetDeltaPrice() (delta items_types.PriceType, err error) {
+	return d.tree.GetDeltaPrice()
+}
+
 func (d *Asks) GetStandardDeviation() float64 {
 	return d.tree.GetStandardDeviation()
+}
+
+func (d *Asks) NextPriceUp(percent float64) items_types.PriceType {
+	return d.tree.NextPriceUp(percent)
 }

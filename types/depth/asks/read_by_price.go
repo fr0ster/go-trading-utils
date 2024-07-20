@@ -19,6 +19,6 @@ func (d *Asks) GetSummaByPricePercent(targetPrice float64, firstMax ...bool) (
 	return d.tree.GetSummaByPricePercent(targetPrice, depths_types.DOWN, firstMax...)
 }
 
-func (d *Asks) GetMinMaxByPrice() (min, max *items_types.DepthItem) {
+func (d *Asks) GetMinMaxByPrice() (min, max *items_types.DepthItem, err error) {
 	return d.tree.GetMinMaxByPrice(depths_types.DOWN)
 }

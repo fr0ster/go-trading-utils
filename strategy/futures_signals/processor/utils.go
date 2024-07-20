@@ -33,48 +33,9 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetNextUpCoefficient() items.PriceType {
-	if pp.depth.GetAsks() == nil ||
-		pp.depth.GetBids() == nil ||
-		pp.depth.GetAsks().GetSummaValue() == 0 ||
-		pp.depth.GetBids().GetSummaValue() == 0 {
-		return 1
-	}
-	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
-	if coefficients > 1 {
-		return 1
-	} else {
-		return coefficients
-	}
-}
-
-func (pp *PairProcessor) GetNextDownCoefficient() items.PriceType {
-	if pp.depth.GetAsks() == nil ||
-		pp.depth.GetBids() == nil ||
-		pp.depth.GetAsks().GetSummaValue() == 0 ||
-		pp.depth.GetBids().GetSummaValue() == 0 {
-		return 1
-	}
-	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
-	if coefficients > 1 {
-		return coefficients
-	} else {
-		return 1
-	}
-}
-
 func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, priceUp items.PriceType, err error) {
-	var currentPrice items.PriceType
-	if len(price) == 0 {
-		currentPrice, err = pp.GetCurrentPrice()
-		if err != nil {
-			return
-		}
-	} else {
-		currentPrice = price[0]
-	}
-	priceUp = pp.RoundPrice(currentPrice * (1 + pp.GetDeltaPrice()*pp.GetNextUpCoefficient()))
-	priceDown = pp.RoundPrice(currentPrice * (1 - pp.GetDeltaPrice()*pp.GetNextDownCoefficient()))
+	priceUp = pp.NextPriceUp(price...)
+	priceDown = pp.NextPriceDown(price...)
 	return
 }
 
@@ -142,16 +103,12 @@ func (pp *PairProcessor) GetPrices(
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-		positionPrice := items.PriceType(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-		if positionPrice == 0 {
-			positionPrice = items.PriceType(utils.ConvStrToFloat64(risk.EntryPrice))
-		}
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			priceDown = pp.NextPriceDown(items.PriceType(math.Min(float64(positionPrice), float64(price))))
+			priceDown = pp.NextPriceDown()
 			quantityDown = items.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyDown = true
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			priceUp = pp.NextPriceUp(items.PriceType(math.Max(float64(positionPrice), float64(price))))
+			priceUp = pp.NextPriceUp()
 			quantityUp = items.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyUp = true
 		}
