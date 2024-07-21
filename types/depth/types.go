@@ -43,7 +43,7 @@ type (
 		stop             chan struct{}
 		resetEvent       chan error
 		timeOut          time.Duration
-		StartDepthStream func() (chan struct{}, chan struct{}, error)
+		startDepthStream func() (chan struct{}, chan struct{}, error)
 		Init             func() (err error)
 	}
 )

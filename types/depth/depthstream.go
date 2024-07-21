@@ -8,7 +8,7 @@ import (
 func (d *Depths) DepthEventStart(
 	levels DepthStreamLevel,
 	rate DepthStreamRate) (err error) {
-	if d.Init == nil || d.StartDepthStream == nil {
+	if d.Init == nil || d.startDepthStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return
 	}
@@ -17,7 +17,7 @@ func (d *Depths) DepthEventStart(
 	// Ініціалізуємо маркер для останньої відповіді
 	lastResponse := time.Now()
 	// Запускаємо стрім подій користувача
-	_, stopC, err := d.StartDepthStream()
+	_, stopC, err := d.startDepthStream()
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
@@ -28,7 +28,7 @@ func (d *Depths) DepthEventStart(
 				return
 			case <-d.resetEvent:
 				// Запускаємо новий стрім подій користувача
-				_, stopC, err = d.StartDepthStream()
+				_, stopC, err = d.startDepthStream()
 				if err != nil {
 					close(d.stop)
 					return
@@ -39,7 +39,7 @@ func (d *Depths) DepthEventStart(
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
 					// Запускаємо новий стрім подій користувача
-					_, stopC, err = d.StartDepthStream()
+					_, stopC, err = d.startDepthStream()
 					if err != nil {
 						close(d.stop)
 						return

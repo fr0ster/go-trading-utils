@@ -34,11 +34,11 @@ func New(
 		stop:             stop,
 		resetEvent:       make(chan error, 1),
 		timeOut:          1 * time.Hour,
-		StartDepthStream: nil,
+		startDepthStream: nil,
 		Init:             nil,
 	}
 	if startDepthStreamCreator != nil && initCreator != nil {
-		this.StartDepthStream = startDepthStreamCreator(this)
+		this.startDepthStream = startDepthStreamCreator(this)
 		this.Init = initCreator(this)
 	}
 	return this
