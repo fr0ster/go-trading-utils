@@ -21,10 +21,6 @@ const (
 	expBase         = 2
 )
 
-var (
-	stop chan struct{} = make(chan struct{})
-)
-
 func TestParserStr(t *testing.T) {
 	ip, time, err := processor.ParserErr1003(msg)
 	assert.Nil(t, err)
@@ -69,7 +65,7 @@ func TestGetLimitPrices(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(30), bidMax.GetQuantity())
 	assert.Equal(t, items_types.ValueType(9000), bidMax.GetValue())
 
-	depth := depth_types.New(stop, degree, "BTCUSDT", timeOut, nil, nil)
+	depth := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
 	depth.GetAsks().SetTree(asks.GetTree())
 	depth.GetBids().SetTree(bids.GetTree())
 	_, askMax = depth.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()

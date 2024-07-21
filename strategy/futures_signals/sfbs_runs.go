@@ -37,7 +37,6 @@ func Run(
 		depth = depths[0]
 	} else {
 		depth = depth_types.New(
-			quit,
 			degree,
 			pair.GetPair(),
 			1000*time.Millisecond,

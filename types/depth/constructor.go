@@ -12,12 +12,20 @@ import (
 
 // DepthBTree - B-дерево для зберігання стакана заявок
 func New(
-	stop chan struct{},
 	degree int,
 	symbol string,
 	timeOut time.Duration,
 	startDepthStream func() (chan struct{}, chan struct{}, error),
-	init func(*Depths) error) *Depths {
+	init func(*Depths) error,
+	stops ...chan struct{}) *Depths {
+	var (
+		stop chan struct{}
+	)
+	if len(stops) > 0 {
+		stop = stops[0]
+	} else {
+		stop = make(chan struct{}, 1)
+	}
 	this := &Depths{
 		symbol:           symbol,
 		degree:           degree,
