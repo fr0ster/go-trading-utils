@@ -100,7 +100,7 @@ func (d *Depths) GetDeltaPrice() (delta items_types.PriceType, err error) {
 	if err != nil {
 		return
 	}
-	delta = max.GetPrice() - min.GetPrice()
+	delta = items_types.PriceType(math.Abs(float64(max.GetPrice() - min.GetPrice())))
 	return
 }
 
