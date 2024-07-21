@@ -51,13 +51,10 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func GetterDepthEventCallBackCreator(preCallBackCreator, postCallBackCreator func(d *depth_types.Depths) futures.WsDepthHandler) func(d *depth_types.Depths) futures.WsDepthHandler {
+func GetterDepthEventCallBackCreator() func(d *depth_types.Depths) futures.WsDepthHandler {
 	return func(d *depth_types.Depths) futures.WsDepthHandler {
 		d.Init()
 		return func(event *futures.WsDepthEvent) {
-			if preCallBackCreator != nil {
-				preCallBackCreator(d)(event)
-			}
 			func() {
 				d.Lock()         // Locking the depths
 				defer d.Unlock() // Unlocking the depths
@@ -84,9 +81,6 @@ func GetterDepthEventCallBackCreator(preCallBackCreator, postCallBackCreator fun
 					d.LastUpdateID = event.LastUpdateID
 				}
 			}()
-			if postCallBackCreator != nil {
-				postCallBackCreator(d)(event)
-			}
 		}
 	}
 }

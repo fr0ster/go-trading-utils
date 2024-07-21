@@ -98,13 +98,10 @@ func GetterStartPartialDepthStreamCreator(
 	}
 }
 
-func GetterPartialDepthEventCallBackCreator(preCallBackCreator, postCallBackCreator func(d *depth_types.Depths) binance.WsPartialDepthHandler) func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+func GetterPartialDepthEventCallBackCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 		d.Init()
 		return func(event *binance.WsPartialDepthEvent) {
-			if preCallBackCreator != nil {
-				preCallBackCreator(d)(event)
-			}
 			func() {
 				d.Lock()         // Locking the depths
 				defer d.Unlock() // Unlocking the depths
@@ -131,9 +128,6 @@ func GetterPartialDepthEventCallBackCreator(preCallBackCreator, postCallBackCrea
 					d.LastUpdateID = event.LastUpdateID
 				}
 			}()
-			if postCallBackCreator != nil {
-				postCallBackCreator(d)(event)
-			}
 		}
 	}
 }
