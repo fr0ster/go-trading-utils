@@ -51,33 +51,41 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func GetterDepthEventCallBackCreator() func(d *depth_types.Depths) futures.WsDepthHandler {
+func GetterDepthEventCallBackCreator(preCallBack, postCallBack futures.WsDepthHandler) func(d *depth_types.Depths) futures.WsDepthHandler {
 	return func(d *depth_types.Depths) futures.WsDepthHandler {
 		d.Init()
 		return func(event *futures.WsDepthEvent) {
-			d.Lock()         // Locking the depths
-			defer d.Unlock() // Unlocking the depths
-			if event.LastUpdateID < d.LastUpdateID {
-				return
+			if preCallBack != nil {
+				preCallBack(event)
 			}
-			if event.PrevLastUpdateID != int64(d.LastUpdateID) {
-				d.Init()
-			} else if event.PrevLastUpdateID == int64(d.LastUpdateID) {
-				for _, bid := range event.Bids {
-					price, quantity, err := bid.Parse()
-					if err != nil {
-						return
-					}
-					d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
+			func() {
+				d.Lock()         // Locking the depths
+				defer d.Unlock() // Unlocking the depths
+				if event.LastUpdateID < d.LastUpdateID {
+					return
 				}
-				for _, ask := range event.Asks {
-					price, quantity, err := ask.Parse()
-					if err != nil {
-						return
+				if event.PrevLastUpdateID != int64(d.LastUpdateID) {
+					d.Init()
+				} else if event.PrevLastUpdateID == int64(d.LastUpdateID) {
+					for _, bid := range event.Bids {
+						price, quantity, err := bid.Parse()
+						if err != nil {
+							return
+						}
+						d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
 					}
-					d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					for _, ask := range event.Asks {
+						price, quantity, err := ask.Parse()
+						if err != nil {
+							return
+						}
+						d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					}
+					d.LastUpdateID = event.LastUpdateID
 				}
-				d.LastUpdateID = event.LastUpdateID
+			}()
+			if postCallBack != nil {
+				postCallBack(event)
 			}
 		}
 	}

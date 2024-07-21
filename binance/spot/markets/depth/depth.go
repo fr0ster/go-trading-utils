@@ -98,33 +98,41 @@ func GetterStartPartialDepthStreamCreator(
 	}
 }
 
-func GetterPartialDepthEventCallBackCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+func GetterPartialDepthEventCallBackCreator(preCallBack, postCallBack binance.WsPartialDepthHandler) func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 		d.Init()
 		return func(event *binance.WsPartialDepthEvent) {
-			d.Lock()         // Locking the depths
-			defer d.Unlock() // Unlocking the depths
-			if event.LastUpdateID < d.LastUpdateID {
-				return
+			if preCallBack != nil {
+				preCallBack(event)
 			}
-			if event.LastUpdateID != int64(d.LastUpdateID)+1 {
-				d.Init()
-			} else if event.LastUpdateID == int64(d.LastUpdateID)+1 {
-				for _, bid := range event.Bids {
-					price, quantity, err := bid.Parse()
-					if err != nil {
-						return
-					}
-					d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
+			func() {
+				d.Lock()         // Locking the depths
+				defer d.Unlock() // Unlocking the depths
+				if event.LastUpdateID < d.LastUpdateID {
+					return
 				}
-				for _, ask := range event.Asks {
-					price, quantity, err := ask.Parse()
-					if err != nil {
-						return
+				if event.LastUpdateID != int64(d.LastUpdateID)+1 {
+					d.Init()
+				} else if event.LastUpdateID == int64(d.LastUpdateID)+1 {
+					for _, bid := range event.Bids {
+						price, quantity, err := bid.Parse()
+						if err != nil {
+							return
+						}
+						d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
 					}
-					d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					for _, ask := range event.Asks {
+						price, quantity, err := ask.Parse()
+						if err != nil {
+							return
+						}
+						d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					}
+					d.LastUpdateID = event.LastUpdateID
 				}
-				d.LastUpdateID = event.LastUpdateID
+			}()
+			if postCallBack != nil {
+				postCallBack(event)
 			}
 		}
 	}
