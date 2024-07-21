@@ -9,6 +9,10 @@ func (pp *PairProcessor) GetDepth() *depth_types.Depths {
 	return pp.depth
 }
 
+func (pp *PairProcessor) SetDepth(depth *depth_types.Depths) {
+	pp.depth = depth
+}
+
 func (pp *PairProcessor) NextPriceUp(prices ...items_types.PriceType) items_types.PriceType {
 	var err error
 	if pp.depth != nil {
