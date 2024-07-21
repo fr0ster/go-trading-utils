@@ -10,8 +10,9 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -59,7 +60,7 @@ func getCallBack_v5(
 				// Балансування маржі як треба
 				marginBalancing(risk, pairProcessor)
 				err = createNextPair_v5(
-					types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
+					items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
 					event.OrderTradeUpdate.Side,
 					pairProcessor)
 				if err != nil {
@@ -78,10 +79,10 @@ func getErrorHandling_v5(
 	quit chan struct{}) futures.ErrHandler {
 	return func(networkErr error) {
 		var (
-			initPriceUp    types.PriceType
-			initPriceDown  types.PriceType
-			quantityUp     types.QuantityType
-			quantityDown   types.QuantityType
+			initPriceUp    items_types.PriceType
+			initPriceDown  items_types.PriceType
+			quantityUp     items_types.QuantityType
+			quantityDown   items_types.QuantityType
 			reduceOnlyUp   bool
 			reduceOnlyDown bool
 		)
@@ -145,15 +146,15 @@ func getErrorHandling_v5(
 }
 
 func createNextPair_v5(
-	LastExecutedPrice types.PriceType,
+	LastExecutedPrice items_types.PriceType,
 	LastExecutedSide futures.SideType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk              *futures.PositionRisk
-		upPrice           types.PriceType
-		downPrice         types.PriceType
-		upQuantity        types.QuantityType
-		downQuantity      types.QuantityType
+		upPrice           items_types.PriceType
+		downPrice         items_types.PriceType
+		upQuantity        items_types.QuantityType
+		downQuantity      items_types.QuantityType
 		upClosePosition   bool
 		downClosePosition bool
 		upReduceOnly      bool
@@ -163,7 +164,7 @@ func createNextPair_v5(
 	)
 	risk, _ = pairProcessor.GetPositionRisk()
 	breakEvenPrice := utils.ConvStrToFloat64(risk.BreakEvenPrice)
-	position := types.QuantityType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
+	position := items_types.QuantityType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 	if breakEvenPrice == 0 {
 		breakEvenPrice = utils.ConvStrToFloat64(risk.EntryPrice)
 	}
@@ -171,11 +172,11 @@ func createNextPair_v5(
 		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 			upQuantity = pairProcessor.RoundQuantity(
-				types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
+				items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
 		}
-		downPrice = pairProcessor.NextPriceDown(types.PriceType(math.Min(breakEvenPrice, float64(LastExecutedPrice))))
+		downPrice = pairProcessor.NextPriceDown(items_types.PriceType(math.Min(breakEvenPrice, float64(LastExecutedPrice))))
 		downQuantity = pairProcessor.RoundQuantity(
-			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
+			items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		if downQuantity > position {
 			downQuantity = position
 		}
@@ -184,16 +185,16 @@ func createNextPair_v5(
 		upReduceOnly = false
 		downReduceOnly = true
 	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-		upPrice = pairProcessor.NextPriceUp(types.PriceType(math.Max(breakEvenPrice, float64(LastExecutedPrice))))
+		upPrice = pairProcessor.NextPriceUp(items_types.PriceType(math.Max(breakEvenPrice, float64(LastExecutedPrice))))
 		upQuantity = pairProcessor.RoundQuantity(
-			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
+			items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
 		if upQuantity > position {
 			upQuantity = position
 		}
 		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 			downQuantity = pairProcessor.RoundQuantity(
-				types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
+				items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		}
 		upClosePosition = false
 		downClosePosition = false
@@ -203,9 +204,9 @@ func createNextPair_v5(
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
 		upQuantity = pairProcessor.RoundQuantity(
-			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
+			items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(upPrice)))
 		downQuantity = pairProcessor.RoundQuantity(
-			types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
+			items_types.QuantityType(float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(downPrice)))
 		upClosePosition = false
 		downClosePosition = false
 		upReduceOnly = false
@@ -264,15 +265,15 @@ func createNextPair_v5(
 }
 
 func initPosition_v5(
-	price types.PriceType,
+	price items_types.PriceType,
 	risk *futures.PositionRisk,
 	pairProcessor *processor.PairProcessor,
 	quit chan struct{}) {
 	var (
-		initPriceUp    types.PriceType
-		initPriceDown  types.PriceType
-		quantityUp     types.QuantityType
-		quantityDown   types.QuantityType
+		initPriceUp    items_types.PriceType
+		initPriceDown  items_types.PriceType
+		quantityUp     items_types.QuantityType
+		quantityDown   items_types.QuantityType
 		reduceOnlyUp   bool
 		reduceOnlyDown bool
 	)
@@ -335,6 +336,7 @@ func RunFuturesGridTradingV5(
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
+	depths *depth_types.Depths,
 	timeout ...time.Duration) (err error) {
 	var (
 		pairProcessor *processor.PairProcessor
@@ -362,7 +364,8 @@ func RunFuturesGridTradingV5(
 		limitDepth,
 		expBase,
 		callbackRate,
-		progression)
+		progression,
+		depths)
 	if err != nil {
 		printError()
 		return
@@ -395,7 +398,7 @@ func RunFuturesGridTradingV5(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if v5.TryLock() {
 					logrus.Debugf("Futures %s: Check position", pairProcessor.GetPair())
-					free := pairProcessor.GetFreeBalance() * types.PriceType(pairProcessor.GetLeverage())
+					free := pairProcessor.GetFreeBalance() * items_types.PriceType(pairProcessor.GetLeverage())
 					risk, err := pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()

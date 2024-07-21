@@ -10,6 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
@@ -308,6 +309,7 @@ func RunFuturesGridTradingV4(
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
+	depths *depth_types.Depths,
 	timeout ...time.Duration) (err error) {
 	var (
 		pairProcessor *processor.PairProcessor
@@ -336,7 +338,8 @@ func RunFuturesGridTradingV4(
 		limitDepth,
 		expBase,
 		callbackRate,
-		progression)
+		progression,
+		depths)
 	if err != nil {
 		printError()
 		return

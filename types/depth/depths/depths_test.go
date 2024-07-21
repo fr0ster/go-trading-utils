@@ -16,7 +16,7 @@ const (
 
 func TestDepthsGetAndReplaceOrInsert(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))
@@ -44,7 +44,7 @@ func TestDepthsGetAndReplaceOrInsert(t *testing.T) {
 
 func TestGetAndSetDepths(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))
@@ -56,7 +56,7 @@ func TestGetAndSetDepths(t *testing.T) {
 	assert.Equal(t, items_types.PriceType(100), depth.Get(items_types.New(100)).GetPrice())
 	assert.Equal(t, items_types.PriceType(0), (depth.Get(items_types.New(600))).GetPrice())
 
-	otherDepth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	otherDepth := depths_types.New(degree, "BTCUSDT")
 	otherDepth.SetTree(depth.GetTree())
 
 	assert.Equal(t, 5, depth.Count())
@@ -67,7 +67,7 @@ func TestGetAndSetDepths(t *testing.T) {
 
 func TestGetMaxAndSummaByPrice(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10)) // 10 - 00
 	depth.Set(items_types.New(200, 20)) // 30 - 80
 	depth.Set(items_types.New(300, 30)) // 60 - 60
@@ -122,7 +122,7 @@ func TestGetMaxAndSummaByPrice(t *testing.T) {
 
 func TestGetMinMaxByPrice(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))
@@ -151,7 +151,7 @@ func TestGetMinMaxByPrice(t *testing.T) {
 
 func TestGetMaxAndSummaByQuantity(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10)) // 10 - 00
 	depth.Set(items_types.New(200, 20)) // 30 - 80
 	depth.Set(items_types.New(300, 30)) // 60 - 60
@@ -206,7 +206,7 @@ func TestGetMaxAndSummaByQuantity(t *testing.T) {
 
 func TestGetMaxAndSummaByQuantityPercent(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10)) // 10 - 00
 	depth.Set(items_types.New(200, 20)) // 30 - 80
 	depth.Set(items_types.New(300, 30)) // 60 - 60
@@ -261,7 +261,7 @@ func TestGetMaxAndSummaByQuantityPercent(t *testing.T) {
 
 func TestGetMinMaxByQuantity(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))
@@ -288,7 +288,7 @@ func TestGetMinMaxByQuantity(t *testing.T) {
 
 func TestGetMaxAndSummaByValue(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10)) // 1000 - 1000 - 1000 - 27000
 	depth.Set(items_types.New(200, 20)) // 4000 - 5000 - 4000 - 26000
 	depth.Set(items_types.New(300, 30)) // 9000 - 14000 - 9000 - 22000
@@ -343,7 +343,7 @@ func TestGetMaxAndSummaByValue(t *testing.T) {
 
 func TestGetMaxAndSummaByValuePercent(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10)) // 1000 - 1000 - 1000 - 27000
 	depth.Set(items_types.New(200, 20)) // 4000 - 5000 - 4000 - 26000
 	depth.Set(items_types.New(300, 30)) // 9000 - 14000 - 9000 - 22000
@@ -398,7 +398,7 @@ func TestGetMaxAndSummaByValuePercent(t *testing.T) {
 
 func TestGetMinMaxByValue(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))
@@ -425,7 +425,7 @@ func TestGetMinMaxByValue(t *testing.T) {
 
 func TestGetFiltered(t *testing.T) {
 	// TODO: Add test cases.
-	depth := depths_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := depths_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.New(100, 10))
 	depth.Set(items_types.New(200, 20))
 	depth.Set(items_types.New(300, 30))

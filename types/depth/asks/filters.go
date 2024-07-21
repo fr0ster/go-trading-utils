@@ -6,7 +6,7 @@ import (
 )
 
 func (d *Asks) GetFiltered(f ...items_types.DepthFilter) (asks *Asks) {
-	asks = New(d.Degree(), d.Symbol(), d.TargetPercent(), d.LimitDepth(), d.ExpBase(), d.RateStream())
+	asks = New(d.Degree(), d.Symbol())
 	asks.SetTree(d.tree.GetFiltered(depths_types.UP, f...).GetTree())
 	return
 }

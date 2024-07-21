@@ -2,10 +2,10 @@ package depth
 
 import (
 	"sync"
+	"time"
 
 	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
@@ -25,13 +25,14 @@ type (
 		// bidsSummaQuantity types.QuantityType
 		// bidsMinMax        *btree.BTree
 		// bidNormalized     *btree.BTree
-		mutex           *sync.Mutex
-		LastUpdateID    int64
-		limitDepth      depths_types.DepthAPILimit
-		limitStream     depths_types.DepthStreamLevel
-		rateStream      depths_types.DepthStreamRate
-		percentToTarget float64
-		expBase         int
+		mutex        *sync.Mutex
+		LastUpdateID int64
+
+		stop             chan struct{}
+		resetEvent       chan error
+		timeOut          time.Duration
+		StartDepthStream func() (chan struct{}, chan struct{}, error)
+		Init             func(*Depths) error
 	}
 )
 
@@ -68,6 +69,6 @@ func (a *Depths) UpdateBid(item *items_types.Bid) bool {
 	return a.bids.Update(item)
 }
 
-func (d *Depths) GetPercentToTarget() float64 {
-	return d.percentToTarget
+func (a *Depths) ResetEvent(err error) {
+	a.resetEvent <- err
 }

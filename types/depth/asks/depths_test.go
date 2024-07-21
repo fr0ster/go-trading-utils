@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +14,7 @@ const (
 
 func TestAsksGetAndReplaceOrInsert(t *testing.T) {
 	// TODO: Add test cases.
-	asks := asks_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	asks := asks_types.New(degree, "BTCUSDT")
 	asks.Set(items_types.NewAsk(100, 10))
 	asks.Set(items_types.NewAsk(200, 20))
 	asks.Set(items_types.NewAsk(300, 30))
@@ -43,7 +42,7 @@ func TestAsksGetAndReplaceOrInsert(t *testing.T) {
 
 func TestGetAndSetAsks(t *testing.T) {
 	// TODO: Add test cases.
-	depth := asks_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := asks_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.NewAsk(100, 10))
 	depth.Set(items_types.NewAsk(200, 20))
 	depth.Set(items_types.NewAsk(300, 30))
@@ -55,7 +54,7 @@ func TestGetAndSetAsks(t *testing.T) {
 	assert.Equal(t, items_types.PriceType(100), depth.Get(items_types.NewAsk(100)).GetDepthItem().GetPrice())
 	assert.Equal(t, items_types.PriceType(0), (depth.Get(items_types.NewAsk(600))).GetDepthItem().GetPrice())
 
-	otherDepth := asks_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	otherDepth := asks_types.New(degree, "BTCUSDT")
 	otherDepth.SetTree(depth.GetTree())
 
 	assert.Equal(t, 5, depth.Count())
@@ -66,7 +65,7 @@ func TestGetAndSetAsks(t *testing.T) {
 
 func TestGetMaxQuantity(t *testing.T) {
 	// TODO: Add test cases.
-	depth := asks_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := asks_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.NewAsk(100, 10))
 	depth.Set(items_types.NewAsk(200, 20))
 	depth.Set(items_types.NewAsk(300, 30))

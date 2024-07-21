@@ -42,7 +42,15 @@ func NewPairProcessor(
 	limitDepth depths_types.DepthAPILimit,
 	expBase int,
 	callbackRate float64,
-	progression pairs_types.ProgressionType) (pp *PairProcessor, err error) {
+	progression pairs_types.ProgressionType,
+	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
+	var (
+		depth *depth_types.Depths
+	)
+	if len(depths) > 0 {
+		depth = depths[0]
+	}
+
 	exchangeInfo := exchange_types.New()
 	err = futures_exchange_info.RestrictedInit(exchangeInfo, 3, []string{symbol}, client)
 	if err != nil {
@@ -80,7 +88,7 @@ func NewPairProcessor(
 		deltaQuantity: types.QuantityType(deltaQuantity),
 
 		progression: progression,
-		depth:       nil,
+		depth:       depth,
 	}
 
 	// Ініціалізуємо інформацію про пару
@@ -179,15 +187,15 @@ func NewPairProcessor(
 		}
 	}
 
-	// Ініціалізуємо стакан
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
-	if pp.depth != nil {
-		pp.DepthEventStart(
-			stop,
-			pp.depth.GetLimitStream(),
-			pp.depth.GetRateStream(),
-			pp.GetDepthEventCallBack())
-	}
+	// // Ініціалізуємо стакан
+	// pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
+	// if pp.depth != nil {
+	// 	pp.DepthEventStart(
+	// 		stop,
+	// 		pp.depth.GetLimitStream(),
+	// 		pp.depth.GetRateStream(),
+	// 		pp.GetDepthEventCallBack())
+	// }
 
 	return
 }

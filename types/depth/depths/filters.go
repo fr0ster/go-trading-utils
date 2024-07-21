@@ -21,7 +21,7 @@ func (d *Depths) GetFiltered(up UpOrDown, filter ...items_types.DepthFilter) (tr
 			return true // продовжуємо обхід
 		}
 	}
-	tree = New(d.degree, d.symbol, d.targetPercent, d.limitDepth, d.expBase, d.rateStream)
+	tree = New(d.degree, d.symbol)
 	if up {
 		d.GetTree().Ascend(getIterator(tree, filter...))
 	} else {

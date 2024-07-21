@@ -34,7 +34,14 @@ func NewPairProcessor(
 	limitDepth depths_types.DepthAPILimit,
 	expBase int,
 	callbackRate float64,
-	depth ...*depth_types.Depths) (pp *PairProcessor, err error) {
+	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
+	var (
+		depth *depth_types.Depths
+	)
+	if len(depths) > 0 {
+		depth = depths[0]
+	}
+
 	exchangeInfo := exchange_types.New()
 	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
 	if err != nil {
@@ -52,7 +59,7 @@ func NewPairProcessor(
 		degree:     3,
 		timeOut:    1 * time.Hour,
 
-		depth: nil,
+		depth: depth,
 	}
 	// Ініціалізуємо інформацію про пару
 	pp.pairInfo = pp.exchangeInfo.GetSymbol(
@@ -79,14 +86,6 @@ func NewPairProcessor(
 	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
 	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
 	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
-
-	// Ініціалізуємо стакан
-	pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
-	if pp.depth != nil {
-		pp.DepthEventStart(
-			stop,
-			pp.GetDepthEventCallBack())
-	}
 
 	return
 }

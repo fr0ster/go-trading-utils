@@ -1,25 +1,12 @@
 package depth
 
 import (
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 // Symbol implements depth_interface.Depths.
 func (d *Depths) Symbol() string {
 	return d.symbol
-}
-
-func (d *Depths) GetLimitDepth() depths_types.DepthAPILimit {
-	return d.limitDepth
-}
-
-func (d *Depths) GetLimitStream() depths_types.DepthStreamLevel {
-	return d.limitStream
-}
-
-func (d *Depths) GetRateStream() depths_types.DepthStreamRate {
-	return d.rateStream
 }
 
 func (d *Depths) GetNextUpCoefficient() items_types.PricePercentType {

@@ -3,61 +3,34 @@ package depth
 import (
 	"errors"
 	"sync"
+	"time"
 
 	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
 func New(
+	stop chan struct{},
 	degree int,
 	symbol string,
-	isMinMax bool,
-	targetPercent float64,
-	limitDepth depths_types.DepthAPILimit,
-	expBase int,
-	rate ...depths_types.DepthStreamRate) *Depths {
-	var (
-		limitStream depths_types.DepthStreamLevel
-		rateStream  depths_types.DepthStreamRate
-		// asksMinMax  *btree.BTree
-		// bidsMinMax  *btree.BTree
-	)
-	switch limitDepth {
-	case depths_types.DepthAPILimit5:
-		limitStream = depths_types.DepthStreamLevel5
-	case depths_types.DepthAPILimit10:
-		limitStream = depths_types.DepthStreamLevel10
-	default:
-		limitStream = depths_types.DepthStreamLevel20
+	timeOut time.Duration,
+	startDepthStream func() (chan struct{}, chan struct{}, error),
+	init func(*Depths) error) *Depths {
+	this := &Depths{
+		symbol:           symbol,
+		degree:           degree,
+		asks:             asks_types.New(degree, symbol),
+		bids:             bids_types.New(degree, symbol),
+		mutex:            &sync.Mutex{},
+		stop:             stop,
+		resetEvent:       make(chan error, 1),
+		timeOut:          timeOut,
+		StartDepthStream: startDepthStream,
+		Init:             init,
 	}
-	if len(rate) == 0 {
-		rateStream = depths_types.DepthStreamRate100ms
-	} else {
-		rateStream = rate[0]
-	}
-	// if isMinMax {
-	// 	asksMinMax = btree.New(degree)
-	// 	bidsMinMax = btree.New(degree)
-	// }
-	return &Depths{
-		symbol: symbol,
-		degree: degree,
-		asks:   asks_types.New(degree, symbol, targetPercent, limitDepth, expBase, rate...),
-		// asksMinMax:      asksMinMax,
-		// askNormalized:   btree.New(degree),
-		bids: bids_types.New(degree, symbol, targetPercent, limitDepth, expBase, rate...),
-		// bidsMinMax:      bidsMinMax,
-		// bidNormalized:   btree.New(degree),
-		mutex:           &sync.Mutex{},
-		limitDepth:      limitDepth,
-		limitStream:     limitStream,
-		rateStream:      rateStream,
-		percentToTarget: targetPercent,
-		expBase:         expBase,
-	}
+	return this
 }
 
 func Binance2BookTicker(binanceDepth interface{}) (*items_types.DepthItem, error) {

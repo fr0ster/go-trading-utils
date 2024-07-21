@@ -35,13 +35,8 @@ type (
 type (
 	UpOrDown bool
 	Depths   struct {
-		symbol        string
-		degree        int
-		expBase       int
-		targetPercent float64
-		limitDepth    DepthAPILimit
-		limitStream   DepthStreamLevel
-		rateStream    DepthStreamRate
+		symbol string
+		degree int
 
 		tree  *btree.BTree
 		mutex *sync.Mutex

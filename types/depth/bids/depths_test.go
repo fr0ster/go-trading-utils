@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +14,7 @@ const (
 
 func TestBidsGetAndReplaceOrInsert(t *testing.T) {
 	// TODO: Add test cases.
-	bids := bids_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	bids := bids_types.New(degree, "BTCUSDT")
 	bids.Set(items_types.NewBid(100, 10))
 	bids.Set(items_types.NewBid(200, 20))
 	bids.Set(items_types.NewBid(300, 30))
@@ -43,7 +42,7 @@ func TestBidsGetAndReplaceOrInsert(t *testing.T) {
 
 func TestGetAndSetBids(t *testing.T) {
 	// TODO: Add test cases.
-	depth := bids_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := bids_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.NewBid(100, 10))
 	depth.Set(items_types.NewBid(200, 20))
 	depth.Set(items_types.NewBid(300, 30))
@@ -58,7 +57,7 @@ func TestGetAndSetBids(t *testing.T) {
 
 func TestGetMaxQuantity(t *testing.T) {
 	// TODO: Add test cases.
-	depth := bids_types.New(degree, "BTCUSDT", 10, 100, 2, depths_types.DepthStreamRate100ms)
+	depth := bids_types.New(degree, "BTCUSDT")
 	depth.Set(items_types.NewBid(100, 10))
 	depth.Set(items_types.NewBid(200, 20))
 	depth.Set(items_types.NewBid(300, 30))

@@ -3,53 +3,54 @@ package processor
 import (
 	"fmt"
 
-	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	"github.com/sirupsen/logrus"
 )
 
 func (pp *PairProcessor) CalcValueForQuantity(
-	P1 items.PriceType,
-	Q1 items.QuantityType,
-	P2 items.PriceType) (
-	value items.PriceType,
-	quantity items.QuantityType,
-	middlePrice items.PriceType,
+	P1 items_types.PriceType,
+	Q1 items_types.QuantityType,
+	P2 items_types.PriceType) (
+	value items_types.PriceType,
+	quantity items_types.QuantityType,
+	middlePrice items_types.PriceType,
 	n int) {
 	var (
-		deltaPrice items.PriceType
+		deltaPrice items_types.PriceType
 	)
 	if P1 < P2 {
-		deltaPrice = items.PriceType(pp.GetDeltaPrice())
+		deltaPrice = items_types.PriceType(pp.GetDeltaPrice())
 	} else {
-		deltaPrice = items.PriceType(-pp.GetDeltaPrice())
+		deltaPrice = items_types.PriceType(-pp.GetDeltaPrice())
 	}
 	n = pp.FindLengthOfProgression(float64(P1), float64(P1)*(1+float64(deltaPrice)), float64(P2))
-	value = items.PriceType(pp.Sum(
+	value = items_types.PriceType(pp.Sum(
 		float64(P1)*float64(Q1),
 		pp.GetDelta(
 			float64(P1)*float64(Q1),
 			float64(P1)*(1+float64(deltaPrice))*float64(Q1)*(1+float64(pp.GetDeltaQuantity()))),
 		n))
-	quantity = items.QuantityType(pp.Sum(float64(Q1), pp.GetDelta(float64(Q1), float64(Q1)*(1+float64(pp.GetDeltaQuantity()))), n))
-	middlePrice = items.PriceType(pp.RoundPrice(items.PriceType(float64(value) / float64(quantity))))
+	quantity = items_types.QuantityType(pp.Sum(float64(Q1), pp.GetDelta(float64(Q1), float64(Q1)*(1+float64(pp.GetDeltaQuantity()))), n))
+	middlePrice = items_types.PriceType(pp.RoundPrice(items_types.PriceType(float64(value) / float64(quantity))))
 	return
 }
 
 func (pp *PairProcessor) CalculateInitialPosition(
 	buyPrice,
-	endPrice items.PriceType) (
-	value items.PriceType,
-	quantity items.QuantityType,
-	middlePrice items.PriceType,
-	initialQuantity items.QuantityType, n int, err error) {
-	low := items.QuantityType(pp.RoundQuantity(items.QuantityType(pp.notional / float64(buyPrice))))
-	high := items.QuantityType(pp.RoundQuantity(items.QuantityType(float64(pp.limitOnPosition) * float64(pp.leverage) / float64(buyPrice))))
+	endPrice items_types.PriceType) (
+	value items_types.PriceType,
+	quantity items_types.QuantityType,
+	middlePrice items_types.PriceType,
+	initialQuantity items_types.QuantityType, n int, err error) {
+	low := items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(pp.notional / float64(buyPrice))))
+	high := items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(float64(pp.limitOnPosition) * float64(pp.leverage) / float64(buyPrice))))
 
-	for pp.RoundQuantity(high-low) > items.QuantityType(pp.StepSize) {
-		mid := items.QuantityType(pp.RoundQuantity((low + high) / 2))
+	for pp.RoundQuantity(high-low) > items_types.QuantityType(pp.StepSize) {
+		mid := items_types.QuantityType(pp.RoundQuantity((low + high) / 2))
 		value, _, _, n = pp.CalcValueForQuantity(buyPrice, mid, endPrice)
-		if value <= items.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
+		if value <= items_types.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
 			low = mid
 		} else {
 			high = mid
@@ -57,12 +58,12 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	}
 
 	value, quantity, middlePrice, n = pp.CalcValueForQuantity(buyPrice, high, endPrice)
-	if value < items.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
-		initialQuantity = items.QuantityType(pp.RoundQuantity(high))
+	if value < items_types.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
+		initialQuantity = items_types.QuantityType(pp.RoundQuantity(high))
 		return
 	}
 	value, quantity, middlePrice, n = pp.CalcValueForQuantity(buyPrice, low, endPrice)
-	if value < items.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
+	if value < items_types.PriceType(float64(pp.limitOnPosition)*float64(pp.leverage)) && n >= pp.minSteps {
 		initialQuantity = pp.RoundQuantity(low)
 		return
 	}
@@ -71,16 +72,16 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	return
 }
 
-func (pp *PairProcessor) InitPositionGridUp(price items.PriceType) (
-	valueUp items.PriceType,
-	quantityUp items.QuantityType,
-	middlePriceUp items.PriceType,
-	startQuantityUp items.QuantityType,
+func (pp *PairProcessor) InitPositionGridUp(price items_types.PriceType) (
+	valueUp items_types.PriceType,
+	quantityUp items_types.QuantityType,
+	middlePriceUp items_types.PriceType,
+	startQuantityUp items_types.QuantityType,
 	stepsUp int,
 	err error) {
 	var (
-		priceUp           items.PriceType
-		currentQuantityUp items.QuantityType
+		priceUp           items_types.PriceType
+		currentQuantityUp items_types.QuantityType
 	)
 	valueUp, quantityUp, middlePriceUp, startQuantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		price,
@@ -95,9 +96,9 @@ func (pp *PairProcessor) InitPositionGridUp(price items.PriceType) (
 	}
 	pp.up.Clear(false)
 	for i := 1; i <= stepsUp; i++ {
-		priceUp = pp.RoundPrice(items.PriceType(pp.FindNthTerm(float64(price), float64(price)*(1+float64(pp.GetDeltaPrice())), i+1)))
+		priceUp = pp.RoundPrice(items_types.PriceType(pp.FindNthTerm(float64(price), float64(price)*(1+float64(pp.GetDeltaPrice())), i+1)))
 		currentQuantityUp = pp.RoundQuantity(
-			items.QuantityType(
+			items_types.QuantityType(
 				pp.FindNthTerm(
 					float64(startQuantityUp),
 					float64(startQuantityUp)*(1+float64(pp.GetDeltaQuantity())), i+1)))
@@ -112,16 +113,16 @@ func (pp *PairProcessor) InitPositionGridUp(price items.PriceType) (
 
 }
 
-func (pp *PairProcessor) InitPositionGridDown(price items.PriceType) (
-	valueDown items.PriceType,
-	quantityDown items.QuantityType,
-	middlePriceDown items.PriceType,
-	startQuantityDown items.QuantityType,
+func (pp *PairProcessor) InitPositionGridDown(price items_types.PriceType) (
+	valueDown items_types.PriceType,
+	quantityDown items_types.QuantityType,
+	middlePriceDown items_types.PriceType,
+	startQuantityDown items_types.QuantityType,
 	stepsDown int,
 	err error) {
 	var (
-		priceDown           items.PriceType
-		currentQuantityDown items.QuantityType
+		priceDown           items_types.PriceType
+		currentQuantityDown items_types.QuantityType
 	)
 	valueDown, quantityDown, middlePriceDown, startQuantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		price,
@@ -136,8 +137,8 @@ func (pp *PairProcessor) InitPositionGridDown(price items.PriceType) (
 	}
 	pp.down.Clear(false)
 	for i := 1; i < stepsDown; i++ {
-		priceDown = items.PriceType(pp.FindNthTerm(float64(price), float64(price)*(1-float64(pp.GetDeltaPrice())), i))
-		currentQuantityDown = items.QuantityType(pp.FindNthTerm(float64(startQuantityDown), float64(startQuantityDown)*(1+float64(pp.GetDeltaQuantity())), i))
+		priceDown = items_types.PriceType(pp.FindNthTerm(float64(price), float64(price)*(1-float64(pp.GetDeltaPrice())), i))
+		currentQuantityDown = items_types.QuantityType(pp.FindNthTerm(float64(startQuantityDown), float64(startQuantityDown)*(1+float64(pp.GetDeltaQuantity())), i))
 		if float64(currentQuantityDown)*float64(price) < pp.notional {
 			err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
 				pp.notional, float64(currentQuantityDown)*float64(price))
@@ -148,19 +149,51 @@ func (pp *PairProcessor) InitPositionGridDown(price items.PriceType) (
 
 }
 
-func (pp *PairProcessor) NextPriceUp(price ...items.PriceType) items.PriceType {
-	return pp.RoundPrice(pp.GetDepth().NextPriceUp(items.PricePercentType(pp.GetDeltaPrice()), price...))
+func (pp *PairProcessor) GetDepth() *depth_types.Depths {
+	return pp.depth
 }
 
-func (pp *PairProcessor) NextPriceDown(price ...items.PriceType) items.PriceType {
-	return pp.RoundPrice(pp.GetDepth().NextPriceDown(items.PricePercentType(pp.GetDeltaPrice()), price...))
+func (pp *PairProcessor) NextPriceUp(prices ...items_types.PriceType) items_types.PriceType {
+	var err error
+	if pp.depth != nil {
+		return pp.RoundPrice(pp.GetDepth().NextPriceUp(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
+	} else {
+		price := items_types.PriceType(0.0)
+		if len(prices) == 0 {
+			price, err = pp.GetCurrentPrice()
+			if err != nil {
+				return 0
+			}
+		} else {
+			price = prices[0]
+		}
+		return pp.RoundPrice(price * (1 + pp.GetDeltaPrice()))
+	}
 }
 
-func (pp *PairProcessor) NextQuantityUp(quantity items.QuantityType) items.QuantityType {
+func (pp *PairProcessor) NextPriceDown(prices ...items_types.PriceType) items_types.PriceType {
+	var err error
+	if pp.depth != nil {
+		return pp.RoundPrice(pp.GetDepth().NextPriceDown(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
+	} else {
+		price := items_types.PriceType(0.0)
+		if len(prices) == 0 {
+			price, err = pp.GetCurrentPrice()
+			if err != nil {
+				return 0
+			}
+		} else {
+			price = prices[0]
+		}
+		return pp.RoundPrice(price * (1 - pp.GetDeltaPrice()))
+	}
+}
+
+func (pp *PairProcessor) NextQuantityUp(quantity items_types.QuantityType) items_types.QuantityType {
 	return pp.RoundQuantity(quantity * (1 + pp.GetDeltaQuantity()))
 }
 
-func (pp *PairProcessor) NextQuantityDown(quantity items.QuantityType) items.QuantityType {
+func (pp *PairProcessor) NextQuantityDown(quantity items_types.QuantityType) items_types.QuantityType {
 	return pp.RoundQuantity(quantity * (1 - pp.GetDeltaQuantity()))
 }
 
@@ -207,9 +240,9 @@ func (pp *PairProcessor) UpDownDebug() {
 	}
 }
 
-func (pp *PairProcessor) NextUp(currentPrice items.PriceType, currentQuantity ...items.QuantityType) (
-	price items.PriceType,
-	quantity items.QuantityType,
+func (pp *PairProcessor) NextUp(currentPrice items_types.PriceType, currentQuantity ...items_types.QuantityType) (
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	err error) {
 	if val := pp.up.Min(); val != nil {
 		pair := val.(*pair_price_types.PairPrice)
@@ -225,9 +258,9 @@ func (pp *PairProcessor) NextUp(currentPrice items.PriceType, currentQuantity ..
 	}
 }
 
-func (pp *PairProcessor) nextUps(currentPrice items.PriceType) (
-	price items.PriceType,
-	quantity items.QuantityType,
+func (pp *PairProcessor) nextUps(currentPrice items_types.PriceType) (
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	err error) {
 	for {
 		price, quantity, err = pp.NextUp(currentPrice)
@@ -240,9 +273,9 @@ func (pp *PairProcessor) nextUps(currentPrice items.PriceType) (
 	}
 }
 
-func (pp *PairProcessor) NextDown(currentPrice items.PriceType, currentQuantity ...items.QuantityType) (
-	price items.PriceType,
-	quantity items.QuantityType,
+func (pp *PairProcessor) NextDown(currentPrice items_types.PriceType, currentQuantity ...items_types.QuantityType) (
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	err error) {
 	if val := pp.down.Max(); val != nil {
 		pair := val.(*pair_price_types.PairPrice)
@@ -258,9 +291,9 @@ func (pp *PairProcessor) NextDown(currentPrice items.PriceType, currentQuantity 
 	}
 }
 
-func (pp *PairProcessor) nextDowns(currentPrice items.PriceType) (
-	price items.PriceType,
-	quantity items.QuantityType,
+func (pp *PairProcessor) nextDowns(currentPrice items_types.PriceType) (
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	err error) {
 	for {
 		price, quantity, err = pp.NextDown(currentPrice)
@@ -273,7 +306,7 @@ func (pp *PairProcessor) nextDowns(currentPrice items.PriceType) (
 	}
 }
 
-func (pp *PairProcessor) ResetUpDown(currentPrice items.PriceType) (err error) {
+func (pp *PairProcessor) ResetUpDown(currentPrice items_types.PriceType) (err error) {
 	up := pp.up.Min()
 	down := pp.down.Max()
 	if up != nil && down != nil {
@@ -294,7 +327,7 @@ func (pp *PairProcessor) ResetUpDown(currentPrice items.PriceType) (err error) {
 	return
 }
 
-func (pp *PairProcessor) ResetUpOrInit(currentPrice items.PriceType) (err error) {
+func (pp *PairProcessor) ResetUpOrInit(currentPrice items_types.PriceType) (err error) {
 	if pp.up.Len() == 0 && pp.down.Len() == 0 {
 		_, _, _, _, _, err = pp.InitPositionGridUp(currentPrice)
 	} else {
@@ -303,7 +336,7 @@ func (pp *PairProcessor) ResetUpOrInit(currentPrice items.PriceType) (err error)
 	return
 }
 
-func (pp *PairProcessor) ResetDownOrInit(currentPrice items.PriceType) (err error) {
+func (pp *PairProcessor) ResetDownOrInit(currentPrice items_types.PriceType) (err error) {
 	if pp.up.Len() == 0 && pp.down.Len() == 0 {
 		_, _, _, _, _, err = pp.InitPositionGridDown(currentPrice)
 	} else {
