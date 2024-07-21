@@ -105,7 +105,7 @@ func (d *Depths) GetDeltaPrice() (delta items_types.PriceType, err error) {
 }
 
 func (d *Depths) GetDeltaPricePercent() (delta items_types.PricePercentType, err error) {
-	deltaPrice, err := d.GetDeltaPrice()
+	max, err := d.GetMaxPrice()
 	if err != nil {
 		return
 	}
@@ -113,7 +113,7 @@ func (d *Depths) GetDeltaPricePercent() (delta items_types.PricePercentType, err
 	if err != nil {
 		return
 	}
-	return items_types.PricePercentType(deltaPrice/min.GetPrice()) * 100, nil
+	return items_types.PricePercentType((max.GetPrice() - min.GetPrice()) * 2 * 100 / (max.GetPrice() + min.GetPrice())), nil
 }
 
 func (d *Depths) GetStandardDeviation() float64 {
