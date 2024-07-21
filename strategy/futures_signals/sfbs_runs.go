@@ -42,7 +42,7 @@ func Run(
 			futures_depth.GetterStartDepthStreamCreator(
 				depth_types.DepthStreamLevel5,
 				depth_types.DepthStreamRate100ms,
-				futures_depth.GetterDepthEventCallBackCreator(),
+				futures_depth.StandardEventCallBackCreator(),
 				futures_depth.GetterWsErrorHandlerCreator()),
 			futures_depth.GetterInitCreator(depth_types.DepthAPILimit20, client))
 	}

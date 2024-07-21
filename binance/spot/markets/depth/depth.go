@@ -52,33 +52,52 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func GetterDepthEventCallBackCreator() func(d *depth_types.Depths) binance.WsDepthHandler {
+func standardEventHandlerCreator() func(d *depth_types.Depths) binance.WsDepthHandler {
+	return func(d *depth_types.Depths) binance.WsDepthHandler {
+		return func(event *binance.WsDepthEvent) {
+			func() {
+				d.Lock()         // Locking the depths
+				defer d.Unlock() // Unlocking the depths
+				if event.LastUpdateID < d.LastUpdateID {
+					return
+				}
+				if event.LastUpdateID != int64(d.LastUpdateID)+1 {
+					d.Init()
+				} else if event.LastUpdateID == int64(d.LastUpdateID)+1 {
+					for _, bid := range event.Bids {
+						price, quantity, err := bid.Parse()
+						if err != nil {
+							return
+						}
+						d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					}
+					for _, ask := range event.Asks {
+						price, quantity, err := ask.Parse()
+						if err != nil {
+							return
+						}
+						d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
+					}
+					d.LastUpdateID = event.LastUpdateID
+				}
+			}()
+		}
+	}
+}
+
+func GetterDepthEventCallBackCreator(
+	handlers ...func(d *depth_types.Depths) binance.WsDepthHandler) func(d *depth_types.Depths) binance.WsDepthHandler {
 	return func(d *depth_types.Depths) binance.WsDepthHandler {
 		d.Init()
+		var stack []binance.WsDepthHandler
+		d.Init()
+		handlers = append(handlers, standardEventHandlerCreator())
+		for _, handler := range handlers {
+			stack = append(stack, handler(d))
+		}
 		return func(event *binance.WsDepthEvent) {
-			d.Lock()         // Locking the depths
-			defer d.Unlock() // Unlocking the depths
-			if event.LastUpdateID < d.LastUpdateID {
-				return
-			}
-			if event.LastUpdateID != int64(d.LastUpdateID)+1 {
-				d.Init()
-			} else if event.LastUpdateID == int64(d.LastUpdateID)+1 {
-				for _, bid := range event.Bids {
-					price, quantity, err := bid.Parse()
-					if err != nil {
-						return
-					}
-					d.GetBids().Update(items_types.NewBid(items_types.PriceType(price), items_types.QuantityType(quantity)))
-				}
-				for _, ask := range event.Asks {
-					price, quantity, err := ask.Parse()
-					if err != nil {
-						return
-					}
-					d.GetAsks().Update(items_types.NewAsk(items_types.PriceType(price), items_types.QuantityType(quantity)))
-				}
-				d.LastUpdateID = event.LastUpdateID
+			for _, handler := range stack {
+				handler(event)
 			}
 		}
 	}
@@ -98,9 +117,8 @@ func GetterStartPartialDepthStreamCreator(
 	}
 }
 
-func GetterPartialDepthEventCallBackCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+func standardPartialEventHandlerCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
-		d.Init()
 		return func(event *binance.WsPartialDepthEvent) {
 			func() {
 				d.Lock()         // Locking the depths
@@ -128,6 +146,23 @@ func GetterPartialDepthEventCallBackCreator() func(d *depth_types.Depths) binanc
 					d.LastUpdateID = event.LastUpdateID
 				}
 			}()
+		}
+	}
+}
+
+func GetterPartialDepthEventCallBackCreator(
+	handlers ...func(d *depth_types.Depths) binance.WsPartialDepthHandler) func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+		var stack []binance.WsPartialDepthHandler
+		d.Init()
+		handlers = append(handlers, standardPartialEventHandlerCreator())
+		for _, handler := range handlers {
+			stack = append(stack, handler(d))
+		}
+		return func(event *binance.WsPartialDepthEvent) {
+			for _, handler := range stack {
+				handler(event)
+			}
 		}
 	}
 }
