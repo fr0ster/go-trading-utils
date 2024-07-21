@@ -63,8 +63,8 @@ const (
 
 	CallbackRate_1 items_types.PricePercentType = 0.1 // CallbackRate 0.1%
 
-	PercentToTarget_1 items_types.PricePercentType = 10 // Відсоток до цілі
-	DepthsN_1                                      = 50 // Глибина
+	PercentToTarget_1 items_types.PricePercentType = 10.0 // Відсоток до цілі
+	DepthsN_1         int                          = 50   // Глибина
 
 	// Для USDT_FUTURE/COIN_FUTURE
 	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
@@ -89,7 +89,7 @@ const (
 	CallbackRate_2 items_types.PricePercentType = 0.5 // CallbackRate 0.5%
 
 	PercentToTarget_2 items_types.PricePercentType = 10  // Відсоток до цілі
-	DepthsN_2                                      = 500 // Глибина
+	DepthsN_2         int                          = 500 // Глибина
 )
 
 var (
