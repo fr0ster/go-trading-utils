@@ -1,6 +1,7 @@
 package bids
 
 import (
+	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
@@ -58,7 +59,7 @@ func (d *Bids) GetDeltaPrice() (delta items_types.PriceType, err error) {
 }
 
 func (d *Bids) GetDeltaPricePercent() (delta items_types.PricePercentType, err error) {
-	return d.tree.GetDeltaPricePercent()
+	return d.tree.GetDeltaPricePercent(depths_types.DOWN)
 }
 
 func (d *Bids) GetStandardDeviation() float64 {
