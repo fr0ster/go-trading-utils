@@ -12,7 +12,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
@@ -173,8 +172,6 @@ func RunSpotGridTrading(
 	deltaQuantity float64,
 	minSteps int,
 	targetPercent float64,
-	limitDepth depths_types.DepthAPILimit, // limitDepth
-	expBase int,
 	callbackRate float64,
 	stopEvent chan struct{},
 	wg *sync.WaitGroup) (err error) {
@@ -194,8 +191,6 @@ func RunSpotGridTrading(
 		deltaPrice,
 		deltaQuantity,
 		targetPercent,
-		limitDepth,
-		expBase,
 		callbackRate)
 	if err != nil {
 		printError()

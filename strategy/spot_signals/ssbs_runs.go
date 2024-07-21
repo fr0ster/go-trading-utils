@@ -10,6 +10,7 @@ import (
 
 	grid "github.com/fr0ster/go-trading-utils/strategy/spot_signals/grid"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -58,7 +59,26 @@ func Run(
 	stopEvent chan struct{},
 	updateTime time.Duration,
 	debug bool,
-	wg *sync.WaitGroup) {
+	wg *sync.WaitGroup,
+	depths ...*depth_types.Depths) {
+	// var (
+	// 	depth *depth_types.Depths
+	// )
+	// if len(depths) > 0 {
+	// 	depth = depths[0]
+	// } else {
+	// 	depth = depth_types.New(
+	// 		degree,
+	// 		pair.GetPair(),
+	// 		1000*time.Millisecond,
+	// 		spot_depth.GetterStartPartialDepthStreamCreator(
+	// 			pair.GetPair(),
+	// 			depth_types.DepthStreamLevel5,
+	// 			depth_types.DepthStreamRate100ms,
+	// 			spot_depth.GetterPartialDepthEventCallBackCreator(),
+	// 			spot_depth.GetterWsErrorHandlerCreator()),
+	// 		spot_depth.GetterInitCreator(depth_types.DepthAPILimit20, client))
+	// }
 	wg.Add(1)
 	go func() {
 		// Відпрацьовуємо Arbitrage стратегію
@@ -115,8 +135,6 @@ func Run(
 					pair.GetDeltaQuantity(),      // deltaQuantity
 					pair.GetMinSteps(),           // minSteps
 					pair.GetPercentToTarget(),    // targetPercent
-					pair.GetDepthsN(),            // limitDepth
-					2,                            // expBase
 					pair.GetCallbackRate(),       // callbackRate
 					stopEvent,                    // stopEvent
 					wg))                          // wg

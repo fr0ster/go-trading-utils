@@ -15,8 +15,8 @@ func New(
 	degree int,
 	symbol string,
 	timeOut time.Duration,
-	startDepthStream func() (chan struct{}, chan struct{}, error),
-	init func(*Depths) error,
+	startDepthStreamCreator func(*Depths) func() (chan struct{}, chan struct{}, error),
+	initCreator func(*Depths) func() (err error),
 	stops ...chan struct{}) *Depths {
 	var (
 		stop chan struct{}
@@ -35,8 +35,12 @@ func New(
 		stop:             stop,
 		resetEvent:       make(chan error, 1),
 		timeOut:          timeOut,
-		StartDepthStream: startDepthStream,
-		Init:             init,
+		StartDepthStream: nil,
+		Init:             nil,
+	}
+	if startDepthStreamCreator != nil && initCreator != nil {
+		this.StartDepthStream = startDepthStreamCreator(this)
+		this.Init = initCreator(this)
 	}
 	return this
 }

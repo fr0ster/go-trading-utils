@@ -3,8 +3,9 @@ package pairs_test
 import (
 	"testing"
 
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
 )
@@ -112,7 +113,7 @@ func assertPair(
 	assert.Equal(t, 10.0, pair.GetPercentToTarget())
 
 	// Test GetDepthsN
-	assert.Equal(t, depths_types.DepthAPILimit(50), pair.GetDepthsN())
+	assert.Equal(t, depth_types.DepthAPILimit(50), pair.GetDepthsN())
 }
 
 func TestPairs(t *testing.T) {

@@ -9,7 +9,6 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -329,8 +328,6 @@ func RunFuturesTrading(
 	leverage int,
 	minSteps int,
 	targetPercent float64,
-	limitDepth depths_types.DepthAPILimit,
-	expBase int,
 	callBackRate float64,
 	upOrderSideOpen futures.SideType,
 	upPositionNewOrderType futures.OrderType,
@@ -371,8 +368,6 @@ func RunFuturesTrading(
 		leverage,
 		minSteps,
 		targetPercent,
-		limitDepth,
-		expBase,
 		callBackRate,
 		progression)
 	if err != nil {

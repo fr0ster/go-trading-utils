@@ -3,13 +3,11 @@ package depth
 import (
 	"errors"
 	"time"
-
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 )
 
 func (d *Depths) DepthEventStart(
-	levels depths_types.DepthStreamLevel,
-	rate depths_types.DepthStreamRate) (err error) {
+	levels DepthStreamLevel,
+	rate DepthStreamRate) (err error) {
 	if d.Init == nil || d.StartDepthStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return

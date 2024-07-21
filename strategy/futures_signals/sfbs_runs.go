@@ -16,7 +16,6 @@ import (
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
@@ -40,13 +39,13 @@ func Run(
 			degree,
 			pair.GetPair(),
 			1000*time.Millisecond,
-			futures_depth.GetStartDepthStream(
-				depth,
-				depths_types.DepthStreamLevel5,
-				depths_types.DepthStreamRate100ms,
-				futures_depth.GetDepthEventCallBack(depth),
-				futures_depth.GetWsErrorHandler(depth)),
-			func(d *depth_types.Depths) error { return futures_depth.Init(d, depths_types.DepthAPILimit20, client) })
+			futures_depth.GetterStartDepthStreamCreator(
+				pair.GetPair(),
+				depth_types.DepthStreamLevel5,
+				depth_types.DepthStreamRate100ms,
+				futures_depth.GetterDepthEventCallBackCreator(),
+				futures_depth.GetterWsErrorHandlerCreator()),
+			futures_depth.GetterInitCreator(depth_types.DepthAPILimit20, client))
 	}
 	wg.Add(1)
 	go func() {
@@ -75,8 +74,6 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetPercentToTarget(),                                     // targetPercent
-				pair.GetDepthsN(),                                             // limitDepth
-				2,                                                             // expBase
 				pair.GetCallbackRate(),                                        // callbackRate
 				pair.GetProgression(),                                         // progression
 				quit,                                                          // quit
@@ -99,8 +96,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetDepthsN(),            // limitDepth
-				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				futures.SideTypeBuy,          // upOrderSideOpen
 				futures.OrderTypeStop,        // upPositionNewOrderType
@@ -130,8 +125,6 @@ func Run(
 				pair.GetMinSteps(),           // minSteps
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				pair.GetPercentToTarget(),                                     // targetPercent
-				pair.GetDepthsN(),                                             // limitPercent
-				2,                                                             // expBase
 				pair.GetCallbackRate(),                                        // callbackRate
 				pair.GetProgression(),                                         // progression
 				quit,                                                          // quit
@@ -151,8 +144,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				10,                           // targetPercent
-				75,                           // limitPercent
-				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				config.GetConfigurations().GetPercentsToStopSettingNewOrder(), // percentsToStopSettingNewOrder
 				quit,                  // quit
@@ -177,8 +168,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetDepthsN(),            // limitDepth
-				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit
@@ -203,8 +192,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetDepthsN(),            // limitDepth
-				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit
@@ -230,8 +217,6 @@ func Run(
 				pair.GetLeverage(),           // leverage
 				pair.GetMinSteps(),           // minSteps
 				pair.GetPercentToTarget(),    // targetPercent
-				pair.GetDepthsN(),            // limitDepth
-				2,                            // expBase
 				pair.GetCallbackRate(),       // callbackRate
 				pair.GetProgression(),        // progression
 				quit,                         // quit

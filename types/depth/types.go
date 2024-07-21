@@ -9,22 +9,34 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 )
 
+const (
+	DepthStreamLevel5    DepthStreamLevel = 5
+	DepthStreamLevel10   DepthStreamLevel = 10
+	DepthStreamLevel20   DepthStreamLevel = 20
+	DepthAPILimit5       DepthAPILimit    = 5
+	DepthAPILimit10      DepthAPILimit    = 10
+	DepthAPILimit20      DepthAPILimit    = 20
+	DepthAPILimit50      DepthAPILimit    = 50
+	DepthAPILimit100     DepthAPILimit    = 100
+	DepthAPILimit500     DepthAPILimit    = 500
+	DepthAPILimit1000    DepthAPILimit    = 1000
+	DepthStreamRate100ms DepthStreamRate  = DepthStreamRate(100 * time.Millisecond)
+	DepthStreamRate250ms DepthStreamRate  = DepthStreamRate(250 * time.Millisecond)
+	DepthStreamRate500ms DepthStreamRate  = DepthStreamRate(500 * time.Millisecond)
+)
+
+type (
+	DepthStreamLevel int
+	DepthAPILimit    int
+	DepthStreamRate  time.Duration
+)
+
 type (
 	Depths struct {
-		symbol string
-		degree int
-		asks   *asks_types.Asks
-		// asks              *btree.BTree
-		// asksCountQuantity int
-		// asksSummaQuantity types.QuantityType
-		// asksMinMax        *btree.BTree
-		// askNormalized     *btree.BTree
-		bids *bids_types.Bids
-		// bids              *btree.BTree
-		// bidsCountQuantity int
-		// bidsSummaQuantity types.QuantityType
-		// bidsMinMax        *btree.BTree
-		// bidNormalized     *btree.BTree
+		symbol       string
+		degree       int
+		asks         *asks_types.Asks
+		bids         *bids_types.Bids
 		mutex        *sync.Mutex
 		LastUpdateID int64
 
@@ -32,7 +44,7 @@ type (
 		resetEvent       chan error
 		timeOut          time.Duration
 		StartDepthStream func() (chan struct{}, chan struct{}, error)
-		Init             func(*Depths) error
+		Init             func() (err error)
 	}
 )
 

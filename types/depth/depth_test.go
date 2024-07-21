@@ -19,10 +19,6 @@ const (
 	expBase         = 2
 )
 
-var (
-	stop chan struct{} = make(chan struct{})
-)
-
 func TestLockUnlock(t *testing.T) {
 	d := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
 	d.Lock()
