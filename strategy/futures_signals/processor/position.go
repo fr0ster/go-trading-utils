@@ -76,7 +76,7 @@ func (pp *PairProcessor) GetPositionMargin() (margin float64) {
 	return
 }
 
-func (pp *PairProcessor) SetPositionMargin(amountMargin types.PriceType, typeMargin int) (err error) {
+func (pp *PairProcessor) SetPositionMargin(amountMargin types.ValueType, typeMargin int) (err error) {
 	return pp.client.NewUpdatePositionMarginService().
 		Symbol(pp.symbol.Symbol).Type(typeMargin).
 		Amount(utils.ConvFloat64ToStrDefault(float64(amountMargin))).Do(context.Background())
@@ -100,7 +100,7 @@ func (pp *PairProcessor) GetPositionAmt() (positionAmt float64) {
 	return
 }
 
-func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price types.PriceType) (unRealizedProfit types.PriceType) {
+func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price types.PriceType) (unRealizedProfit types.ValueType) {
 	if risk == nil || pp.leverage <= 0 {
 		return 0
 	}
@@ -109,9 +109,9 @@ func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price ty
 	if positionAmt == 0 { // No position
 		return 0
 	} else if positionAmt < 0 { // Short position
-		unRealizedProfit = types.PriceType(float64(entryPrice-price) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = types.ValueType(float64(entryPrice-price) * float64(positionAmt) * float64(pp.leverage))
 	} else if positionAmt > 0 { // Long position
-		unRealizedProfit = types.PriceType(float64(price-entryPrice) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = types.ValueType(float64(price-entryPrice) * float64(positionAmt) * float64(pp.leverage))
 	}
 	return
 }
@@ -125,21 +125,21 @@ func (pp *PairProcessor) CheckAddPosition(risk *futures.PositionRisk, price type
 		return true
 	} else if positionAmt < 0 { // Short position
 		return liquidationPrice > pp.GetUpBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*types.PriceType(pp.GetLeverage())) &&
+			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*types.ValueType(pp.GetLeverage())) &&
 			price <= pp.GetUpBound()
 	} else if positionAmt > 0 { // Long position
 		return liquidationPrice < pp.GetLowBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*types.PriceType(pp.GetLeverage())) &&
+			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*types.ValueType(pp.GetLeverage())) &&
 			price >= pp.GetLowBound()
 	}
 	return false
 }
 
-func (pp *PairProcessor) CheckStopLoss(free types.PriceType, risk *futures.PositionRisk, price types.PriceType) bool {
+func (pp *PairProcessor) CheckStopLoss(free types.ValueType, risk *futures.PositionRisk, price types.PriceType) bool {
 	if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 		return false
 	}
 	return (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && price < pp.GetLowBound()) ||
 		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && price > pp.GetUpBound()) ||
-		types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free
+		types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free
 }

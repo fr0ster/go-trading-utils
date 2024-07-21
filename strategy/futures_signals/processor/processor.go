@@ -44,8 +44,8 @@ func (pp *PairProcessor) CalculateInitialPosition(
 	quantity items_types.QuantityType,
 	middlePrice items_types.PriceType,
 	initialQuantity items_types.QuantityType, n int, err error) {
-	low := items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(pp.notional / float64(buyPrice))))
-	high := items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(float64(pp.limitOnPosition) * float64(pp.leverage) / float64(buyPrice))))
+	low := items_types.QuantityType(pp.RoundValue(pp.notional / items_types.ValueType(buyPrice)))
+	high := items_types.QuantityType(pp.RoundValue(pp.limitOnPosition * items_types.ValueType(pp.leverage) / items_types.ValueType(buyPrice)))
 
 	for pp.RoundQuantity(high-low) > items_types.QuantityType(pp.StepSize) {
 		mid := items_types.QuantityType(pp.RoundQuantity((low + high) / 2))
@@ -89,7 +89,7 @@ func (pp *PairProcessor) InitPositionGridUp(price items_types.PriceType) (
 	if err != nil {
 		return
 	}
-	if float64(startQuantityUp)*float64(price) < pp.notional {
+	if items_types.ValueType(float64(startQuantityUp)*float64(price)) < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v",
 			pp.notional, float64(startQuantityUp)*float64(price))
 		return
@@ -102,7 +102,7 @@ func (pp *PairProcessor) InitPositionGridUp(price items_types.PriceType) (
 				pp.FindNthTerm(
 					float64(startQuantityUp),
 					float64(startQuantityUp)*(1+float64(pp.GetDeltaQuantity())), i+1)))
-		if float64(currentQuantityUp)*float64(price) < pp.notional {
+		if items_types.ValueType(float64(currentQuantityUp)*float64(price)) < pp.notional {
 			err = fmt.Errorf("we need more money for position if price gone up: %v but can buy only for %v",
 				pp.notional, float64(currentQuantityUp)*float64(price))
 			return
@@ -130,7 +130,7 @@ func (pp *PairProcessor) InitPositionGridDown(price items_types.PriceType) (
 	if err != nil {
 		return
 	}
-	if float64(currentQuantityDown)*float64(price) < pp.notional {
+	if items_types.ValueType(float64(currentQuantityDown)*float64(price)) < pp.notional {
 		err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
 			pp.notional, float64(currentQuantityDown)*float64(price))
 		return
@@ -139,7 +139,7 @@ func (pp *PairProcessor) InitPositionGridDown(price items_types.PriceType) (
 	for i := 1; i < stepsDown; i++ {
 		priceDown = items_types.PriceType(pp.FindNthTerm(float64(price), float64(price)*(1-float64(pp.GetDeltaPrice())), i))
 		currentQuantityDown = items_types.QuantityType(pp.FindNthTerm(float64(startQuantityDown), float64(startQuantityDown)*(1+float64(pp.GetDeltaQuantity())), i))
-		if float64(currentQuantityDown)*float64(price) < pp.notional {
+		if items_types.ValueType(float64(currentQuantityDown)*float64(price)) < pp.notional {
 			err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
 				pp.notional, float64(currentQuantityDown)*float64(price))
 		}

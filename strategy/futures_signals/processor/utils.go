@@ -10,17 +10,21 @@ import (
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
-	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-func (pp *PairProcessor) RoundPrice(price items.PriceType) items.PriceType {
-	return items.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
+func (pp *PairProcessor) RoundValue(value items_types.ValueType) items_types.ValueType {
+	return items_types.ValueType(utils.RoundToDecimalPlace(float64(value), pp.GetTickSizeExp()))
 }
 
-func (pp *PairProcessor) RoundQuantity(quantity items.QuantityType) items.QuantityType {
-	return items.QuantityType(utils.RoundToDecimalPlace(float64(quantity), pp.GetStepSizeExp()))
+func (pp *PairProcessor) RoundPrice(price items_types.PriceType) items_types.PriceType {
+	return items_types.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
+}
+
+func (pp *PairProcessor) RoundQuantity(quantity items_types.QuantityType) items_types.QuantityType {
+	return items_types.QuantityType(utils.RoundToDecimalPlace(float64(quantity), pp.GetStepSizeExp()))
 }
 
 func (pp *PairProcessor) Debug(fl, id string) {
@@ -33,25 +37,25 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, priceUp items.PriceType, err error) {
+func (pp *PairProcessor) GetTargetPrices(price ...items_types.PriceType) (priceDown, priceUp items_types.PriceType, err error) {
 	priceUp = pp.NextPriceUp(price...)
 	priceDown = pp.NextPriceDown(price...)
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items.PriceType, err error) {
+func (pp *PairProcessor) GetLimitPrices(price ...items_types.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items_types.PriceType, err error) {
 	var (
-		askMax *items.DepthItem
-		bidMax *items.DepthItem
+		askMax *items_types.DepthItem
+		bidMax *items_types.DepthItem
 	)
 	priceTargetDown, priceTargetUp, err = pp.GetTargetPrices(price...)
 	if err != nil {
 		return
 	}
-	asksFilter := func(i *items.DepthItem) bool {
+	asksFilter := func(i *items_types.DepthItem) bool {
 		return i.GetPrice() > priceTargetUp
 	}
-	bidsFilter := func(i *items.DepthItem) bool {
+	bidsFilter := func(i *items_types.DepthItem) bool {
 		return i.GetPrice() < priceTargetDown
 	}
 	_, askMax = pp.depth.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()
@@ -62,13 +66,13 @@ func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDo
 }
 
 func (pp *PairProcessor) GetPrices(
-	price items.PriceType,
+	price items_types.PriceType,
 	risk *futures.PositionRisk,
 	isDynamic bool) (
-	priceUp items.PriceType,
-	quantityUp items.QuantityType,
-	priceDown items.PriceType,
-	quantityDown items.QuantityType,
+	priceUp items_types.PriceType,
+	quantityUp items_types.QuantityType,
+	priceDown items_types.PriceType,
+	quantityDown items_types.QuantityType,
 	reduceOnlyUp bool,
 	reduceOnlyDown bool,
 	err error) {
@@ -88,28 +92,28 @@ func (pp *PairProcessor) GetPrices(
 			quantityDown = 0
 		}
 	} else {
-		quantityUp = pp.RoundQuantity(items.QuantityType(float64(pp.GetLimitOnTransaction()) * float64(pp.GetLeverage()) / float64(priceUp)))
-		quantityDown = pp.RoundQuantity(items.QuantityType(float64(pp.GetLimitOnTransaction()) * float64(pp.GetLeverage()) / float64(priceDown)))
+		quantityUp = pp.RoundQuantity(items_types.QuantityType(float64(pp.GetLimitOnTransaction()) * float64(pp.GetLeverage()) / float64(priceUp)))
+		quantityDown = pp.RoundQuantity(items_types.QuantityType(float64(pp.GetLimitOnTransaction()) * float64(pp.GetLeverage()) / float64(priceDown)))
 	}
 	if quantityUp == 0 && quantityDown == 0 {
 		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)
 		return
 	}
-	if float64(quantityUp)*float64(priceUp) < pp.GetNotional() {
+	if items_types.ValueType(float64(quantityUp)*float64(priceUp)) < pp.GetNotional() {
 		err = fmt.Errorf("calculated quantity up %v * price up %v < notional %v", quantityUp, priceUp, pp.GetNotional())
 		return
-	} else if float64(quantityUp)*float64(priceUp) < pp.GetNotional() {
+	} else if items_types.ValueType(float64(quantityUp)*float64(priceUp)) < pp.GetNotional() {
 		err = fmt.Errorf("calculated quantity down %v * price down %v < notional %v", quantityDown, priceDown, pp.GetNotional())
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 			priceDown = pp.NextPriceDown()
-			quantityDown = items.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
+			quantityDown = items_types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyDown = true
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 			priceUp = pp.NextPriceUp()
-			quantityUp = items.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+			quantityUp = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyUp = true
 		}
 	}
@@ -137,7 +141,7 @@ func (pp *PairProcessor) GetTPAndSLOrdersSideAndTypes(
 	downOrderSide = downOrderSideOpen
 	downOrderType = downPositionNewOrderType
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 &&
-		math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)) > pp.GetNotional() {
+		items_types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))) > pp.GetNotional() {
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // SHORT Закриваємо SHORT позицію
 			upOrderSide = futures.SideTypeBuy
 			upOrderType = shortPositionSLOrderType

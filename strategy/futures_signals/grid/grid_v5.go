@@ -319,17 +319,17 @@ func RunFuturesGridTradingV5(
 	client *futures.Client,
 	degree int,
 	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
@@ -393,7 +393,7 @@ func RunFuturesGridTradingV5(
 				openOrders, _ := pairProcessor.GetOpenOrders()
 				if v5.TryLock() {
 					logrus.Debugf("Futures %s: Check position", pairProcessor.GetPair())
-					free := pairProcessor.GetFreeBalance() * items_types.PriceType(pairProcessor.GetLeverage())
+					free := pairProcessor.GetFreeBalance() * items_types.ValueType(pairProcessor.GetLeverage())
 					risk, err := pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()

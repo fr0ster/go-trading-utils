@@ -18,7 +18,7 @@ import (
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -28,17 +28,17 @@ func NewPairProcessor(
 	stop chan struct{},
 	client *futures.Client,
 	symbol string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	UpBound float64,
-	LowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	UpBound items_types.PricePercentType,
+	LowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
 	var (
@@ -71,7 +71,7 @@ func NewPairProcessor(
 		orderTypes:         nil,
 		degree:             3,
 		timeOut:            1 * time.Hour,
-		limitOnPosition:    types.PriceType(limitOnPosition),
+		limitOnPosition:    limitOnPosition,
 		limitOnTransaction: limitOnTransaction,
 		UpBoundPercent:     UpBound,
 		UpBound:            0,
@@ -81,8 +81,8 @@ func NewPairProcessor(
 		marginType:         marginType,
 		callbackRate:       callbackRate,
 
-		deltaPrice:    types.PriceType(deltaPrice),
-		deltaQuantity: types.QuantityType(deltaQuantity),
+		deltaPrice:    items_types.PriceType(deltaPrice),
+		deltaQuantity: items_types.QuantityType(deltaQuantity),
 
 		progression: progression,
 		depth:       depth,
@@ -105,13 +105,13 @@ func NewPairProcessor(
 	}
 	pp.baseSymbol = pp.symbol.QuoteAsset
 	pp.targetSymbol = pp.symbol.BaseAsset
-	pp.notional = utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional)
-	pp.StepSize = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
-	pp.maxQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity)
-	pp.minQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity)
-	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
-	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
-	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
+	pp.notional = items_types.ValueType(utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional))
+	pp.StepSize = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize))
+	pp.maxQty = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity))
+	pp.minQty = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity))
+	pp.tickSize = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize))
+	pp.maxPrice = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice))
+	pp.minPrice = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice))
 
 	if pp.progression == pairs_types.ArithmeticProgression {
 		pp.NthTerm = progressions.ArithmeticProgressionNthTerm

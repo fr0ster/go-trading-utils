@@ -5,6 +5,7 @@ import (
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 
 	"github.com/google/btree"
 )
@@ -87,23 +88,23 @@ type (
 		MarginType MarginType `json:"margin_type"` // Тип маржі
 		Leverage   int        `json:"leverage"`    // Маржинальне плече
 
-		LimitOnPosition    float64 `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
-		LimitOnTransaction float64 `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
+		LimitOnPosition    items_types.ValueType        `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
+		LimitOnTransaction items_types.ValuePercentType `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		UpBound  float64 `json:"up_bound"`  // Верхня межа ціни, най буде відсоток від ціни безубитку позиції
-		LowBound float64 `json:"low_bound"` // Нижня межа ціни, най буде відсоток від ціни безубитку позиції
-		MinSteps int     `json:"min_steps"` // Мінімальна кількість кроків
+		UpBound  items_types.PricePercentType `json:"up_bound"`  // Верхня межа ціни, най буде відсоток від ціни безубитку позиції
+		LowBound items_types.PricePercentType `json:"low_bound"` // Нижня межа ціни, най буде відсоток від ціни безубитку позиції
+		MinSteps int                          `json:"min_steps"` // Мінімальна кількість кроків
 
-		DeltaPrice    float64         `json:"delta_price"`    // Дельта для купівлі/продажу
-		DeltaQuantity float64         `json:"delta_quantity"` // Кількість для купівлі/продажу
-		Progression   ProgressionType `json:"progression"`    // Тип прогресії
+		DeltaPrice    items_types.PricePercentType    `json:"delta_price"`    // Дельта для купівлі/продажу
+		DeltaQuantity items_types.QuantityPercentType `json:"delta_quantity"` // Кількість для купівлі/продажу
+		Progression   ProgressionType                 `json:"progression"`    // Тип прогресії
 
-		Value float64 `json:"value"` // Вартість позиції
+		Value items_types.ValueType `json:"value"` // Вартість позиції
 
-		CallbackRate float64 `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
+		CallbackRate items_types.PricePercentType `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 
-		PercentToTarget float64 `json:"percent_to_target"` // Відсоток до цільової позиції
-		DepthsN         int     `json:"depths_n"`          // Глибина стакана
+		PercentToTarget items_types.PricePercentType `json:"percent_to_target"` // Відсоток до цільової позиції
+		DepthsN         int                          `json:"depths_n"`          // Глибина стакана
 	}
 )
 
@@ -181,87 +182,87 @@ func (pr *Pairs) SetLeverage(leverage int) {
 	pr.Leverage = leverage
 }
 
-func (pr *Pairs) GetLimitOnPosition() float64 {
+func (pr *Pairs) GetLimitOnPosition() items_types.ValueType {
 	return pr.LimitOnPosition
 }
 
-func (pr *Pairs) GetLimitOnTransaction() float64 {
-	return pr.LimitOnTransaction / 100
+func (pr *Pairs) GetLimitOnTransaction() items_types.ValuePercentType {
+	return pr.LimitOnTransaction
 }
 
-func (pr *Pairs) GetUpBound() float64 {
-	return pr.UpBound / 100
+func (pr *Pairs) GetUpBound() items_types.PricePercentType {
+	return pr.UpBound
 }
 
-func (pr *Pairs) GetLowBound() float64 {
-	return pr.LowBound / 100
+func (pr *Pairs) GetLowBound() items_types.PricePercentType {
+	return pr.LowBound
 }
 
 func (pr *Pairs) GetMinSteps() int {
 	return pr.MinSteps
 }
 
-func (pr *Pairs) GetDeltaPrice() float64 {
-	return pr.DeltaPrice / 100
+func (pr *Pairs) GetDeltaPrice() items_types.PricePercentType {
+	return pr.DeltaPrice
 }
 
-func (pr *Pairs) GetDeltaQuantity() float64 {
-	return pr.DeltaQuantity / 100
+func (pr *Pairs) GetDeltaQuantity() items_types.QuantityPercentType {
+	return pr.DeltaQuantity
 }
 
 func (pr *Pairs) GetProgression() ProgressionType {
 	return pr.Progression
 }
 
-func (pr *Pairs) GetValue() float64 {
+func (pr *Pairs) GetValue() items_types.ValueType {
 	return pr.Value
 }
 
-func (pr *Pairs) SetLimitOnPosition(val float64) {
+func (pr *Pairs) SetLimitOnPosition(val items_types.ValueType) {
 	pr.LimitOnPosition = val
 }
 
-func (pr *Pairs) SetLimitOnTransaction(val float64) {
-	pr.LimitOnTransaction = val * 100
+func (pr *Pairs) SetLimitOnTransaction(val items_types.ValuePercentType) {
+	pr.LimitOnTransaction = val
 }
 
-func (pr *Pairs) SetUpBoundPercent(val float64) {
-	pr.UpBound = val * 100
+func (pr *Pairs) SetUpBoundPercent(val items_types.PricePercentType) {
+	pr.UpBound = val
 }
 
-func (pr *Pairs) SetLowBoundPercent(val float64) {
-	pr.LowBound = val * 100
+func (pr *Pairs) SetLowBoundPercent(val items_types.PricePercentType) {
+	pr.LowBound = val
 }
 
 func (pr *Pairs) SetMinSteps(val int) {
 	pr.MinSteps = val
 }
 
-func (pr *Pairs) SetDeltaPrice(val float64) {
-	pr.DeltaPrice = val * 100
+func (pr *Pairs) SetDeltaPrice(val items_types.PricePercentType) {
+	pr.DeltaPrice = val
 }
 
-func (pr *Pairs) SetDeltaQuantity(quantity float64) {
-	pr.DeltaQuantity = quantity * 100
+func (pr *Pairs) SetDeltaQuantity(quantity items_types.QuantityPercentType) {
+	pr.DeltaQuantity = quantity
 }
 
 func (pr *Pairs) SetProgression(val ProgressionType) {
 	pr.Progression = val
 }
 
-func (pr *Pairs) SetValue(value float64) {
+func (pr *Pairs) SetValue(value items_types.ValueType) {
 	pr.Value = value
 }
 
-func (pr *Pairs) GetCallbackRate() float64 {
+func (pr *Pairs) GetCallbackRate() items_types.PricePercentType {
 	return pr.CallbackRate
 }
 
-func (pr *Pairs) SetCallbackRate(rate float64) {
+func (pr *Pairs) SetCallbackRate(rate items_types.PricePercentType) {
 	pr.CallbackRate = rate
 }
 
-func (pr *Pairs) GetPercentToTarget() float64 {
+func (pr *Pairs) GetPercentToTarget() items_types.PricePercentType {
 	if pr.PercentToTarget == 0 {
 		return 10
 	} else {
@@ -269,7 +270,7 @@ func (pr *Pairs) GetPercentToTarget() float64 {
 	}
 }
 
-func (pr *Pairs) SetPercentToTarget(percent float64) {
+func (pr *Pairs) SetPercentToTarget(percent items_types.PricePercentType) {
 	pr.PercentToTarget = percent
 }
 

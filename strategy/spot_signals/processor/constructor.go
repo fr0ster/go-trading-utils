@@ -13,6 +13,7 @@ import (
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
@@ -23,14 +24,14 @@ func NewPairProcessor(
 	stop chan struct{},
 	client *binance.Client,
 	symbol string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	UpBound float64,
-	LowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
-	targetPercent float64,
-	callbackRate float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	UpBound items_types.PricePercentType,
+	LowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
 	var (
 		depth *depth_types.Depths

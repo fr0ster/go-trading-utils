@@ -11,6 +11,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -394,17 +395,17 @@ func initPosition_v3(
 func RunFuturesGridTradingV3(
 	client *futures.Client,
 	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
@@ -469,7 +470,7 @@ func RunFuturesGridTradingV3(
 				if v3.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
 					if len(openOrders) == 1 {
-						free := pairProcessor.GetFreeBalance() * types.PriceType(pairProcessor.GetLeverage())
+						free := pairProcessor.GetFreeBalance() * types.ValueType(pairProcessor.GetLeverage())
 						risk, _ := pairProcessor.GetPositionRisk()
 						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 							currentPrice, err := pairProcessor.GetCurrentPrice()
@@ -480,7 +481,7 @@ func RunFuturesGridTradingV3(
 							}
 							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
 								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
-								types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free {
+								types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free {
 								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
 									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
 								pairProcessor.ClosePosition(risk)

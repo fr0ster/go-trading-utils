@@ -9,7 +9,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
@@ -30,10 +30,10 @@ func getCallBackTrading(
 	var (
 		sideUp    futures.SideType
 		typeUp    futures.OrderType
-		priceUp   types.PriceType
+		priceUp   items_types.PriceType
 		sideDown  futures.SideType
 		typeDown  futures.OrderType
-		priceDown types.PriceType
+		priceDown items_types.PriceType
 	)
 	return func(event *futures.WsUserDataEvent) {
 		if event.Event == futures.UserDataEventTypeOrderTradeUpdate &&
@@ -58,18 +58,18 @@ func getCallBackTrading(
 					// Відкрили позицію long купівлею, закриваємо її продажем
 					sideUp = futures.SideTypeSell
 					typeUp = longPositionTPOrderType
-					priceUp = types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 + float64(pairProcessor.GetDeltaPrice())*2))
+					priceUp = items_types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 + float64(pairProcessor.GetDeltaPrice())*2))
 					sideDown = futures.SideTypeSell
 					typeDown = longPositionSLOrderType
-					priceDown = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 - float64(pairProcessor.GetDeltaPrice())))
+					priceDown = items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 - float64(pairProcessor.GetDeltaPrice())))
 				} else if event.OrderTradeUpdate.Side == futures.SideTypeSell {
 					// Відкрили позицію short продажею, закриваємо її купівлею
 					sideUp = futures.SideTypeBuy
 					typeUp = shortPositionSLOrderType
-					priceUp = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + float64(pairProcessor.GetDeltaPrice())))
+					priceUp = items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice) * (1 + float64(pairProcessor.GetDeltaPrice())))
 					sideDown = futures.SideTypeBuy
 					typeDown = shortPositionTPOrderType
-					priceDown = types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 - float64(pairProcessor.GetDeltaPrice())*2))
+					priceDown = items_types.PriceType(math.Max(utils.ConvStrToFloat64(risk.BreakEvenPrice), float64(currentPrice)) * (1 - float64(pairProcessor.GetDeltaPrice())*2))
 				}
 				upOrder, downOrder, err := openPosition(
 					sideUp,
@@ -80,8 +80,8 @@ func getCallBackTrading(
 					true,
 					false,
 					true,
-					types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
-					types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
+					items_types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
+					items_types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
 					priceUp,
 					priceUp,
 					priceUp,
@@ -114,7 +114,7 @@ func getCallBackTrading(
 			} else if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 				pairProcessor.CancelAllOrders()
 				// Створюємо початкові ордери на продаж та купівлю
-				if pairProcessor.GetNotional() > float64(pairProcessor.GetLimitOnTransaction()) {
+				if pairProcessor.GetNotional() > items_types.ValueType(pairProcessor.GetLimitOnTransaction()) {
 					logrus.Errorf("Notional %v > LimitOnTransaction %v", pairProcessor.GetNotional(), pairProcessor.GetLimitOnTransaction())
 					printError()
 					close(quit)
@@ -129,7 +129,7 @@ func getCallBackTrading(
 				}
 				quantity := pairProcessor.RoundQuantity(
 					pairProcessor.RoundQuantity(
-						types.QuantityType(
+						items_types.QuantityType(
 							float64(pairProcessor.GetLimitOnTransaction()) * float64(pairProcessor.GetLeverage()) / float64(currentPrice))))
 				_, _, err = openPosition(
 					upOrderSideOpen,
@@ -177,10 +177,10 @@ func getErrorHandlingTrading(
 			upNewOrder    futures.OrderType
 			downNewSide   futures.SideType
 			downNewOrder  futures.OrderType
-			initPriceUp   types.PriceType
-			initPriceDown types.PriceType
-			quantityUp    types.QuantityType
-			quantityDown  types.QuantityType
+			initPriceUp   items_types.PriceType
+			initPriceDown items_types.PriceType
+			quantityUp    items_types.QuantityType
+			quantityDown  items_types.QuantityType
 			err           error
 		)
 		openOrders, _ := pairProcessor.GetOpenOrders()
@@ -253,10 +253,10 @@ func initNewTradingPosition(
 	upNewOrder futures.OrderType,
 	downNewSide futures.SideType,
 	downNewOrder futures.OrderType,
-	initPriceUp types.PriceType,
-	initPriceDown types.PriceType,
-	quantityUp types.QuantityType,
-	quantityDown types.QuantityType,
+	initPriceUp items_types.PriceType,
+	initPriceDown items_types.PriceType,
+	quantityUp items_types.QuantityType,
+	quantityDown items_types.QuantityType,
 	err error) {
 
 	risk, err := pairProcessor.GetPositionRisk()
@@ -265,7 +265,7 @@ func initNewTradingPosition(
 		close(quit)
 		return
 	}
-	if float64(pairProcessor.GetLimitOnTransaction()) < pairProcessor.GetNotional() {
+	if items_types.ValueType(pairProcessor.GetLimitOnTransaction()) < pairProcessor.GetNotional() {
 		err = fmt.Errorf("limit on transaction %v < notional %v", pairProcessor.GetLimitOnTransaction(), pairProcessor.GetNotional())
 		printError()
 		close(quit)
@@ -287,12 +287,12 @@ func initNewTradingPosition(
 		close(quit)
 		return
 	}
-	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
-		quantityDown = types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
-	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && utils.ConvStrToFloat64(risk.PositionAmt) > pairProcessor.GetNotional() {
-		quantityUp = types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-		quantityDown = types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 && items_types.ValueType(utils.ConvStrToFloat64(risk.PositionAmt)) > pairProcessor.GetNotional() {
+		quantityUp = items_types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
+		quantityDown = items_types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
+	} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 && items_types.ValueType(utils.ConvStrToFloat64(risk.PositionAmt)) > pairProcessor.GetNotional() {
+		quantityUp = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+		quantityDown = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	}
 	upNewSide, upNewOrder, downNewSide, downNewOrder, err = pairProcessor.GetTPAndSLOrdersSideAndTypes(
 		risk,
@@ -318,17 +318,17 @@ func RunFuturesTrading(
 	symbol string,
 	degree int,
 	limit int,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callBackRate float64,
+	targetPercent items_types.PricePercentType,
+	callBackRate items_types.PricePercentType,
 	upOrderSideOpen futures.SideType,
 	upPositionNewOrderType futures.OrderType,
 	downOrderSideOpen futures.SideType,
@@ -345,10 +345,10 @@ func RunFuturesTrading(
 		upNewOrder    futures.OrderType
 		downNewSide   futures.SideType
 		downNewOrder  futures.OrderType
-		initPriceUp   types.PriceType
-		initPriceDown types.PriceType
-		quantityUp    types.QuantityType
-		quantityDown  types.QuantityType
+		initPriceUp   items_types.PriceType
+		initPriceDown items_types.PriceType
+		quantityUp    items_types.QuantityType
+		quantityDown  items_types.QuantityType
 		pairProcessor *processor.PairProcessor
 	)
 	defer wg.Done()

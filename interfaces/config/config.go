@@ -2,6 +2,7 @@ package config
 
 import (
 	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	"github.com/sirupsen/logrus"
 )
@@ -33,10 +34,10 @@ type (
 		GetBalancingOfMargin() bool
 		SetBalancingOfMargin(bool)
 
-		GetPercentsToStopSettingNewOrder() float64
-		SetPercentsToStopSettingNewOrder(float64)
-		GetPercentToDecreasePosition() float64
-		SetPercentToDecreasePosition(float64)
+		GetPercentsToStopSettingNewOrder() items_types.PricePercentType
+		SetPercentsToStopSettingNewOrder(items_types.PricePercentType)
+		GetPercentToDecreasePosition() items_types.PricePercentType
+		SetPercentToDecreasePosition(items_types.PricePercentType)
 
 		GetObserverTimeOutMillisecond() int
 		SetObserverTimeOutMillisecond(int)

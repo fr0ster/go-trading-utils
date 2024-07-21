@@ -12,7 +12,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -46,8 +46,8 @@ func round(val float64, exp int) float64 {
 func initVars(
 	pairProcessor *processor.PairProcessor) (
 	symbol *binance.Symbol,
-	price types.PriceType,
-	quantity types.QuantityType,
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	tickSizeExp,
 	stepSizeExp int,
 	err error) {
@@ -68,11 +68,11 @@ func initVars(
 	// Отримання середньої ціни
 	price, _ = pairProcessor.GetCurrentPrice() // Отримання ціни по ринку для пари
 	price = roundPrice(price, symbol)
-	setQuantity := func(symbol *binance.Symbol) (quantity types.QuantityType) {
-		quantity = types.QuantityType(round(float64(pairProcessor.GetLimitOnTransaction()/price), stepSizeExp))
+	setQuantity := func(symbol *binance.Symbol) (quantity items_types.QuantityType) {
+		quantity = items_types.QuantityType(round(float64(pairProcessor.GetLimitOnTransaction()/price), stepSizeExp))
 		minNotional := utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)
 		if float64(quantity)*float64(price) < minNotional {
-			quantity = types.QuantityType(utils.RoundToDecimalPlace(minNotional/float64(price), stepSizeExp))
+			quantity = items_types.QuantityType(utils.RoundToDecimalPlace(minNotional/float64(price), stepSizeExp))
 		}
 		return
 	}
@@ -81,15 +81,15 @@ func initVars(
 }
 
 func openPosition(
-	price types.PriceType,
-	quantity types.QuantityType,
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	pairProcessor *processor.PairProcessor) (sellOrder, buyOrder *binance.CreateOrderResponse, err error) {
 	var (
-		targetBalance types.PriceType
+		targetBalance items_types.PriceType
 	)
 	_, _ = pairProcessor.CancelAllOrders()
 	// Створюємо ордери на продаж
-	if targetBalance, err = pairProcessor.GetTargetBalance(); err == nil && targetBalance >= types.PriceType(quantity)*price {
+	if targetBalance, err = pairProcessor.GetTargetBalance(); err == nil && targetBalance >= items_types.PriceType(quantity)*price {
 		sellOrder, err = createOrderInGrid(
 			pairProcessor,
 			binance.SideTypeSell,
@@ -119,8 +119,8 @@ func openPosition(
 func createOrderInGrid(
 	pairProcessor *processor.PairProcessor,
 	side binance.SideType,
-	quantity types.QuantityType,
-	price types.PriceType) (order *binance.CreateOrderResponse, err error) {
+	quantity items_types.QuantityType,
+	price items_types.PriceType) (order *binance.CreateOrderResponse, err error) {
 	order, err = pairProcessor.CreateOrder(
 		binance.OrderTypeLimit,     // orderType
 		side,                       // sideType
@@ -134,9 +134,9 @@ func createOrderInGrid(
 }
 
 // Округлення ціни до TickSize знаків після коми
-func roundPrice(val types.PriceType, symbol *binance.Symbol) types.PriceType {
+func roundPrice(val items_types.PriceType, symbol *binance.Symbol) items_types.PriceType {
 	exp := int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
-	return types.PriceType(utils.RoundToDecimalPlace(float64(val), exp))
+	return items_types.PriceType(utils.RoundToDecimalPlace(float64(val), exp))
 }
 
 func getCallBack_v1(
@@ -164,20 +164,20 @@ func getCallBack_v1(
 func RunSpotGridTrading(
 	client *binance.Client,
 	symbol string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	UpBound float64,
-	LowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	UpBound items_types.PricePercentType,
+	LowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	stopEvent chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	var (
-		quantity types.QuantityType
+		quantity items_types.QuantityType
 	)
 	// Створюємо обробник пари
 	pairProcessor, err := processor.NewPairProcessor(

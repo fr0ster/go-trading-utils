@@ -16,8 +16,8 @@ func (pp *PairProcessor) GetDeltaQuantity() types.QuantityType {
 	return types.QuantityType(pp.deltaQuantity)
 }
 
-func (pp *PairProcessor) GetLimitOnTransaction() (limit types.PriceType) {
-	return types.PriceType(pp.limitOnTransaction) * pp.GetFreeBalance()
+func (pp *PairProcessor) GetLimitOnTransaction() (limit types.ValueType) {
+	return types.ValueType(pp.limitOnTransaction) * pp.GetFreeBalance()
 }
 
 func (pp *PairProcessor) SetBounds(price types.PriceType) {

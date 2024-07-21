@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/adshao/go-binance/v2/futures"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -38,15 +38,15 @@ func (pp *PairProcessor) GetTickSizeExp() int {
 	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
 }
 
-func (pp *PairProcessor) GetNotional() float64 {
+func (pp *PairProcessor) GetNotional() items_types.ValueType {
 	return pp.notional
 }
 
-func (pp *PairProcessor) GetCallbackRate() float64 {
+func (pp *PairProcessor) GetCallbackRate() items_types.PricePercentType {
 	return pp.callbackRate
 }
 
-func (pp *PairProcessor) SetCallbackRate(callbackRate float64) {
+func (pp *PairProcessor) SetCallbackRate(callbackRate items_types.PricePercentType) {
 	pp.callbackRate = callbackRate
 }
 
@@ -76,49 +76,49 @@ func (pp *PairProcessor) GetTargetAsset() (asset *futures.AccountAsset, err erro
 	return nil, fmt.Errorf("can't find asset %s", pp.targetSymbol)
 }
 
-func (pp *PairProcessor) GetBaseBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetBaseBalance() (balance items_types.ValueType, err error) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.WalletBalance) // Convert string to float64
+	balance = items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance))
 	return
 }
 
-func (pp *PairProcessor) GetTargetBalance() (balance float64, err error) {
+func (pp *PairProcessor) GetTargetBalance() (balance items_types.ValueType, err error) {
 	asset, err := pp.GetTargetAsset()
 	if err != nil {
 		return
 	}
-	balance = utils.ConvStrToFloat64(asset.AvailableBalance) // Convert string to float64
+	balance = items_types.ValueType(utils.ConvStrToFloat64(asset.AvailableBalance))
 	return
 }
 
-func (pp *PairProcessor) GetFreeBalance() (balance types.PriceType) {
+func (pp *PairProcessor) GetFreeBalance() (balance items_types.ValueType) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return 0
 	}
-	balance = types.PriceType(utils.ConvStrToFloat64(asset.AvailableBalance))
+	balance = items_types.ValueType(utils.ConvStrToFloat64(asset.AvailableBalance))
 	if balance > pp.limitOnPosition {
 		balance = pp.limitOnPosition
 	}
 	return
 }
 
-func (pp *PairProcessor) GetLockedBalance() (balance types.PriceType, err error) {
+func (pp *PairProcessor) GetLockedBalance() (balance items_types.ValueType, err error) {
 	asset, err := pp.GetBaseAsset()
 	if err != nil {
 		return
 	}
-	balance = types.PriceType(utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance))
+	balance = items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance))
 	return
 }
 
-func (pp *PairProcessor) GetCurrentPrice() (types.PriceType, error) {
+func (pp *PairProcessor) GetCurrentPrice() (items_types.PriceType, error) {
 	price, err := pp.client.NewListPricesService().Symbol(pp.symbol.Symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
 	}
-	return types.PriceType(utils.ConvStrToFloat64(price[0].Price)), nil
+	return items_types.PriceType(utils.ConvStrToFloat64(price[0].Price)), nil
 }

@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -55,13 +57,13 @@ func (pp *PairProcessor) createOrder(
 	orderType futures.OrderType,
 	sideType futures.SideType,
 	timeInForce futures.TimeInForceType,
-	quantity types.QuantityType,
+	quantity items_types.QuantityType,
 	closePosition bool,
 	reduceOnly bool,
-	price types.PriceType,
-	stopPrice types.PriceType,
-	activationPrice types.PriceType,
-	callbackRate float64,
+	price items_types.PriceType,
+	stopPrice items_types.PriceType,
+	activationPrice items_types.PriceType,
+	callbackRate items_types.PricePercentType,
 	times int,
 	oldErr ...error) (
 	order *futures.CreateOrderResponse, err error) {
@@ -124,7 +126,7 @@ func (pp *PairProcessor) createOrder(
 		service = service.
 			TimeInForce(futures.TimeInForceTypeGTC).
 			Quantity(utils.ConvFloat64ToStr(float64(quantity), quantityRound)).
-			CallbackRate(utils.ConvFloat64ToStr(callbackRate, priceRound))
+			CallbackRate(utils.ConvFloat64ToStr(float64(callbackRate), priceRound))
 		if stopPrice != 0 {
 			service = service.
 				ActivationPrice(utils.ConvFloat64ToStr(float64(activationPrice), priceRound))
@@ -213,13 +215,13 @@ func (pp *PairProcessor) CreateOrder(
 	orderType futures.OrderType,
 	sideType futures.SideType,
 	timeInForce futures.TimeInForceType,
-	quantity types.QuantityType,
+	quantity items_types.QuantityType,
 	closePosition bool,
 	reduceOnly bool,
-	price types.PriceType,
-	stopPrice types.PriceType,
-	activationPrice types.PriceType,
-	callbackRate float64) (
+	price items_types.PriceType,
+	stopPrice items_types.PriceType,
+	activationPrice items_types.PriceType,
+	callbackRate items_types.PricePercentType) (
 	order *futures.CreateOrderResponse, err error) {
 	return pp.createOrder(
 		orderType,

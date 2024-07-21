@@ -10,6 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -21,12 +22,12 @@ import (
 func getCallBack_v2(
 	pairProcessor *processor.PairProcessor,
 	grid *grid_types.Grid,
-	percentsToStopSettingNewOrder float64,
+	percentsToStopSettingNewOrder items_types.PricePercentType,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
 		quantity     types.QuantityType
-		locked       types.PriceType
+		locked       types.ValueType
 		currentPrice types.PriceType
 		risk         *futures.PositionRisk
 		err          error
@@ -97,18 +98,18 @@ func getCallBack_v2(
 func RunFuturesGridTradingV2(
 	client *futures.Client,
 	pair *pairs_types.Pairs,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
-	percentsToStopSettingNewOrder float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
+	percentsToStopSettingNewOrder items_types.PricePercentType,
 	quit chan struct{},
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {

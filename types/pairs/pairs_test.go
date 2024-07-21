@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
@@ -83,34 +84,34 @@ func assertPair(
 	assert.Equal(t, 20, pair.GetLeverage())
 
 	// Test GetLimitOnPosition
-	assert.Equal(t, 1000.0, pair.GetLimitOnPosition())
+	assert.Equal(t, items_types.ValueType(1000.0), pair.GetLimitOnPosition())
 
 	// Test GetLimitOnTransaction
-	assert.Equal(t, 0.1, pair.GetLimitOnTransaction())
+	assert.Equal(t, items_types.ValuePercentType(10), pair.GetLimitOnTransaction())
 
 	// Test GetUpBoundPercent
-	assert.Equal(t, 0.1, pair.GetUpBound())
+	assert.Equal(t, items_types.PricePercentType(10), pair.GetUpBound())
 
 	// Test GetLowBoundPercent
-	assert.Equal(t, 0.1, pair.GetLowBound())
+	assert.Equal(t, items_types.PricePercentType(10), pair.GetLowBound())
 
 	// Test GetDeltaPrice
-	assert.Equal(t, 0.01, pair.GetDeltaPrice())
+	assert.Equal(t, items_types.PricePercentType(1), pair.GetDeltaPrice())
 
 	// Test GetDeltaQuantity
-	assert.Equal(t, 0.1, pair.GetDeltaQuantity())
+	assert.Equal(t, items_types.QuantityPercentType(10.0), pair.GetDeltaQuantity())
 
 	// Test GetProgression
 	assert.Equal(t, pairs_types.GeometricProgression, pair.GetProgression())
 
 	// Test GetValue
-	assert.Equal(t, 200.0, pair.GetValue())
+	assert.Equal(t, items_types.ValueType(200.0), pair.GetValue())
 
 	// Test GetCallbackRate
-	assert.Equal(t, 0.1, pair.GetCallbackRate())
+	assert.Equal(t, items_types.PricePercentType(0.1), pair.GetCallbackRate())
 
 	// Test GetPercentToTarget
-	assert.Equal(t, 10.0, pair.GetPercentToTarget())
+	assert.Equal(t, items_types.PricePercentType(10.0), pair.GetPercentToTarget())
 
 	// Test GetDepthsN
 	assert.Equal(t, depth_types.DepthAPILimit(50), pair.GetDepthsN())

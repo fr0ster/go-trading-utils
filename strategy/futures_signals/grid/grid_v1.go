@@ -10,7 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -22,13 +22,13 @@ func getCallBack_v1(
 	// config *config_types.ConfigFile,
 	pairProcessor *processor.PairProcessor,
 	grid *grid_types.Grid,
-	percentsToStopSettingNewOrder float64,
+	percentsToStopSettingNewOrder items_types.PricePercentType,
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
-		quantity     types.QuantityType
-		locked       types.PriceType
-		currentPrice types.PriceType
+		quantity     items_types.QuantityType
+		locked       items_types.ValueType
+		currentPrice items_types.PriceType
 		risk         *futures.PositionRisk
 		err          error
 	)
@@ -47,7 +47,7 @@ func getCallBack_v1(
 					event.OrderTradeUpdate.LastFilledQty,
 					event.OrderTradeUpdate.Side,
 					event.OrderTradeUpdate.Status)
-				currentPrice = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
+				currentPrice = items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
 				// Знаходимо у гріді на якому був виконаний ордер
 				order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 				if ok {
@@ -92,28 +92,28 @@ func getCallBack_v1(
 func RunFuturesGridTradingV1(
 	client *futures.Client,
 	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	percentsToStopSettingNewOrder float64,
-	targetPercent float64,
-	callbackRate float64,
+	percentsToStopSettingNewOrder items_types.PricePercentType,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (
-		initPrice     types.PriceType
-		initPriceUp   types.PriceType
-		initPriceDown types.PriceType
-		quantity      types.QuantityType
-		quantityUp    types.QuantityType
-		quantityDown  types.QuantityType
+		initPrice     items_types.PriceType
+		initPriceUp   items_types.PriceType
+		initPriceDown items_types.PriceType
+		quantity      items_types.QuantityType
+		quantityUp    items_types.QuantityType
+		quantityDown  items_types.QuantityType
 		minNotional   float64
 		grid          *grid_types.Grid
 	)

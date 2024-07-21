@@ -14,6 +14,10 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
+func (pp *PairProcessor) RoundValue(value items.ValueType) items.ValueType {
+	return items.ValueType(utils.RoundToDecimalPlace(float64(value), pp.GetTickSizeExp()))
+}
+
 func (pp *PairProcessor) RoundPrice(price items.PriceType) items.PriceType {
 	return items.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
 }

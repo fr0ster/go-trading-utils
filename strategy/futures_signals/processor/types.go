@@ -8,7 +8,7 @@ import (
 	"github.com/google/btree"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
@@ -39,30 +39,30 @@ type (
 		targetSymbol string
 
 		// Дані про обмеження на пару
-		notional float64
-		StepSize float64
-		maxQty   float64
-		minQty   float64
-		tickSize float64
-		maxPrice float64
-		minPrice float64
+		notional items_types.ValueType
+		StepSize items_types.QuantityType
+		maxQty   items_types.QuantityType
+		minQty   items_types.QuantityType
+		tickSize items_types.PriceType
+		maxPrice items_types.PriceType
+		minPrice items_types.PriceType
 
 		// канал зупинки
 		stop chan struct{}
 
-		limitOnPosition    types.PriceType
-		limitOnTransaction float64
+		limitOnPosition    items_types.ValueType
+		limitOnTransaction items_types.ValuePercentType
 
 		// Дінаміка ціни, використовувалось тіко для grid_v3
 		minSteps        int
 		up              *btree.BTree
 		down            *btree.BTree
-		UpBoundPercent  float64
-		UpBound         types.PriceType
-		LowBoundPercent float64
-		LowBound        types.PriceType
-		deltaPrice      types.PriceType
-		deltaQuantity   types.QuantityType
+		UpBoundPercent  items_types.PricePercentType
+		UpBound         items_types.PriceType
+		LowBoundPercent items_types.PricePercentType
+		LowBound        items_types.PriceType
+		deltaPrice      items_types.PriceType
+		deltaQuantity   items_types.QuantityType
 
 		// Прогресії, використовувалось тіко для grid_v3
 		progression             pairs_types.ProgressionType
@@ -76,7 +76,7 @@ type (
 		// Дані про позицію
 		leverage     int
 		marginType   pairs_types.MarginType
-		callbackRate float64
+		callbackRate items_types.PricePercentType
 
 		// Дані про стакан
 		depth *depth_types.Depths

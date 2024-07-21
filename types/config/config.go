@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
@@ -22,8 +23,8 @@ type (
 		ObservePosition               bool                         `json:"observe_position"`
 		ClosePositionOnRestart        bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin             bool                         `json:"balancing_of_margin"`
-		PercentsToStopSettingNewOrder float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition     float64                      `json:"percent_to_decrease_position"`
+		PercentsToStopSettingNewOrder items_types.PricePercentType `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition     items_types.PricePercentType `json:"percent_to_decrease_position"`
 		ObserverTimeOutMillisecond    int                          `json:"observer_timeout_millisecond"`
 		Pairs                         *btree.BTree
 	}
@@ -74,19 +75,19 @@ func (cf *Configs) SetBalancingOfMargin(balancing bool) {
 	cf.BalancingOfMargin = balancing
 }
 
-func (cf *Configs) GetPercentsToStopSettingNewOrder() float64 {
+func (cf *Configs) GetPercentsToStopSettingNewOrder() items_types.PricePercentType {
 	return cf.PercentsToStopSettingNewOrder
 }
 
-func (cf *Configs) SetPercentsToStopSettingNewOrder(percent float64) {
+func (cf *Configs) SetPercentsToStopSettingNewOrder(percent items_types.PricePercentType) {
 	cf.PercentsToStopSettingNewOrder = percent
 }
 
-func (cf *Configs) GetPercentToDecreasePosition() float64 {
+func (cf *Configs) GetPercentToDecreasePosition() items_types.PricePercentType {
 	return cf.PercentToDecreasePosition
 }
 
-func (cf *Configs) SetPercentToDecreasePosition(percent float64) {
+func (cf *Configs) SetPercentToDecreasePosition(percent items_types.PricePercentType) {
 	cf.PercentToDecreasePosition = percent
 }
 
@@ -164,8 +165,8 @@ func (c *Configs) MarshalJSON() ([]byte, error) {
 		ObservePosition           bool                         `json:"observe_position"`
 		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
+		PercentsToLiquidation     items_types.PricePercentType `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition items_types.PricePercentType `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{
@@ -190,8 +191,8 @@ func (c *Configs) UnmarshalJSON(data []byte) error {
 		ObservePosition           bool                         `json:"observe_position"`
 		RestartClosedPosition     bool                         `json:"close_position_on_restart"`
 		BalancingOfMargin         bool                         `json:"balancing_of_margin"`
-		PercentsToLiquidation     float64                      `json:"percents_to_stop_setting_new_order"`
-		PercentToDecreasePosition float64                      `json:"percent_to_decrease_position"`
+		PercentsToLiquidation     items_types.PricePercentType `json:"percents_to_stop_setting_new_order"`
+		PercentToDecreasePosition items_types.PricePercentType `json:"percent_to_decrease_position"`
 		ObserverTimeOut           int                          `json:"observer_timeout_millisecond"`
 		Pairs                     []*pairs_types.Pairs         `json:"pairs"`
 	}{}

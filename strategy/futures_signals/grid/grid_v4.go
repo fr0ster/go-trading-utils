@@ -11,6 +11,7 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
+	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
@@ -292,17 +293,17 @@ func RunFuturesGridTradingV4(
 	client *futures.Client,
 	degree int,
 	pair string,
-	limitOnPosition float64,
-	limitOnTransaction float64,
-	upBound float64,
-	lowBound float64,
-	deltaPrice float64,
-	deltaQuantity float64,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upBound items_types.PricePercentType,
+	lowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent float64,
-	callbackRate float64,
+	targetPercent items_types.PricePercentType,
+	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup,
@@ -366,7 +367,7 @@ func RunFuturesGridTradingV4(
 			case <-time.After(timeOut_v4):
 				if v4.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
-					free := pairProcessor.GetFreeBalance() * types.PriceType(pairProcessor.GetLeverage())
+					free := pairProcessor.GetFreeBalance() * types.ValueType(pairProcessor.GetLeverage())
 					risk, err := pairProcessor.GetPositionRisk()
 					if err != nil {
 						printError()
