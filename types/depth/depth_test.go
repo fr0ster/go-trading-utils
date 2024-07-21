@@ -20,7 +20,7 @@ const (
 )
 
 func TestLockUnlock(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	d := depth_types.New(degree, "BTCUSDT", nil, nil)
 	d.Lock()
 	defer d.Unlock()
 
@@ -29,7 +29,7 @@ func TestLockUnlock(t *testing.T) {
 }
 
 func TestSetAndGetBid(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	d := depth_types.New(degree, "BTCUSDT", nil, nil)
 	price := items_types.PriceType(200.0)
 	quantity := items_types.QuantityType(20.0)
 
@@ -90,7 +90,7 @@ func getTestDepths() (asks *btree.BTree, bids *btree.BTree) {
 }
 
 func TestNew(t *testing.T) {
-	d := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	d := depth_types.New(degree, "BTCUSDT", nil, nil)
 	// Add assertions here to verify that the New method works correctly
 	assert.NotNil(t, d)
 	assert.Equal(t, "BTCUSDT", d.Symbol())
@@ -98,7 +98,7 @@ func TestNew(t *testing.T) {
 
 func TestGetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 	ds.GetAsks().SetTree(asks)
 	ask := ds.GetAsks().Get(items_types.NewAsk(1.951))
 	if ask == nil {
@@ -112,7 +112,7 @@ func TestGetAsk(t *testing.T) {
 
 func TestGetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 	ds.GetBids().SetTree(bids)
 	bid := ds.GetBids().Get(items_types.NewBid(1.93))
 	if bid == nil {
@@ -122,7 +122,7 @@ func TestGetBid(t *testing.T) {
 
 func TestSetAsk(t *testing.T) {
 	asks, _ := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 	ds.GetAsks().SetTree(asks)
 	ask := items_types.NewAsk(1.96, 200.0)
 	ds.GetAsks().Set(ask)
@@ -133,7 +133,7 @@ func TestSetAsk(t *testing.T) {
 
 func TestSetBid(t *testing.T) {
 	_, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 	ds.GetBids().SetTree(bids)
 	bid := items_types.NewBid(1.96, 200.0)
 	ds.GetBids().Set(bid)
@@ -156,7 +156,7 @@ func summaAsksAndBids(ds *depth_types.Depths) (summaAsks, summaBids items_types.
 
 func TestUpdateAskAndBid(t *testing.T) {
 	asks, bids := getTestDepths()
-	ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+	ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 	ds.GetAsks().SetTree(asks)
 	ds.GetBids().SetTree(bids)
 	ask := ds.GetAsks().Get(items_types.NewAsk(1.951))
@@ -193,7 +193,7 @@ func TestUpdateAskAndBid(t *testing.T) {
 
 func TestAsksAndBidMiddleQuantity(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		initDepths(ds)
 		asksMiddle := ds.GetAsks().GetMiddleQuantity()
 		assert.Equal(t, items_types.QuantityType(18.0), asksMiddle)
@@ -202,7 +202,7 @@ func TestAsksAndBidMiddleQuantity(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		ds.GetAsks().SetTree(asks)
 		ds.GetBids().SetTree(bids)
 		asksMiddle := ds.GetAsks().GetMiddleQuantity()
@@ -214,7 +214,7 @@ func TestAsksAndBidMiddleQuantity(t *testing.T) {
 
 func TestAsksAndBidStandardDeviation(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		initDepths(ds)
 		asksSquares := ds.GetAsks().GetStandardDeviation()
 		assert.Equal(t, 7.483314773547883, asksSquares)
@@ -223,7 +223,7 @@ func TestAsksAndBidStandardDeviation(t *testing.T) {
 	}()
 	func() {
 		asks, bids := getTestDepths()
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		ds.GetAsks().SetTree(asks)
 		ds.GetBids().SetTree(bids)
 		asksSquares := ds.GetAsks().GetStandardDeviation()
@@ -235,7 +235,7 @@ func TestAsksAndBidStandardDeviation(t *testing.T) {
 
 func TestAskAndBidDelete(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		ds.GetAsks().Set(items_types.NewAsk(800, 100))
 		ds.GetAsks().Set(items_types.NewAsk(750, 150))
 		ds.GetAsks().Delete(items_types.NewAsk(800))
@@ -251,7 +251,7 @@ func TestAskAndBidDelete(t *testing.T) {
 
 func TestAskAndBidSummaQuantity(t *testing.T) {
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		ds.GetAsks().Set(items_types.NewAsk(800, 100))
 		assert.Equal(t, items_types.QuantityType(100.0), ds.GetAsks().GetSummaQuantity())
 		ds.GetAsks().Set(items_types.NewAsk(790, 100))
@@ -268,7 +268,7 @@ func TestAskAndBidSummaQuantity(t *testing.T) {
 		assert.Equal(t, items_types.QuantityType(700.0), ds.GetAsks().GetSummaQuantity())
 	}()
 	func() {
-		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 		ds.GetBids().Set(items_types.NewBid(800, 100))
 		assert.Equal(t, items_types.QuantityType(100.0), ds.GetBids().GetSummaQuantity())
 		ds.GetBids().Set(items_types.NewBid(790, 100))
@@ -288,7 +288,7 @@ func TestAskAndBidSummaQuantity(t *testing.T) {
 
 // func TestAskAndBidMinMaxQuantity(t *testing.T) {
 // 	func() {
-// 		ds := depth_types.New(degree, "BTCUSDT", timeOut, nil, nil)
+// 		ds := depth_types.New(degree, "BTCUSDT", nil, nil)
 // 		minTest := func() items_types.QuantityType {
 // 			min, err := ds.AskMin()
 // 			if err != nil {
