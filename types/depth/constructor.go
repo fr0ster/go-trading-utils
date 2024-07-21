@@ -14,7 +14,6 @@ import (
 func New(
 	degree int,
 	symbol string,
-	timeOut time.Duration,
 	startDepthStreamCreator func(*Depths) func() (chan struct{}, chan struct{}, error),
 	initCreator func(*Depths) func() (err error),
 	stops ...chan struct{}) *Depths {
@@ -34,7 +33,7 @@ func New(
 		mutex:            &sync.Mutex{},
 		stop:             stop,
 		resetEvent:       make(chan error, 1),
-		timeOut:          timeOut,
+		timeOut:          1 * time.Hour,
 		StartDepthStream: nil,
 		Init:             nil,
 	}

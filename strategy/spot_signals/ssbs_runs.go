@@ -70,7 +70,6 @@ func Run(
 	// 	depth = depth_types.New(
 	// 		degree,
 	// 		pair.GetPair(),
-	// 		1000*time.Millisecond,
 	// 		spot_depth.GetterStartPartialDepthStreamCreator(
 	// 			depth_types.DepthStreamLevel5,
 	// 			depth_types.DepthStreamRate100ms,

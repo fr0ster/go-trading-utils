@@ -3,7 +3,6 @@ package futures_signals
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -38,7 +37,6 @@ func Run(
 		depth = depth_types.New(
 			degree,
 			pair.GetPair(),
-			1000*time.Millisecond,
 			futures_depth.GetterStartDepthStreamCreator(
 				depth_types.DepthStreamLevel5,
 				depth_types.DepthStreamRate100ms,
