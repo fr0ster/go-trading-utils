@@ -187,16 +187,6 @@ func NewPairProcessor(
 		}
 	}
 
-	// // Ініціалізуємо стакан
-	// pp.depth = depth_types.New(pp.degree, symbol, true, targetPercent, limitDepth, expBase)
-	// if pp.depth != nil {
-	// 	pp.DepthEventStart(
-	// 		stop,
-	// 		pp.depth.GetLimitStream(),
-	// 		pp.depth.GetRateStream(),
-	// 		pp.GetDepthEventCallBack())
-	// }
-
 	return
 }
 
