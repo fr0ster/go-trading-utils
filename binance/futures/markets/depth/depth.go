@@ -38,7 +38,6 @@ func GetterInitCreator(limit depth_types.DepthAPILimit, client *futures.Client) 
 }
 
 func GetterStartDepthStreamCreator(
-	symbol string,
 	levels depth_types.DepthStreamLevel,
 	rate depth_types.DepthStreamRate,
 	handlerCreator func(d *depth_types.Depths) futures.WsDepthHandler,
@@ -46,7 +45,7 @@ func GetterStartDepthStreamCreator(
 	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = futures.WsPartialDepthServeWithRate(symbol, int(levels), time.Duration(rate), handlerCreator(d), errHandlerCreator(d))
+			doneC, stopC, err = futures.WsPartialDepthServeWithRate(d.Symbol(), int(levels), time.Duration(rate), handlerCreator(d), errHandlerCreator(d))
 			return
 		}
 	}

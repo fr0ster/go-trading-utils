@@ -40,7 +40,6 @@ func Run(
 			pair.GetPair(),
 			1000*time.Millisecond,
 			futures_depth.GetterStartDepthStreamCreator(
-				pair.GetPair(),
 				depth_types.DepthStreamLevel5,
 				depth_types.DepthStreamRate100ms,
 				futures_depth.GetterDepthEventCallBackCreator(),

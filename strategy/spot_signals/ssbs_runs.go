@@ -72,7 +72,6 @@ func Run(
 	// 		pair.GetPair(),
 	// 		1000*time.Millisecond,
 	// 		spot_depth.GetterStartPartialDepthStreamCreator(
-	// 			pair.GetPair(),
 	// 			depth_types.DepthStreamLevel5,
 	// 			depth_types.DepthStreamRate100ms,
 	// 			spot_depth.GetterPartialDepthEventCallBackCreator(),

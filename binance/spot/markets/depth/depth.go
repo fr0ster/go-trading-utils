@@ -39,7 +39,6 @@ func GetterInitCreator(limit depth_types.DepthAPILimit, client *binance.Client) 
 }
 
 func GetterStartDepthStreamCreator(
-	symbol string,
 	levels depth_types.DepthStreamLevel,
 	rate depth_types.DepthStreamRate,
 	handlerCreator func(d *depth_types.Depths) binance.WsDepthHandler,
@@ -47,7 +46,7 @@ func GetterStartDepthStreamCreator(
 	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsDepthServe(symbol, handlerCreator(d), errHandlerCreator(d))
+			doneC, stopC, err = binance.WsDepthServe(d.Symbol(), handlerCreator(d), errHandlerCreator(d))
 			return
 		}
 	}
@@ -86,7 +85,6 @@ func GetterDepthEventCallBackCreator() func(d *depth_types.Depths) binance.WsDep
 }
 
 func GetterStartPartialDepthStreamCreator(
-	symbol string,
 	levels depth_types.DepthStreamLevel,
 	rate depth_types.DepthStreamRate,
 	handlerCreator func(d *depth_types.Depths) binance.WsPartialDepthHandler,
@@ -94,7 +92,7 @@ func GetterStartPartialDepthStreamCreator(
 	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsPartialDepthServe100Ms(symbol, string(rune(levels)), handlerCreator(d), errHandlerCreator(d))
+			doneC, stopC, err = binance.WsPartialDepthServe100Ms(d.Symbol(), string(rune(levels)), handlerCreator(d), errHandlerCreator(d))
 			return
 		}
 	}
