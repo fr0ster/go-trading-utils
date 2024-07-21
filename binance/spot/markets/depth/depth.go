@@ -52,7 +52,7 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func standardEventHandlerCreator() func(d *depth_types.Depths) binance.WsDepthHandler {
+func StandardEventHandlerCreator() func(d *depth_types.Depths) binance.WsDepthHandler {
 	return func(d *depth_types.Depths) binance.WsDepthHandler {
 		return func(event *binance.WsDepthEvent) {
 			func() {
@@ -85,13 +85,13 @@ func standardEventHandlerCreator() func(d *depth_types.Depths) binance.WsDepthHa
 	}
 }
 
-func GetterDepthEventCallBackCreator(
+func StandardEventCallBackCreator(
 	handlers ...func(d *depth_types.Depths) binance.WsDepthHandler) func(d *depth_types.Depths) binance.WsDepthHandler {
 	return func(d *depth_types.Depths) binance.WsDepthHandler {
 		d.Init()
 		var stack []binance.WsDepthHandler
 		d.Init()
-		handlers = append(handlers, standardEventHandlerCreator())
+		handlers = append(handlers, StandardEventHandlerCreator())
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}
@@ -117,7 +117,7 @@ func GetterStartPartialDepthStreamCreator(
 	}
 }
 
-func standardPartialEventHandlerCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+func StandardPartialEventHandlerCreator() func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 		return func(event *binance.WsPartialDepthEvent) {
 			func() {
@@ -150,12 +150,12 @@ func standardPartialEventHandlerCreator() func(d *depth_types.Depths) binance.Ws
 	}
 }
 
-func GetterPartialDepthEventCallBackCreator(
+func StandardPartialEventCallBackCreator(
 	handlers ...func(d *depth_types.Depths) binance.WsPartialDepthHandler) func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
 		var stack []binance.WsPartialDepthHandler
 		d.Init()
-		handlers = append(handlers, standardPartialEventHandlerCreator())
+		handlers = append(handlers, StandardPartialEventHandlerCreator())
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}
