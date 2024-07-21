@@ -57,6 +57,10 @@ func (d *Bids) GetDeltaPrice() (delta items_types.PriceType, err error) {
 	return d.tree.GetDeltaPrice()
 }
 
+func (d *Bids) GetDeltaPricePercent() (delta items_types.PricePercentType, err error) {
+	return d.tree.GetDeltaPricePercent()
+}
+
 func (d *Bids) GetStandardDeviation() float64 {
 	return d.tree.GetStandardDeviation()
 }
