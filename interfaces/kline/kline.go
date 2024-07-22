@@ -1,6 +1,7 @@
 package kline
 
 import (
+	klines_types "github.com/fr0ster/go-trading-utils/types/klines"
 	"github.com/google/btree"
 )
 
@@ -10,8 +11,7 @@ type (
 		Unlock()
 		Ascend(func(btree.Item) bool)
 		Descend(func(btree.Item) bool)
-		GetKline(openTime int64) btree.Item
-		SetKline(value btree.Item)
+		SetKline(value *klines_types.Kline)
 		GetKlines() *btree.BTree
 	}
 	// WsKline define websocket kline

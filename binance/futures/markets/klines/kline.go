@@ -5,8 +5,6 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
-	"github.com/fr0ster/go-trading-utils/types/ring_buffer"
-	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,27 +32,55 @@ func GetInitCreator(client *futures.Client) func(kl *kline_types.Klines) func() 
 }
 
 func GetStartKlineStreamCreator(
-	handler futures.WsKlineHandler,
-	errHandler futures.ErrHandler) func(d *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
-	return func(pp *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
+	handler func(*kline_types.Klines) futures.WsKlineHandler,
+	errHandler func(*kline_types.Klines) futures.ErrHandler) func(*kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
+	return func(kl *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = futures.WsKlineServe(pp.GetSymbolname(), string(pp.GetInterval()), handler, errHandler)
+			doneC, stopC, err = futures.WsKlineServe(kl.GetSymbolname(), string(kl.GetInterval()), handler(kl), errHandler(kl))
 			return
 		}
 	}
 }
 
-func GetKlineCallBackCreator(
-	maxRing,
-	minRing *ring_buffer.RingBuffer) func(kl *kline_types.Klines) futures.WsKlineHandler {
-	return func(kl *kline_types.Klines) futures.WsKlineHandler {
-		return func(event *futures.WsKlineEvent) {
-			high := utils.ConvStrToFloat64(event.Kline.High)
-			low := utils.ConvStrToFloat64(event.Kline.Low)
+func standardEventHandlerCreator(kl *kline_types.Klines) futures.WsKlineHandler {
+	return func(event *futures.WsKlineEvent) {
+		func() {
+			kl.Lock()         // Locking the depths
+			defer kl.Unlock() // Unlocking the depths
 			if event.Kline.IsFinal {
-				maxRing.Add(high)
-				minRing.Add(low)
+				klineItem := &kline_types.Kline{
+					OpenTime:                 event.Kline.StartTime,
+					Open:                     event.Kline.Open,
+					High:                     event.Kline.High,
+					Low:                      event.Kline.Low,
+					Close:                    event.Kline.Close,
+					Volume:                   event.Kline.Volume,
+					CloseTime:                event.Kline.EndTime,
+					QuoteAssetVolume:         event.Kline.QuoteVolume,
+					TradeNum:                 event.Kline.TradeNum,
+					TakerBuyBaseAssetVolume:  event.Kline.ActiveBuyVolume,
+					TakerBuyQuoteAssetVolume: event.Kline.ActiveBuyQuoteVolume,
+					IsFinal:                  event.Kline.IsFinal,
+				}
+				kl.SetKline(klineItem)
+			}
+		}()
+	}
+}
+
+func StandardEventCallBackCreator(
+	handlers ...func(*kline_types.Klines) futures.WsKlineHandler) func(*kline_types.Klines) futures.WsKlineHandler {
+	return func(kl *kline_types.Klines) futures.WsKlineHandler {
+		var stack []futures.WsKlineHandler
+		standardHandlers := standardEventHandlerCreator(kl)
+		for _, handler := range handlers {
+			stack = append(stack, handler(kl))
+		}
+		return func(event *futures.WsKlineEvent) {
+			standardHandlers(event)
+			for _, handler := range stack {
+				handler(event)
 			}
 		}
 	}

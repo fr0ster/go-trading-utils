@@ -39,8 +39,6 @@ func GetterInitCreator(limit depths_types.DepthAPILimit, client *binance.Client)
 }
 
 func GetterStartDepthStreamCreator(
-	levels depths_types.DepthStreamLevel,
-	rate depths_types.DepthStreamRate,
 	handlerCreator func(d *depths_types.Depths) binance.WsDepthHandler,
 	errHandlerCreator func(d *depths_types.Depths) binance.ErrHandler) func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 	return func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
@@ -104,7 +102,6 @@ func StandardEventCallBackCreator(
 
 func GetterStartPartialDepthStreamCreator(
 	levels depths_types.DepthStreamLevel,
-	rate depths_types.DepthStreamRate,
 	handlerCreator func(d *depths_types.Depths) binance.WsPartialDepthHandler,
 	errHandlerCreator func(d *depths_types.Depths) binance.ErrHandler) func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 	return func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {

@@ -70,13 +70,8 @@ func (d *Klines) GetSymbolname() string {
 	return d.symbolname
 }
 
-// GetItem implements kline_interface.Klines.
-func (d *Klines) GetKline(openTime int64) btree.Item {
-	return d.klines_final.Get(&Kline{OpenTime: int64(openTime)})
-}
-
 // SetItem implements kline_interface.Klines.
-func (d *Klines) SetKline(value btree.Item) {
+func (d *Klines) SetKline(value *Kline) {
 	d.klines_final.ReplaceOrInsert(value)
 }
 
@@ -113,9 +108,8 @@ func New(
 	startKlineStream func(*Klines) func() (chan struct{}, chan struct{}, error),
 	initCreator func(*Klines) func() error) *Klines {
 	this := &Klines{
-		symbolname: symbolname,
-		interval:   interval,
-		// time:         0,
+		symbolname:   symbolname,
+		interval:     interval,
 		klines_final: btree.New(degree),
 		mutex:        sync.Mutex{},
 		degree:       degree,

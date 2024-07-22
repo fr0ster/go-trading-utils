@@ -38,13 +38,47 @@ func GetInitCreator(client *binance.Client) func(*booktickers_types.BookTickers)
 }
 
 func GetStartBookTickerStreamCreator(
-	handler binance.WsBookTickerHandler,
-	errHandler binance.ErrHandler) func(d *booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
+	handler func(*booktickers_types.BookTickers) binance.WsBookTickerHandler,
+	errHandler func(*booktickers_types.BookTickers) binance.ErrHandler) func(*booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
 	return func(bt *booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsBookTickerServe(bt.GetSymbol(), handler, errHandler)
+			doneC, stopC, err = binance.WsBookTickerServe(bt.GetSymbol(), handler(bt), errHandler(bt))
 			return
+		}
+	}
+}
+
+func standardEventHandlerCreator(bt *booktickers_types.BookTickers) binance.WsBookTickerHandler {
+	return func(event *binance.WsBookTickerEvent) {
+		func() {
+			bt.Lock()         // Locking the depths
+			defer bt.Unlock() // Unlocking the depths
+			if btt := bt.Get(event.Symbol); btt != nil {
+				btt.SetAskPrice(depths_types.PriceType(utils.ConvStrToFloat64(event.BestAskPrice)))
+				btt.SetAskQuantity(depths_types.QuantityType(utils.ConvStrToFloat64(event.BestAskQty)))
+				btt.SetBidPrice(depths_types.PriceType(utils.ConvStrToFloat64(event.BestBidPrice)))
+				btt.SetBidQuantity(depths_types.QuantityType(utils.ConvStrToFloat64(event.BestBidQty)))
+				btt.SetUpdateID(event.UpdateID)
+				bt.Set(btt)
+			}
+		}()
+	}
+}
+
+func StandardEventCallBackCreator(
+	handlers ...func(*booktickers_types.BookTickers) binance.WsBookTickerHandler) func(*booktickers_types.BookTickers) binance.WsBookTickerHandler {
+	return func(bt *booktickers_types.BookTickers) binance.WsBookTickerHandler {
+		var stack []binance.WsBookTickerHandler
+		standardHandlers := standardEventHandlerCreator(bt)
+		for _, handler := range handlers {
+			stack = append(stack, handler(bt))
+		}
+		return func(event *binance.WsBookTickerEvent) {
+			standardHandlers(event)
+			for _, handler := range stack {
+				handler(event)
+			}
 		}
 	}
 }
