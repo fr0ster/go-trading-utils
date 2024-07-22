@@ -22,8 +22,7 @@ func getTestData() *btree.BTree {
 		Leverage:           20,
 		LimitOnPosition:    1000,
 		LimitOnTransaction: 10,   // LimitOnTransaction 10%
-		UpBound:            10,   // UpBoundPercent 10%
-		LowBound:           10,   // LowBoundPercent 10%
+		UpAndLowBound:      10,   // UpBoundPercent 10%
 		DeltaPrice:         1.0,  // DeltaPrice 1%
 		DeltaQuantity:      10.0, // DeltaQuantity 10%
 		Progression:        "GEOMETRIC",
@@ -41,8 +40,7 @@ func getTestData() *btree.BTree {
 		Leverage:           20,
 		LimitOnPosition:    1000,
 		LimitOnTransaction: 10,   // LimitOnTransaction 10%
-		UpBound:            10,   // UpBoundPercent 10%
-		LowBound:           10,   // LowBoundPercent 10%
+		UpAndLowBound:      10,   // UpBoundPercent 10%
 		DeltaPrice:         1.0,  // DeltaPrice 1%
 		DeltaQuantity:      10.0, // DeltaQuantity 10%
 		Progression:        "GEOMETRIC",

@@ -53,9 +53,9 @@ const (
 	LimitOnPosition_1    items_types.ValueType        = 1000.0 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1 items_types.ValuePercentType = 10.0   // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UpBoundPercent_1  items_types.PricePercentType = 10.0 // Верхня межа відсоток
-	LowBoundPercent_1 items_types.PricePercentType = 20.0 // Нижня межа відсоток
-	MinSteps_1                                     = 10   // Мінімальна кількість кроків
+	UpAndLowBoundPercent_1 items_types.PricePercentType = 10.0 // Верхня межа відсоток
+
+	MinSteps_1 = 10 // Мінімальна кількість кроків
 
 	DeltaPrice_1    items_types.PricePercentType    = 1.0   // Дельта для купівлі
 	DeltaQuantity_1 items_types.QuantityPercentType = 10.0  // Дельта для кількості
@@ -78,9 +78,9 @@ const (
 	LimitOnPosition_2    items_types.ValueType        = 2000.0 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2 items_types.ValuePercentType = 1.0    // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-	UpBoundPercent_2  items_types.PricePercentType = 10.0 // Верхня межа відсоток
-	LowBoundPercent_2 items_types.PricePercentType = 10.0 // Нижня межа відсоток
-	MinSteps_2                                     = 10   // Мінімальна кількість кроків
+	UpAndLowBoundPercent_2 items_types.PricePercentType = 10.0 // Верхня межа відсоток
+
+	MinSteps_2 = 10 // Мінімальна кількість кроків
 
 	Delta_Price_2   items_types.PricePercentType    = 1.0   // Дельта для купівлі
 	DeltaQuantity_2 items_types.QuantityPercentType = 10.0  // Дельта для кількості
@@ -128,8 +128,7 @@ var (
 		Leverage:           Leverage_1,
 		LimitOnPosition:    LimitOnPosition_1,
 		LimitOnTransaction: LimitOnTransaction_1,
-		UpBound:            UpBoundPercent_1,
-		LowBound:           LowBoundPercent_1,
+		UpAndLowBound:      UpAndLowBoundPercent_1,
 		MinSteps:           MinSteps_1,
 		DeltaPrice:         DeltaPrice_1,
 		DeltaQuantity:      DeltaQuantity_1,
@@ -147,8 +146,7 @@ var (
 		Leverage:           Leverage_2,
 		LimitOnPosition:    LimitOnPosition_2,
 		LimitOnTransaction: LimitOnTransaction_2,
-		UpBound:            UpBoundPercent_2,
-		LowBound:           LowBoundPercent_2,
+		UpAndLowBound:      UpAndLowBoundPercent_2,
 		MinSteps:           MinSteps_2,
 		DeltaPrice:         Delta_Price_2,
 		DeltaQuantity:      DeltaQuantity_2,
@@ -188,8 +186,7 @@ func getTestData() []byte {
 					"taking_position_sleeping_time": ` + strconv.Itoa(TakingPositionSleepingTime_1) + `,
 					"limit_on_position": ` + json.Number(strconv.FormatFloat(float64(LimitOnPosition_1), 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(float64(LimitOnTransaction_1), 'f', -1, 64)).String() + `,
-					"up_bound": ` + json.Number(strconv.FormatFloat(float64(UpBoundPercent_1), 'f', -1, 64)).String() + `,
-					"low_bound": ` + json.Number(strconv.FormatFloat(float64(LowBoundPercent_1), 'f', -1, 64)).String() + `,
+					"up_and_low_bound": ` + json.Number(strconv.FormatFloat(float64(UpAndLowBoundPercent_1), 'f', -1, 64)).String() + `,
 					"min_steps": ` + strconv.Itoa(MinSteps_1) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(float64(DeltaPrice_1), 'f', -1, 64)).String() + `,
 					"delta_quantity": ` + json.Number(strconv.FormatFloat(float64(DeltaQuantity_1), 'f', -1, 64)).String() + `,
@@ -207,8 +204,7 @@ func getTestData() []byte {
 					"leverage": ` + strconv.Itoa(Leverage_2) + `,
 					"limit_in_position": ` + json.Number(strconv.FormatFloat(float64(LimitOnPosition_2), 'f', -1, 64)).String() + `,
 					"limit_on_transaction": ` + json.Number(strconv.FormatFloat(float64(LimitOnTransaction_2), 'f', -1, 64)).String() + `,
-					"up_bound": ` + json.Number(strconv.FormatFloat(float64(UpBoundPercent_2), 'f', -1, 64)).String() + `,
-					"low_bound": ` + json.Number(strconv.FormatFloat(float64(LowBoundPercent_2), 'f', -1, 64)).String() + `,
+					"up_and_low_bound": ` + json.Number(strconv.FormatFloat(float64(UpAndLowBoundPercent_2), 'f', -1, 64)).String() + `,
 					"min_steps": ` + strconv.Itoa(MinSteps_2) + `,
 					"delta_price": ` + json.Number(strconv.FormatFloat(float64(Delta_Price_2), 'f', -1, 64)).String() + `,
 					"buy_delta_quantity": ` + json.Number(strconv.FormatFloat(float64(DeltaQuantity_2), 'f', -1, 64)).String() + `,
@@ -383,8 +379,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
-	assert.Equal(t, UpBoundPercent_1, pair.GetUpBound())
-	assert.Equal(t, LowBoundPercent_1, pair.GetLowBound())
+	assert.Equal(t, UpAndLowBoundPercent_1, pair.GetUpBound())
 	assert.Equal(t, Value_1, pair.GetValue())
 }
 

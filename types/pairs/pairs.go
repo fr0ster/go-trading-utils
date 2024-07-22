@@ -91,9 +91,8 @@ type (
 		LimitOnPosition    items_types.ValueType        `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction items_types.ValuePercentType `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
 
-		UpBound  items_types.PricePercentType `json:"up_bound"`  // Верхня межа ціни, най буде відсоток від ціни безубитку позиції
-		LowBound items_types.PricePercentType `json:"low_bound"` // Нижня межа ціни, най буде відсоток від ціни безубитку позиції
-		MinSteps int                          `json:"min_steps"` // Мінімальна кількість кроків
+		UpAndLowBound items_types.PricePercentType `json:"up_and_low_bound"` // Верхня та Нижня межи ціни, най буде відсоток від ціни безубитку позиції
+		MinSteps      int                          `json:"min_steps"`        // Мінімальна кількість кроків
 
 		DeltaPrice    items_types.PricePercentType    `json:"delta_price"`    // Дельта для купівлі/продажу
 		DeltaQuantity items_types.QuantityPercentType `json:"delta_quantity"` // Кількість для купівлі/продажу
@@ -191,11 +190,11 @@ func (pr *Pairs) GetLimitOnTransaction() items_types.ValuePercentType {
 }
 
 func (pr *Pairs) GetUpBound() items_types.PricePercentType {
-	return pr.UpBound
+	return pr.UpAndLowBound
 }
 
 func (pr *Pairs) GetLowBound() items_types.PricePercentType {
-	return pr.LowBound
+	return pr.UpAndLowBound
 }
 
 func (pr *Pairs) GetMinSteps() int {
@@ -226,12 +225,8 @@ func (pr *Pairs) SetLimitOnTransaction(val items_types.ValuePercentType) {
 	pr.LimitOnTransaction = val
 }
 
-func (pr *Pairs) SetUpBoundPercent(val items_types.PricePercentType) {
-	pr.UpBound = val
-}
-
-func (pr *Pairs) SetLowBoundPercent(val items_types.PricePercentType) {
-	pr.LowBound = val
+func (pr *Pairs) SetUpAndLowBound(val items_types.PricePercentType) {
+	pr.UpAndLowBound = val
 }
 
 func (pr *Pairs) SetMinSteps(val int) {
