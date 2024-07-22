@@ -3,8 +3,6 @@ package kline
 import (
 	"errors"
 	"time"
-
-	"github.com/adshao/go-binance/v2/futures"
 )
 
 const (
@@ -31,10 +29,7 @@ type (
 	KlineStreamInterval string
 )
 
-func (pp *Klines) KlineEventStart(
-	stop chan struct{},
-	interval KlineStreamInterval,
-	callBack futures.WsKlineHandler) (err error) {
+func (pp *Klines) KlineEventStart() (err error) {
 	if pp.init == nil || pp.startKlineStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return

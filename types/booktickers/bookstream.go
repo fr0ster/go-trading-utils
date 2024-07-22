@@ -3,14 +3,9 @@ package booktickers
 import (
 	"errors"
 	"time"
-
-	"github.com/adshao/go-binance/v2/futures"
 )
 
-func (bt *BookTickers) BookTickerEventStart(
-	levels int,
-	rate time.Duration,
-	callBack futures.WsBookTickerHandler) (err error) {
+func (bt *BookTickers) BookTickerEventStart() (err error) {
 	if bt.init == nil || bt.startBookTickerStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return

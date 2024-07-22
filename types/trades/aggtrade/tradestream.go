@@ -2,11 +2,9 @@ package aggtrade
 
 import (
 	"time"
-
-	"github.com/adshao/go-binance/v2/futures"
 )
 
-func (pp *AggTrades) TradeEventStart(callBack futures.WsAggTradeHandler) (err error) {
+func (pp *AggTrades) TradeEventStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді

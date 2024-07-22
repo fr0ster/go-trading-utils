@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-func (d *Depths) DepthEventStart(
-	levels DepthStreamLevel,
-	rate DepthStreamRate) (err error) {
+func (d *Depths) DepthEventStart() (err error) {
 	if d.Init == nil || d.startDepthStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return

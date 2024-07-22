@@ -2,11 +2,9 @@ package tradeV3
 
 import (
 	"time"
-
-	"github.com/adshao/go-binance/v2/futures"
 )
 
-func (pp *TradesV3) TradeEventStart(callBack futures.WsAggTradeHandler) (err error) {
+func (pp *TradesV3) TradeEventStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(pp.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
