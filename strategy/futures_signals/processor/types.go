@@ -54,15 +54,15 @@ type (
 		limitOnTransaction items_types.ValuePercentType
 
 		// Дінаміка ціни, використовувалось тіко для grid_v3
-		minSteps        int
-		up              *btree.BTree
-		down            *btree.BTree
-		UpBoundPercent  items_types.PricePercentType
-		UpBound         items_types.PriceType
+		minSteps       int
+		up             *btree.BTree
+		down           *btree.BTree
+		UpBoundPercent items_types.PricePercentType
+		// UpBound         items_types.PriceType
 		LowBoundPercent items_types.PricePercentType
-		LowBound        items_types.PriceType
-		deltaPrice      items_types.PriceType
-		deltaQuantity   items_types.QuantityType
+		// LowBound        items_types.PriceType
+		deltaPrice    items_types.PriceType
+		deltaQuantity items_types.QuantityType
 
 		// Прогресії, використовувалось тіко для grid_v3
 		progression             pairs_types.ProgressionType

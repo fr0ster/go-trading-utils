@@ -408,7 +408,12 @@ func RunFuturesGridTradingV5(
 					}
 					if pairProcessor.CheckStopLoss(free, risk, currentPrice) {
 						logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
-							pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
+							pairProcessor.GetPair(),
+							currentPrice,
+							pairProcessor.GetLowBound(currentPrice),
+							pairProcessor.GetUpBound(currentPrice),
+							risk.UnRealizedProfit,
+							free)
 						pairProcessor.CancelAllOrders()
 						pairProcessor.ClosePosition(risk)
 					}

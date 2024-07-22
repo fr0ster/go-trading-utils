@@ -9,7 +9,6 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	types "github.com/fr0ster/go-trading-utils/types"
-	depth_items "github.com/fr0ster/go-trading-utils/types/depths/items"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
@@ -19,8 +18,8 @@ import (
 
 func initGrid(
 	pairProcessor *processor.PairProcessor,
-	price depth_items.PriceType,
-	quantity depth_items.QuantityType,
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
 	sellOrder,
 	buyOrder *futures.CreateOrderResponse) (grid *grid_types.Grid, err error) {
 	// Ініціалізація гріду
@@ -40,9 +39,9 @@ func initGrid(
 
 func initVars(
 	pairProcessor *processor.PairProcessor) (
-	price depth_items.PriceType,
+	price items_types.PriceType,
 	priceUp,
-	priceDown depth_items.PriceType,
+	priceDown items_types.PriceType,
 	minNotional float64,
 	err error) {
 	symbol, err := pairProcessor.GetFuturesSymbol()
@@ -63,7 +62,7 @@ func marginBalancing(
 	pairProcessor *processor.PairProcessor) (err error) {
 	// Балансування маржі як треба
 	if utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-		delta := pairProcessor.RoundValue(pairProcessor.GetFreeBalance()) - pairProcessor.RoundValue(depth_items.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)))
+		delta := pairProcessor.RoundValue(pairProcessor.GetFreeBalance()) - pairProcessor.RoundValue(items_types.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)))
 		if delta != 0 {
 			if delta > 0 && delta < pairProcessor.GetFreeBalance() {
 				err = pairProcessor.SetPositionMargin(delta, 1)
@@ -84,14 +83,14 @@ func openPosition(
 	reduceOnlyUp bool,
 	closePositionDown bool,
 	reduceOnlyDown bool,
-	quantityUp depth_items.QuantityType,
-	quantityDown depth_items.QuantityType,
-	priceUp depth_items.PriceType,
-	stopPriceUp depth_items.PriceType,
-	activationPriceUp depth_items.PriceType,
-	priceDown depth_items.PriceType,
-	stopPriceDown depth_items.PriceType,
-	activationPriceDown depth_items.PriceType,
+	quantityUp items_types.QuantityType,
+	quantityDown items_types.QuantityType,
+	priceUp items_types.PriceType,
+	stopPriceUp items_types.PriceType,
+	activationPriceUp items_types.PriceType,
+	priceDown items_types.PriceType,
+	stopPriceDown items_types.PriceType,
+	activationPriceDown items_types.PriceType,
 	pairProcessor *processor.PairProcessor) (upOrder, downOrder *futures.CreateOrderResponse, err error) {
 	err = pairProcessor.CancelAllOrders()
 	if err != nil {
@@ -163,24 +162,25 @@ func processOrder(
 	grid *grid_types.Grid,
 	percentsToStopSettingNewOrder items_types.PricePercentType,
 	order *grid_types.Record,
-	quantity depth_items.QuantityType,
-	locked depth_items.ValueType,
+	quantity items_types.QuantityType,
+	locked items_types.ValueType,
 	risk *futures.PositionRisk) (err error) {
 	var (
 		takerRecord *grid_types.Record
 		takerOrder  *futures.CreateOrderResponse
 	)
-	delta_percent := func(currentPrice depth_items.PriceType) depth_items.PricePercentType {
-		return depth_items.PricePercentType(
+	delta_percent := func(currentPrice items_types.PriceType) items_types.PricePercentType {
+		return items_types.PricePercentType(
 			math.Abs((float64(currentPrice) - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice)))
 	}
+	currentPrice, _ := pairProcessor.GetCurrentPrice()
 	if side == futures.SideTypeSell {
 		// Якшо вище немае запису про створений ордер, то створюємо його і робимо запис в грід
 		if order.GetUpPrice() == 0 {
 			// Створюємо ордер на продаж
 			upPrice := pairProcessor.RoundPrice(order.GetPrice() * (1 + pairProcessor.GetDeltaPrice()))
-			if (pairProcessor.GetUpBound() == 0 || upPrice <= pairProcessor.GetUpBound()) &&
-				depth_items.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) <= pairProcessor.GetFreeBalance() &&
+			if (pairProcessor.GetUpBound(currentPrice) == 0 || upPrice <= pairProcessor.GetUpBound(currentPrice)) &&
+				items_types.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) <= pairProcessor.GetFreeBalance() &&
 				locked <= pairProcessor.GetFreeBalance() {
 				upOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,
@@ -207,10 +207,10 @@ func processOrder(
 					takerOrder = upOrder
 				}
 			} else {
-				if pairProcessor.GetUpBound() == 0 || upPrice > pairProcessor.GetUpBound() {
+				if pairProcessor.GetUpBound(currentPrice) == 0 || upPrice > pairProcessor.GetUpBound(currentPrice) {
 					logrus.Debugf("Futures %s: UpBound %v isn't 0 and price %v > UpBound %v",
-						pairProcessor.GetPair(), pairProcessor.GetUpBound(), upPrice, pairProcessor.GetUpBound())
-				} else if depth_items.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) > pairProcessor.GetFreeBalance() {
+						pairProcessor.GetPair(), pairProcessor.GetUpBound(currentPrice), upPrice, pairProcessor.GetUpBound(currentPrice))
+				} else if items_types.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) > pairProcessor.GetFreeBalance() {
 					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
 						pairProcessor.GetPair(), risk.IsolatedMargin, pairProcessor.GetFreeBalance())
 				} else if locked > pairProcessor.GetFreeBalance() {
@@ -270,9 +270,9 @@ func processOrder(
 		if order.GetDownPrice() == 0 {
 			// Створюємо ордер на купівлю
 			downPrice := pairProcessor.RoundPrice(order.GetPrice() * (1 - pairProcessor.GetDeltaPrice()))
-			if (pairProcessor.GetLowBound() == 0 || downPrice >= pairProcessor.GetLowBound()) &&
+			if (pairProcessor.GetLowBound(currentPrice) == 0 || downPrice >= pairProcessor.GetLowBound(currentPrice)) &&
 				delta_percent(downPrice) >= percentsToStopSettingNewOrder &&
-				depth_items.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) <= pairProcessor.GetFreeBalance() &&
+				items_types.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) <= pairProcessor.GetFreeBalance() &&
 				locked <= pairProcessor.GetFreeBalance() {
 				downOrder, err := pairProcessor.CreateOrder(
 					futures.OrderTypeLimit,
@@ -300,13 +300,13 @@ func processOrder(
 					takerOrder = downOrder
 				}
 			} else {
-				if pairProcessor.GetLowBound() == 0 || downPrice < pairProcessor.GetLowBound() {
+				if pairProcessor.GetLowBound(currentPrice) == 0 || downPrice < pairProcessor.GetLowBound(currentPrice) {
 					logrus.Debugf("Futures %s: LowBound %v isn't 0 and price %v < LowBound %v",
-						pairProcessor.GetPair(), pairProcessor.GetLowBound(), downPrice, pairProcessor.GetLowBound())
+						pairProcessor.GetPair(), pairProcessor.GetLowBound(currentPrice), downPrice, pairProcessor.GetLowBound(currentPrice))
 				} else if delta_percent(downPrice) < percentsToStopSettingNewOrder {
 					logrus.Debugf("Futures %s: Liquidation price %v, distance %v less than %v",
 						pairProcessor.GetPair(), risk.LiquidationPrice, delta_percent(downPrice), percentsToStopSettingNewOrder)
-				} else if depth_items.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) > pairProcessor.GetFreeBalance() {
+				} else if items_types.ValueType(utils.ConvStrToFloat64(risk.IsolatedMargin)) > pairProcessor.GetFreeBalance() {
 					logrus.Debugf("Futures %s: IsolatedMargin %v > current position balance %v",
 						pairProcessor.GetPair(), risk.IsolatedMargin, pairProcessor.GetFreeBalance())
 				} else if locked > pairProcessor.GetFreeBalance() {

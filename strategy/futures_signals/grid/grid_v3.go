@@ -294,14 +294,14 @@ func createNextPair_v3(
 		// Визначаємо ціну для нових ордерів
 		// Визначаємо кількість для нових ордерів
 		pairProcessor.UpDownClear()
-		pairProcessor.SetBounds(LastExecutedPrice)
+		// pairProcessor.SetBounds(LastExecutedPrice)
 		upPrice = pairProcessor.NextPriceUp(LastExecutedPrice)
 		downPrice = pairProcessor.NextPriceDown(LastExecutedPrice)
-		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.UpBound)
+		_, _, _, upQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.GetUpBound(LastExecutedPrice))
 		if err != nil {
 			logrus.Errorf("Future %s: can't calculate initial position for price up %v", pairProcessor.GetPair(), LastExecutedPrice)
 		}
-		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.LowBound)
+		_, _, _, downQuantity, _, err = pairProcessor.CalculateInitialPosition(LastExecutedPrice, pairProcessor.GetLowBound(LastExecutedPrice))
 		if err != nil {
 			logrus.Errorf("Future %s: can't calculate initial position for price down %v", pairProcessor.GetPair(), LastExecutedPrice)
 		}
@@ -478,11 +478,11 @@ func RunFuturesGridTradingV3(
 								close(quit)
 								return
 							}
-							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
-								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
+							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound(currentPrice)) ||
+								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound(currentPrice)) ||
 								items_types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free {
 								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
-									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
+									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(currentPrice), pairProcessor.GetUpBound(currentPrice), risk.UnRealizedProfit, free)
 								pairProcessor.ClosePosition(risk)
 							}
 							initPosition_v3(currentPrice, risk, pairProcessor, quit)

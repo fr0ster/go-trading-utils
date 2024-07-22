@@ -83,11 +83,11 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyUp = false
 	reduceOnlyDown = false
 	if isDynamic {
-		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(priceUp, pp.UpBound)
+		_, _, _, quantityUp, _, err = pp.CalculateInitialPosition(priceUp, pp.GetUpBound(price))
 		if err != nil {
 			quantityUp = 0
 		}
-		_, _, _, quantityDown, _, err = pp.CalculateInitialPosition(priceDown, pp.LowBound)
+		_, _, _, quantityDown, _, err = pp.CalculateInitialPosition(priceDown, pp.GetLowBound(price))
 		if err != nil {
 			quantityDown = 0
 		}

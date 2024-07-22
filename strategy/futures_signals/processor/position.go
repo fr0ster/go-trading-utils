@@ -100,7 +100,7 @@ func (pp *PairProcessor) GetPositionAmt() (positionAmt float64) {
 	return
 }
 
-func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price items_types.PriceType) (unRealizedProfit items_types.ValueType) {
+func (pp *PairProcessor) GetPredictableLoss(risk *futures.PositionRisk, price items_types.PriceType) (unRealizedProfit items_types.ValueType) {
 	if risk == nil || pp.leverage <= 0 {
 		return 0
 	}
@@ -109,9 +109,9 @@ func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price it
 	if positionAmt == 0 { // No position
 		return 0
 	} else if positionAmt < 0 { // Short position
-		unRealizedProfit = items_types.ValueType(float64(entryPrice-price) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = items_types.ValueType(float64(pp.GetUpBound(price)-entryPrice) * float64(positionAmt))
 	} else if positionAmt > 0 { // Long position
-		unRealizedProfit = items_types.ValueType(float64(price-entryPrice) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = items_types.ValueType(float64(entryPrice-pp.GetLowBound(price)) * float64(positionAmt))
 	}
 	return
 }
@@ -124,13 +124,13 @@ func (pp *PairProcessor) CheckAddPosition(risk *futures.PositionRisk, price item
 	if positionAmt == 0 { // No position
 		return true
 	} else if positionAmt < 0 { // Short position
-		return liquidationPrice > pp.GetUpBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
-			price <= pp.GetUpBound()
+		return liquidationPrice > pp.GetUpBound(price) &&
+			pp.GetPredictableLoss(risk, pp.GetUpBound(price)) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
+			price <= pp.GetUpBound(price)
 	} else if positionAmt > 0 { // Long position
-		return liquidationPrice < pp.GetLowBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
-			price >= pp.GetLowBound()
+		return liquidationPrice < pp.GetLowBound(price) &&
+			pp.GetPredictableLoss(risk, pp.GetLowBound(price)) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
+			price >= pp.GetLowBound(price)
 	}
 	return false
 }
@@ -139,7 +139,7 @@ func (pp *PairProcessor) CheckStopLoss(free items_types.ValueType, risk *futures
 	if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 		return false
 	}
-	return (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && price < pp.GetLowBound()) ||
-		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && price > pp.GetUpBound()) ||
+	return (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && price < pp.GetLowBound(price)) ||
+		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && price > pp.GetUpBound(price)) ||
 		items_types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free
 }

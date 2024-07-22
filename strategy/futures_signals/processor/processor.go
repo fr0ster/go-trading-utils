@@ -85,7 +85,7 @@ func (pp *PairProcessor) InitPositionGridUp(price items_types.PriceType) (
 	)
 	valueUp, quantityUp, middlePriceUp, startQuantityUp, stepsUp, err = pp.CalculateInitialPosition(
 		price,
-		pp.UpBound)
+		pp.GetUpBound(price))
 	if err != nil {
 		return
 	}
@@ -126,7 +126,7 @@ func (pp *PairProcessor) InitPositionGridDown(price items_types.PriceType) (
 	)
 	valueDown, quantityDown, middlePriceDown, startQuantityDown, stepsDown, err = pp.CalculateInitialPosition(
 		price,
-		pp.LowBound)
+		pp.GetLowBound(price))
 	if err != nil {
 		return
 	}
