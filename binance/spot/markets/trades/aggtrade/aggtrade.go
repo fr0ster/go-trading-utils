@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/futures"
 	aggtrade_types "github.com/fr0ster/go-trading-utils/types/trades/aggtrade"
 )
 
@@ -36,29 +35,31 @@ func GetAggTradeInitCreator(client *binance.Client, limit int) func(at *aggtrade
 	}
 }
 
-func GetAggTradesHandler(limit int, trade *aggtrade_types.AggTrades) futures.WsAggTradeHandler {
-	return func(event *futures.WsAggTradeEvent) {
-		trade.Lock()         // Locking the depths
-		defer trade.Unlock() // Unlocking the depths
-		trade.Update(&aggtrade_types.AggTrade{
-			AggTradeID:   event.AggregateTradeID,
-			Price:        event.Price,
-			Quantity:     event.Quantity,
-			FirstTradeID: event.FirstTradeID,
-			LastTradeID:  event.LastTradeID,
-			Timestamp:    event.TradeTime,
-			IsBuyerMaker: event.Maker,
-			// IsBestPriceMatch: event.IsBestPriceMatch,
-		})
+func StandardEventCallBackCreator(limit int) func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
+	return func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
+		return func(event *binance.WsAggTradeEvent) {
+			trade.Lock()         // Locking the depths
+			defer trade.Unlock() // Unlocking the depths
+			trade.Update(&aggtrade_types.AggTrade{
+				AggTradeID:   event.AggTradeID,
+				Price:        event.Price,
+				Quantity:     event.Quantity,
+				FirstTradeID: event.FirstBreakdownTradeID,
+				LastTradeID:  event.LastBreakdownTradeID,
+				Timestamp:    event.TradeTime,
+				IsBuyerMaker: event.IsBuyerMaker,
+				// IsBestPriceMatch: event.IsBestPriceMatch,
+			})
+		}
 	}
 }
 func GetStartTradeStreamCreator(
-	handler binance.WsAggTradeHandler,
-	errHandler binance.ErrHandler) func(*aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
+	handler func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler,
+	errHandler func(trade *aggtrade_types.AggTrades) binance.ErrHandler) func(*aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
 	return func(at *aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsAggTradeServe(at.Symbol(), handler, errHandler)
+			doneC, stopC, err = binance.WsAggTradeServe(at.Symbol(), handler(at), errHandler(at))
 			return
 		}
 	}

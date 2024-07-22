@@ -35,29 +35,31 @@ func GetAggTradeInitCreator(client *futures.Client, limit int) func(at *aggtrade
 	}
 }
 
-func GetAggTradesHandler(limit int, trade *aggtrade_types.AggTrades) futures.WsAggTradeHandler {
-	return func(event *futures.WsAggTradeEvent) {
-		trade.Lock()         // Locking the depths
-		defer trade.Unlock() // Unlocking the depths
-		trade.Update(&aggtrade_types.AggTrade{
-			AggTradeID:   event.AggregateTradeID,
-			Price:        event.Price,
-			Quantity:     event.Quantity,
-			FirstTradeID: event.FirstTradeID,
-			LastTradeID:  event.LastTradeID,
-			Timestamp:    event.TradeTime,
-			IsBuyerMaker: event.Maker,
-			// IsBestPriceMatch: event.IsBestPriceMatch,
-		})
+func StandardEventCallBackCreator(limit int) func(trade *aggtrade_types.AggTrades) futures.WsAggTradeHandler {
+	return func(trade *aggtrade_types.AggTrades) futures.WsAggTradeHandler {
+		return func(event *futures.WsAggTradeEvent) {
+			trade.Lock()         // Locking the depths
+			defer trade.Unlock() // Unlocking the depths
+			trade.Update(&aggtrade_types.AggTrade{
+				AggTradeID:   event.AggregateTradeID,
+				Price:        event.Price,
+				Quantity:     event.Quantity,
+				FirstTradeID: event.FirstTradeID,
+				LastTradeID:  event.LastTradeID,
+				Timestamp:    event.TradeTime,
+				IsBuyerMaker: event.Maker,
+				// IsBestPriceMatch: event.IsBestPriceMatch,
+			})
+		}
 	}
 }
 func GetStartTradeStreamCreator(
-	handler futures.WsAggTradeHandler,
-	errHandler futures.ErrHandler) func(*aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
+	handler func(trade *aggtrade_types.AggTrades) futures.WsAggTradeHandler,
+	errHandler func(trade *aggtrade_types.AggTrades) futures.ErrHandler) func(*aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
 	return func(at *aggtrade_types.AggTrades) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = futures.WsAggTradeServe(at.Symbol(), handler, errHandler)
+			doneC, stopC, err = futures.WsAggTradeServe(at.Symbol(), handler(at), errHandler(at))
 			return
 		}
 	}
