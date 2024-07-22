@@ -4,28 +4,28 @@ import (
 	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
-	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/markets/trade/tradev3"
+	"github.com/adshao/go-binance/v2/futures"
+	futures_trade "github.com/fr0ster/go-trading-utils/binance/futures/markets/trades/trade"
 	trade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
-	trade_types "github.com/fr0ster/go-trading-utils/types/trade/tradeV3"
+	trade_types "github.com/fr0ster/go-trading-utils/types/trades/trade"
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestListTradeInterface(t *testing.T) {
+func TestHistoricalTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	futures.UseTestnet = false
 	trades := trade_types.New(
 		"BTCUSDT",
 		nil,
-		spot_trade.GetListTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		futures_trade.GetHistoricalTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(*trade_types.TradeV3)
+				ht := item.(*trade_types.Trade)
 				assert.NotNil(t, ht)
 			}
 			return true
@@ -36,20 +36,20 @@ func TestListTradeInterface(t *testing.T) {
 	})
 }
 
-func TestListMarginTradesInterface(t *testing.T) {
+func TestRecentTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	futures.UseTestnet = false
 	trades := trade_types.New(
 		"BTCUSDT",
 		nil,
-		spot_trade.GetListMarginTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		futures_trade.GetRecentTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
 		i.Ascend(func(item btree.Item) bool {
 			if item != nil {
-				ht := item.(*trade_types.TradeV3)
+				ht := item.(*trade_types.Trade)
 				assert.NotNil(t, ht)
 			}
 			return true

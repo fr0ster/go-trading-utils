@@ -1,12 +1,12 @@
-package bookticker_test
+package booktickers_test
 
 import (
 	"errors"
 	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
-	spot_booktickers "github.com/fr0ster/go-trading-utils/binance/spot/markets/bookticker"
+	"github.com/adshao/go-binance/v2/futures"
+	futures_booktickers "github.com/fr0ster/go-trading-utils/binance/futures/markets/booktickers"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
@@ -29,18 +29,14 @@ func initBookTicker() *booktickers_types.BookTickers {
 func TestInitPricesTree(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
-	spot := binance.NewClient(api_key, secret_key)
+	futures.UseTestnet = true
+	futures := futures.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	bookTickers := booktickers_types.New(
-		3,
-		nil,
-		spot_booktickers.GetInitCreator(spot),
-		"BTCUSDT")
+	bookTicker := booktickers_types.New(3, nil, futures_booktickers.GetInitCreator(futures), "BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function
-	btc_bt := bookTickers.Get("BTCUSDT")
+	btc_bt := bookTicker.Get("BTCUSDT")
 	assert.NotNil(t, btc_bt)
 }
 

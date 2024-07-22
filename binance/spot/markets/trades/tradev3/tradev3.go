@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2"
-	trade_types "github.com/fr0ster/go-trading-utils/types/trade/tradeV3"
+	trade_types "github.com/fr0ster/go-trading-utils/types/trades/tradeV3"
 )
 
 func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {

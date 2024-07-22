@@ -6,9 +6,9 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
-	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/markets/trade/aggtrade"
+	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/markets/trades/aggtrade"
 	trade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
-	trade_types "github.com/fr0ster/go-trading-utils/types/trade/aggtrade"
+	trade_types "github.com/fr0ster/go-trading-utils/types/trades/aggtrade"
 
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"

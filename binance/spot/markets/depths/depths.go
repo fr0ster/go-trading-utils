@@ -1,18 +1,18 @@
-package depth
+package depths
 
 import (
 	"context"
 
 	"github.com/adshao/go-binance/v2"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 
 	"github.com/sirupsen/logrus"
 )
 
-func GetterInitCreator(limit depth_types.DepthAPILimit, client *binance.Client) func(d *depth_types.Depths) func() (err error) {
-	return func(d *depth_types.Depths) func() (err error) {
+func GetterInitCreator(limit depths_types.DepthAPILimit, client *binance.Client) func(d *depths_types.Depths) func() (err error) {
+	return func(d *depths_types.Depths) func() (err error) {
 		return func() (err error) {
 			res, err :=
 				client.NewDepthService().
@@ -39,11 +39,11 @@ func GetterInitCreator(limit depth_types.DepthAPILimit, client *binance.Client) 
 }
 
 func GetterStartDepthStreamCreator(
-	levels depth_types.DepthStreamLevel,
-	rate depth_types.DepthStreamRate,
-	handlerCreator func(d *depth_types.Depths) binance.WsDepthHandler,
-	errHandlerCreator func(d *depth_types.Depths) binance.ErrHandler) func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
-	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
+	levels depths_types.DepthStreamLevel,
+	rate depths_types.DepthStreamRate,
+	handlerCreator func(d *depths_types.Depths) binance.WsDepthHandler,
+	errHandlerCreator func(d *depths_types.Depths) binance.ErrHandler) func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
+	return func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsDepthServe(d.Symbol(), handlerCreator(d), errHandlerCreator(d))
@@ -52,7 +52,7 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func standardEventHandlerCreator(d *depth_types.Depths) binance.WsDepthHandler {
+func standardEventHandlerCreator(d *depths_types.Depths) binance.WsDepthHandler {
 	return func(event *binance.WsDepthEvent) {
 		func() {
 			d.Lock()         // Locking the depths
@@ -84,8 +84,8 @@ func standardEventHandlerCreator(d *depth_types.Depths) binance.WsDepthHandler {
 }
 
 func StandardEventCallBackCreator(
-	handlers ...func(d *depth_types.Depths) binance.WsDepthHandler) func(d *depth_types.Depths) binance.WsDepthHandler {
-	return func(d *depth_types.Depths) binance.WsDepthHandler {
+	handlers ...func(d *depths_types.Depths) binance.WsDepthHandler) func(d *depths_types.Depths) binance.WsDepthHandler {
+	return func(d *depths_types.Depths) binance.WsDepthHandler {
 		d.Init()
 		var stack []binance.WsDepthHandler
 		d.Init()
@@ -103,11 +103,11 @@ func StandardEventCallBackCreator(
 }
 
 func GetterStartPartialDepthStreamCreator(
-	levels depth_types.DepthStreamLevel,
-	rate depth_types.DepthStreamRate,
-	handlerCreator func(d *depth_types.Depths) binance.WsPartialDepthHandler,
-	errHandlerCreator func(d *depth_types.Depths) binance.ErrHandler) func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
-	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
+	levels depths_types.DepthStreamLevel,
+	rate depths_types.DepthStreamRate,
+	handlerCreator func(d *depths_types.Depths) binance.WsPartialDepthHandler,
+	errHandlerCreator func(d *depths_types.Depths) binance.ErrHandler) func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
+	return func(d *depths_types.Depths) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsPartialDepthServe100Ms(d.Symbol(), string(rune(levels)), handlerCreator(d), errHandlerCreator(d))
@@ -116,7 +116,7 @@ func GetterStartPartialDepthStreamCreator(
 	}
 }
 
-func StandardPartialEventHandlerCreator(d *depth_types.Depths) binance.WsPartialDepthHandler {
+func StandardPartialEventHandlerCreator(d *depths_types.Depths) binance.WsPartialDepthHandler {
 	return func(event *binance.WsPartialDepthEvent) {
 		func() {
 			d.Lock()         // Locking the depths
@@ -148,8 +148,8 @@ func StandardPartialEventHandlerCreator(d *depth_types.Depths) binance.WsPartial
 }
 
 func StandardPartialEventCallBackCreator(
-	handlers ...func(d *depth_types.Depths) binance.WsPartialDepthHandler) func(d *depth_types.Depths) binance.WsPartialDepthHandler {
-	return func(d *depth_types.Depths) binance.WsPartialDepthHandler {
+	handlers ...func(d *depths_types.Depths) binance.WsPartialDepthHandler) func(d *depths_types.Depths) binance.WsPartialDepthHandler {
+	return func(d *depths_types.Depths) binance.WsPartialDepthHandler {
 		var stack []binance.WsPartialDepthHandler
 		d.Init()
 		standardHandlers := StandardPartialEventHandlerCreator(d)
@@ -165,8 +165,8 @@ func StandardPartialEventCallBackCreator(
 	}
 }
 
-func GetterWsErrorHandlerCreator() func(d *depth_types.Depths) binance.ErrHandler {
-	return func(d *depth_types.Depths) binance.ErrHandler {
+func GetterWsErrorHandlerCreator() func(d *depths_types.Depths) binance.ErrHandler {
+	return func(d *depths_types.Depths) binance.ErrHandler {
 		return func(err error) {
 			logrus.Errorf("Spot wsErrorHandler error: %v", err)
 			d.ResetEvent(err)

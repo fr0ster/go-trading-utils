@@ -1,4 +1,4 @@
-package bookticker
+package booktickers
 
 import (
 	"context"
