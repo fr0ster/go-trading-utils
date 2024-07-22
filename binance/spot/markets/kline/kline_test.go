@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
-	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
+	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,7 +53,7 @@ func getTestData() []*kline_types.Kline {
 }
 
 func TestKlineInterface(t *testing.T) {
-	klines := kline_types.New(2, "1m", "BTCUSDT")
+	klines := kline_types.New(2, "1m", "BTCUSDT", nil, nil)
 
 	test := func(k kline_interface.Klines) {
 		val1 := k.GetKlines().Max().(*kline_types.Kline)

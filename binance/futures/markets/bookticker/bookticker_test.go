@@ -6,21 +6,23 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2/futures"
-	futuresBookTicker "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
-	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/bookticker"
-	bookticker_types "github.com/fr0ster/go-trading-utils/types/bookticker"
+	futures_booktickers "github.com/fr0ster/go-trading-utils/binance/futures/markets/bookticker"
+	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
+	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
+	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
+	"github.com/stretchr/testify/assert"
 )
 
-func initBookTicker() *bookticker_types.BookTickers {
-	bookTicker := bookticker_types.New(3)
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "BTCUSDT", BidPrice: 10000, BidQuantity: 1, AskPrice: 10001, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "ETHUSDT", BidPrice: 1000, BidQuantity: 1, AskPrice: 1001, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "BNBUSDT", BidPrice: 100, BidQuantity: 1, AskPrice: 101, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "SUSHIUSDT", BidPrice: 10000, BidQuantity: 1, AskPrice: 10001, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "LINKUSDT", BidPrice: 1000, BidQuantity: 1, AskPrice: 1001, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "DOTUSDT", BidPrice: 100, BidQuantity: 1, AskPrice: 101, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "ADAUSDT", BidPrice: 10000, BidQuantity: 1, AskPrice: 10001, AskQuantity: 1})
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "XRPUSDT", BidPrice: 1000, BidQuantity: 1, AskPrice: 1001, AskQuantity: 1})
+func initBookTicker() *booktickers_types.BookTickers {
+	bookTicker := booktickers_types.New(3, nil, nil)
+	bookTicker.Set(bookticker_types.New("BTCUSDT", 10000, 1, 10001, 1))
+	bookTicker.Set(bookticker_types.New("ETHUSDT", 1000, 1, 1001, 1))
+	bookTicker.Set(bookticker_types.New("BNBUSDT", 100, 1, 101, 1))
+	bookTicker.Set(bookticker_types.New("SUSHIUSDT", 10000, 1, 10001, 1))
+	bookTicker.Set(bookticker_types.New("LINKUSDT", 1000, 1, 1001, 1))
+	bookTicker.Set(bookticker_types.New("DOTUSDT", 100, 1, 101, 1))
+	bookTicker.Set(bookticker_types.New("ADAUSDT", 10000, 1, 10001, 1))
+	bookTicker.Set(bookticker_types.New("XRPUSDT", 1000, 1, 1001, 1))
 	return bookTicker
 }
 
@@ -31,15 +33,11 @@ func TestInitPricesTree(t *testing.T) {
 	futures := futures.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	bookTicker := bookticker_types.New(3)
-	err := futuresBookTicker.Init(bookTicker, "BTCUSDT", futures)
-
-	// Check if there was an error
-	if err != nil {
-		t.Errorf("InitPricesTree returned an error: %v", err)
-	}
+	bookTicker := booktickers_types.New(3, nil, futures_booktickers.GetInitCreator(futures), "BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function
+	btc_bt := bookTicker.Get("BTCUSDT")
+	assert.NotNil(t, btc_bt)
 }
 
 func TestBookTickerGet(t *testing.T) {
@@ -56,25 +54,21 @@ func TestSetBookTickerItem(t *testing.T) {
 	// Add assertions to check the correctness of the updated item
 	// For example, check if the item was updated correctly
 	bookTicker := initBookTicker()
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "BTCUSDT", BidPrice: 10000, BidQuantity: 1, AskPrice: 10001, AskQuantity: 1})
-	item, err := bookticker_types.Binance2BookTicker(bookTicker.Get("BTCUSDT"))
-	if err != nil {
-		t.Errorf("SetItem returned an error: %v", err)
-	}
+	bookTicker.Set(bookticker_types.New("BTCUSDT", 10000, 1, 10001, 1))
+	item := bookTicker.Get("BTCUSDT")
 	if item == nil {
 		t.Errorf("SetItem did not update the item")
-	} else if item.BidPrice != 10000 && item.BidQuantity != 1 && item.AskPrice != 10001 && item.AskQuantity != 1 {
+	} else if item.GetBidPrice() != 10000 && item.GetBidQuantity() != 1 && item.GetAskPrice() != 10001 && item.GetAskQuantity() != 1 {
 		t.Errorf("SetItem did not update the item correctly")
 	}
 
-	bookTicker.Set(&bookticker_types.BookTicker{Symbol: "BTCUSDT", BidPrice: 99999})
-	item, err = bookticker_types.Binance2BookTicker(bookTicker.Get("BTCUSDT"))
-	if err != nil {
-		t.Errorf("SetItem returned an error: %v", err)
-	}
+	bt := bookTicker.Get("BTCUSDT")
+	bt.SetBidPrice(99999)
+	bookTicker.Set(bt)
+	bookTicker.Get("BTCUSDT")
 	if item == nil {
 		t.Errorf("SetItem did not update the item")
-	} else if item.BidPrice != 99999 {
+	} else if item.GetBidPrice() != 99999 {
 		t.Errorf("SetItem did not update the item correctly")
 	}
 }

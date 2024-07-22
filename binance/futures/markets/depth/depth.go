@@ -51,7 +51,7 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func StandardEventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
+func standardEventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
 	return func(event *futures.WsDepthEvent) {
 		func() {
 			d.Lock()         // Locking the depths
@@ -87,7 +87,7 @@ func StandardEventCallBackCreator(
 	return func(d *depth_types.Depths) futures.WsDepthHandler {
 		var stack []futures.WsDepthHandler
 		d.Init()
-		standardHandler := StandardEventHandlerCreator(d)
+		standardHandler := standardEventHandlerCreator(d)
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}

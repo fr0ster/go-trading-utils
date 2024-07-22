@@ -1,13 +1,11 @@
 package depth
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
-	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
 // DepthBTree - B-дерево для зберігання стакана заявок
@@ -37,17 +35,11 @@ func New(
 		startDepthStream: nil,
 		Init:             nil,
 	}
-	if startDepthStreamCreator != nil && initCreator != nil {
+	if startDepthStreamCreator != nil {
 		this.startDepthStream = startDepthStreamCreator(this)
+	}
+	if initCreator != nil {
 		this.Init = initCreator(this)
 	}
 	return this
-}
-
-func Binance2BookTicker(binanceDepth interface{}) (*items_types.DepthItem, error) {
-	switch binanceDepth := binanceDepth.(type) {
-	case *items_types.DepthItem:
-		return binanceDepth, nil
-	}
-	return nil, errors.New("it's not a types.DepthItemType")
 }

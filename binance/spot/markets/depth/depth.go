@@ -52,7 +52,7 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func StandardEventHandlerCreator(d *depth_types.Depths) binance.WsDepthHandler {
+func standardEventHandlerCreator(d *depth_types.Depths) binance.WsDepthHandler {
 	return func(event *binance.WsDepthEvent) {
 		func() {
 			d.Lock()         // Locking the depths
@@ -89,7 +89,7 @@ func StandardEventCallBackCreator(
 		d.Init()
 		var stack []binance.WsDepthHandler
 		d.Init()
-		standardHandlers := StandardEventHandlerCreator(d)
+		standardHandlers := standardEventHandlerCreator(d)
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}

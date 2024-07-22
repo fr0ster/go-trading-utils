@@ -1,13 +1,10 @@
 package kline_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2/futures"
-	futures_kline "github.com/fr0ster/go-trading-utils/binance/futures/markets/kline"
 	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
-	kline_types "github.com/fr0ster/go-trading-utils/types/kline"
+	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
 )
 
 func getTestData() []*kline_types.Kline {
@@ -42,13 +39,7 @@ func getTestData() []*kline_types.Kline {
 }
 
 func TestKlineInterface(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
-	futures := futures.NewClient(api_key, secret_key)
-
-	kline := kline_types.New(2, "1m", "BTCUSDT")
-	futures_kline.Init(kline, futures)
+	kline := kline_types.New(2, kline_types.KlineStreamInterval1m, "BTCUSDT", nil, nil)
 
 	test := func(k kline_interface.Klines) {
 	}
