@@ -34,13 +34,12 @@ func GetInitCreator(interval kline_types.KlineStreamInterval, client *binance.Cl
 }
 
 func GetStartKlineStreamCreator(
-	interval kline_types.KlineStreamInterval,
 	handler binance.WsKlineHandler,
 	errHandler binance.ErrHandler) func(d *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
 	return func(pp *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsKlineServe(pp.GetSymbolname(), string(interval), handler, errHandler)
+			doneC, stopC, err = binance.WsKlineServe(pp.GetSymbolname(), string(pp.GetInterval()), handler, errHandler)
 			return
 		}
 	}
