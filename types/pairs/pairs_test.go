@@ -3,8 +3,8 @@ package pairs_test
 import (
 	"testing"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"

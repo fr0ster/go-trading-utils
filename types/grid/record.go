@@ -2,18 +2,18 @@ package grid
 
 import (
 	"github.com/fr0ster/go-trading-utils/types"
-	depth_items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	"github.com/google/btree"
 )
 
 type (
 	OrderIdType int64
 	Record      struct {
-		Price     depth_items.PriceType
-		quantity  depth_items.QuantityType
+		Price     items_types.PriceType
+		quantity  items_types.QuantityType
 		orderId   int64
-		uPrice    depth_items.PriceType
-		downPrice depth_items.PriceType
+		uPrice    items_types.PriceType
+		downPrice items_types.PriceType
 		orderSide types.OrderSide
 	}
 )
@@ -34,19 +34,19 @@ func (g *Record) Equals(other btree.Item) bool {
 	return (g.Price == other.(*Record).Price)
 }
 
-func (g *Record) GetPrice() depth_items.PriceType {
+func (g *Record) GetPrice() items_types.PriceType {
 	return g.Price
 }
 
-func (g *Record) SetPrice(price depth_items.PriceType) {
+func (g *Record) SetPrice(price items_types.PriceType) {
 	g.Price = price
 }
 
-func (g *Record) GetQuantity() depth_items.QuantityType {
+func (g *Record) GetQuantity() items_types.QuantityType {
 	return g.quantity
 }
 
-func (g *Record) SetQuantity(quantity depth_items.QuantityType) {
+func (g *Record) SetQuantity(quantity items_types.QuantityType) {
 	g.quantity = quantity
 }
 
@@ -58,19 +58,19 @@ func (g *Record) SetOrderId(orderId int64) {
 	g.orderId = orderId
 }
 
-func (g *Record) GetUpPrice() depth_items.PriceType {
+func (g *Record) GetUpPrice() items_types.PriceType {
 	return g.uPrice
 }
 
-func (g *Record) SetUpPrice(upPrice depth_items.PriceType) {
+func (g *Record) SetUpPrice(upPrice items_types.PriceType) {
 	g.uPrice = upPrice
 }
 
-func (g *Record) GetDownPrice() depth_items.PriceType {
+func (g *Record) GetDownPrice() items_types.PriceType {
 	return g.downPrice
 }
 
-func (g *Record) SetDownPrice(downPrice depth_items.PriceType) {
+func (g *Record) SetDownPrice(downPrice items_types.PriceType) {
 	g.downPrice = downPrice
 }
 
@@ -84,10 +84,10 @@ func (g *Record) SetOrderSide(orderSide types.OrderSide) {
 
 func NewRecord(
 	orderId int64,
-	price depth_items.PriceType,
-	quantity depth_items.QuantityType,
-	upPrice depth_items.PriceType,
-	downPrice depth_items.PriceType,
+	price items_types.PriceType,
+	quantity items_types.QuantityType,
+	upPrice items_types.PriceType,
+	downPrice items_types.PriceType,
 	orderSide types.OrderSide) *Record {
 	return &Record{
 		Price:     price,

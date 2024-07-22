@@ -3,8 +3,8 @@ package processor
 import (
 	"fmt"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	"github.com/sirupsen/logrus"
 )

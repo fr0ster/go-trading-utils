@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 
 	"github.com/google/btree"
 )

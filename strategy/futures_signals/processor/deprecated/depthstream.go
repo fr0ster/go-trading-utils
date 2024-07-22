@@ -7,8 +7,8 @@ package processor
 // 	"github.com/sirupsen/logrus"
 
 // 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depth"
-// 	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-// 	depths_types "github.com/fr0ster/go-trading-utils/types/depth/depths"
+// 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+// 	depths_types "github.com/fr0ster/go-trading-utils/types/depths/depths"
 // 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
 // )
 

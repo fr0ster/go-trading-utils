@@ -10,8 +10,8 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 

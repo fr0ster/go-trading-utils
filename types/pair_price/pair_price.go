@@ -2,19 +2,21 @@ package pair_price
 
 import (
 	"github.com/adshao/go-binance/v2/common"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
+
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
 
 type (
 	PairPrice struct {
-		Price    types.PriceType
-		Quantity types.QuantityType
+		Price    items_types.PriceType
+		Quantity items_types.QuantityType
 	}
 	PairDelta struct {
-		Price   types.PriceType
-		Percent types.QuantityType
+		Price   items_types.PriceType
+		Percent items_types.QuantityType
 	}
 	AskBid struct {
 		Ask *PairDelta
@@ -33,8 +35,8 @@ func (i *PairPrice) Equal(than btree.Item) bool {
 
 func (i *PairPrice) Parse(a common.PriceLevel) {
 	price, quantity, _ := a.Parse()
-	i.Price = types.PriceType(price)
-	i.Quantity = types.QuantityType(quantity)
+	i.Price = items_types.PriceType(price)
+	i.Quantity = items_types.QuantityType(quantity)
 }
 
 func Binance2PairPrice(binancePairPrice interface{}) (*PairPrice, error) {

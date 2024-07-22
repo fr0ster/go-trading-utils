@@ -9,7 +9,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/sirupsen/logrus"

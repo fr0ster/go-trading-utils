@@ -10,7 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -36,15 +36,15 @@ func (pp *PairProcessor) createOrder(
 	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	sideType binance.SideType, // BUY, SELL
 	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
-	quantity types.QuantityType, // BTC for example if we buy or sell BTC
-	quantityQty types.PriceType, // USDT for example if we buy or sell BTC
+	quantity items_types.QuantityType, // BTC for example if we buy or sell BTC
+	quantityQty items_types.PriceType, // USDT for example if we buy or sell BTC
 	// price for 1 BTC
 	// it's price of order execution for LIMIT, LIMIT_MAKER
 	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
 	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
-	price types.PriceType,
+	price items_types.PriceType,
 	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
-	stopPrice types.PriceType,
+	stopPrice items_types.PriceType,
 	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
 	trailingDelta int,
@@ -167,15 +167,15 @@ func (pp *PairProcessor) CreateOrder(
 	orderType binance.OrderType, // MARKET, LIMIT, LIMIT_MAKER, STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	sideType binance.SideType, // BUY, SELL
 	timeInForce binance.TimeInForceType, // GTC, IOC, FOK
-	quantity types.QuantityType, // BTC for example if we buy or sell BTC
-	quantityQty types.PriceType, // USDT for example if we buy or sell BTC
+	quantity items_types.QuantityType, // BTC for example if we buy or sell BTC
+	quantityQty items_types.PriceType, // USDT for example if we buy or sell BTC
 	// price for 1 BTC
 	// it's price of order execution for LIMIT, LIMIT_MAKER
 	// after execution of STOP_LOSS, TAKE_PROFIT, wil be created MARKET order
 	// after execution of STOP_LOSS_LIMIT, TAKE_PROFIT_LIMIT wil be created LIMIT order with price of order execution from PRICE parameter
-	price types.PriceType,
+	price items_types.PriceType,
 	// price for stop loss or take profit it's price of order execution for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
-	stopPrice types.PriceType,
+	stopPrice items_types.PriceType,
 	// trailingDelta for STOP_LOSS, STOP_LOSS_LIMIT, TAKE_PROFIT, TAKE_PROFIT_LIMIT
 	// https://github.com/binance/binance-spot-api-docs/blob/master/faqs/trailing-stop-faq.md
 	trailingDelta int) (

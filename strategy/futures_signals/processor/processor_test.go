@@ -5,10 +5,10 @@ import (
 	"time"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
-	depth_types "github.com/fr0ster/go-trading-utils/types/depth"
-	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
-	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
+	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
+	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 
 	"github.com/stretchr/testify/assert"
 )

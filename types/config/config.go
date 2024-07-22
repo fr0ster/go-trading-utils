@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"

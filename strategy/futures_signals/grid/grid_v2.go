@@ -10,8 +10,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -26,9 +25,9 @@ func getCallBack_v2(
 	quit chan struct{},
 	maintainedOrders *btree.BTree) func(*futures.WsUserDataEvent) {
 	var (
-		quantity     types.QuantityType
-		locked       types.ValueType
-		currentPrice types.PriceType
+		quantity     items_types.QuantityType
+		locked       items_types.ValueType
+		currentPrice items_types.PriceType
 		risk         *futures.PositionRisk
 		err          error
 	)
@@ -39,7 +38,7 @@ func getCallBack_v2(
 		if event.OrderTradeUpdate.Status == futures.OrderStatusTypeFilled {
 			grid.Lock()
 			// Знаходимо у гріді на якому був виконаний ордер
-			currentPrice = types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
+			currentPrice = items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.OriginalPrice))
 			order, ok := grid.Get(&grid_types.Record{Price: currentPrice}).(*grid_types.Record)
 			if !ok {
 				printError()
@@ -114,12 +113,12 @@ func RunFuturesGridTradingV2(
 	progression pairs_types.ProgressionType,
 	wg *sync.WaitGroup) (err error) {
 	var (
-		initPrice     types.PriceType
-		initPriceUp   types.PriceType
-		initPriceDown types.PriceType
-		quantity      types.QuantityType
-		quantityUp    types.QuantityType
-		quantityDown  types.QuantityType
+		initPrice     items_types.PriceType
+		initPriceUp   items_types.PriceType
+		initPriceDown items_types.PriceType
+		quantity      items_types.QuantityType
+		quantityUp    items_types.QuantityType
+		quantityDown  items_types.QuantityType
 		minNotional   float64
 		grid          *grid_types.Grid
 		pairProcessor *processor.PairProcessor

@@ -9,21 +9,21 @@ import (
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 
-	items "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-func (pp *PairProcessor) RoundValue(value items.ValueType) items.ValueType {
-	return items.ValueType(utils.RoundToDecimalPlace(float64(value), pp.GetTickSizeExp()))
+func (pp *PairProcessor) RoundValue(value items_types.ValueType) items_types.ValueType {
+	return items_types.ValueType(utils.RoundToDecimalPlace(float64(value), pp.GetTickSizeExp()))
 }
 
-func (pp *PairProcessor) RoundPrice(price items.PriceType) items.PriceType {
-	return items.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
+func (pp *PairProcessor) RoundPrice(price items_types.PriceType) items_types.PriceType {
+	return items_types.PriceType(utils.RoundToDecimalPlace(float64(price), pp.GetTickSizeExp()))
 }
 
-func (pp *PairProcessor) RoundQuantity(quantity items.QuantityType) items.QuantityType {
-	return items.QuantityType(utils.RoundToDecimalPlace(float64(quantity), pp.GetStepSizeExp()))
+func (pp *PairProcessor) RoundQuantity(quantity items_types.QuantityType) items_types.QuantityType {
+	return items_types.QuantityType(utils.RoundToDecimalPlace(float64(quantity), pp.GetStepSizeExp()))
 }
 
 func (pp *PairProcessor) Debug(fl, id string) {
@@ -36,14 +36,14 @@ func (pp *PairProcessor) Debug(fl, id string) {
 	}
 }
 
-func (pp *PairProcessor) GetNextUpCoefficient() items.PriceType {
+func (pp *PairProcessor) GetNextUpCoefficient() items_types.PriceType {
 	if pp.depth.GetAsks() == nil ||
 		pp.depth.GetBids() == nil ||
 		pp.depth.GetAsks().GetSummaValue() == 0 ||
 		pp.depth.GetBids().GetSummaValue() == 0 {
 		return 1
 	}
-	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	coefficients := items_types.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
 	if coefficients > 1 {
 		return 1
 	} else {
@@ -51,14 +51,14 @@ func (pp *PairProcessor) GetNextUpCoefficient() items.PriceType {
 	}
 }
 
-func (pp *PairProcessor) GetNextDownCoefficient() items.PriceType {
+func (pp *PairProcessor) GetNextDownCoefficient() items_types.PriceType {
 	if pp.depth.GetAsks() == nil ||
 		pp.depth.GetBids() == nil ||
 		pp.depth.GetAsks().GetSummaValue() == 0 ||
 		pp.depth.GetBids().GetSummaValue() == 0 {
 		return 1
 	}
-	coefficients := items.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
+	coefficients := items_types.PriceType(pp.depth.GetAsks().GetSummaValue() / pp.depth.GetBids().GetSummaValue())
 	if coefficients > 1 {
 		return coefficients
 	} else {
@@ -66,25 +66,25 @@ func (pp *PairProcessor) GetNextDownCoefficient() items.PriceType {
 	}
 }
 
-func (pp *PairProcessor) GetTargetPrices(price ...items.PriceType) (priceDown, priceUp items.PriceType, err error) {
+func (pp *PairProcessor) GetTargetPrices(price ...items_types.PriceType) (priceDown, priceUp items_types.PriceType, err error) {
 	priceUp = pp.NextPriceUp(price...)
 	priceDown = pp.NextPriceDown(price...)
 	return
 }
 
-func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items.PriceType, err error) {
+func (pp *PairProcessor) GetLimitPrices(price ...items_types.PriceType) (priceTargetDown, priceTargetUp, priceDown, priceUp items_types.PriceType, err error) {
 	var (
-		askMax *items.DepthItem
-		bidMax *items.DepthItem
+		askMax *items_types.DepthItem
+		bidMax *items_types.DepthItem
 	)
 	priceTargetDown, priceTargetUp, err = pp.GetTargetPrices(price...)
 	if err != nil {
 		return
 	}
-	asksFilter := func(i *items.DepthItem) bool {
+	asksFilter := func(i *items_types.DepthItem) bool {
 		return i.GetPrice() > priceTargetUp
 	}
-	bidsFilter := func(i *items.DepthItem) bool {
+	bidsFilter := func(i *items_types.DepthItem) bool {
 		return i.GetPrice() < priceTargetDown
 	}
 	_, askMax = pp.depth.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()
@@ -95,12 +95,12 @@ func (pp *PairProcessor) GetLimitPrices(price ...items.PriceType) (priceTargetDo
 }
 
 func (pp *PairProcessor) GetPrices(
-	price items.PriceType,
+	price items_types.PriceType,
 	isDynamic bool) (
-	priceUp items.PriceType,
-	quantityUp items.QuantityType,
-	priceDown items.PriceType,
-	quantityDown items.QuantityType,
+	priceUp items_types.PriceType,
+	quantityUp items_types.QuantityType,
+	priceDown items_types.PriceType,
+	quantityDown items_types.QuantityType,
 	reduceOnlyUp bool,
 	reduceOnlyDown bool,
 	err error) {
@@ -111,8 +111,8 @@ func (pp *PairProcessor) GetPrices(
 	reduceOnlyUp = false
 	reduceOnlyDown = false
 
-	quantityUp = items.QuantityType(pp.RoundQuantity(items.QuantityType(pp.GetLimitOnTransaction() / priceUp)))
-	quantityDown = items.QuantityType(pp.RoundQuantity(items.QuantityType(pp.GetLimitOnTransaction() / priceDown)))
+	quantityUp = items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(pp.GetLimitOnTransaction() / priceUp)))
+	quantityDown = items_types.QuantityType(pp.RoundQuantity(items_types.QuantityType(pp.GetLimitOnTransaction() / priceDown)))
 
 	if quantityUp == 0 && quantityDown == 0 {
 		err = fmt.Errorf("can't calculate initial position for price up %v and price down %v", priceUp, priceDown)

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -76,7 +76,7 @@ func (pp *PairProcessor) GetPositionMargin() (margin float64) {
 	return
 }
 
-func (pp *PairProcessor) SetPositionMargin(amountMargin types.ValueType, typeMargin int) (err error) {
+func (pp *PairProcessor) SetPositionMargin(amountMargin items_types.ValueType, typeMargin int) (err error) {
 	return pp.client.NewUpdatePositionMarginService().
 		Symbol(pp.symbol.Symbol).Type(typeMargin).
 		Amount(utils.ConvFloat64ToStrDefault(float64(amountMargin))).Do(context.Background())
@@ -100,46 +100,46 @@ func (pp *PairProcessor) GetPositionAmt() (positionAmt float64) {
 	return
 }
 
-func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price types.PriceType) (unRealizedProfit types.ValueType) {
+func (pp *PairProcessor) GetPredictableUPnL(risk *futures.PositionRisk, price items_types.PriceType) (unRealizedProfit items_types.ValueType) {
 	if risk == nil || pp.leverage <= 0 {
 		return 0
 	}
-	entryPrice := types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice))
-	positionAmt := types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	entryPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice))
+	positionAmt := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	if positionAmt == 0 { // No position
 		return 0
 	} else if positionAmt < 0 { // Short position
-		unRealizedProfit = types.ValueType(float64(entryPrice-price) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = items_types.ValueType(float64(entryPrice-price) * float64(positionAmt) * float64(pp.leverage))
 	} else if positionAmt > 0 { // Long position
-		unRealizedProfit = types.ValueType(float64(price-entryPrice) * float64(positionAmt) * float64(pp.leverage))
+		unRealizedProfit = items_types.ValueType(float64(price-entryPrice) * float64(positionAmt) * float64(pp.leverage))
 	}
 	return
 }
-func (pp *PairProcessor) CheckAddPosition(risk *futures.PositionRisk, price types.PriceType) bool {
+func (pp *PairProcessor) CheckAddPosition(risk *futures.PositionRisk, price items_types.PriceType) bool {
 	if risk == nil {
 		return false
 	}
-	positionAmt := types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	liquidationPrice := types.PriceType(utils.ConvStrToFloat64(risk.LiquidationPrice))
+	positionAmt := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	liquidationPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.LiquidationPrice))
 	if positionAmt == 0 { // No position
 		return true
 	} else if positionAmt < 0 { // Short position
 		return liquidationPrice > pp.GetUpBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*types.ValueType(pp.GetLeverage())) &&
+			pp.GetPredictableUPnL(risk, pp.GetUpBound()) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
 			price <= pp.GetUpBound()
 	} else if positionAmt > 0 { // Long position
 		return liquidationPrice < pp.GetLowBound() &&
-			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*types.ValueType(pp.GetLeverage())) &&
+			pp.GetPredictableUPnL(risk, pp.GetLowBound()) > -(pp.GetFreeBalance()*items_types.ValueType(pp.GetLeverage())) &&
 			price >= pp.GetLowBound()
 	}
 	return false
 }
 
-func (pp *PairProcessor) CheckStopLoss(free types.ValueType, risk *futures.PositionRisk, price types.PriceType) bool {
+func (pp *PairProcessor) CheckStopLoss(free items_types.ValueType, risk *futures.PositionRisk, price items_types.PriceType) bool {
 	if risk == nil || utils.ConvStrToFloat64(risk.PositionAmt) == 0 {
 		return false
 	}
 	return (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && price < pp.GetLowBound()) ||
 		(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && price > pp.GetUpBound()) ||
-		types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free
+		items_types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free
 }

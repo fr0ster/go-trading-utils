@@ -1,9 +1,9 @@
 package depth
 
 import (
-	asks_types "github.com/fr0ster/go-trading-utils/types/depth/asks"
-	bids_types "github.com/fr0ster/go-trading-utils/types/depth/bids"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
+	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
 type (

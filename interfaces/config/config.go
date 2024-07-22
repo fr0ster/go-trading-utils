@@ -2,7 +2,7 @@ package config
 
 import (
 	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	"github.com/sirupsen/logrus"
 )

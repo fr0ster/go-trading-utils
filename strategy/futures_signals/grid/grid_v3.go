@@ -11,8 +11,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
@@ -60,8 +59,8 @@ func getCallBack_v3(
 				pairProcessor.CancelAllOrders()
 				logrus.Debugf("Futures %s: Other orders was cancelled", pairProcessor.GetPair())
 				err = createNextPair_v3(
-					types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
-					types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
+					items_types.PriceType(utils.ConvStrToFloat64(event.OrderTradeUpdate.LastFilledPrice)),
+					items_types.QuantityType(utils.ConvStrToFloat64(event.OrderTradeUpdate.AccumulatedFilledQty)),
 					event.OrderTradeUpdate.Side,
 					pairProcessor)
 				if err != nil {
@@ -80,10 +79,10 @@ func getErrorHandling_v3(
 	quit chan struct{}) futures.ErrHandler {
 	return func(networkErr error) {
 		var (
-			initPriceUp    types.PriceType
-			initPriceDown  types.PriceType
-			quantityUp     types.QuantityType
-			quantityDown   types.QuantityType
+			initPriceUp    items_types.PriceType
+			initPriceDown  items_types.PriceType
+			quantityUp     items_types.QuantityType
+			quantityDown   items_types.QuantityType
 			reduceOnlyUp   bool
 			reduceOnlyDown bool
 		)
@@ -147,24 +146,24 @@ func getErrorHandling_v3(
 }
 
 func createNextPair_v3(
-	LastExecutedPrice types.PriceType,
-	AccumulatedFilledQty types.QuantityType,
+	LastExecutedPrice items_types.PriceType,
+	AccumulatedFilledQty items_types.QuantityType,
 	LastExecutedSide futures.SideType,
 	pairProcessor *processor.PairProcessor) (err error) {
 	var (
 		risk              *futures.PositionRisk
-		upPrice           types.PriceType
-		downPrice         types.PriceType
-		upQuantity        types.QuantityType
-		downQuantity      types.QuantityType
+		upPrice           items_types.PriceType
+		downPrice         items_types.PriceType
+		upQuantity        items_types.QuantityType
+		downQuantity      items_types.QuantityType
 		upClosePosition   bool
 		downClosePosition bool
 		upReduceOnly      bool
 		downReduceOnly    bool
 	)
-	riskBreakEvenPriceOrEntryPrice := func(risk *futures.PositionRisk) types.PriceType {
-		breakEvenPrice := types.PriceType(utils.ConvStrToFloat64(risk.BreakEvenPrice))
-		entryPrice := types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice))
+	riskBreakEvenPriceOrEntryPrice := func(risk *futures.PositionRisk) items_types.PriceType {
+		breakEvenPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.BreakEvenPrice))
+		entryPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice))
 		if breakEvenPrice != 0 {
 			return breakEvenPrice
 		} else if entryPrice != 0 {
@@ -173,7 +172,7 @@ func createNextPair_v3(
 		return 0
 	}
 	risk, _ = pairProcessor.GetPositionRisk()
-	position := types.QuantityType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
+	position := items_types.QuantityType(math.Abs(utils.ConvStrToFloat64(risk.PositionAmt)))
 	if utils.ConvStrToFloat64(risk.PositionAmt) < 0 { // Маємо позицію short
 		if pairProcessor.CheckAddPosition(risk, LastExecutedPrice) {
 			// Виконаний ордер був на продаж, тобто збільшив або відкрив позицію short
@@ -216,13 +215,13 @@ func createNextPair_v3(
 			// Створюємо ордер на продаж, тобто збільшуємо позицію short
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
 			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
-			downQuantity = types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
+			downQuantity = items_types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
 		} else {
 			// Створюємо ордер на купівлю, тобто скорочуємо позицію short
 			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
 			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
 			upQuantity = 0
-			downQuantity = types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
+			downQuantity = items_types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
 		}
 		if downQuantity > position {
 			downQuantity = position
@@ -274,12 +273,12 @@ func createNextPair_v3(
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
 			// Створюємо ордер на купівлю, тобто збільшуємо позицію long
 			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
-			upQuantity = types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
+			upQuantity = items_types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
 		} else {
 			// Створюємо ордер на продаж, тобто скорочуємо позицію long
 			upPrice = pairProcessor.NextPriceUp(riskBreakEvenPriceOrEntryPrice(risk))
 			downPrice = pairProcessor.NextPriceDown(riskBreakEvenPriceOrEntryPrice(risk))
-			upQuantity = types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
+			upQuantity = items_types.QuantityType(math.Min(float64(AccumulatedFilledQty), math.Abs(utils.ConvStrToFloat64(risk.PositionAmt))))
 			downQuantity = 0
 		}
 		if upQuantity > position {
@@ -341,15 +340,15 @@ func createNextPair_v3(
 }
 
 func initPosition_v3(
-	price types.PriceType,
+	price items_types.PriceType,
 	risk *futures.PositionRisk,
 	pairProcessor *processor.PairProcessor,
 	quit chan struct{}) {
 	var (
-		initPriceUp    types.PriceType
-		initPriceDown  types.PriceType
-		quantityUp     types.QuantityType
-		quantityDown   types.QuantityType
+		initPriceUp    items_types.PriceType
+		initPriceDown  items_types.PriceType
+		quantityUp     items_types.QuantityType
+		quantityDown   items_types.QuantityType
 		reduceOnlyUp   bool
 		reduceOnlyDown bool
 	)
@@ -470,7 +469,7 @@ func RunFuturesGridTradingV3(
 				if v3.TryLock() {
 					openOrders, _ := pairProcessor.GetOpenOrders()
 					if len(openOrders) == 1 {
-						free := pairProcessor.GetFreeBalance() * types.ValueType(pairProcessor.GetLeverage())
+						free := pairProcessor.GetFreeBalance() * items_types.ValueType(pairProcessor.GetLeverage())
 						risk, _ := pairProcessor.GetPositionRisk()
 						if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 							currentPrice, err := pairProcessor.GetCurrentPrice()
@@ -481,7 +480,7 @@ func RunFuturesGridTradingV3(
 							}
 							if (utils.ConvStrToFloat64(risk.PositionAmt) > 0 && currentPrice < pairProcessor.GetLowBound()) ||
 								(utils.ConvStrToFloat64(risk.PositionAmt) < 0 && currentPrice > pairProcessor.GetUpBound()) ||
-								types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free {
+								items_types.ValueType(math.Abs(utils.ConvStrToFloat64(risk.UnRealizedProfit))) > free {
 								logrus.Debugf("Futures %s: Price %v is out of range, close position, LowBound %v, UpBound %v, UnRealizedProfit %v, free %v",
 									pairProcessor.GetPair(), currentPrice, pairProcessor.GetLowBound(), pairProcessor.GetUpBound(), risk.UnRealizedProfit, free)
 								pairProcessor.ClosePosition(risk)

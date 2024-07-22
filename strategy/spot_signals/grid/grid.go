@@ -12,7 +12,7 @@ import (
 	"github.com/adshao/go-binance/v2"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/spot_signals/processor"
-	items_types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
