@@ -8,14 +8,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func GetInitCreator(interval kline_types.KlineStreamInterval, client *binance.Client) func(*kline_types.Klines) func() (err error) {
+func GetInitCreator(client *binance.Client) func(*kline_types.Klines) func() (err error) {
 	return func(kl *kline_types.Klines) func() (err error) {
 		return func() (err error) {
 			kl.Lock()         // Locking the klines
 			defer kl.Unlock() // Unlocking the klines
 			klines, _ :=
 				client.NewKlinesService().
-					Interval(string(interval)).
+					Interval(string(kl.GetInterval())).
 					Symbol(kl.GetSymbolname()).
 					Do(context.Background())
 			for _, kline := range klines {
