@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+	types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	"github.com/stretchr/testify/assert"
 )
 

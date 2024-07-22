@@ -8,7 +8,7 @@ package processor
 
 // 	binance_depth "github.com/fr0ster/go-trading-utils/binance/spot/markets/depth"
 // 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
-// 	types "github.com/fr0ster/go-trading-utils/types/depth/items"
+// 	types "github.com/fr0ster/go-trading-utils/types/depths/items"
 // )
 
 // const (
