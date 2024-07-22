@@ -327,7 +327,6 @@ func RunFuturesTrading(
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent items_types.PricePercentType,
 	callBackRate items_types.PricePercentType,
 	upOrderSideOpen futures.SideType,
 	upPositionNewOrderType futures.OrderType,
@@ -367,7 +366,6 @@ func RunFuturesTrading(
 		marginType,
 		leverage,
 		minSteps,
-		targetPercent,
 		callBackRate,
 		progression)
 	if err != nil {

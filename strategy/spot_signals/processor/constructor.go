@@ -30,7 +30,6 @@ func NewPairProcessor(
 	LowBound items_types.PricePercentType,
 	deltaPrice items_types.PricePercentType,
 	deltaQuantity items_types.QuantityPercentType,
-	targetPercent items_types.PricePercentType,
 	callbackRate items_types.PricePercentType,
 	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
 	var (

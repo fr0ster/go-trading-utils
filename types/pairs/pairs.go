@@ -102,8 +102,7 @@ type (
 
 		CallbackRate items_types.PricePercentType `json:"callback_rate"` // callbackRate для TRAILING_STOP_MARKET
 
-		PercentToTarget items_types.PricePercentType `json:"percent_to_target"` // Відсоток до цільової позиції
-		DepthsN         int                          `json:"depths_n"`          // Глибина стакана
+		DepthsN int `json:"depths_n"` // Глибина стакана
 	}
 )
 
@@ -257,18 +256,6 @@ func (pr *Pairs) SetCallbackRate(rate items_types.PricePercentType) {
 	pr.CallbackRate = rate
 }
 
-func (pr *Pairs) GetPercentToTarget() items_types.PricePercentType {
-	if pr.PercentToTarget == 0 {
-		return 10
-	} else {
-		return pr.PercentToTarget
-	}
-}
-
-func (pr *Pairs) SetPercentToTarget(percent items_types.PricePercentType) {
-	pr.PercentToTarget = percent
-}
-
 func (pr *Pairs) GetDepthsN() depth_types.DepthAPILimit {
 	if pr.DepthsN == 0 {
 		return depth_types.DepthAPILimit(50)
@@ -301,8 +288,7 @@ func New(
 		DeltaQuantity:      10.0,  // 10%
 		Progression:        "GEOMETRIC",
 		Value:              0.0,
-		CallbackRate:       0.1,  // 0.1%
-		PercentToTarget:    10.0, // 10%
-		DepthsN:            50,   // 50
+		CallbackRate:       0.1, // 0.1%
+		DepthsN:            50,  // 50
 	}
 }

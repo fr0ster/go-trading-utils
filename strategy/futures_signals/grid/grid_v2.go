@@ -139,7 +139,6 @@ func RunFuturesGridTradingV2(
 		marginType,
 		leverage,
 		minSteps,
-		targetPercent,
 		callbackRate,
 		progression)
 	if err != nil {

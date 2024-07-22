@@ -37,7 +37,6 @@ func NewPairProcessor(
 	marginType pairs_types.MarginType,
 	leverage int,
 	minSteps int,
-	targetPercent items_types.PricePercentType,
 	callbackRate items_types.PricePercentType,
 	progression pairs_types.ProgressionType,
 	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
