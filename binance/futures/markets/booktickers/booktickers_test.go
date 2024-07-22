@@ -13,8 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	quit = make(chan struct{})
+)
+
 func initBookTicker() *booktickers_types.BookTickers {
-	bookTicker := booktickers_types.New(3, nil, nil)
+	bookTicker := booktickers_types.New(quit, 3, nil, nil)
 	bookTicker.Set(bookticker_types.New("BTCUSDT", 10000, 1, 10001, 1))
 	bookTicker.Set(bookticker_types.New("ETHUSDT", 1000, 1, 1001, 1))
 	bookTicker.Set(bookticker_types.New("BNBUSDT", 100, 1, 101, 1))
@@ -33,7 +37,7 @@ func TestInitPricesTree(t *testing.T) {
 	futures := futures.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	bookTicker := booktickers_types.New(3, nil, futures_booktickers.GetInitCreator(futures), "BTCUSDT")
+	bookTicker := booktickers_types.New(quit, 3, nil, futures_booktickers.GetInitCreator(futures), "BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function
 	btc_bt := bookTicker.Get("BTCUSDT")

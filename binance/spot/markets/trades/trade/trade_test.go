@@ -12,11 +12,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	quit = make(chan struct{})
+)
+
 func TestHistoricalTradesInterface(t *testing.T) {
 	api_key := os.Getenv("API_KEY")
 	secret_key := os.Getenv("SECRET_KEY")
 	binance.UseTestnet = false
 	trades := trade_types.New(
+		quit,
 		"BTCUSDT",
 		nil,
 		spot_trade.GetHistoricalTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
@@ -41,6 +46,7 @@ func TestRecentTradesInterface(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	binance.UseTestnet = false
 	trades := trade_types.New(
+		quit,
 		"BTCUSDT",
 		nil,
 		spot_trade.GetRecentTradesInitCreator(binance.NewClient(api_key, secret_key), 10))

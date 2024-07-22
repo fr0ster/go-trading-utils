@@ -87,6 +87,7 @@ func (a *AggTrades) Symbol() string {
 }
 
 func New(
+	stop chan struct{},
 	symbol string,
 	startTradeStream func(*AggTrades) func() (chan struct{}, chan struct{}, error),
 	initCreator func(*AggTrades) func() error) *AggTrades {
@@ -94,6 +95,7 @@ func New(
 		symbol: symbol,
 		tree:   btree.New(2),
 		mu:     &sync.Mutex{},
+		stop:   stop,
 	}
 	if startTradeStream != nil {
 		this.startTradeStream = startTradeStream(this)

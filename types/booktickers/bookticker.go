@@ -59,6 +59,7 @@ func (btt *BookTickers) GetSymbol() string {
 }
 
 func New(
+	stop chan struct{},
 	degree int,
 	startBookTickerStreamCreator func(*BookTickers) func() (chan struct{}, chan struct{}, error),
 	initCreator func(*BookTickers) func() error,
@@ -73,7 +74,7 @@ func New(
 		mutex:      sync.Mutex{},
 		degree:     degree,
 		timeOut:    1 * time.Hour,
-		stop:       make(chan struct{}),
+		stop:       stop,
 		resetEvent: make(chan error),
 	}
 	if startBookTickerStreamCreator != nil {

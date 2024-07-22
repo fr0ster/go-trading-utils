@@ -79,6 +79,7 @@ func (a *Trades) GetSymbolname() string {
 }
 
 func New(
+	stop chan struct{},
 	symbolname string,
 	startTradeStream func(a *Trades) func() (chan struct{}, chan struct{}, error),
 	initCreator func(a *Trades) func() error,
@@ -87,6 +88,7 @@ func New(
 		symbolname: symbolname,
 		tree:       btree.New(2),
 		mu:         &sync.Mutex{},
+		stop:       stop,
 	}
 	if startTradeStream != nil {
 		this.startTradeStream = startTradeStream(this)

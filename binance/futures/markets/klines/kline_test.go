@@ -7,6 +7,10 @@ import (
 	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
 )
 
+var (
+	quit = make(chan struct{})
+)
+
 func getTestData() []*kline_types.Kline {
 	return []*kline_types.Kline{
 		{
@@ -39,7 +43,7 @@ func getTestData() []*kline_types.Kline {
 }
 
 func TestKlineInterface(t *testing.T) {
-	kline := kline_types.New(2, kline_types.KlineStreamInterval1m, "BTCUSDT", nil, nil)
+	kline := kline_types.New(quit, 2, kline_types.KlineStreamInterval1m, "BTCUSDT", nil, nil)
 
 	test := func(k kline_interface.Klines) {
 	}

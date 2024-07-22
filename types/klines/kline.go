@@ -102,6 +102,7 @@ func (d *Klines) SetInterval(interval KlineStreamInterval) {
 
 // Kline - B-дерево для зберігання стакана заявок
 func New(
+	stop chan struct{},
 	degree int,
 	interval KlineStreamInterval,
 	symbolname string,
@@ -114,6 +115,7 @@ func New(
 		mutex:        sync.Mutex{},
 		degree:       degree,
 		timeOut:      0,
+		stop:         stop,
 	}
 	if startKlineStream != nil {
 		this.startKlineStream = startKlineStream(this)
