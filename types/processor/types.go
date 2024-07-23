@@ -10,24 +10,22 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/processor/symbol_info"
 )
 
 type (
 	Processor struct {
-		// Дані про клієнта
-		// client *futures.Client
 		// Налаштування та обмеження, реалізація
 		orderTypes map[futures.OrderType]bool
 		degree     int
 		timeOut    time.Duration
 
+		symbol string
+
 		// Дані про біржу
 		exchangeInfo *exchange_types.ExchangeInfo
 
 		// Дані про пару
-		symbol     string
-		symbolInfo *symbol_info_types.SymbolInfo
+		// symbolInfo *symbol_types.SymbolInfo
 
 		// канал зупинки
 		stop chan struct{}
@@ -41,7 +39,7 @@ type (
 		GetFreeBalance   func() items_types.ValueType
 		GetLockedBalance func() items_types.ValueType
 		GetCurrentPrice  func() items_types.PriceType
-		getSymbolInfo    func() *symbol_info_types.SymbolInfo
+		// getSymbolInfo    func() *symbol_types.SymbolInfo
 
 		getPositionRisk func() *futures.PositionRisk
 

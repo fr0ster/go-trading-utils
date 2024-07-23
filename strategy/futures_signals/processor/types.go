@@ -33,8 +33,8 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 
 		// Дані про пару
-		symbol       *futures.Symbol
-		pairInfo     *symbol_types.FuturesSymbol
+		// symbol       *futures.Symbol
+		pairInfo     *symbol_types.SymbolInfo
 		baseSymbol   string
 		targetSymbol string
 

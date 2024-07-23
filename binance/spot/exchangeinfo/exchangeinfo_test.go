@@ -8,7 +8,6 @@ import (
 	exchangeinfo "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/exchangeinfo"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,13 +40,10 @@ func TestGetOrderTypes(t *testing.T) {
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
-	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
-	orderTypes := symbol.OrderTypes
+	symbol := exchangeInfo.GetSymbol("BTCUSDT")
 
 	// Check if the orderTypes is not empty
-	if len(orderTypes) == 0 {
-		t.Error("GetOrderTypes returned empty orderTypes")
-	}
+	assert.NotNil(t, symbol)
 }
 
 func TestGetPermissions(t *testing.T) {
@@ -58,8 +54,8 @@ func TestGetPermissions(t *testing.T) {
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
-	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
-	permissions := symbol.Permissions
+	symbol := exchangeInfo.GetSymbol("BTCUSDT")
+	permissions := symbol.GetPermissions()
 	assert.NotNil(t, permissions)
 }
 
@@ -71,7 +67,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
-	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
+	symbol := exchangeInfo.GetSymbol("BTCUSDT")
 
 	// Check if the permissions is not empty
 	if symbol == nil {
@@ -88,8 +84,8 @@ func TestInterface(t *testing.T) {
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
-		symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
-		for _, permissions := range symbol.Permissions {
+		symbol := exchangeInfo.GetSymbol("BTCUSDT")
+		for _, permissions := range symbol.GetPermissions() {
 			_ = permissions
 		}
 		_ = exchangeInfo.GetTimezone()

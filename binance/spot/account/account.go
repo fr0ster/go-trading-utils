@@ -11,7 +11,6 @@ import (
 
 	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
 	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 type (
@@ -161,8 +160,8 @@ func (a *Account) PermissionUpdate(item string) {
 func (a *Account) GetMarginAccount() (marginAccount *MarginAccount) {
 	var marginSymbols []string
 	for _, symbol := range a.symbols {
-		val := a.exchangeInfo.GetSymbol(&symbol_types.SpotSymbol{Symbol: symbol})
-		if val != nil && val.(*symbol_types.SpotSymbol).IsMarginTradingAllowed {
+		val := a.exchangeInfo.GetSymbol(symbol)
+		if val.IsMarginTradingAllowed() {
 			marginSymbols = append(marginSymbols, symbol)
 		}
 	}
@@ -176,8 +175,8 @@ func (a *Account) GetMarginAccount() (marginAccount *MarginAccount) {
 func (a *Account) GetIsolatedMargin() (isolatedMarginAsset *IsolatedMarginAccount) {
 	var marginSymbols []string
 	for _, symbol := range a.symbols {
-		val := a.exchangeInfo.GetSymbol(&symbol_types.SpotSymbol{Symbol: symbol})
-		if val != nil && val.(*symbol_types.SpotSymbol).IsMarginTradingAllowed {
+		val := a.exchangeInfo.GetSymbol(symbol)
+		if val.IsMarginTradingAllowed() {
 			marginSymbols = append(marginSymbols, symbol)
 		}
 	}

@@ -27,7 +27,7 @@ func (pp *PairProcessor) RoundQuantity(quantity items_types.QuantityType) items_
 func (pp *PairProcessor) Debug(fl, id string) {
 	if logrus.GetLevel() == logrus.DebugLevel {
 		orders, _ := pp.GetOpenOrders()
-		logrus.Debugf("%s %s %s:", fl, id, pp.symbol.Symbol)
+		logrus.Debugf("%s %s %s:", fl, id, pp.pairInfo.GetSymbol())
 		for _, order := range orders {
 			logrus.Debugf(" Open Order %v on price %v OrderSide %v Status %s", order.OrderID, order.Price, order.Side, order.Status)
 		}

@@ -5,8 +5,11 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/types"
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
+	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
+	symbols_types "github.com/fr0ster/go-trading-utils/types/symbols"
+	"github.com/fr0ster/go-trading-utils/utils"
 )
 
 func InitCreator(degree int, client *futures.Client) func(*exchange_types.ExchangeInfo) types.InitFunction {
@@ -21,9 +24,34 @@ func InitCreator(degree int, client *futures.Client) func(*exchange_types.Exchan
 			}
 			val.Timezone = exchangeInfo.Timezone
 			val.ServerTime = exchangeInfo.ServerTime
-			val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
+			val.RateLimits = ConvertRateLimits(exchangeInfo.RateLimits)
 			val.ExchangeFilters = exchangeInfo.ExchangeFilters
-			val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(exchangeInfo.Symbols))
+			val.Symbols, err = symbols_types.New(
+				degree,
+				func() (symbols []*symbol_types.SymbolInfo) {
+					for _, s := range exchangeInfo.Symbols {
+						orderTypes := make([]symbol_types.OrderType, len(s.OrderType))
+						for i, ot := range s.OrderType {
+							orderTypes[i] = symbol_types.OrderType(ot)
+						}
+						symbols = append(symbols, symbol_types.New(
+							s.Symbol,
+							items_types.ValueType(utils.ConvStrToFloat64(s.MinNotionalFilter().Notional)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().StepSize)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().MaxQuantity)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().MinQuantity)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().TickSize)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().MaxPrice)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().MinPrice)),
+							symbol_types.QuoteAsset(s.QuoteAsset),
+							symbol_types.BaseAsset(s.BaseAsset),
+							false,
+							nil,
+							orderTypes,
+						))
+					}
+					return
+				})
 			return
 		}
 	}
@@ -38,7 +66,7 @@ func RestrictedInitCreator(degree int, symbols []string, client *futures.Client)
 			}
 			val.Timezone = exchangeInfo.Timezone
 			val.ServerTime = exchangeInfo.ServerTime
-			val.RateLimits = convertRateLimits(exchangeInfo.RateLimits)
+			val.RateLimits = ConvertRateLimits(exchangeInfo.RateLimits)
 			val.ExchangeFilters = exchangeInfo.ExchangeFilters
 			restrictedSymbols := make([]futures.Symbol, 0)
 			symbolMap := make(map[string]bool)
@@ -50,21 +78,38 @@ func RestrictedInitCreator(degree int, symbols []string, client *futures.Client)
 					restrictedSymbols = append(restrictedSymbols, s)
 				}
 			}
-			val.Symbols, err = symbols_info.NewSymbols(degree, convertSymbols(restrictedSymbols))
+			val.Symbols, err = symbols_types.New(
+				degree,
+				func() (symbols []*symbol_types.SymbolInfo) {
+					for _, s := range restrictedSymbols {
+						orderTypes := make([]symbol_types.OrderType, len(s.OrderType))
+						for i, ot := range s.OrderType {
+							orderTypes[i] = symbol_types.OrderType(ot)
+						}
+						symbols = append(symbols, symbol_types.New(
+							s.Symbol,
+							items_types.ValueType(utils.ConvStrToFloat64(s.MinNotionalFilter().Notional)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().StepSize)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().MaxQuantity)),
+							items_types.QuantityType(utils.ConvStrToFloat64(s.LotSizeFilter().MinQuantity)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().TickSize)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().MaxPrice)),
+							items_types.PriceType(utils.ConvStrToFloat64(s.PriceFilter().MinPrice)),
+							symbol_types.QuoteAsset(s.QuoteAsset),
+							symbol_types.BaseAsset(s.BaseAsset),
+							false,
+							nil,
+							orderTypes,
+						))
+					}
+					return
+				})
 			return
 		}
 	}
 }
 
-func convertSymbols(symbols []futures.Symbol) []interface{} {
-	convertedSymbols := make([]interface{}, len(symbols))
-	for i, s := range symbols {
-		convertedSymbols[i] = s
-	}
-	return convertedSymbols
-}
-
-func convertRateLimits(rateLimits []futures.RateLimit) []exchange_types.RateLimit {
+func ConvertRateLimits(rateLimits []futures.RateLimit) []exchange_types.RateLimit {
 	convertedRateLimits := make([]exchange_types.RateLimit, len(rateLimits))
 	for i, rl := range rateLimits {
 		convertedRateLimits[i] = exchange_types.RateLimit{

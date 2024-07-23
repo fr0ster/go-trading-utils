@@ -15,7 +15,6 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -53,30 +52,23 @@ func NewPairProcessor(
 		depth: depth,
 	}
 	// Ініціалізуємо інформацію про пару
-	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.SpotSymbol{Symbol: symbol}).(*symbol_types.SpotSymbol)
+	pp.pairInfo = pp.exchangeInfo.GetSymbol(symbol)
 
 	// Ініціалізуємо типи ордерів які можна використовувати для пари
 	pp.orderTypes = make(map[binance.OrderType]bool, 0)
-	for _, orderType := range pp.pairInfo.OrderTypes {
+	for _, orderType := range pp.pairInfo.GetOrderType() {
 		pp.orderTypes[binance.OrderType(orderType)] = true
 	}
 
-	// Буферизуємо інформацію про символ
-	pp.symbol, err = pp.GetSymbol().GetSpotSymbol()
-	if err != nil {
-		err = ParseError(err)
-		return
-	}
-	pp.baseSymbol = pp.symbol.QuoteAsset
-	pp.targetSymbol = pp.symbol.BaseAsset
-	pp.notional = utils.ConvStrToFloat64(pp.symbol.NotionalFilter().MinNotional)
-	pp.StepSize = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)
-	pp.maxQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity)
-	pp.minQty = utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity)
-	pp.tickSize = utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)
-	pp.maxPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice)
-	pp.minPrice = utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice)
+	pp.baseSymbol = pp.pairInfo.GetBaseSymbol()
+	pp.targetSymbol = pp.pairInfo.GetTargetSymbol()
+	pp.notional = pp.pairInfo.GetNotional()
+	pp.StepSize = pp.pairInfo.GetStepSize()
+	pp.maxQty = pp.pairInfo.GetMaxQty()
+	pp.minQty = pp.pairInfo.GetMinQty()
+	pp.tickSize = pp.pairInfo.GetTickSizeExp()
+	pp.maxPrice = pp.pairInfo.GetMaxPrice()
+	pp.minPrice = pp.pairInfo.GetMinPrice()
 
 	return
 }

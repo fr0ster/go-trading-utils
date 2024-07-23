@@ -3,7 +3,6 @@ package processor
 import (
 	"context"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"time"
@@ -54,18 +53,13 @@ func (pp *PairProcessor) createOrder(
 		err = fmt.Errorf("can't create order")
 		return
 	}
-	symbol, err := (*pp.pairInfo).GetSpotSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
 	if _, ok := pp.orderTypes[orderType]; !ok && len(pp.orderTypes) != 0 {
 		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pairInfo.Symbol)
 		return
 	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / float64(pp.pairInfo.GetStepSize())))
+		priceRound    = int(math.Log10(1 / float64(pp.pairInfo.GetTickSizeExp())))
 	)
 	service :=
 		pp.client.NewCreateOrderService().

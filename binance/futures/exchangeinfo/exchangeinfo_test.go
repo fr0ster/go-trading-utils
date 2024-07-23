@@ -7,7 +7,6 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 	"github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +34,7 @@ func TestGetOrderTypes(t *testing.T) {
 	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
 
 	// Call the function being tested
-	orderTypes := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol).OrderType
+	orderTypes := exchangeInfo.GetSymbol("BTCUSDT")
 	logrus.Info(orderTypes)
 }
 
@@ -47,7 +46,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
 
 	// Call the function being tested
-	symbol := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol)
+	symbol := exchangeInfo.GetSymbol("BTCUSDT")
 
 	// Check if the permissions is not empty
 	if symbol == nil {

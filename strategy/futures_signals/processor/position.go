@@ -16,7 +16,7 @@ func (pp *PairProcessor) getPositionRisk(times int) (risks []*futures.PositionRi
 	if times == 0 {
 		return
 	}
-	risks, err = pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.GetSymbol()).Do(context.Background())
+	risks, err = pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 	if err != nil {
 		errApi, _ := utils.ParseAPIError(err)
 		if errApi != nil && errApi.Code == -1021 {
@@ -32,7 +32,7 @@ func (pp *PairProcessor) GetPositionRisk() (risks *futures.PositionRisk, err err
 	if err != nil {
 		return nil, err
 	} else if len(risk) == 0 {
-		return nil, fmt.Errorf("can't get position risk for symbol %s", pp.symbol.Symbol)
+		return nil, fmt.Errorf("can't get position risk for symbol %s", pp.pairInfo.Symbol)
 	} else {
 		return risk[0], nil
 	}
@@ -48,7 +48,7 @@ func (pp *PairProcessor) GetLeverage() int {
 }
 
 func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage, err error) {
-	return pp.client.NewChangeLeverageService().Symbol(pp.symbol.Symbol).Leverage(leverage).Do(context.Background())
+	return pp.client.NewChangeLeverageService().Symbol(pp.pairInfo.Symbol).Leverage(leverage).Do(context.Background())
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"
@@ -62,7 +62,7 @@ func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
 func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err error) {
 	return pp.client.
 		NewChangeMarginTypeService().
-		Symbol(pp.symbol.Symbol).
+		Symbol(pp.pairInfo.Symbol).
 		MarginType(futures.MarginType(marginType)).
 		Do(context.Background())
 }
@@ -78,7 +78,7 @@ func (pp *PairProcessor) GetPositionMargin() (margin float64) {
 
 func (pp *PairProcessor) SetPositionMargin(amountMargin items_types.ValueType, typeMargin int) (err error) {
 	return pp.client.NewUpdatePositionMarginService().
-		Symbol(pp.symbol.Symbol).Type(typeMargin).
+		Symbol(pp.pairInfo.Symbol).Type(typeMargin).
 		Amount(utils.ConvFloat64ToStrDefault(float64(amountMargin))).Do(context.Background())
 }
 

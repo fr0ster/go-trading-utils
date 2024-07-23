@@ -1,23 +1,18 @@
 package symbols
 
 import (
-	"fmt"
 	"sync"
 
-	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/futures"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	"github.com/google/btree"
 )
 
 type (
 	Symbols struct {
-		degree  int
-		symbols btree.BTree
-		mu      sync.Mutex
-	}
-	ISymbol interface {
-		symbol_info.SpotSymbol | symbol_info.FuturesSymbol
+		degree     int
+		symbols    btree.BTree
+		mu         sync.Mutex
+		getSymbols func() []*symbol_info.SymbolInfo
 	}
 )
 
@@ -33,16 +28,16 @@ func (s *Symbols) Len() int {
 	return s.symbols.Len()
 }
 
-func (s *Symbols) Insert(symbol btree.Item) {
+func (s *Symbols) Insert(symbol *symbol_info.SymbolInfo) {
 	s.symbols.ReplaceOrInsert(symbol)
 }
 
-func (s *Symbols) GetSymbol(symbol btree.Item) btree.Item {
-	item := s.symbols.Get(symbol)
+func (s *Symbols) GetSymbol(symbol string) *symbol_info.SymbolInfo {
+	item := s.symbols.Get(&symbol_info.SymbolInfo{Symbol: symbol})
 	if item == nil {
 		return nil
 	}
-	return item
+	return item.(*symbol_info.SymbolInfo)
 }
 
 func (s *Symbols) Ascend(f func(btree.Item) bool) {
@@ -57,26 +52,17 @@ func (s *Symbols) Descend(f func(btree.Item) bool) {
 	})
 }
 
-func NewSymbols(degree int, symbols []interface{}) (s *Symbols, err error) {
+func New(
+	degree int,
+	getSymbols func() []*symbol_info.SymbolInfo) (s *Symbols, err error) {
 	s = &Symbols{
 		degree:  degree,
 		symbols: *btree.New(degree),
 		mu:      sync.Mutex{},
 	}
-	for _, symbol := range symbols {
-		switch symbol := symbol.(type) {
-		case symbol_info.SpotSymbol:
-			s.Insert(&symbol)
-		case binance.Symbol:
-			val := symbol_info.SpotSymbol(symbol)
-			s.Insert(&val)
-		case symbol_info.FuturesSymbol:
-			s.Insert(&symbol)
-		case futures.Symbol:
-			val := symbol_info.FuturesSymbol(symbol)
-			s.Insert(&val)
-		default:
-			err = fmt.Errorf("invalid symbol type: %T", symbol)
+	if getSymbols != nil {
+		for _, symbol := range getSymbols() {
+			s.Insert(symbol)
 		}
 	}
 	return

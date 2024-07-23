@@ -3,11 +3,9 @@ package exchangeinfo
 import (
 	"time"
 
-	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/fr0ster/go-trading-utils/types"
+	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
-	"github.com/google/btree"
 )
 
 type (
@@ -28,8 +26,6 @@ type (
 		RateLimits      []RateLimit           `json:"rateLimits"`
 		ExchangeFilters []interface{}         `json:"exchangeFilters"`
 		Symbols         *symbols_info.Symbols `json:"symbols"`
-		SpotSymbols     []binance.Symbol      `json:"spotSymbols"`
-		FuturesSymbols  []futures.Symbol      `json:"futuresSymbols"`
 	}
 )
 
@@ -82,22 +78,12 @@ func (e *ExchangeInfo) GetTimezone() string {
 	return e.Timezone
 }
 
-func (exchangeInfo *ExchangeInfo) GetSymbol(symbol btree.Item) btree.Item {
+func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.SymbolInfo {
 	return exchangeInfo.Symbols.GetSymbol(symbol)
 }
 
 func (exchangeInfo *ExchangeInfo) GetSymbols() *symbols_info.Symbols {
 	return exchangeInfo.Symbols
-}
-
-// Ascend implements info.ExchangeInfo.
-func (exchangeInfo *ExchangeInfo) Ascend(iterator func(item btree.Item) bool) {
-	exchangeInfo.Symbols.Ascend(iterator)
-}
-
-// Descend implements info.ExchangeInfo.
-func (exchangeInfo *ExchangeInfo) Descend(iterator func(item btree.Item) bool) {
-	exchangeInfo.Symbols.Descend(iterator)
 }
 
 func New(init func(*ExchangeInfo) types.InitFunction) *ExchangeInfo {

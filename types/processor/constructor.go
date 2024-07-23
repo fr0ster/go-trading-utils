@@ -17,7 +17,6 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/processor/symbol_info"
 )
 
 func New(
@@ -33,7 +32,7 @@ func New(
 	getLockedBalance func() items_types.ValueType,
 	getCurrentPrice func() items_types.PriceType,
 
-	getSymbolInfo func(*Processor) func() *symbol_info_types.SymbolInfo,
+	// getSymbolInfo func(*Processor) func() *symbol_types.SymbolInfo,
 	getPositionRisk func() *futures.PositionRisk,
 	setLeverage func(*Processor) func(int) (*futures.SymbolLeverage, error),
 	setMarginType func(*Processor) func(pairs_types.MarginType) error,
@@ -68,10 +67,10 @@ func New(
 	if getCurrentPrice != nil {
 		pp.GetCurrentPrice = getCurrentPrice
 	}
-	if getSymbolInfo != nil {
-		pp.getSymbolInfo = getSymbolInfo(pp)
-		pp.symbolInfo = pp.getSymbolInfo()
-	}
+	// if getSymbolInfo != nil {
+	// 	pp.getSymbolInfo = getSymbolInfo(pp)
+	// 	pp.symbolInfo = pp.getSymbolInfo()
+	// }
 	if getPositionRisk != nil {
 		pp.getPositionRisk = getPositionRisk
 	}

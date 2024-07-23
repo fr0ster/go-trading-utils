@@ -16,26 +16,26 @@ func (pp *PairProcessor) GetAccount() (account *futures.Account, err error) {
 }
 
 func (pp *PairProcessor) GetPair() string {
-	return pp.symbol.Symbol
+	return pp.pairInfo.Symbol
 }
 
-func (pp *PairProcessor) GetSymbol() *symbol_types.FuturesSymbol {
+func (pp *PairProcessor) GetSymbol() *symbol_types.SymbolInfo {
 	// Ініціалізуємо інформацію про пару
 	return pp.pairInfo
 }
 
-func (pp *PairProcessor) GetFuturesSymbol() (*futures.Symbol, error) {
-	return pp.symbol, nil
-}
+// func (pp *PairProcessor) GetFuturesSymbol() (*futures.Symbol, error) {
+// 	return pp.symbol, nil
+// }
 
 // Округлення ціни до StepSize знаків після коми
 func (pp *PairProcessor) GetStepSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
+	return int(math.Abs(math.Round(math.Log10(float64(pp.pairInfo.GetStepSize())))))
 }
 
 // Округлення ціни до TickSize знаків після коми
 func (pp *PairProcessor) GetTickSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
+	return int(math.Abs(math.Round(math.Log10(float64(pp.pairInfo.GetTickSizeExp())))))
 }
 
 func (pp *PairProcessor) GetNotional() items_types.ValueType {
@@ -116,7 +116,7 @@ func (pp *PairProcessor) GetLockedBalance() (balance items_types.ValueType, err 
 }
 
 func (pp *PairProcessor) GetCurrentPrice() (items_types.PriceType, error) {
-	price, err := pp.client.NewListPricesService().Symbol(pp.symbol.Symbol).Do(context.Background())
+	price, err := pp.client.NewListPricesService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 	if err != nil {
 		return 0, err
 	}

@@ -26,19 +26,18 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 
 		// Дані про пару
-		symbol       *binance.Symbol
-		pairInfo     *symbol_types.SpotSymbol
-		baseSymbol   string
-		targetSymbol string
+		pairInfo     *symbol_types.SymbolInfo
+		baseSymbol   symbol_types.QuoteAsset
+		targetSymbol symbol_types.BaseAsset
 
 		// Дані про обмеження на пару
-		notional float64
-		StepSize float64
-		maxQty   float64
-		minQty   float64
-		tickSize float64
-		maxPrice float64
-		minPrice float64
+		notional items_types.ValueType
+		StepSize items_types.QuantityType
+		maxQty   items_types.QuantityType
+		minQty   items_types.QuantityType
+		tickSize items_types.PriceType
+		maxPrice items_types.PriceType
+		minPrice items_types.PriceType
 
 		// канал зупинки
 		stop chan struct{}

@@ -21,7 +21,6 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
-	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 func NewPairProcessor(
@@ -50,13 +49,13 @@ func NewPairProcessor(
 	pp = &PairProcessor{
 		client:       client,
 		exchangeInfo: exchange_types.New(futures_exchange_info.RestrictedInitCreator(3, []string{symbol}, client)),
-		symbol:       nil,
-		baseSymbol:   "",
-		notional:     0,
-		StepSize:     0,
-		minSteps:     minSteps,
-		up:           btree.New(2),
-		down:         btree.New(2),
+		// symbol:       nil,
+		baseSymbol: "",
+		notional:   0,
+		StepSize:   0,
+		minSteps:   minSteps,
+		up:         btree.New(2),
+		down:       btree.New(2),
 
 		stop: stop,
 
@@ -80,29 +79,23 @@ func NewPairProcessor(
 	}
 
 	// Ініціалізуємо інформацію про пару
-	pp.pairInfo = pp.exchangeInfo.GetSymbol(
-		&symbol_types.FuturesSymbol{Symbol: symbol}).(*symbol_types.FuturesSymbol)
+	pp.pairInfo = pp.exchangeInfo.GetSymbol(symbol)
 
 	// Ініціалізуємо типи ордерів
 	pp.orderTypes = make(map[futures.OrderType]bool, 0)
-	for _, orderType := range pp.pairInfo.OrderType {
-		pp.orderTypes[orderType] = true
+	for _, orderType := range pp.pairInfo.GetOrderType() {
+		pp.orderTypes[futures.OrderType(orderType)] = true
 	}
 
-	// Буферизуємо інформацію про символ
-	pp.symbol, err = pp.GetSymbol().GetFuturesSymbol()
-	if err != nil {
-		return
-	}
-	pp.baseSymbol = pp.symbol.QuoteAsset
-	pp.targetSymbol = pp.symbol.BaseAsset
-	pp.notional = items_types.ValueType(utils.ConvStrToFloat64(pp.symbol.MinNotionalFilter().Notional))
-	pp.StepSize = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize))
-	pp.maxQty = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MaxQuantity))
-	pp.minQty = items_types.QuantityType(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().MinQuantity))
-	pp.tickSize = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize))
-	pp.maxPrice = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().MaxPrice))
-	pp.minPrice = items_types.PriceType(utils.ConvStrToFloat64(pp.symbol.PriceFilter().MinPrice))
+	pp.baseSymbol = string(pp.pairInfo.GetBaseSymbol())
+	pp.targetSymbol = string(pp.pairInfo.GetTargetSymbol())
+	pp.notional = pp.pairInfo.GetNotional()
+	pp.StepSize = pp.pairInfo.GetStepSize()
+	pp.maxQty = pp.pairInfo.GetMaxQty()
+	pp.minQty = pp.pairInfo.GetMinQty()
+	pp.tickSize = pp.pairInfo.GetTickSizeExp()
+	pp.maxPrice = pp.pairInfo.GetMaxPrice()
+	pp.minPrice = pp.pairInfo.GetMinPrice()
 
 	if pp.progression == pairs_types.ArithmeticProgression {
 		pp.NthTerm = progressions.ArithmeticProgressionNthTerm

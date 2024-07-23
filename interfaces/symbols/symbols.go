@@ -11,7 +11,7 @@ type (
 	Symbols interface {
 		Lock()
 		Unlock()
-		GetSymbol(symbol string) *symbol_info.SpotSymbol
+		GetSymbol(symbol string) *symbol_info.SymbolInfo
 		GetSpotSymbol() *binance.Symbol
 		GetFuturesSymbol() *futures.Symbol
 		Ascend(f func(btree.Item) bool)

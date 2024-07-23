@@ -18,7 +18,7 @@ func (pp *PairProcessor) SetTimeOut(timeOut time.Duration) {
 	pp.timeOut = timeOut
 }
 
-func (pp *PairProcessor) GetSymbol() *symbol_types.SpotSymbol {
+func (pp *PairProcessor) GetSymbol() *symbol_types.SymbolInfo {
 	return pp.pairInfo
 }
 
@@ -44,7 +44,7 @@ func (pp *PairProcessor) GetBaseAsset() (asset *binance.Balance, err error) {
 		return
 	}
 	for _, asset := range account.Balances {
-		if asset.Asset == pp.baseSymbol {
+		if asset.Asset == string(pp.baseSymbol) {
 			return &asset, nil
 		}
 	}
@@ -57,7 +57,7 @@ func (pp *PairProcessor) GetTargetAsset() (asset *binance.Balance, err error) {
 		return
 	}
 	for _, asset := range account.Balances {
-		if asset.Asset == pp.targetSymbol {
+		if asset.Asset == string(pp.targetSymbol) {
 			return &asset, nil
 		}
 	}
@@ -142,14 +142,14 @@ func (pp *PairProcessor) GetLockedBalance() (balance items_types.PriceType, err 
 
 // Округлення ціни до SteGSize знаків після коми
 func (pp *PairProcessor) GetStepSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))))
+	return int(math.Abs(math.Round(math.Log10(float64(pp.pairInfo.GetStepSize())))))
 }
 
 // Округлення ціни до TicGSize знаків після коми
 func (pp *PairProcessor) GetTickSizeExp() int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))))
+	return int(math.Abs(math.Round(math.Log10(float64(pp.pairInfo.GetTickSizeExp())))))
 }
 
 func (pp *PairProcessor) GetNotional() float64 {
-	return pp.notional
+	return float64(pp.pairInfo.GetNotional())
 }

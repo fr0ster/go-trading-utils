@@ -1,7 +1,6 @@
 package grid
 
 import (
-	"fmt"
 	"math"
 	"runtime"
 	"sync"
@@ -29,16 +28,6 @@ func printError() {
 	}
 }
 
-// Округлення ціни до StepSize знаків після коми
-func getStepSizeExp(symbol *binance.Symbol) int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)))))
-}
-
-// Округлення ціни до TickSize знаків після коми
-func getTickSizeExp(symbol *binance.Symbol) int {
-	return int(math.Abs(math.Round(math.Log10(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)))))
-}
-
 func round(val float64, exp int) float64 {
 	return utils.RoundToDecimalPlace(float64(val), exp)
 }
@@ -51,20 +40,8 @@ func initVars(
 	tickSizeExp,
 	stepSizeExp int,
 	err error) {
-	symbol, err = func() (res *binance.Symbol, err error) {
-		val := pairProcessor.GetSymbol()
-		if val == nil {
-			printError()
-			return nil, fmt.Errorf("spot %s: Symbol not found", pairProcessor.GetPair())
-		}
-		return val.GetSpotSymbol()
-	}()
-	if err != nil {
-		printError()
-		return
-	}
-	tickSizeExp = getTickSizeExp(symbol)
-	stepSizeExp = getStepSizeExp(symbol)
+	tickSizeExp = pairProcessor.GetTickSizeExp()
+	stepSizeExp = pairProcessor.GetStepSizeExp()
 	// Отримання середньої ціни
 	price, _ = pairProcessor.GetCurrentPrice() // Отримання ціни по ринку для пари
 	price = roundPrice(price, symbol)

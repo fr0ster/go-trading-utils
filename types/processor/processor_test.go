@@ -1,21 +1,22 @@
 package processor_test
 
 import (
-	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	"github.com/fr0ster/go-trading-utils/types"
+
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	processor "github.com/fr0ster/go-trading-utils/types/processor"
-	symbol_info_types "github.com/fr0ster/go-trading-utils/types/processor/symbol_info"
+	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
+	symbols_types "github.com/fr0ster/go-trading-utils/types/symbols"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	"github.com/stretchr/testify/assert"
@@ -90,66 +91,99 @@ func TestGetLimitPrices(t *testing.T) {
 	assert.Equal(t, items_types.ValueType(9000), bidMax.GetValue())
 }
 
-func TestNewFutures(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	futures.UseTestnet = false
-	client := futures.NewClient(api_key, secret_key)
-	// exchangeInfo := exchange_types.New(futures_exchange_info.InitCreator(degree, client))
-	getSymbolInfo := func(pp *processor.Processor) func() (symbolInfo *symbol_info_types.SymbolInfo) {
-		return func() (symbolInfo *symbol_info_types.SymbolInfo) {
-			// symbol, _ := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: pp.GetSymbol()}).(*symbol_info.FuturesSymbol).GetFuturesSymbol()
-			return symbol_info_types.New(
-				// items_types.ValueType(utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().MaxQuantity)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().MinQuantity)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().MaxPrice)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().MinPrice)),
-				items_types.ValueType(100),
-				items_types.QuantityType(0.001),
-				items_types.QuantityType(1000000),
-				items_types.QuantityType(0.1),
-				items_types.PriceType(0.1),
-				items_types.PriceType(100000),
-				items_types.PriceType(100),
-			)
-		}
-	}
-	getPositionRisk := func() (risks *futures.PositionRisk) {
-		var (
-			riskArr []*futures.PositionRisk
-			err     error
-		)
-		riskArr, err = client.NewGetPositionRiskService().Do(context.Background())
-		if err != nil {
-			return
-		}
-		risks = riskArr[0]
+func TestNewSpot(t *testing.T) {
+	getSymbols := func() (symbols []*symbol_types.SymbolInfo) {
+		symbols = append(symbols, symbol_types.New(
+			"BTCUSDT",
+			100,
+			0.001,
+			1000000,
+			0.1,
+			0.1,
+			100000,
+			100,
+			"USDT",
+			"BTC",
+			false,
+			nil,
+			nil,
+		))
 		return
 	}
-	setLeverage := func(pp *processor.Processor) func(leverage int) (res *futures.SymbolLeverage, err error) {
-		return func(leverage int) (res *futures.SymbolLeverage, err error) {
-			return client.NewChangeLeverageService().Symbol(pp.GetSymbol()).Leverage(leverage).Do(context.Background())
+	init := func(val *exchange_types.ExchangeInfo) types.InitFunction {
+		return func() (err error) {
+			val.Timezone = time.Now().Location().String()
+			val.ServerTime = time.Now().Unix()
+			val.RateLimits = nil
+			val.ExchangeFilters = nil
+			val.Symbols, _ = symbols_types.New(degree, getSymbols)
+			return
 		}
 	}
-	setMarginType := func(pp *processor.Processor) func(marginType pairs_types.MarginType) (err error) {
-		return func(marginType pairs_types.MarginType) (err error) {
-			return client.
-				NewChangeMarginTypeService().
-				Symbol(pp.GetSymbol()).
-				MarginType(futures.MarginType(marginType)).
-				Do(context.Background())
+	exchangeInfo := exchange_types.New(init)
+	maintainer, err := processor.New(
+		quit,         // stop
+		"BTCUSDT",    // symbol
+		exchangeInfo, // exchangeInfo
+		nil,          // depths
+		nil,          // orders
+		func() items_types.ValueType { return 10000 }, // getBaseBalance
+		func() items_types.ValueType { return 10000 }, // getTargetBalance
+		func() items_types.ValueType { return 10000 }, // getFreeBalance
+		func() items_types.ValueType { return 10000 }, // getLockedBalance
+		func() items_types.PriceType { return 67000 }, // getCurrentPrice
+		nil,  // getPositionRisk
+		nil,  // setLeverage
+		nil,  // setMarginType
+		nil,  // setPositionMargin
+		nil,  // closePosition
+		true, // debug
+	)
+	assert.Nil(t, err)
+	assert.NotNil(t, maintainer)
+	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
+	assert.Equal(t, items_types.ValueType(10000), maintainer.GetBaseBalance())
+	assert.Equal(t, items_types.ValueType(10000), maintainer.GetTargetBalance())
+	assert.Equal(t, items_types.ValueType(10000), maintainer.GetFreeBalance())
+	assert.Equal(t, items_types.ValueType(10000), maintainer.GetLockedBalance())
+	assert.Equal(t, items_types.PriceType(67000), maintainer.GetCurrentPrice())
+	assert.Equal(t, items_types.ValueType(100), maintainer.GetNotional())
+	assert.Equal(t, items_types.QuantityType(0.1), maintainer.GetMinQty())
+	assert.Equal(t, items_types.QuantityType(1000000), maintainer.GetMaxQty())
+	assert.Equal(t, items_types.PriceType(100), maintainer.GetMinPrice())
+	assert.Equal(t, items_types.PriceType(100000), maintainer.GetMaxPrice())
+}
+
+func TestNewFutures(t *testing.T) {
+	getSymbols := func() (symbols []*symbol_types.SymbolInfo) {
+		symbols = append(symbols, symbol_types.New(
+			"BTCUSDT",
+			100,
+			0.001,
+			1000000,
+			0.1,
+			0.1,
+			100000,
+			100,
+			"USDT",
+			"BTC",
+			false,
+			nil,
+			nil,
+		))
+		return
+	}
+	init := func(val *exchange_types.ExchangeInfo) types.InitFunction {
+		return func() (err error) {
+			val.Timezone = time.Now().Location().String()
+			val.ServerTime = time.Now().Unix()
+			val.RateLimits = nil
+			val.ExchangeFilters = nil
+			val.Symbols, _ = symbols_types.New(degree, getSymbols)
+			return
 		}
 	}
-	setPositionMargin := func(pp *processor.Processor) func(amountMargin items_types.ValueType, typeMargin int) (err error) {
-		return func(amountMargin items_types.ValueType, typeMargin int) (err error) {
-			return client.NewUpdatePositionMarginService().
-				Symbol(pp.GetSymbol()).Type(typeMargin).
-				Amount(utils.ConvFloat64ToStrDefault(float64(amountMargin))).Do(context.Background())
-		}
-	}
+	exchangeInfo := exchange_types.New(init)
 	closePosition := func(pp *processor.Processor) func(risk *futures.PositionRisk) error {
 		return func(risk *futures.PositionRisk) (err error) {
 			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
@@ -169,23 +203,22 @@ func TestNewFutures(t *testing.T) {
 		}
 	}
 	maintainer, err := processor.New(
-		quit,      // stop
-		"BTCUSDT", // symbol
-		nil,       // exchangeInfo, // exchangeInfo
-		nil,       // depths
-		nil,       // orders
+		quit,         // stop
+		"BTCUSDT",    // symbol
+		exchangeInfo, // exchangeInfo
+		nil,          // depths
+		nil,          // orders
 		func() items_types.ValueType { return 10000 }, // getBaseBalance
 		func() items_types.ValueType { return 10000 }, // getTargetBalance
 		func() items_types.ValueType { return 10000 }, // getFreeBalance
 		func() items_types.ValueType { return 10000 }, // getLockedBalance
 		func() items_types.PriceType { return 67000 }, // getCurrentPrice
-		getSymbolInfo,     // getSymbolInfo
-		getPositionRisk,   // getPositionRisk
-		setLeverage,       // setLeverage
-		setMarginType,     // setMarginType
-		setPositionMargin, // setPositionMargin
-		closePosition,     // closePosition
-		true,              // debug
+		nil,           // getPositionRisk
+		nil,           // setLeverage
+		nil,           // setMarginType
+		nil,           // setPositionMargin
+		closePosition, // closePosition
+		true,          // debug
 	)
 	assert.Nil(t, err)
 	assert.NotNil(t, maintainer)
@@ -200,60 +233,4 @@ func TestNewFutures(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(1000000), maintainer.GetMaxQty())
 	assert.Equal(t, items_types.PriceType(100), maintainer.GetMinPrice())
 	assert.Equal(t, items_types.PriceType(100000), maintainer.GetMaxPrice())
-}
-
-func TestNewSpot(t *testing.T) {
-	// api_key := os.Getenv("API_KEY")
-	// secret_key := os.Getenv("SECRET_KEY")
-	// futures.UseTestnet = false
-	// client := binance.NewClient(api_key, secret_key)
-	// exchangeInfo := exchange_types.New(spot_exchange_info.InitCreator(degree, client))
-	getSymbolInfo := func(pp *processor.Processor) func() (symbolInfo *symbol_info_types.SymbolInfo) {
-		return func() (symbolInfo *symbol_info_types.SymbolInfo) {
-			// symbol, _ := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: pp.GetSymbol()}).(*symbol_info.SpotSymbol).GetSpotSymbol()
-			return symbol_info_types.New(
-				// items_types.ValueType(utils.ConvStrToFloat64(symbol.NotionalFilter().MinNotional)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().StepSize)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().MaxQuantity)),
-				// items_types.QuantityType(utils.ConvStrToFloat64(symbol.LotSizeFilter().MinQuantity)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().TickSize)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().MaxPrice)),
-				// items_types.PriceType(utils.ConvStrToFloat64(symbol.PriceFilter().MinPrice)),
-				items_types.ValueType(100),
-				items_types.QuantityType(0.001),
-				items_types.QuantityType(1000000),
-				items_types.QuantityType(0.1),
-				items_types.PriceType(0.1),
-				items_types.PriceType(100000),
-				items_types.PriceType(100),
-			)
-		}
-	}
-	maintainer, err := processor.New(
-		quit,      // stop
-		"BTCUSDT", // symbol
-		nil,       //exchangeInfo, // exchangeInfo
-		nil,       // depths
-		nil,       // orders
-		func() items_types.ValueType { return 10000 }, // getBaseBalance
-		func() items_types.ValueType { return 10000 }, // getTargetBalance
-		func() items_types.ValueType { return 10000 }, // getFreeBalance
-		func() items_types.ValueType { return 10000 }, // getLockedBalance
-		func() items_types.PriceType { return 67000 }, // getCurrentPrice
-		getSymbolInfo, // getSymbolInfo
-		nil,           // getPositionRisk
-		nil,           // setLeverage
-		nil,           // setMarginType
-		nil,           // setPositionMargin
-		nil,           // closePosition
-		true,          // debug
-	)
-	assert.Nil(t, err)
-	assert.NotNil(t, maintainer)
-	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetBaseBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetTargetBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetFreeBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetLockedBalance())
-	assert.Equal(t, items_types.PriceType(67000), maintainer.GetCurrentPrice())
 }

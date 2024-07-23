@@ -1,21 +1,12 @@
 package processor
 
 import (
-	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
-func (pp *Processor) GetDepth() *depth_types.Depths {
-	return pp.depths
-}
-
-func (pp *Processor) SetDepth(depth *depth_types.Depths) {
-	pp.depths = depth
-}
-
 func (pp *Processor) NextPriceUp(prices ...items_types.PriceType) items_types.PriceType {
 	if pp.depths != nil {
-		return pp.RoundPrice(pp.GetDepth().NextPriceUp(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
+		return pp.RoundPrice(pp.depths.NextPriceUp(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
 	} else {
 		price := items_types.PriceType(0.0)
 		if len(prices) == 0 {
@@ -29,7 +20,7 @@ func (pp *Processor) NextPriceUp(prices ...items_types.PriceType) items_types.Pr
 
 func (pp *Processor) NextPriceDown(prices ...items_types.PriceType) items_types.PriceType {
 	if pp.depths != nil {
-		return pp.RoundPrice(pp.GetDepth().NextPriceDown(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
+		return pp.RoundPrice(pp.depths.NextPriceDown(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
 	} else {
 		price := items_types.PriceType(0.0)
 		if len(prices) == 0 {

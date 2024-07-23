@@ -44,16 +44,13 @@ func initVars(
 	priceDown items_types.PriceType,
 	minNotional float64,
 	err error) {
-	symbol, err := pairProcessor.GetFuturesSymbol()
-	if err != nil {
-		return
-	}
+	symbol := pairProcessor.GetSymbol()
 	// Отримання середньої ціни
 	price, _ = pairProcessor.GetCurrentPrice() // Отримання ціни по ринку для пари
 	price = pairProcessor.RoundPrice(price)
 	priceUp = pairProcessor.NextPriceUp(price)
 	priceDown = pairProcessor.NextPriceDown(price)
-	minNotional = utils.ConvStrToFloat64(symbol.MinNotionalFilter().Notional)
+	minNotional = float64(symbol.GetNotional())
 	return
 }
 

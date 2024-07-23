@@ -3,7 +3,6 @@ package processor
 import (
 	"context"
 	"fmt"
-	"log"
 	"math"
 	"time"
 
@@ -75,23 +74,23 @@ func (pp *PairProcessor) createOrder(
 		}
 		return
 	}
-	pp.symbol, err = (*pp.pairInfo).GetFuturesSymbol()
-	if err != nil {
-		log.Printf(errorMsg, err)
-		return
-	}
+	// pp.symbol, err = (*pp.pairInfo).GetFuturesSymbol()
+	// if err != nil {
+	// 	log.Printf(errorMsg, err)
+	// 	return
+	// }
 	if _, ok := pp.orderTypes[orderType]; !ok && len(pp.orderTypes) != 0 {
-		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.symbol.Symbol)
+		err = fmt.Errorf("order type %s is not supported for symbol %s", orderType, pp.pairInfo.Symbol)
 		return
 	}
 	var (
-		quantityRound = int(math.Log10(1 / utils.ConvStrToFloat64(pp.symbol.LotSizeFilter().StepSize)))
-		priceRound    = int(math.Log10(1 / utils.ConvStrToFloat64(pp.symbol.PriceFilter().TickSize)))
+		quantityRound = int(math.Log10(1 / float64(pp.pairInfo.GetStepSize())))
+		priceRound    = int(math.Log10(1 / float64(pp.pairInfo.GetTickSizeExp())))
 	)
 	service :=
 		pp.client.NewCreateOrderService().
 			NewOrderResponseType(futures.NewOrderRespTypeRESULT).
-			Symbol(string(futures.SymbolType(pp.symbol.Symbol))).
+			Symbol(string(futures.SymbolType(pp.pairInfo.Symbol))).
 			Type(orderType).
 			Side(sideType)
 	if reduceOnly && !closePosition {
@@ -157,7 +156,7 @@ func (pp *PairProcessor) createOrder(
 				return nil, err
 			}
 			for _, order := range orders {
-				if order.Symbol == pp.symbol.Symbol &&
+				if order.Symbol == pp.pairInfo.Symbol &&
 					order.Side == sideType &&
 					order.Price == utils.ConvFloat64ToStr(float64(price), priceRound) {
 					return &futures.CreateOrderResponse{
@@ -238,21 +237,21 @@ func (pp *PairProcessor) CreateOrder(
 }
 
 func (pp *PairProcessor) GetOpenOrders() (orders []*futures.Order, err error) {
-	return pp.client.NewListOpenOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
+	return pp.client.NewListOpenOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetAllOrders() (orders []*futures.Order, err error) {
-	return pp.client.NewListOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
+	return pp.client.NewListOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
 
 func (pp *PairProcessor) GetOrder(orderID int64) (order *futures.Order, err error) {
-	return pp.client.NewGetOrderService().Symbol(pp.symbol.Symbol).OrderID(orderID).Do(context.Background())
+	return pp.client.NewGetOrderService().Symbol(pp.pairInfo.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelOrder(orderID int64) (order *futures.CancelOrderResponse, err error) {
-	return pp.client.NewCancelOrderService().Symbol(pp.symbol.Symbol).OrderID(orderID).Do(context.Background())
+	return pp.client.NewCancelOrderService().Symbol(pp.pairInfo.Symbol).OrderID(orderID).Do(context.Background())
 }
 
 func (pp *PairProcessor) CancelAllOrders() (err error) {
-	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.symbol.Symbol).Do(context.Background())
+	return pp.client.NewCancelAllOpenOrdersService().Symbol(pp.pairInfo.Symbol).Do(context.Background())
 }
