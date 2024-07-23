@@ -6,10 +6,12 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2/futures"
-	futures_booktickers "github.com/fr0ster/go-trading-utils/binance/futures/markets/booktickers"
+
+	futures_booktickers "github.com/fr0ster/go-trading-utils/binance/futures/booktickers"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
+
 	"github.com/stretchr/testify/assert"
 )
 

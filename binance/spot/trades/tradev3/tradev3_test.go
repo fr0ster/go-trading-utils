@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/markets/trades/tradev3"
+	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/trades/tradev3"
 	trade_interface "github.com/fr0ster/go-trading-utils/interfaces/trades"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/tradeV3"
 	"github.com/google/btree"

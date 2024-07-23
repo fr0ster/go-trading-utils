@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
-	spot_booktickers "github.com/fr0ster/go-trading-utils/binance/spot/markets/booktickers"
+	spot_booktickers "github.com/fr0ster/go-trading-utils/binance/spot/booktickers"
 	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"

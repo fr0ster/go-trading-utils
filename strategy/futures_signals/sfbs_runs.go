@@ -8,7 +8,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/markets/depths"
+	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/depths"
 
 	grid "github.com/fr0ster/go-trading-utils/strategy/futures_signals/grid"
 	trading "github.com/fr0ster/go-trading-utils/strategy/futures_signals/trading"
