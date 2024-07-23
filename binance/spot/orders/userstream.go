@@ -29,13 +29,13 @@ func UserDataStreamCreator(
 }
 
 func CallBackCreator(
-	handlers ...func(d *orders_types.Orders) binance.WsDepthHandler) func(d *orders_types.Orders) binance.WsDepthHandler {
-	return func(d *orders_types.Orders) binance.WsDepthHandler {
-		var stack []binance.WsDepthHandler
+	handlers ...func(d *orders_types.Orders) binance.WsUserDataHandler) func(d *orders_types.Orders) binance.WsUserDataHandler {
+	return func(d *orders_types.Orders) binance.WsUserDataHandler {
+		var stack []binance.WsUserDataHandler
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}
-		return func(event *binance.WsDepthEvent) {
+		return func(event *binance.WsUserDataEvent) {
 			for _, handler := range stack {
 				handler(event)
 			}

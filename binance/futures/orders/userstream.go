@@ -28,13 +28,13 @@ func UserDataStreamCreator(
 }
 
 func CallBackCreator(
-	handlers ...func(d *orders_types.Orders) futures.WsDepthHandler) func(d *orders_types.Orders) futures.WsDepthHandler {
-	return func(d *orders_types.Orders) futures.WsDepthHandler {
-		var stack []futures.WsDepthHandler
+	handlers ...func(d *orders_types.Orders) futures.WsUserDataHandler) func(d *orders_types.Orders) futures.WsUserDataHandler {
+	return func(d *orders_types.Orders) futures.WsUserDataHandler {
+		var stack []futures.WsUserDataHandler
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}
-		return func(event *futures.WsDepthEvent) {
+		return func(event *futures.WsUserDataEvent) {
 			for _, handler := range stack {
 				handler(event)
 			}
