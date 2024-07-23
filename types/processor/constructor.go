@@ -53,19 +53,19 @@ func New(
 	}
 
 	if getBaseBalance != nil {
-		pp.GetBaseBalance = getBaseBalance
+		pp.getBaseBalance = getBaseBalance
 	}
 	if getTargetBalance != nil {
-		pp.GetTargetBalance = getTargetBalance
+		pp.getTargetBalance = getTargetBalance
 	}
 	if getFreeBalance != nil {
-		pp.GetFreeBalance = getFreeBalance
+		pp.getFreeBalance = getFreeBalance
 	}
 	if getLockedBalance != nil {
-		pp.GetLockedBalance = getLockedBalance
+		pp.getLockedBalance = getLockedBalance
 	}
 	if getCurrentPrice != nil {
-		pp.GetCurrentPrice = getCurrentPrice
+		pp.getCurrentPrice = getCurrentPrice
 	}
 	// if getSymbolInfo != nil {
 	// 	pp.getSymbolInfo = getSymbolInfo(pp)

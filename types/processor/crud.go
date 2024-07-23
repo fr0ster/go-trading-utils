@@ -80,3 +80,35 @@ func (pp *Processor) GetDepth() *depth_types.Depths {
 func (pp *Processor) GetOrder() *orders_types.Orders {
 	return pp.orders
 }
+
+func (pp *Processor) GetBaseBalance() items_types.ValueType {
+	if pp.getBaseBalance == nil {
+		return 0
+	}
+	return pp.GetBaseBalance()
+}
+func (pp *Processor) GetTargetBalance() items_types.ValueType {
+	if pp.getTargetBalance == nil {
+		return 0
+	}
+	return pp.GetTargetBalance()
+
+}
+func (pp *Processor) GetFreeBalance() items_types.ValueType {
+	if pp.getFreeBalance == nil {
+		return 0
+	}
+	return pp.GetFreeBalance()
+}
+func (pp *Processor) GetLockedBalance() items_types.ValueType {
+	if pp.getLockedBalance == nil {
+		return 0
+	}
+	return pp.GetLockedBalance()
+}
+func (pp *Processor) GetCurrentPrice() items_types.PriceType {
+	if pp.getCurrentPrice == nil {
+		return 0
+	}
+	return pp.GetCurrentPrice()
+}

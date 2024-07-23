@@ -34,12 +34,11 @@ type (
 		depths *depth_types.Depths
 		orders *orders_types.Orders
 
-		GetBaseBalance   func() items_types.ValueType
-		GetTargetBalance func() items_types.ValueType
-		GetFreeBalance   func() items_types.ValueType
-		GetLockedBalance func() items_types.ValueType
-		GetCurrentPrice  func() items_types.PriceType
-		// getSymbolInfo    func() *symbol_types.SymbolInfo
+		getBaseBalance   func() items_types.ValueType
+		getTargetBalance func() items_types.ValueType
+		getFreeBalance   func() items_types.ValueType
+		getLockedBalance func() items_types.ValueType
+		getCurrentPrice  func() items_types.PriceType
 
 		getPositionRisk func() *futures.PositionRisk
 
