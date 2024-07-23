@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func GetInitCreator(client *futures.Client) func(kl *kline_types.Klines) func() (err error) {
+func InitCreator(client *futures.Client) func(kl *kline_types.Klines) func() (err error) {
 	return func(kl *kline_types.Klines) func() (err error) {
 		return func() (err error) {
 			kl.Lock()         // Locking the klines
@@ -31,7 +31,7 @@ func GetInitCreator(client *futures.Client) func(kl *kline_types.Klines) func() 
 	}
 }
 
-func GetStartKlineStreamCreator(
+func KlineStreamCreator(
 	handler func(*kline_types.Klines) futures.WsKlineHandler,
 	errHandler func(*kline_types.Klines) futures.ErrHandler) func(*kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
 	return func(kl *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
@@ -43,7 +43,7 @@ func GetStartKlineStreamCreator(
 	}
 }
 
-func standardEventHandlerCreator(kl *kline_types.Klines) futures.WsKlineHandler {
+func eventHandlerCreator(kl *kline_types.Klines) futures.WsKlineHandler {
 	return func(event *futures.WsKlineEvent) {
 		func() {
 			kl.Lock()         // Locking the depths
@@ -69,11 +69,11 @@ func standardEventHandlerCreator(kl *kline_types.Klines) futures.WsKlineHandler 
 	}
 }
 
-func StandardEventCallBackCreator(
+func CallBackCreator(
 	handlers ...func(*kline_types.Klines) futures.WsKlineHandler) func(*kline_types.Klines) futures.WsKlineHandler {
 	return func(kl *kline_types.Klines) futures.WsKlineHandler {
 		var stack []futures.WsKlineHandler
-		standardHandlers := standardEventHandlerCreator(kl)
+		standardHandlers := eventHandlerCreator(kl)
 		for _, handler := range handlers {
 			stack = append(stack, handler(kl))
 		}
@@ -82,6 +82,15 @@ func StandardEventCallBackCreator(
 			for _, handler := range stack {
 				handler(event)
 			}
+		}
+	}
+}
+
+func WsErrorHandlerCreator() func(*kline_types.Klines) futures.ErrHandler {
+	return func(kl *kline_types.Klines) futures.ErrHandler {
+		return func(err error) {
+			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			kl.ResetEvent(err)
 		}
 	}
 }

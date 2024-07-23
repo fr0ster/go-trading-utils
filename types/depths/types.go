@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
@@ -43,8 +44,8 @@ type (
 		stop             chan struct{}
 		resetEvent       chan error
 		timeOut          time.Duration
-		startDepthStream func() (chan struct{}, chan struct{}, error)
-		Init             func() (err error)
+		startDepthStream types.StreamFunction
+		Init             types.InitFunction
 	}
 )
 

@@ -19,12 +19,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchangeinfo.New()
-	err := futuresInfo.Init(exchangeInfo, degree, client)
-	// Check if the function returned an error
-	if err != nil {
-		t.Errorf("GetExchangeInfo returned an error: %v", err)
-	}
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -37,11 +32,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.New()
-	err := futuresInfo.Init(exchangeInfo, degree, client)
-	if err != nil {
-		t.Errorf("GetExchangeInfo returned an error: %v", err)
-	}
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
 
 	// Call the function being tested
 	orderTypes := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol).OrderType
@@ -53,11 +44,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.New()
-	err := futuresInfo.Init(exchangeInfo, degree, client)
-	if err != nil {
-		t.Errorf("GetExchangeInfo returned an error: %v", err)
-	}
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol)

@@ -24,7 +24,7 @@ func TestHistoricalTradesInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		futures_trade.GetHistoricalTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
+		futures_trade.HistoricalTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
@@ -49,7 +49,7 @@ func TestRecentTradesInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		futures_trade.GetRecentTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
+		futures_trade.RecentTradesInitCreator(futures.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()

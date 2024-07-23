@@ -4,14 +4,16 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/types"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	"github.com/fr0ster/go-trading-utils/utils"
+	"github.com/sirupsen/logrus"
 )
 
-func GetInitCreator(client *binance.Client) func(*booktickers_types.BookTickers) func() (err error) {
-	return func(bt *booktickers_types.BookTickers) func() (err error) {
+func InitCreator(client *binance.Client) func(*booktickers_types.BookTickers) types.InitFunction {
+	return func(bt *booktickers_types.BookTickers) types.InitFunction {
 		return func() (err error) {
 			bt.Lock()         // Locking the bookticker
 			defer bt.Unlock() // Unlocking the bookticker
@@ -37,10 +39,10 @@ func GetInitCreator(client *binance.Client) func(*booktickers_types.BookTickers)
 	}
 }
 
-func GetStartBookTickerStreamCreator(
+func BookTickerStreamCreator(
 	handler func(*booktickers_types.BookTickers) binance.WsBookTickerHandler,
-	errHandler func(*booktickers_types.BookTickers) binance.ErrHandler) func(*booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
-	return func(bt *booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
+	errHandler func(*booktickers_types.BookTickers) binance.ErrHandler) func(*booktickers_types.BookTickers) types.StreamFunction {
+	return func(bt *booktickers_types.BookTickers) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsBookTickerServe(bt.GetSymbol(), handler(bt), errHandler(bt))
@@ -49,7 +51,7 @@ func GetStartBookTickerStreamCreator(
 	}
 }
 
-func standardEventHandlerCreator(bt *booktickers_types.BookTickers) binance.WsBookTickerHandler {
+func eventHandlerCreator(bt *booktickers_types.BookTickers) binance.WsBookTickerHandler {
 	return func(event *binance.WsBookTickerEvent) {
 		func() {
 			bt.Lock()         // Locking the depths
@@ -66,11 +68,11 @@ func standardEventHandlerCreator(bt *booktickers_types.BookTickers) binance.WsBo
 	}
 }
 
-func StandardEventCallBackCreator(
+func CallBackCreator(
 	handlers ...func(*booktickers_types.BookTickers) binance.WsBookTickerHandler) func(*booktickers_types.BookTickers) binance.WsBookTickerHandler {
 	return func(bt *booktickers_types.BookTickers) binance.WsBookTickerHandler {
 		var stack []binance.WsBookTickerHandler
-		standardHandlers := standardEventHandlerCreator(bt)
+		standardHandlers := eventHandlerCreator(bt)
 		for _, handler := range handlers {
 			stack = append(stack, handler(bt))
 		}
@@ -79,6 +81,15 @@ func StandardEventCallBackCreator(
 			for _, handler := range stack {
 				handler(event)
 			}
+		}
+	}
+}
+
+func WsErrorHandlerCreator() func(*booktickers_types.BookTickers) binance.ErrHandler {
+	return func(btt *booktickers_types.BookTickers) binance.ErrHandler {
+		return func(err error) {
+			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			btt.ResetEvent(err)
 		}
 	}
 }

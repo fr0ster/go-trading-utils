@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2/futures"
+
 	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
-	exchange_info "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	symbol_info "github.com/fr0ster/go-trading-utils/types/symbol"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,11 +20,7 @@ func TestInterface(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// binance.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_info.New()
-	err := futuresInfo.Init(exchangeInfo, degree, client)
-	if err != nil {
-		t.Errorf("Error: %v", err)
-	}
+	exchangeInfo := exchange_types.New(futuresInfo.InitCreator(degree, client))
 	symbol := exchangeInfo.GetSymbol(&symbol_info.FuturesSymbol{Symbol: "BTCUSDT"}).(*symbol_info.FuturesSymbol)
 
 	// Check if the struct implements the interface

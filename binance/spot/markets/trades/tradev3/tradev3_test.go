@@ -24,7 +24,7 @@ func TestListTradeInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.GetListTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.ListTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
@@ -49,7 +49,7 @@ func TestListMarginTradesInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.GetListMarginTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.ListMarginTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()

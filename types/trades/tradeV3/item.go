@@ -23,10 +23,10 @@ type (
 	}
 )
 
-func (i *TradeV3) Less(than btree.Item) bool {
-	return i.ID < than.(*TradeV3).ID
+func (tv3 *TradeV3) Less(than btree.Item) bool {
+	return tv3.ID < than.(*TradeV3).ID
 }
 
-func (i *TradeV3) Equal(than btree.Item) bool {
-	return i.ID == than.(*TradeV3).ID
+func (tv3 *TradeV3) Equal(than btree.Item) bool {
+	return tv3.ID == than.(*TradeV3).ID
 }

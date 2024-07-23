@@ -5,13 +5,15 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+
+	types "github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	"github.com/sirupsen/logrus"
 )
 
-func GetterInitCreator(limit depth_types.DepthAPILimit, client *futures.Client) func(d *depth_types.Depths) func() (err error) {
-	return func(d *depth_types.Depths) func() (err error) {
+func InitCreator(limit depth_types.DepthAPILimit, client *futures.Client) func(d *depth_types.Depths) types.InitFunction {
+	return func(d *depth_types.Depths) types.InitFunction {
 		return func() (err error) {
 			res, err :=
 				client.NewDepthService().
@@ -37,12 +39,12 @@ func GetterInitCreator(limit depth_types.DepthAPILimit, client *futures.Client) 
 	}
 }
 
-func GetterStartDepthStreamCreator(
+func DepthStreamCreator(
 	levels depth_types.DepthStreamLevel,
 	rate depth_types.DepthStreamRate,
 	handlerCreator func(d *depth_types.Depths) futures.WsDepthHandler,
-	errHandlerCreator func(d *depth_types.Depths) futures.ErrHandler) func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
-	return func(d *depth_types.Depths) func() (doneC, stopC chan struct{}, err error) {
+	errHandlerCreator func(d *depth_types.Depths) futures.ErrHandler) func(d *depth_types.Depths) types.StreamFunction {
+	return func(d *depth_types.Depths) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsPartialDepthServeWithRate(d.Symbol(), int(levels), time.Duration(rate), handlerCreator(d), errHandlerCreator(d))
@@ -51,7 +53,7 @@ func GetterStartDepthStreamCreator(
 	}
 }
 
-func standardEventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
+func eventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
 	return func(event *futures.WsDepthEvent) {
 		func() {
 			d.Lock()         // Locking the depths
@@ -82,12 +84,12 @@ func standardEventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
 	}
 }
 
-func StandardEventCallBackCreator(
+func CallBackCreator(
 	handlers ...func(d *depth_types.Depths) futures.WsDepthHandler) func(d *depth_types.Depths) futures.WsDepthHandler {
 	return func(d *depth_types.Depths) futures.WsDepthHandler {
 		var stack []futures.WsDepthHandler
 		d.Init()
-		standardHandler := standardEventHandlerCreator(d)
+		standardHandler := eventHandlerCreator(d)
 		for _, handler := range handlers {
 			stack = append(stack, handler(d))
 		}
@@ -100,7 +102,7 @@ func StandardEventCallBackCreator(
 	}
 }
 
-func GetterWsErrorHandlerCreator() func(d *depth_types.Depths) futures.ErrHandler {
+func WsErrorHandlerCreator() func(d *depth_types.Depths) futures.ErrHandler {
 	return func(d *depth_types.Depths) futures.ErrHandler {
 		return func(err error) {
 			logrus.Errorf("Future wsErrorHandler error: %v", err)

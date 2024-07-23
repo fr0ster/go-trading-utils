@@ -1,0 +1,47 @@
+package orders
+
+import (
+	"time"
+)
+
+func (o *Orders) UserDataEventStart() (err error) {
+	// Ініціалізуємо стріми для відмірювання часу
+	ticker := time.NewTicker(o.timeOut)
+	// Ініціалізуємо маркер для останньої відповіді
+	lastResponse := time.Now()
+	// Запускаємо стрім подій користувача
+	_, stopC, err := o.startUserDataStream()
+	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
+	go func() {
+		for {
+			select {
+			case <-o.stop:
+				// Зупиняємо стрім подій користувача
+				stopC <- struct{}{}
+				return
+			case <-o.resetEvent:
+				// Запускаємо новий стрім подій користувача
+				_, stopC, err = o.startUserDataStream()
+				if err != nil {
+					close(o.stop)
+					return
+				}
+			case <-ticker.C:
+				// Перевіряємо чи не вийшли за ліміт часу відповіді
+				if time.Since(lastResponse) > o.timeOut {
+					// Зупиняємо стрім подій користувача
+					stopC <- struct{}{}
+					// Запускаємо новий стрім подій користувача
+					_, stopC, err = o.startUserDataStream()
+					if err != nil {
+						close(o.stop)
+						return
+					}
+					// Встановлюємо новий час відповіді
+					lastResponse = time.Now()
+				}
+			}
+		}
+	}()
+	return
+}

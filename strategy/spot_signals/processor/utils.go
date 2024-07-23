@@ -7,8 +7,6 @@ import (
 	"github.com/adshao/go-binance/v2"
 	"github.com/sirupsen/logrus"
 
-	spot_exchange_info "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -128,17 +126,14 @@ func (pp *PairProcessor) GetPrices(
 	return
 }
 
-func LimitRead(degree int, symbols []string, client *binance.Client) (
+func (pp *PairProcessor) LimitRead(degree int, symbols []string, client *binance.Client) (
 	updateTime time.Duration,
 	minuteOrderLimit *exchange.RateLimits,
 	dayOrderLimit *exchange.RateLimits,
 	minuteRawRequestLimit *exchange.RateLimits) {
-	exchangeInfo := exchange.New()
-	spot_exchange_info.RestrictedInit(exchangeInfo, degree, symbols, client)
-
-	minuteOrderLimit = exchangeInfo.Get_Minute_Order_Limit()
-	dayOrderLimit = exchangeInfo.Get_Day_Order_Limit()
-	minuteRawRequestLimit = exchangeInfo.Get_Minute_Raw_Request_Limit()
+	minuteOrderLimit = pp.exchangeInfo.Get_Minute_Order_Limit()
+	dayOrderLimit = pp.exchangeInfo.Get_Day_Order_Limit()
+	minuteRawRequestLimit = pp.exchangeInfo.Get_Minute_Raw_Request_Limit()
 	updateTime = minuteRawRequestLimit.Interval * time.Duration(1+minuteRawRequestLimit.IntervalNum)
 	return
 }

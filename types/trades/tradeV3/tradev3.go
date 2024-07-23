@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -15,24 +16,24 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
-		startTradeStream func() (chan struct{}, chan struct{}, error)
-		Init             func() error
+		startTradeStream types.StreamFunction
+		Init             types.InitFunction
 	}
 )
 
 // Ascend implements Trades.
-func (a *TradesV3) Ascend(iter func(btree.Item) bool) {
-	a.tree.Ascend(iter)
+func (tv3 *TradesV3) Ascend(iter func(btree.Item) bool) {
+	tv3.tree.Ascend(iter)
 }
 
 // Descend implements Trades.
-func (a *TradesV3) Descend(iter func(btree.Item) bool) {
-	a.tree.Descend(iter)
+func (tv3 *TradesV3) Descend(iter func(btree.Item) bool) {
+	tv3.tree.Descend(iter)
 }
 
 // Get implements Trades.
-func (a *TradesV3) Get(id int64) btree.Item {
-	res := a.tree.Get(&TradeV3{ID: id})
+func (tv3 *TradesV3) Get(id int64) btree.Item {
+	res := tv3.tree.Get(&TradeV3{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -40,28 +41,28 @@ func (a *TradesV3) Get(id int64) btree.Item {
 }
 
 // Lock implements Trades.
-func (a *TradesV3) Lock() {
-	a.mu.Lock()
+func (tv3 *TradesV3) Lock() {
+	tv3.mu.Lock()
 }
 
 // Set implements Trades.
-func (a *TradesV3) Set(val btree.Item) {
-	a.tree.ReplaceOrInsert(val)
+func (tv3 *TradesV3) Set(val btree.Item) {
+	tv3.tree.ReplaceOrInsert(val)
 }
 
 // Unlock implements Trades.
-func (a *TradesV3) Unlock() {
-	a.mu.Unlock()
+func (tv3 *TradesV3) Unlock() {
+	tv3.mu.Unlock()
 }
 
 // Update implements Trades.
-func (a *TradesV3) Update(val btree.Item) {
+func (tv3 *TradesV3) Update(val btree.Item) {
 	id := val.(*TradeV3).ID
-	old := a.Get(id)
+	old := tv3.Get(id)
 	if old == nil {
-		a.Set(val)
+		tv3.Set(val)
 	} else {
-		a.Set(&TradeV3{
+		tv3.Set(&TradeV3{
 			ID:              val.(*TradeV3).ID,
 			Symbol:          val.(*TradeV3).Symbol,
 			OrderID:         val.(*TradeV3).OrderID,
@@ -80,15 +81,19 @@ func (a *TradesV3) Update(val btree.Item) {
 	}
 }
 
-func (a *TradesV3) GetSymbolname() string {
-	return a.symbolname
+func (tv3 *TradesV3) GetSymbolname() string {
+	return tv3.symbolname
+}
+
+func (tv3 *TradesV3) ResetEvent(err error) {
+	tv3.resetEvent <- err
 }
 
 func New(
 	stop chan struct{},
 	symbolname string,
-	startTradeStream func(*TradesV3) func() (chan struct{}, chan struct{}, error),
-	initCreator func(*TradesV3) func() error) *TradesV3 {
+	startTradeStream func(*TradesV3) types.StreamFunction,
+	initCreator func(*TradesV3) types.InitFunction) *TradesV3 {
 	this := &TradesV3{
 		symbolname: symbolname,
 		tree:       btree.New(2),

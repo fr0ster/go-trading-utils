@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
 )
@@ -33,71 +34,75 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
-		startKlineStream func() (chan struct{}, chan struct{}, error)
-		init             func() error
+		startKlineStream types.StreamFunction
+		init             types.InitFunction
 	}
 )
 
 // Kline - тип для зберігання свічок
-func (i *Kline) Less(than btree.Item) bool {
-	return i.OpenTime < than.(*Kline).OpenTime || i.CloseTime < than.(*Kline).CloseTime
+func (kl *Kline) Less(than btree.Item) bool {
+	return kl.OpenTime < than.(*Kline).OpenTime || kl.CloseTime < than.(*Kline).CloseTime
 }
 
-func (i *Kline) Equal(than btree.Item) bool {
-	return i.OpenTime == than.(*Kline).OpenTime && i.CloseTime == than.(*Kline).CloseTime
+func (kl *Kline) Equal(than btree.Item) bool {
+	return kl.OpenTime == than.(*Kline).OpenTime && kl.CloseTime == than.(*Kline).CloseTime
 }
 
-func (d *Klines) Ascend(f func(btree.Item) bool) {
-	d.klines_final.Ascend(f)
+func (kl *Klines) Ascend(f func(btree.Item) bool) {
+	kl.klines_final.Ascend(f)
 }
 
-func (d *Klines) Descend(f func(btree.Item) bool) {
-	d.klines_final.Descend(f)
+func (kl *Klines) Descend(f func(btree.Item) bool) {
+	kl.klines_final.Descend(f)
 }
 
 // Lock implements kline_interface.Klines.
-func (d *Klines) Lock() {
-	d.mutex.Lock()
+func (kl *Klines) Lock() {
+	kl.mutex.Lock()
 }
 
 // Unlock implements kline_interface.Klines.
-func (d *Klines) Unlock() {
-	d.mutex.Unlock()
+func (kl *Klines) Unlock() {
+	kl.mutex.Unlock()
 }
 
 // GetSymbolname implements kline_interface.Klines.
-func (d *Klines) GetSymbolname() string {
-	return d.symbolname
+func (kl *Klines) GetSymbolname() string {
+	return kl.symbolname
 }
 
 // SetItem implements kline_interface.Klines.
-func (d *Klines) SetKline(value *Kline) {
-	d.klines_final.ReplaceOrInsert(value)
+func (kl *Klines) SetKline(value *Kline) {
+	kl.klines_final.ReplaceOrInsert(value)
 }
 
 // GetLastKline implements kline_interface.Klines.
-func (d *Klines) GetLastKline() *Kline {
-	return d.last_kline
+func (kl *Klines) GetLastKline() *Kline {
+	return kl.last_kline
 }
 
 // SetLastKline implements kline_interface.Klines.
-func (d *Klines) SetLastKline(value *Kline) {
-	d.last_kline = value
+func (kl *Klines) SetLastKline(value *Kline) {
+	kl.last_kline = value
 }
 
 // GetKlines implements kline_interface.Klines.
-func (d *Klines) GetKlines() *btree.BTree {
-	return d.klines_final
+func (kl *Klines) GetKlines() *btree.BTree {
+	return kl.klines_final
 }
 
 // GetInterval implements kline_interface.Klines.
-func (d *Klines) GetInterval() KlineStreamInterval {
-	return d.interval
+func (kl *Klines) GetInterval() KlineStreamInterval {
+	return kl.interval
 }
 
 // SetInterval implements kline_interface.Klines.
-func (d *Klines) SetInterval(interval KlineStreamInterval) {
-	d.interval = interval
+func (kl *Klines) SetInterval(interval KlineStreamInterval) {
+	kl.interval = interval
+}
+
+func (kl *Klines) ResetEvent(err error) {
+	kl.resetEvent <- err
 }
 
 // Kline - B-дерево для зберігання стакана заявок
@@ -106,8 +111,8 @@ func New(
 	degree int,
 	interval KlineStreamInterval,
 	symbolname string,
-	startKlineStream func(*Klines) func() (chan struct{}, chan struct{}, error),
-	initCreator func(*Klines) func() error) *Klines {
+	startKlineStream func(*Klines) types.StreamFunction,
+	initCreator func(*Klines) types.InitFunction) *Klines {
 	this := &Klines{
 		symbolname:   symbolname,
 		interval:     interval,

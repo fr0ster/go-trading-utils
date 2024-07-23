@@ -195,7 +195,7 @@ func New(client *binance.Client, assets []string) (account *Account, err error) 
 	account = &Account{
 		client:            client,
 		degree:            2,
-		exchangeInfo:      exchange_info.New(),
+		exchangeInfo:      exchange_info.New(spot_exchange_info.InitCreator(2, client)),
 		MakerCommission:   accountIn.MakerCommission,
 		TakerCommission:   accountIn.TakerCommission,
 		BuyerCommission:   accountIn.BuyerCommission,
@@ -212,7 +212,6 @@ func New(client *binance.Client, assets []string) (account *Account, err error) 
 		assetsRestriction: make(map[string]bool),
 		symbols:           []string{},
 	}
-	spot_exchange_info.Init(account.exchangeInfo, account.degree, account.client)
 	for _, asset := range assets {
 		account.assetsRestriction[asset] = true
 	}

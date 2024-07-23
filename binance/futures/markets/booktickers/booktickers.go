@@ -4,14 +4,16 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
 	depths_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	"github.com/fr0ster/go-trading-utils/utils"
+	"github.com/sirupsen/logrus"
 )
 
-func GetInitCreator(client *futures.Client) func(*booktickers_types.BookTickers) func() (err error) {
-	return func(btt *booktickers_types.BookTickers) func() (err error) {
+func InitCreator(client *futures.Client) func(*booktickers_types.BookTickers) types.InitFunction {
+	return func(btt *booktickers_types.BookTickers) types.InitFunction {
 		return func() (err error) {
 			btt.Lock()         // Locking the bookticker
 			defer btt.Unlock() // Unlocking the bookticker
@@ -37,14 +39,23 @@ func GetInitCreator(client *futures.Client) func(*booktickers_types.BookTickers)
 	}
 }
 
-func GetStartBookTickerStreamCreator(
+func BookTickerStreamCreator(
 	handler futures.WsBookTickerHandler,
-	errHandler futures.ErrHandler) func(d *booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
-	return func(bt *booktickers_types.BookTickers) func() (doneC, stopC chan struct{}, err error) {
+	errHandler futures.ErrHandler) func(d *booktickers_types.BookTickers) types.StreamFunction {
+	return func(bt *booktickers_types.BookTickers) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsBookTickerServe(bt.GetSymbol(), handler, errHandler)
 			return
+		}
+	}
+}
+
+func WsErrorHandlerCreator() func(bt *booktickers_types.BookTickers) futures.ErrHandler {
+	return func(bt *booktickers_types.BookTickers) futures.ErrHandler {
+		return func(err error) {
+			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			bt.ResetEvent(err)
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -15,24 +16,24 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
-		startTradeStream func() (chan struct{}, chan struct{}, error)
-		Init             func() error
+		startTradeStream types.StreamFunction
+		Init             types.InitFunction
 	}
 )
 
 // Ascend implements Trades.
-func (a *Trades) Ascend(iter func(btree.Item) bool) {
-	a.tree.Ascend(iter)
+func (t *Trades) Ascend(iter func(btree.Item) bool) {
+	t.tree.Ascend(iter)
 }
 
 // Descend implements Trades.
-func (a *Trades) Descend(iter func(btree.Item) bool) {
-	a.tree.Descend(iter)
+func (t *Trades) Descend(iter func(btree.Item) bool) {
+	t.tree.Descend(iter)
 }
 
 // Get implements Trades.
-func (a *Trades) Get(id int64) btree.Item {
-	res := a.tree.Get(&Trade{ID: id})
+func (t *Trades) Get(id int64) btree.Item {
+	res := t.tree.Get(&Trade{ID: id})
 	if res == nil {
 		return nil
 	}
@@ -40,28 +41,28 @@ func (a *Trades) Get(id int64) btree.Item {
 }
 
 // Lock implements Trades.
-func (a *Trades) Lock() {
-	a.mu.Lock()
+func (t *Trades) Lock() {
+	t.mu.Lock()
 }
 
 // Set implements Trades.
-func (a *Trades) Set(val btree.Item) {
-	a.tree.ReplaceOrInsert(val)
+func (t *Trades) Set(val btree.Item) {
+	t.tree.ReplaceOrInsert(val)
 }
 
 // Unlock implements Trades.
-func (a *Trades) Unlock() {
-	a.mu.Unlock()
+func (t *Trades) Unlock() {
+	t.mu.Unlock()
 }
 
 // Update implements Trades.
-func (a *Trades) Update(val btree.Item) {
+func (t *Trades) Update(val btree.Item) {
 	id := val.(*Trade).ID
-	old := a.Get(id)
+	old := t.Get(id)
 	if old == nil {
-		a.Set(val)
+		t.Set(val)
 	} else {
-		a.Set(&Trade{
+		t.Set(&Trade{
 			ID:            id,
 			Price:         val.(*Trade).Price,
 			Quantity:      val.(*Trade).Quantity,
@@ -74,15 +75,19 @@ func (a *Trades) Update(val btree.Item) {
 	}
 }
 
-func (a *Trades) GetSymbolname() string {
-	return a.symbolname
+func (t *Trades) GetSymbolname() string {
+	return t.symbolname
+}
+
+func (t *Trades) ResetEvent(err error) {
+	t.resetEvent <- err
 }
 
 func New(
 	stop chan struct{},
 	symbolname string,
-	startTradeStream func(a *Trades) func() (chan struct{}, chan struct{}, error),
-	initCreator func(a *Trades) func() error,
+	startTradeStream func(a *Trades) types.StreamFunction,
+	initCreator func(a *Trades) types.InitFunction,
 ) *Trades {
 	this := &Trades{
 		symbolname: symbolname,

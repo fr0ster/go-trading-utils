@@ -41,7 +41,7 @@ func TestInitPricesTree(t *testing.T) {
 		quit,
 		3,
 		nil,
-		spot_booktickers.GetInitCreator(spot),
+		spot_booktickers.InitCreator(spot),
 		"BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function

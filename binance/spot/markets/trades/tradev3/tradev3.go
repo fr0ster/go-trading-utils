@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/fr0ster/go-trading-utils/types"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/tradeV3"
+	"github.com/sirupsen/logrus"
 )
 
 func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
@@ -29,8 +31,8 @@ func tradesV3Init(trd []*binance.TradeV3, a *trade_types.TradesV3) (err error) {
 	return nil
 }
 
-func GetListTradesInitCreator(client *binance.Client, limit int) func(a *trade_types.TradesV3) func() (err error) {
-	return func(a *trade_types.TradesV3) func() (err error) {
+func ListTradesInitCreator(client *binance.Client, limit int) func(a *trade_types.TradesV3) types.InitFunction {
+	return func(a *trade_types.TradesV3) types.InitFunction {
 		return func() (err error) {
 			res, err :=
 				client.NewListTradesService().
@@ -45,8 +47,8 @@ func GetListTradesInitCreator(client *binance.Client, limit int) func(a *trade_t
 	}
 }
 
-func GetListMarginTradesInitCreator(client *binance.Client, limit int) func(a *trade_types.TradesV3) func() (err error) {
-	return func(a *trade_types.TradesV3) func() (err error) {
+func ListMarginTradesInitCreator(client *binance.Client, limit int) func(a *trade_types.TradesV3) types.InitFunction {
+	return func(a *trade_types.TradesV3) types.InitFunction {
 		return func() (err error) {
 			res, err :=
 				client.NewListMarginTradesService().
@@ -57,6 +59,15 @@ func GetListMarginTradesInitCreator(client *binance.Client, limit int) func(a *t
 				return err
 			}
 			return tradesV3Init(res, a)
+		}
+	}
+}
+
+func WsErrorHandlerCreator() func(*trade_types.TradesV3) binance.ErrHandler {
+	return func(trade *trade_types.TradesV3) binance.ErrHandler {
+		return func(err error) {
+			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			trade.ResetEvent(err)
 		}
 	}
 }

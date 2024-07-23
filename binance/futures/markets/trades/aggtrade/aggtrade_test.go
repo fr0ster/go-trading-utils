@@ -25,8 +25,8 @@ func TestAggTradesInterface(t *testing.T) {
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
-		spot_trade.GetStartTradeStreamCreator(nil, nil),
-		spot_trade.GetAggTradeInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.TradeStreamCreator(nil, nil),
+		spot_trade.InitCreator(binance.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()

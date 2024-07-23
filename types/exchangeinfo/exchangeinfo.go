@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	symbols_info "github.com/fr0ster/go-trading-utils/types/symbols"
 	"github.com/google/btree"
 )
@@ -99,11 +100,15 @@ func (exchangeInfo *ExchangeInfo) Descend(iterator func(item btree.Item) bool) {
 	exchangeInfo.Symbols.Descend(iterator)
 }
 
-func New() *ExchangeInfo {
-	return &ExchangeInfo{
+func New(init func(*ExchangeInfo) types.InitFunction) *ExchangeInfo {
+	this := &ExchangeInfo{
 		Timezone:   "",
 		ServerTime: 0,
 		RateLimits: nil,
 		Symbols:    nil,
 	}
+	if init != nil {
+		init(this)()
+	}
+	return this
 }

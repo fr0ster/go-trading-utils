@@ -47,15 +47,9 @@ func NewPairProcessor(
 		depth = depths[0]
 	}
 
-	exchangeInfo := exchange_types.New()
-	err = futures_exchange_info.RestrictedInit(exchangeInfo, 3, []string{symbol}, client)
-	if err != nil {
-		err = ParseError(err)
-		return
-	}
 	pp = &PairProcessor{
 		client:       client,
-		exchangeInfo: exchangeInfo,
+		exchangeInfo: exchange_types.New(futures_exchange_info.RestrictedInitCreator(3, []string{symbol}, client)),
 		symbol:       nil,
 		baseSymbol:   "",
 		notional:     0,

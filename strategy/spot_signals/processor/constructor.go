@@ -39,15 +39,9 @@ func NewPairProcessor(
 		depth = depths[0]
 	}
 
-	exchangeInfo := exchange_types.New()
-	err = spot_exchange_info.Init(exchangeInfo, 3, client, symbol)
-	if err != nil {
-		err = ParseError(err)
-		return
-	}
 	pp = &PairProcessor{
 		client:       client,
-		exchangeInfo: exchangeInfo,
+		exchangeInfo: exchange_types.New(spot_exchange_info.InitCreator(3, client, symbol)),
 
 		stop: stop,
 

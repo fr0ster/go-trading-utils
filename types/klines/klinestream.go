@@ -29,41 +29,41 @@ type (
 	KlineStreamInterval string
 )
 
-func (pp *Klines) KlineEventStart() (err error) {
-	if pp.init == nil || pp.startKlineStream == nil {
+func (kl *Klines) KlineEventStart() (err error) {
+	if kl.init == nil || kl.startKlineStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return
 	}
 	// Ініціалізуємо стріми для відмірювання часу
-	ticker := time.NewTicker(pp.timeOut)
+	ticker := time.NewTicker(kl.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
 	lastResponse := time.Now()
 	// Запускаємо стрім подій користувача
-	_, stopC, err := pp.startKlineStream()
+	_, stopC, err := kl.startKlineStream()
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
 			select {
-			case <-pp.stop:
+			case <-kl.stop:
 				// Зупиняємо стрім подій користувача
 				stopC <- struct{}{}
 				return
-			case <-pp.resetEvent:
+			case <-kl.resetEvent:
 				// Запускаємо новий стрім подій користувача
-				_, stopC, err = pp.startKlineStream()
+				_, stopC, err = kl.startKlineStream()
 				if err != nil {
-					close(pp.stop)
+					close(kl.stop)
 					return
 				}
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
-				if time.Since(lastResponse) > pp.timeOut {
+				if time.Since(lastResponse) > kl.timeOut {
 					// Зупиняємо стрім подій користувача
 					stopC <- struct{}{}
 					// Запускаємо новий стрім подій користувача
-					_, stopC, err = pp.startKlineStream()
+					_, stopC, err = kl.startKlineStream()
 					if err != nil {
-						close(pp.stop)
+						close(kl.stop)
 						return
 					}
 					// Встановлюємо новий час відповіді

@@ -37,7 +37,7 @@ func TestInitPricesTree(t *testing.T) {
 	futures := futures.NewClient(api_key, secret_key)
 
 	// Call the function under test
-	bookTicker := booktickers_types.New(quit, 3, nil, futures_booktickers.GetInitCreator(futures), "BTCUSDT")
+	bookTicker := booktickers_types.New(quit, 3, nil, futures_booktickers.InitCreator(futures), "BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function
 	btc_bt := bookTicker.Get("BTCUSDT")

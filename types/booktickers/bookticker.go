@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
 
 	"github.com/google/btree"
@@ -16,8 +17,8 @@ type (
 		mutex                 sync.Mutex
 		degree                int
 		timeOut               time.Duration
-		startBookTickerStream func() (chan struct{}, chan struct{}, error)
-		init                  func() error
+		startBookTickerStream types.StreamFunction
+		init                  types.InitFunction
 		stop                  chan struct{}
 		resetEvent            chan error
 	}
@@ -58,11 +59,15 @@ func (btt *BookTickers) GetSymbol() string {
 	return btt.symbol
 }
 
+func (btt *BookTickers) ResetEvent(err error) {
+	btt.resetEvent <- err
+}
+
 func New(
 	stop chan struct{},
 	degree int,
-	startBookTickerStreamCreator func(*BookTickers) func() (chan struct{}, chan struct{}, error),
-	initCreator func(*BookTickers) func() error,
+	startBookTickerStreamCreator func(*BookTickers) types.StreamFunction,
+	initCreator func(*BookTickers) types.InitFunction,
 	symbols ...string) *BookTickers {
 	var symbol string
 	if len(symbols) > 0 {

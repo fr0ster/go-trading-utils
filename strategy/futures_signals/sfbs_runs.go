@@ -37,12 +37,12 @@ func Run(
 		depth = depth_types.New(
 			degree,
 			pair.GetPair(),
-			futures_depth.GetterStartDepthStreamCreator(
+			futures_depth.DepthStreamCreator(
 				depth_types.DepthStreamLevel5,
 				depth_types.DepthStreamRate100ms,
-				futures_depth.StandardEventCallBackCreator(),
-				futures_depth.GetterWsErrorHandlerCreator()),
-			futures_depth.GetterInitCreator(depth_types.DepthAPILimit20, client))
+				futures_depth.CallBackCreator(),
+				futures_depth.WsErrorHandlerCreator()),
+			futures_depth.InitCreator(depth_types.DepthAPILimit20, client))
 	}
 	wg.Add(1)
 	go func() {

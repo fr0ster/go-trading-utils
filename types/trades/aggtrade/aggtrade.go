@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/google/btree"
 )
 
@@ -15,24 +16,24 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
-		startTradeStream func() (chan struct{}, chan struct{}, error)
-		Init             func() error
+		startTradeStream types.StreamFunction
+		Init             types.InitFunction
 	}
 )
 
 // Ascend implements trades.Trades.
-func (a *AggTrades) Ascend(iter func(btree.Item) bool) {
-	a.tree.Ascend(iter)
+func (at *AggTrades) Ascend(iter func(btree.Item) bool) {
+	at.tree.Ascend(iter)
 }
 
 // Descend implements trades.Trades.
-func (a *AggTrades) Descend(iter func(btree.Item) bool) {
-	a.tree.Descend(iter)
+func (at *AggTrades) Descend(iter func(btree.Item) bool) {
+	at.tree.Descend(iter)
 }
 
 // Get implements trades.Trades.
-func (a *AggTrades) Get(id int64) btree.Item {
-	res := a.tree.Get(&AggTrade{AggTradeID: id})
+func (at *AggTrades) Get(id int64) btree.Item {
+	res := at.tree.Get(&AggTrade{AggTradeID: id})
 	if res == nil {
 		return nil
 	}
@@ -40,28 +41,28 @@ func (a *AggTrades) Get(id int64) btree.Item {
 }
 
 // Lock implements trades.Trades.
-func (a *AggTrades) Lock() {
-	a.mu.Lock()
+func (at *AggTrades) Lock() {
+	at.mu.Lock()
 }
 
 // Set implements trades.Trades.
-func (a *AggTrades) Set(val btree.Item) {
-	a.tree.ReplaceOrInsert(val)
+func (at *AggTrades) Set(val btree.Item) {
+	at.tree.ReplaceOrInsert(val)
 }
 
 // Unlock implements trades.Trades.
-func (a *AggTrades) Unlock() {
-	a.mu.Unlock()
+func (at *AggTrades) Unlock() {
+	at.mu.Unlock()
 }
 
 // Update implements trades.Trades.
-func (a *AggTrades) Update(val btree.Item) {
+func (at *AggTrades) Update(val btree.Item) {
 	id := val.(*AggTrade).AggTradeID
-	old := a.Get(id)
+	old := at.Get(id)
 	if old == nil {
-		a.Set(val)
+		at.Set(val)
 	} else {
-		a.Set(&AggTrade{
+		at.Set(&AggTrade{
 			AggTradeID:       id,
 			Price:            val.(*AggTrade).Price,
 			Quantity:         val.(*AggTrade).Quantity,
@@ -74,23 +75,27 @@ func (a *AggTrades) Update(val btree.Item) {
 	}
 }
 
-func (a *AggTrades) Delete(id int64) {
-	a.tree.Delete(&AggTrade{AggTradeID: id})
+func (at *AggTrades) Delete(id int64) {
+	at.tree.Delete(&AggTrade{AggTradeID: id})
 }
 
 func (a *AggTrades) Len() int {
 	return a.tree.Len()
 }
 
-func (a *AggTrades) Symbol() string {
-	return a.symbol
+func (at *AggTrades) Symbol() string {
+	return at.symbol
+}
+
+func (at *AggTrades) ResetEvent(err error) {
+	at.resetEvent <- err
 }
 
 func New(
 	stop chan struct{},
 	symbol string,
-	startTradeStream func(*AggTrades) func() (chan struct{}, chan struct{}, error),
-	initCreator func(*AggTrades) func() error) *AggTrades {
+	startTradeStream func(*AggTrades) types.StreamFunction,
+	initCreator func(*AggTrades) types.InitFunction) *AggTrades {
 	this := &AggTrades{
 		symbol: symbol,
 		tree:   btree.New(2),

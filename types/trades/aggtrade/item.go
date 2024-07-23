@@ -17,10 +17,10 @@ type (
 	}
 )
 
-func (i *AggTrade) Less(than btree.Item) bool {
-	return i.AggTradeID < than.(*AggTrade).AggTradeID
+func (a *AggTrade) Less(than btree.Item) bool {
+	return a.AggTradeID < than.(*AggTrade).AggTradeID
 }
 
-func (i *AggTrade) Equal(than btree.Item) bool {
-	return i.AggTradeID == than.(*AggTrade).AggTradeID
+func (a *AggTrade) Equal(than btree.Item) bool {
+	return a.AggTradeID == than.(*AggTrade).AggTradeID
 }

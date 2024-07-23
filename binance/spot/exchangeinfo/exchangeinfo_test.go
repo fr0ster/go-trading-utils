@@ -25,8 +25,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.New()
-	exchangeinfo.Init(exchangeInfo, degree, client)
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -39,8 +38,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New()
-	exchangeinfo.Init(exchangeInfo, degree, client)
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
@@ -57,8 +55,7 @@ func TestGetPermissions(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New()
-	exchangeinfo.Init(exchangeInfo, degree, client)
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
@@ -71,8 +68,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New()
-	exchangeinfo.Init(exchangeInfo, degree, client)
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)
@@ -89,8 +85,7 @@ func TestInterface(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.New()
-	exchangeinfo.Init(exchangeInfo, degree, client)
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
 		symbol := exchangeInfo.GetSymbol(&symbol_info.SpotSymbol{Symbol: "BTCUSDT"}).(*symbol_info.SpotSymbol)

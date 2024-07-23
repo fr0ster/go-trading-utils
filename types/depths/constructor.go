@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
 )
@@ -12,8 +13,8 @@ import (
 func New(
 	degree int,
 	symbol string,
-	startDepthStreamCreator func(*Depths) func() (chan struct{}, chan struct{}, error),
-	initCreator func(*Depths) func() (err error),
+	startDepthStreamCreator func(*Depths) types.StreamFunction,
+	initCreator func(*Depths) types.InitFunction,
 	stops ...chan struct{}) *Depths {
 	var (
 		stop chan struct{}

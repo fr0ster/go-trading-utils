@@ -24,7 +24,7 @@ func TestHistoricalTradesInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.GetHistoricalTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.HistoricalTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
@@ -49,7 +49,7 @@ func TestRecentTradesInterface(t *testing.T) {
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.GetRecentTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.RecentTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
 	test := func(i trade_interface.Trades) {
 		i.Lock()
 		defer i.Unlock()
