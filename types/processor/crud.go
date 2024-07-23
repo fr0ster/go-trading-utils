@@ -72,3 +72,11 @@ func (pp *Processor) GetCallbackRate() items_types.PricePercentType {
 	}
 	return pp.getCallbackRate()
 }
+
+func (pp *Processor) GetDepth() *depth_types.Depths {
+	return pp.depths
+}
+
+func (pp *Processor) GetOrder() *orders_types.Orders {
+	return pp.orders
+}
