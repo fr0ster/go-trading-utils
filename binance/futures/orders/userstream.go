@@ -6,14 +6,15 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 )
 
 func UserDataStreamCreator(
 	client *futures.Client,
 	handlerCreator func(d *orders_types.Orders) futures.WsUserDataHandler,
-	errHandlerCreator func(d *orders_types.Orders) futures.ErrHandler) func(d *orders_types.Orders) func() (doneC, stopC chan struct{}, err error) {
-	return func(o *orders_types.Orders) func() (doneC, stopC chan struct{}, err error) {
+	errHandlerCreator func(d *orders_types.Orders) futures.ErrHandler) func(d *orders_types.Orders) types.StreamFunction {
+	return func(o *orders_types.Orders) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Отримуємо новий або той же самий ключ для прослуховування подій користувача при втраті з'єднання
 			listenKey, err := client.NewStartUserStreamService().Do(context.Background())
