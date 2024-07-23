@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func InitCreator(client *futures.Client) func(kl *kline_types.Klines) func() (err error) {
-	return func(kl *kline_types.Klines) func() (err error) {
+func InitCreator(client *futures.Client) func(kl *kline_types.Klines) types.InitFunction {
+	return func(kl *kline_types.Klines) types.InitFunction {
 		return func() (err error) {
 			kl.Lock()         // Locking the klines
 			defer kl.Unlock() // Unlocking the klines
