@@ -119,14 +119,14 @@ func New(
 	symbol string,
 	startUserDataStreamCreator func(*Orders) types.StreamFunction,
 	createOrderCreator func(*Orders) CreateOrderFunction,
-	stops ...chan struct{}) {
+	stops ...chan struct{}) (this *Orders) {
 	var stop chan struct{}
 	if len(stops) > 0 {
 		stop = stops[0]
 	} else {
 		stop = make(chan struct{})
 	}
-	this := &Orders{
+	this = &Orders{
 		symbol:     symbol,
 		stop:       stop,
 		resetEvent: make(chan error),
@@ -138,4 +138,5 @@ func New(
 	if createOrderCreator != nil {
 		this.CreateOrder = createOrderCreator(this)
 	}
+	return
 }
