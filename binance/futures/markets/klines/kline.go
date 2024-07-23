@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
 	"github.com/sirupsen/logrus"
 )
@@ -33,8 +34,8 @@ func InitCreator(client *futures.Client) func(kl *kline_types.Klines) func() (er
 
 func KlineStreamCreator(
 	handler func(*kline_types.Klines) futures.WsKlineHandler,
-	errHandler func(*kline_types.Klines) futures.ErrHandler) func(*kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
-	return func(kl *kline_types.Klines) func() (doneC, stopC chan struct{}, err error) {
+	errHandler func(*kline_types.Klines) futures.ErrHandler) func(*kline_types.Klines) types.StreamFunction {
+	return func(kl *kline_types.Klines) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsKlineServe(kl.GetSymbolname(), string(kl.GetInterval()), handler(kl), errHandler(kl))
