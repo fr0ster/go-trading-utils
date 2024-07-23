@@ -10,31 +10,19 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-// func (pp *PairProcessor) getPositionRisk(times int) (risks []*futures.PositionRisk, err error) {
-// 	if times == 0 {
-// 		return
-// 	}
-// 	risks, err = pp.client.NewGetPositionRiskService().Symbol(pp.pairInfo.GetSymbol()).Do(context.Background())
-// 	if err != nil {
-// 		errApi, _ := utils.ParseAPIError(err)
-// 		if errApi != nil && errApi.Code == -1021 {
-// 			time.Sleep(3 * time.Second)
-// 			return pp.getPositionRisk(times - 1)
-// 		}
-// 	}
-// 	return
-// }
-
-func (pp *Processor) GetPositionRisk() (risk *futures.PositionRisk, err error) {
-	if pp.getPositionRisk == nil {
-		return nil, fmt.Errorf("getPositionRisk is not set")
+func (pp *Processor) GetPositionRisk() *futures.PositionRisk {
+	if pp.getPositionRisk != nil {
+		return pp.getPositionRisk()
 	}
-	return pp.getPositionRisk()
+	return nil
 }
 
 func (pp *Processor) GetLiquidationDistance(price float64) (distance float64) {
-	risk, _ := pp.GetPositionRisk()
-	return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+	if risk := pp.GetPositionRisk(); risk != nil {
+		return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
+	} else {
+		return 0
+	}
 }
 
 func (pp *Processor) GetLeverage() int {
@@ -70,11 +58,9 @@ func (pp *Processor) SetMarginType(marginType pairs_types.MarginType) (err error
 }
 
 func (pp *Processor) GetPositionMargin() (margin float64) {
-	risk, err := pp.GetPositionRisk()
-	if err != nil {
-		return 0
+	if risk := pp.GetPositionRisk(); risk != nil {
+		margin = utils.ConvStrToFloat64(risk.IsolatedMargin) // Convert string to float64
 	}
-	margin = utils.ConvStrToFloat64(risk.IsolatedMargin) // Convert string to float64
 	return
 }
 
@@ -93,11 +79,9 @@ func (pp *Processor) ClosePosition(risk *futures.PositionRisk) (err error) {
 }
 
 func (pp *Processor) GetPositionAmt() (positionAmt float64) {
-	risk, err := pp.GetPositionRisk()
-	if err != nil {
-		return 0
+	if risk := pp.GetPositionRisk(); risk != nil {
+		positionAmt = utils.ConvStrToFloat64(risk.PositionAmt)
 	}
-	positionAmt = utils.ConvStrToFloat64(risk.PositionAmt) // Convert string to float64
 	return
 }
 

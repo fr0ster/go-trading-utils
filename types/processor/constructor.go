@@ -17,6 +17,7 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	symbol_info_types "github.com/fr0ster/go-trading-utils/types/processor/symbol_info"
 )
 
 func New(
@@ -25,27 +26,30 @@ func New(
 	exchangeInfo *exchange_types.ExchangeInfo,
 	depths *depth_types.Depths,
 	orders *orders_types.Orders,
-	getBaseBalance func() (items_types.ValueType, error),
-	getTargetBalance func() (items_types.ValueType, error),
+
+	getBaseBalance func() items_types.ValueType,
+	getTargetBalance func() items_types.ValueType,
 	getFreeBalance func() items_types.ValueType,
-	getLockedBalance func() (items_types.ValueType, error),
-	getCurrentPrice func() (items_types.PriceType, error),
-	getSymbolInfo func() (SymbolInfo, error),
-	getPositionRisk func() (risks *futures.PositionRisk, err error),
-	setLeverage func(leverage int) (res *futures.SymbolLeverage, err error),
-	setMarginType func(marginType pairs_types.MarginType) (err error),
-	setPositionMargin func(amountMargin items_types.ValueType, typeMargin int) (err error),
-	closePosition func(risk *futures.PositionRisk) (err error)) (pp *Processor, err error) {
+	getLockedBalance func() items_types.ValueType,
+	getCurrentPrice func() items_types.PriceType,
+
+	getSymbolInfo func(*Processor) func() *symbol_info_types.SymbolInfo,
+	getPositionRisk func() *futures.PositionRisk,
+	setLeverage func(*Processor) func(int) (*futures.SymbolLeverage, error),
+	setMarginType func(*Processor) func(pairs_types.MarginType) error,
+	setPositionMargin func(*Processor) func(items_types.ValueType, int) error,
+
+	closePosition func(*Processor) func(*futures.PositionRisk) error,
+	debug ...bool) (pp *Processor, err error) {
 	pp = &Processor{
 		exchangeInfo: exchangeInfo,
 		symbol:       symbol,
-		symbolInfo:   SymbolInfo{},
 
 		stop:       stop,
 		orderTypes: nil,
 		degree:     3,
 		timeOut:    1 * time.Hour,
-		depth:      depths,
+		depths:     depths,
 		orders:     orders,
 	}
 
@@ -65,33 +69,36 @@ func New(
 		pp.GetCurrentPrice = getCurrentPrice
 	}
 	if getSymbolInfo != nil {
-		pp.GetSymbolInfo = getSymbolInfo
+		pp.getSymbolInfo = getSymbolInfo(pp)
+		pp.symbolInfo = pp.getSymbolInfo()
 	}
 	if getPositionRisk != nil {
 		pp.getPositionRisk = getPositionRisk
 	}
 	if setLeverage != nil {
-		pp.setLeverage = setLeverage
+		pp.setLeverage = setLeverage(pp)
 	}
 	if setMarginType != nil {
-		pp.setMarginType = setMarginType
+		pp.setMarginType = setMarginType(pp)
 	}
 	if setPositionMargin != nil {
-		pp.setPositionMargin = setPositionMargin
+		pp.setPositionMargin = setPositionMargin(pp)
 	}
 	if closePosition != nil {
-		pp.closePosition = closePosition
+		pp.closePosition = closePosition(pp)
 	}
-	if pp.setLeverage != nil {
-		res, _ := pp.SetLeverage(pp.GetLeverage())
-		if res.Leverage != pp.GetLeverage() {
-			err = fmt.Errorf("leverage %v is not supported", pp.GetLeverage())
-			err = ParseError(err)
-			return
+	if len(debug) == 0 || (len(debug) > 0 && !debug[0]) {
+		if pp.setLeverage != nil {
+			res, _ := pp.SetLeverage(pp.GetLeverage())
+			if res.Leverage != pp.GetLeverage() {
+				err = fmt.Errorf("leverage %v is not supported", pp.GetLeverage())
+				err = ParseError(err)
+				return
+			}
 		}
-	}
-	if pp.setMarginType != nil {
-		_ = pp.SetMarginType(pp.GetMarginType()) // Встановлюємо тип маржі, як зміна не потрібна, помилку ігноруємо
+		if pp.setMarginType != nil {
+			_ = pp.SetMarginType(pp.GetMarginType()) // Встановлюємо тип маржі, як зміна не потрібна, помилку ігноруємо
+		}
 	}
 
 	return

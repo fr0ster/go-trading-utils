@@ -10,24 +10,10 @@ import (
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
+	symbol_info_types "github.com/fr0ster/go-trading-utils/types/processor/symbol_info"
 )
 
-// const (
-// 	errorMsg    = "Error: %v"
-// 	repeatTimes = 3
-// )
-
 type (
-	// Дані про обмеження на пару
-	SymbolInfo struct {
-		notional items_types.ValueType
-		StepSize items_types.QuantityType
-		maxQty   items_types.QuantityType
-		minQty   items_types.QuantityType
-		tickSize items_types.PriceType
-		maxPrice items_types.PriceType
-		minPrice items_types.PriceType
-	}
 	Processor struct {
 		// Дані про клієнта
 		// client *futures.Client
@@ -40,46 +26,40 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 
 		// Дані про пару
-		// symbol       *futures.Symbol
-		// pairInfo     *symbol_types.FuturesSymbol
-		symbol string
-		// baseSymbol   string
-		// targetSymbol string
-
-		// Дані про обмеження на пару
-		symbolInfo SymbolInfo
+		symbol     string
+		symbolInfo *symbol_info_types.SymbolInfo
 
 		// канал зупинки
 		stop chan struct{}
 
 		// Дані про стакан
-		depth  *depth_types.Depths
+		depths *depth_types.Depths
 		orders *orders_types.Orders
 
-		GetBaseBalance   func() (items_types.ValueType, error)
-		GetTargetBalance func() (items_types.ValueType, error)
+		GetBaseBalance   func() items_types.ValueType
+		GetTargetBalance func() items_types.ValueType
 		GetFreeBalance   func() items_types.ValueType
-		GetLockedBalance func() (items_types.ValueType, error)
-		GetCurrentPrice  func() (items_types.PriceType, error)
-		GetSymbolInfo    func() (SymbolInfo, error)
+		GetLockedBalance func() items_types.ValueType
+		GetCurrentPrice  func() items_types.PriceType
+		getSymbolInfo    func() *symbol_info_types.SymbolInfo
 
-		getPositionRisk func() (risks *futures.PositionRisk, err error)
+		getPositionRisk func() *futures.PositionRisk
 
-		setLeverage func(leverage int) (res *futures.SymbolLeverage, err error)
+		setLeverage func(leverage int) (*futures.SymbolLeverage, error)
 		getLeverage func() int
 
-		setMarginType func(marginType pairs_types.MarginType) (err error)
+		setMarginType func(pairs_types.MarginType) error
 		getMarginType func() pairs_types.MarginType
 
-		setPositionMargin func(amountMargin items_types.ValueType, typeMargin int) (err error)
+		setPositionMargin func(items_types.ValueType, int) error
 
 		getCallbackRate func() items_types.PricePercentType
 
-		closePosition func(risk *futures.PositionRisk) (err error)
+		closePosition func(*futures.PositionRisk) (err error)
 
 		getDeltaPrice         func() items_types.PriceType
 		getDeltaQuantity      func() items_types.QuantityType
-		getLimitOnTransaction func() (limit items_types.ValueType)
+		getLimitOnTransaction func() items_types.ValueType
 		getUpAndLowBound      func() items_types.PricePercentType
 	}
 )

@@ -1,7 +1,6 @@
 package symbol
 
 import (
-	"github.com/adshao/go-binance/v2"
 	"github.com/adshao/go-binance/v2/futures"
 	"github.com/google/btree"
 	"github.com/jinzhu/copier"
@@ -30,15 +29,6 @@ func (s *FuturesSymbol) GetFilter(filterType string) interface{} {
 		}
 	}
 	return nil
-}
-
-func (s *FuturesSymbol) GetFuturesSymbols() (*binance.Symbol, error) {
-	var outSymbol binance.Symbol
-	err := copier.Copy(&outSymbol, s)
-	if err != nil {
-		return nil, err
-	}
-	return &outSymbol, nil
 }
 
 func (s *FuturesSymbol) GetFuturesSymbol() (*futures.Symbol, error) {

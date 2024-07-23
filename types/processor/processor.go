@@ -6,24 +6,20 @@ import (
 )
 
 func (pp *Processor) GetDepth() *depth_types.Depths {
-	return pp.depth
+	return pp.depths
 }
 
 func (pp *Processor) SetDepth(depth *depth_types.Depths) {
-	pp.depth = depth
+	pp.depths = depth
 }
 
 func (pp *Processor) NextPriceUp(prices ...items_types.PriceType) items_types.PriceType {
-	var err error
-	if pp.depth != nil {
+	if pp.depths != nil {
 		return pp.RoundPrice(pp.GetDepth().NextPriceUp(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
 	} else {
 		price := items_types.PriceType(0.0)
 		if len(prices) == 0 {
-			price, err = pp.GetCurrentPrice()
-			if err != nil {
-				return 0
-			}
+			price = pp.GetCurrentPrice()
 		} else {
 			price = prices[0]
 		}
@@ -32,16 +28,12 @@ func (pp *Processor) NextPriceUp(prices ...items_types.PriceType) items_types.Pr
 }
 
 func (pp *Processor) NextPriceDown(prices ...items_types.PriceType) items_types.PriceType {
-	var err error
-	if pp.depth != nil {
+	if pp.depths != nil {
 		return pp.RoundPrice(pp.GetDepth().NextPriceDown(items_types.PricePercentType(pp.GetDeltaPrice()), prices...))
 	} else {
 		price := items_types.PriceType(0.0)
 		if len(prices) == 0 {
-			price, err = pp.GetCurrentPrice()
-			if err != nil {
-				return 0
-			}
+			price = pp.GetCurrentPrice()
 		} else {
 			price = prices[0]
 		}

@@ -45,8 +45,8 @@ func (pp *Processor) GetLimitPrices(price ...items_types.PriceType) (priceTarget
 	bidsFilter := func(i *items_types.DepthItem) bool {
 		return i.GetPrice() < priceTargetDown
 	}
-	_, askMax = pp.depth.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()
-	_, bidMax = pp.depth.GetBids().GetFiltered(bidsFilter).GetMinMaxByValue()
+	_, askMax = pp.depths.GetAsks().GetFiltered(asksFilter).GetMinMaxByValue()
+	_, bidMax = pp.depths.GetBids().GetFiltered(bidsFilter).GetMinMaxByValue()
 	priceUp = askMax.GetPrice()
 	priceDown = bidMax.GetPrice()
 	return

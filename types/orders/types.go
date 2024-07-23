@@ -98,7 +98,7 @@ type (
 		resetEvent          chan error
 		timeOut             time.Duration
 		startUserDataStream types.StreamFunction
-		CreateOrderCreator  CreateOrderFunction
+		CreateOrder         CreateOrderFunction
 		GetOpenOrders       func() ([]*Order, error)
 		GetAllOrders        func() ([]*Order, error)
 		GetOrder            func(orderID int64) (*Order, error)
@@ -129,6 +129,6 @@ func New(
 		this.startUserDataStream = startUserDataStreamCreator(this)
 	}
 	if createOrderCreator != nil {
-		this.CreateOrderCreator = createOrderCreator(this)
+		this.CreateOrder = createOrderCreator(this)
 	}
 }
