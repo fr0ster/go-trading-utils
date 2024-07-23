@@ -2,7 +2,6 @@ package spot_signals
 
 import (
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -20,7 +19,6 @@ func RunSpotHolding(
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
-	updateTime time.Duration,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
@@ -32,7 +30,6 @@ func RunSpotScalping(
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
-	updateTime time.Duration,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
@@ -44,7 +41,6 @@ func RunSpotTrading(
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
-	updateTime time.Duration,
 	wg *sync.WaitGroup) (err error) {
 	defer wg.Done()
 	return nil
@@ -57,26 +53,9 @@ func Run(
 	limit int,
 	pair *pairs_types.Pairs,
 	stopEvent chan struct{},
-	updateTime time.Duration,
 	debug bool,
 	wg *sync.WaitGroup,
 	depths ...*depth_types.Depths) {
-	// var (
-	// 	depth *depth_types.Depths
-	// )
-	// if len(depths) > 0 {
-	// 	depth = depths[0]
-	// } else {
-	// 	depth = depth_types.New(
-	// 		degree,
-	// 		pair.GetPair(),
-	// 		spot_depth.GetterStartPartialDepthStreamCreator(
-	// 			depth_types.DepthStreamLevel5,
-	// 			depth_types.DepthStreamRate100ms,
-	// 			spot_depth.GetterPartialDepthEventCallBackCreator(),
-	// 			spot_depth.GetterWsErrorHandlerCreator()),
-	// 		spot_depth.GetterInitCreator(depth_types.DepthAPILimit20, client))
-	// }
 	wg.Add(1)
 	go func() {
 		// Відпрацьовуємо Arbitrage стратегію
@@ -92,7 +71,6 @@ func Run(
 					limit,
 					pair,
 					stopEvent,
-					updateTime,
 					wg))
 
 			// Відпрацьовуємо Scalping стратегію
@@ -104,7 +82,6 @@ func Run(
 					limit,
 					pair,
 					stopEvent,
-					updateTime,
 					wg))
 
 			// Відпрацьовуємо Trading стратегію
@@ -116,7 +93,6 @@ func Run(
 					limit,
 					pair,
 					stopEvent,
-					updateTime,
 					wg))
 
 			// Відпрацьовуємо Grid стратегію
