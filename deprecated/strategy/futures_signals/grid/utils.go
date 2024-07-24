@@ -12,7 +12,7 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	grid_types "github.com/fr0ster/go-trading-utils/types/grid"
 
-	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
+	processor "github.com/fr0ster/go-trading-utils/deprecated/strategy/futures_signals/processor"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 

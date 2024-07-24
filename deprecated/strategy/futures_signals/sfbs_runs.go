@@ -10,8 +10,8 @@ import (
 
 	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/depths"
 
-	grid "github.com/fr0ster/go-trading-utils/strategy/futures_signals/grid"
-	trading "github.com/fr0ster/go-trading-utils/strategy/futures_signals/trading"
+	grid "github.com/fr0ster/go-trading-utils/deprecated/strategy/futures_signals/grid"
+	trading "github.com/fr0ster/go-trading-utils/deprecated/strategy/futures_signals/trading"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"

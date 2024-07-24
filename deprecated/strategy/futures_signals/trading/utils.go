@@ -7,7 +7,7 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
-	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
+	processor "github.com/fr0ster/go-trading-utils/deprecated/strategy/futures_signals/processor"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
