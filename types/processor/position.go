@@ -5,8 +5,8 @@ import (
 	"math"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -42,7 +42,7 @@ func (pp *Processor) SetLeverage(leverage int) (Leverage int, MaxNotionalValue s
 
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
-func (pp *Processor) GetMarginType() pairs_types.MarginType {
+func (pp *Processor) GetMarginType() types.MarginType {
 	if pp.getMarginType == nil {
 		return ""
 	}
@@ -51,7 +51,7 @@ func (pp *Processor) GetMarginType() pairs_types.MarginType {
 
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
-func (pp *Processor) SetMarginType(marginType pairs_types.MarginType) (err error) {
+func (pp *Processor) SetMarginType(marginType types.MarginType) (err error) {
 	if pp.setMarginType == nil {
 		return fmt.Errorf("setMarginType is not set")
 	}

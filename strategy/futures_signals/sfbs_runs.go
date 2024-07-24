@@ -14,8 +14,8 @@ import (
 	trading "github.com/fr0ster/go-trading-utils/strategy/futures_signals/trading"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 func Run(

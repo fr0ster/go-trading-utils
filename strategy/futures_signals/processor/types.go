@@ -7,10 +7,10 @@ import (
 
 	"github.com/google/btree"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 )
@@ -38,7 +38,7 @@ type (
 
 		// Дані про пару
 		// symbol       *futures.Symbol
-		pairInfo     *symbol_types.SymbolInfo
+		pairInfo     *symbol_types.Symbol
 		baseSymbol   string
 		targetSymbol string
 
@@ -69,7 +69,7 @@ type (
 		deltaQuantity items_types.QuantityType
 
 		// Прогресії, використовувалось тіко для grid_v3
-		progression             pairs_types.ProgressionType
+		progression             types.ProgressionType
 		GetDelta                progressions.DeltaType
 		NthTerm                 progressions.NthTermType
 		Sum                     progressions.SumType
@@ -79,7 +79,7 @@ type (
 
 		// Дані про позицію
 		leverage     int
-		marginType   pairs_types.MarginType
+		marginType   types.MarginType
 		callbackRate items_types.PricePercentType
 
 		// Дані про стакан

@@ -19,7 +19,7 @@ func (pp *PairProcessor) GetPair() string {
 	return pp.pairInfo.Symbol
 }
 
-func (pp *PairProcessor) GetSymbol() *symbol_types.SymbolInfo {
+func (pp *PairProcessor) GetSymbol() *symbol_types.Symbol {
 	// Ініціалізуємо інформацію про пару
 	return pp.pairInfo
 }

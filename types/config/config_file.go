@@ -5,8 +5,8 @@ import (
 	"os"
 	"sync"
 
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 type (

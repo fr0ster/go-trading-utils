@@ -3,6 +3,7 @@ package pairs
 import (
 	"strings"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
@@ -13,11 +14,11 @@ import (
 const (
 	// SpotAccountType is a constant for spot account type.
 	// SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE
-	SpotAccountType           AccountType = "SPOT"
-	MarginAccountType         AccountType = "MARGIN"
-	IsolatedMarginAccountType AccountType = "ISOLATED_MARGIN"
-	USDTFutureType            AccountType = "USDT_FUTURE"
-	CoinFutureType            AccountType = "COIN_FUTURE"
+	SpotAccountType           types.AccountType = "SPOT"
+	MarginAccountType         types.AccountType = "MARGIN"
+	IsolatedMarginAccountType types.AccountType = "ISOLATED_MARGIN"
+	USDTFutureType            types.AccountType = "USDT_FUTURE"
+	CoinFutureType            types.AccountType = "COIN_FUTURE"
 	// SpotStrategyType is a constant for spot strategy type.
 	// HOLDING - Накопичуємо цільовий токен
 	// SCALPING - Купуємо/продаемо цільовий токен за базовий
@@ -28,65 +29,60 @@ const (
 	// Відслідковуємо рівень можливих втрат, якщо втрати перевищують ліміт, зупиняемо збільшення позиції
 	// Коли ціна ліквідаціі починає наближатися, зменшуємо позицію
 	// HOLDING/SCALPING/ARBITRAGE/TRADING/GRID
-	HoldingStrategyType   StrategyType = "HOLDING"
-	ScalpingStrategyType  StrategyType = "SCALPING"
-	ArbitrageStrategyType StrategyType = "ARBITRAGE"
-	TradingStrategyType   StrategyType = "TRADING"
-	GridStrategyType      StrategyType = "GRID"
-	GridStrategyTypeV2    StrategyType = "GRID_V2"
-	GridStrategyTypeV3    StrategyType = "GRID_V3"
-	GridStrategyTypeV4    StrategyType = "GRID_V4"
-	GridStrategyTypeV5    StrategyType = "GRID_V5"
+	HoldingStrategyType   types.StrategyType = "HOLDING"
+	ScalpingStrategyType  types.StrategyType = "SCALPING"
+	ArbitrageStrategyType types.StrategyType = "ARBITRAGE"
+	TradingStrategyType   types.StrategyType = "TRADING"
+	GridStrategyType      types.StrategyType = "GRID"
+	GridStrategyTypeV2    types.StrategyType = "GRID_V2"
+	GridStrategyTypeV3    types.StrategyType = "GRID_V3"
+	GridStrategyTypeV4    types.StrategyType = "GRID_V4"
+	GridStrategyTypeV5    types.StrategyType = "GRID_V5"
 	// INPUT_INTO_POSITION - Режим входу - накопичуємо цільовий токен
 	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
 	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
 	// SpotStageType is a constant for spot stage type.
 	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION/CLOSED
-	InputIntoPositionStage StageType = "INPUT_INTO_POSITION"
-	WorkInPositionStage    StageType = "WORK_IN_POSITION"
-	OutputOfPositionStage  StageType = "OUTPUT_OF_POSITION"
-	PositionClosedStage    StageType = "CLOSED"
+	InputIntoPositionStage types.StageType = "INPUT_INTO_POSITION"
+	WorkInPositionStage    types.StageType = "WORK_IN_POSITION"
+	OutputOfPositionStage  types.StageType = "OUTPUT_OF_POSITION"
+	PositionClosedStage    types.StageType = "CLOSED"
 
 	// Для USDT_FUTURE/COIN_FUTURE
-	CrossMarginType    MarginType = "CROSS"
-	IsolatedMarginType MarginType = "ISOLATED"
+	CrossMarginType    types.MarginType = "CROSS"
+	IsolatedMarginType types.MarginType = "ISOLATED"
 
 	// Арифметична прогресія
-	ArithmeticProgression ProgressionType = "ARITHMETIC"
+	ArithmeticProgression types.ProgressionType = "ARITHMETIC"
 	// Геометрична прогресія
-	GeometricProgression ProgressionType = "GEOMETRIC"
+	GeometricProgression types.ProgressionType = "GEOMETRIC"
 	// Експоненціальна прогресія
-	ExponentialProgression ProgressionType = "EXPONENTIAL"
+	ExponentialProgression types.ProgressionType = "EXPONENTIAL"
 	// Логарифмічна прогресія
-	LogarithmicProgression ProgressionType = "LOGARITHMIC"
+	LogarithmicProgression types.ProgressionType = "LOGARITHMIC"
 	// Квадратична прогресія
-	QuadraticProgression ProgressionType = "QUADRATIC"
+	QuadraticProgression types.ProgressionType = "QUADRATIC"
 	// Кубічна прогресія
-	CubicProgression ProgressionType = "CUBIC"
+	CubicProgression types.ProgressionType = "CUBIC"
 	// Квадратно-коренева прогресія
-	SquareRootProgression ProgressionType = "SQUARE_ROOT"
+	SquareRootProgression types.ProgressionType = "SQUARE_ROOT"
 	// Кубічно-коренева прогресія
-	CubicRootProgression ProgressionType = "CUBIC_ROOT"
+	CubicRootProgression types.ProgressionType = "CUBIC_ROOT"
 	// Гармонічна прогресія
-	HarmonicProgression ProgressionType = "HARMONIC"
+	HarmonicProgression types.ProgressionType = "HARMONIC"
 )
 
 type (
-	AccountType     string
-	MarginType      string
-	ProgressionType string
-	StageType       string
-	StrategyType    string
-	Pairs           struct {
-		AccountType  AccountType  `json:"account_type"`  // Тип акаунта
-		StrategyType StrategyType `json:"strategy_type"` // Тип стратегії
-		StageType    StageType    `json:"stage_type"`    // Cтадія стратегії
+	Pairs struct {
+		AccountType  types.AccountType  `json:"account_type"`  // Тип акаунта
+		StrategyType types.StrategyType `json:"strategy_type"` // Тип стратегії
+		StageType    types.StageType    `json:"stage_type"`    // Cтадія стратегії
 
 		Pair string `json:"symbol"` // Пара
 
 		// Для USDT_FUTURE/COIN_FUTURE
-		MarginType MarginType `json:"margin_type"` // Тип маржі
-		Leverage   int        `json:"leverage"`    // Маржинальне плече
+		MarginType types.MarginType `json:"margin_type"` // Тип маржі
+		Leverage   int              `json:"leverage"`    // Маржинальне плече
 
 		LimitOnPosition    items_types.ValueType        `json:"limit_on_position"`    // Ліміт на позицію, відсоток від балансу базової валюти
 		LimitOnTransaction items_types.ValuePercentType `json:"limit_on_transaction"` // Ліміт на транзакцію, відсоток від ліміту на позицію
@@ -96,7 +92,7 @@ type (
 
 		DeltaPrice    items_types.PricePercentType    `json:"delta_price"`    // Дельта для купівлі/продажу
 		DeltaQuantity items_types.QuantityPercentType `json:"delta_quantity"` // Кількість для купівлі/продажу
-		Progression   ProgressionType                 `json:"progression"`    // Тип прогресії
+		Progression   types.ProgressionType           `json:"progression"`    // Тип прогресії
 
 		Value items_types.ValueType `json:"value"` // Вартість позиції
 
@@ -130,28 +126,28 @@ func (pr *Pairs) Equals(item btree.Item) bool {
 		pr.Pair == other.Pair
 }
 
-// Get AccountType implements Pairs.
-func (pr *Pairs) GetAccountType() AccountType {
+// Get types.AccountType implements Pairs.
+func (pr *Pairs) GetAccountType() types.AccountType {
 	return pr.AccountType
 }
 
 // GetStrategy implements Pairs.
-func (pr *Pairs) GetStrategy() StrategyType {
+func (pr *Pairs) GetStrategy() types.StrategyType {
 	return pr.StrategyType
 }
 
 // SetStrategy implements Pairs.
-func (pr *Pairs) SetStrategy(strategy StrategyType) {
+func (pr *Pairs) SetStrategy(strategy types.StrategyType) {
 	pr.StrategyType = strategy
 }
 
 // GetStage implements Pairs.
-func (pr *Pairs) GetStage() StageType {
+func (pr *Pairs) GetStage() types.StageType {
 	return pr.StageType
 }
 
 // SetStage implements Pairs.
-func (pr *Pairs) SetStage(stage StageType) {
+func (pr *Pairs) SetStage(stage types.StageType) {
 	pr.StageType = stage
 }
 
@@ -161,13 +157,13 @@ func (pr *Pairs) GetPair() string {
 }
 
 // GetMarginType implements Pairs.
-func (pr *Pairs) GetMarginType() MarginType {
+func (pr *Pairs) GetMarginType() types.MarginType {
 	return pr.MarginType
 }
 
 // SetMarginType implements pairs.Pairs.
-func (pr *Pairs) SetMarginType(marginType MarginType) {
-	pr.MarginType = MarginType(strings.ToUpper(string(marginType)))
+func (pr *Pairs) SetMarginType(marginType types.MarginType) {
+	pr.MarginType = types.MarginType(strings.ToUpper(string(marginType)))
 }
 
 // SetMarginType implements Pairs.
@@ -208,7 +204,7 @@ func (pr *Pairs) GetDeltaQuantity() items_types.QuantityPercentType {
 	return pr.DeltaQuantity
 }
 
-func (pr *Pairs) GetProgression() ProgressionType {
+func (pr *Pairs) GetProgression() types.ProgressionType {
 	return pr.Progression
 }
 
@@ -240,7 +236,7 @@ func (pr *Pairs) SetDeltaQuantity(quantity items_types.QuantityPercentType) {
 	pr.DeltaQuantity = quantity
 }
 
-func (pr *Pairs) SetProgression(val ProgressionType) {
+func (pr *Pairs) SetProgression(val types.ProgressionType) {
 	pr.Progression = val
 }
 
@@ -270,16 +266,16 @@ func (pr *Pairs) SetDepthsN(n depth_types.DepthAPILimit) {
 
 func New(
 	connection *connection_types.Connection,
-	accountType AccountType,
-	strategyType StrategyType,
-	stageType StageType,
+	AccountType types.AccountType,
+	StrategyType types.StrategyType,
+	stageType types.StageType,
 	pair string,
 	targetSymbol string,
 	baseSymbol string,
 ) *Pairs {
 	return &Pairs{
-		AccountType:        accountType,
-		StrategyType:       strategyType,
+		AccountType:        AccountType,
+		StrategyType:       StrategyType,
 		StageType:          stageType,
 		Pair:               pair,
 		LimitOnPosition:    100.0, // 100$

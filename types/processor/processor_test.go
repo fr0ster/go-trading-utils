@@ -92,7 +92,7 @@ func TestGetLimitPrices(t *testing.T) {
 }
 
 func TestNewSpot(t *testing.T) {
-	getSymbols := func() (symbols []*symbol_types.SymbolInfo) {
+	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
 			"BTCUSDT",
 			100,
@@ -164,7 +164,7 @@ func TestNewSpot(t *testing.T) {
 }
 
 func TestNewFutures(t *testing.T) {
-	getSymbols := func() (symbols []*symbol_types.SymbolInfo) {
+	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
 			"BTCUSDT",
 			100,

@@ -9,8 +9,8 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	processor "github.com/fr0ster/go-trading-utils/strategy/futures_signals/processor"
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -324,7 +324,7 @@ func RunFuturesTrading(
 	lowBound items_types.PricePercentType,
 	deltaPrice items_types.PricePercentType,
 	deltaQuantity items_types.QuantityPercentType,
-	marginType pairs_types.MarginType,
+	marginType types.MarginType,
 	leverage int,
 	minSteps int,
 	callBackRate items_types.PricePercentType,
@@ -336,7 +336,7 @@ func RunFuturesTrading(
 	shortPositionSLOrderType futures.OrderType,
 	longPositionTPOrderType futures.OrderType,
 	longPositionSLOrderType futures.OrderType,
-	progression pairs_types.ProgressionType,
+	progression types.ProgressionType,
 	quit chan struct{},
 	wg *sync.WaitGroup) (err error) {
 	var (

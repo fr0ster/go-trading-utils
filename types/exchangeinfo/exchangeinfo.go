@@ -78,7 +78,7 @@ func (e *ExchangeInfo) GetTimezone() string {
 	return e.Timezone
 }
 
-func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.SymbolInfo {
+func (exchangeInfo *ExchangeInfo) GetSymbol(symbol string) *symbol_info.Symbol {
 	return exchangeInfo.Symbols.GetSymbol(symbol)
 }
 

@@ -5,11 +5,11 @@ import (
 
 	"github.com/adshao/go-binance/v2/futures"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 type (
@@ -23,8 +23,8 @@ type (
 
 	SetLeverageFunction       func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error)
 	GetLeverageFunction       func() int
-	SetMarginTypeFunction     func(pairs_types.MarginType) error
-	GetMarginTypeFunction     func() pairs_types.MarginType
+	SetMarginTypeFunction     func(types.MarginType) error
+	GetMarginTypeFunction     func() types.MarginType
 	SetPositionMarginFunction func(items_types.ValueType, int) error
 
 	ClosePositionFunction func() (err error)

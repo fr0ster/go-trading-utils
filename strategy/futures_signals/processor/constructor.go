@@ -13,14 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 
 	futures_exchange_info "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
+	"github.com/fr0ster/go-trading-utils/types"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 	progressions "github.com/fr0ster/go-trading-utils/utils/progressions"
 
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 const (
@@ -37,11 +38,11 @@ func NewPairProcessor(
 	LowBound items_types.PricePercentType,
 	deltaPrice items_types.PricePercentType,
 	deltaQuantity items_types.QuantityPercentType,
-	marginType pairs_types.MarginType,
+	marginType types.MarginType,
 	leverage int,
 	minSteps int,
 	callbackRate items_types.PricePercentType,
-	progression pairs_types.ProgressionType,
+	progression types.ProgressionType,
 	depths ...*depth_types.Depths) (pp *PairProcessor, err error) {
 	var (
 		depth *depth_types.Depths

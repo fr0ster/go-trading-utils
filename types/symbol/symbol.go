@@ -10,7 +10,7 @@ type (
 	QuoteAsset string
 	BaseAsset  string
 	// Дані про обмеження на пару
-	SymbolInfo struct {
+	Symbol struct {
 		Symbol                 string
 		notional               items_types.ValueType
 		stepSize               items_types.QuantityType
@@ -27,63 +27,63 @@ type (
 	}
 )
 
-func (si *SymbolInfo) Less(than btree.Item) bool {
-	return si.Symbol < than.(*SymbolInfo).Symbol
+func (si *Symbol) Less(than btree.Item) bool {
+	return si.Symbol < than.(*Symbol).Symbol
 }
 
-func (si *SymbolInfo) Equal(than btree.Item) bool {
-	return si.Symbol == than.(*SymbolInfo).Symbol
+func (si *Symbol) Equal(than btree.Item) bool {
+	return si.Symbol == than.(*Symbol).Symbol
 }
 
-func (si *SymbolInfo) GetSymbol() string {
+func (si *Symbol) GetSymbol() string {
 	return si.Symbol
 }
 
-func (si *SymbolInfo) GetNotional() items_types.ValueType {
+func (si *Symbol) GetNotional() items_types.ValueType {
 	return si.notional
 }
 
-func (si *SymbolInfo) GetStepSize() items_types.QuantityType {
+func (si *Symbol) GetStepSize() items_types.QuantityType {
 	return si.stepSize
 }
 
-func (si *SymbolInfo) GetMaxQty() items_types.QuantityType {
+func (si *Symbol) GetMaxQty() items_types.QuantityType {
 	return si.maxQty
 }
 
-func (si *SymbolInfo) GetMinQty() items_types.QuantityType {
+func (si *Symbol) GetMinQty() items_types.QuantityType {
 	return si.minQty
 }
 
-func (si *SymbolInfo) GetTickSizeExp() items_types.PriceType {
+func (si *Symbol) GetTickSizeExp() items_types.PriceType {
 	return si.tickSize
 }
 
-func (si *SymbolInfo) GetMaxPrice() items_types.PriceType {
+func (si *Symbol) GetMaxPrice() items_types.PriceType {
 	return si.maxPrice
 }
 
-func (si *SymbolInfo) GetMinPrice() items_types.PriceType {
+func (si *Symbol) GetMinPrice() items_types.PriceType {
 	return si.minPrice
 }
 
-func (si *SymbolInfo) GetBaseSymbol() QuoteAsset {
+func (si *Symbol) GetBaseSymbol() QuoteAsset {
 	return si.baseSymbol
 }
 
-func (si *SymbolInfo) GetTargetSymbol() BaseAsset {
+func (si *Symbol) GetTargetSymbol() BaseAsset {
 	return si.targetSymbol
 }
 
-func (si *SymbolInfo) IsMarginTradingAllowed() bool {
+func (si *Symbol) IsMarginTradingAllowed() bool {
 	return si.isMarginTradingAllowed
 }
 
-func (si *SymbolInfo) GetPermissions() []string {
+func (si *Symbol) GetPermissions() []string {
 	return si.permissions
 }
 
-func (si *SymbolInfo) GetOrderType() []OrderType {
+func (si *Symbol) GetOrderType() []OrderType {
 	return si.orderType
 }
 
@@ -100,8 +100,8 @@ func New(
 	baseAsset BaseAsset,
 	isMarginTradingAllowed bool,
 	permissions []string,
-	orderType []OrderType) *SymbolInfo {
-	return &SymbolInfo{
+	orderType []OrderType) *Symbol {
+	return &Symbol{
 		Symbol:                 symbol,
 		notional:               notional,
 		stepSize:               stepSize,

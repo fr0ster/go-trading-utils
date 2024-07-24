@@ -9,8 +9,8 @@ import (
 
 	grid "github.com/fr0ster/go-trading-utils/strategy/spot_signals/grid"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 func RunSpotHolding(

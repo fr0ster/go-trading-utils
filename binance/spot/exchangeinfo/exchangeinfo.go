@@ -36,7 +36,7 @@ func InitCreator(client *binance.Client, degree int, symbol ...string) func(val 
 			val.ExchangeFilters = exchangeInfo.ExchangeFilters
 			val.Symbols, err = symbols_types.New(
 				degree,
-				func() (symbols []*symbol_types.SymbolInfo) {
+				func() (symbols []*symbol_types.Symbol) {
 					for _, s := range exchangeInfo.Symbols {
 						orderTypes := make([]symbol_types.OrderType, len(s.OrderTypes))
 						for i, ot := range s.OrderTypes {

@@ -7,9 +7,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/fr0ster/go-trading-utils/types"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
 )
@@ -100,9 +101,9 @@ func (cf *Configs) SetObserverTimeOutMillisecond(timeout int) {
 
 // Implement the GetPair method
 func (cf *Configs) GetPair(
-	account pairs_types.AccountType,
-	strategy pairs_types.StrategyType,
-	stage pairs_types.StageType,
+	account types.AccountType,
+	strategy types.StrategyType,
+	stage types.StageType,
 	pair string) *pairs_types.Pairs {
 	if res := cf.Pairs.Get(&pairs_types.Pairs{
 		AccountType:  account,
@@ -121,8 +122,8 @@ func (cf *Configs) SetPair(pair *pairs_types.Pairs) {
 }
 
 // Implement the GetPairs method
-func (cf *Configs) GetPairs(account_type ...pairs_types.AccountType) ([]*pairs_types.Pairs, error) {
-	isExist := func(a pairs_types.AccountType) bool {
+func (cf *Configs) GetPairs(account_type ...types.AccountType) ([]*pairs_types.Pairs, error) {
+	isExist := func(a types.AccountType) bool {
 		for _, at := range account_type {
 			if at == a {
 				return true

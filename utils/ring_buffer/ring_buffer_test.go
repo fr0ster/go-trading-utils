@@ -3,8 +3,8 @@ package ring_buffer_test
 import (
 	"testing"
 
-	ring_buffer "github.com/fr0ster/go-trading-utils/types/ring_buffer"
 	"github.com/fr0ster/go-trading-utils/utils"
+	ring_buffer "github.com/fr0ster/go-trading-utils/utils/ring_buffer"
 	"github.com/stretchr/testify/assert"
 )
 

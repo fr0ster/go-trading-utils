@@ -26,7 +26,7 @@ type (
 		exchangeInfo *exchange_types.ExchangeInfo
 
 		// Дані про пару
-		pairInfo     *symbol_types.SymbolInfo
+		pairInfo     *symbol_types.Symbol
 		baseSymbol   symbol_types.QuoteAsset
 		targetSymbol symbol_types.BaseAsset
 

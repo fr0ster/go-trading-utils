@@ -18,7 +18,7 @@ func (pp *PairProcessor) SetTimeOut(timeOut time.Duration) {
 	pp.timeOut = timeOut
 }
 
-func (pp *PairProcessor) GetSymbol() *symbol_types.SymbolInfo {
+func (pp *PairProcessor) GetSymbol() *symbol_types.Symbol {
 	return pp.pairInfo
 }
 

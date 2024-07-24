@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/adshao/go-binance/v2/futures"
+	"github.com/fr0ster/go-trading-utils/types"
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 
@@ -15,7 +16,6 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchangeinfo_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	processor_types "github.com/fr0ster/go-trading-utils/types/processor"
 )
 
@@ -137,7 +137,7 @@ func New(
 			}
 		}, // setLeverage
 		func(p *processor_types.Processor) processor_types.SetMarginTypeFunction {
-			return func(marginType pairs_types.MarginType) error {
+			return func(marginType types.MarginType) error {
 				return client.NewChangeMarginTypeService().Symbol(symbol).MarginType(futures.MarginType(marginType)).Do(context.Background())
 			}
 		}, // setMarginType

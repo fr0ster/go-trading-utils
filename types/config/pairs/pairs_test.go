@@ -3,9 +3,10 @@ package pairs_test
 import (
 	"testing"
 
+	types "github.com/fr0ster/go-trading-utils/types"
+	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -53,9 +54,9 @@ func getTestData() *btree.BTree {
 func assertPair(
 	t *testing.T,
 	pair *pairs_types.Pairs,
-	accountType pairs_types.AccountType,
-	strategyType pairs_types.StrategyType,
-	stageType pairs_types.StageType) {
+	accountType types.AccountType,
+	strategyType types.StrategyType,
+	stageType types.StageType) {
 
 	// Test GetAccountType
 	assert.Equal(t, accountType, pair.GetAccountType())

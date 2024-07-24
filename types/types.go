@@ -1,11 +1,18 @@
 package types
 
 type (
-	OrderSide            string
-	DepthSide            string
+	OrderSide string
+	DepthSide string
+
 	StreamFunction       func() (chan struct{}, chan struct{}, error)
 	InitFunction         func() (err error)
 	ErrorHandlerFunction func(err error)
+
+	AccountType     string
+	MarginType      string
+	ProgressionType string
+	StageType       string
+	StrategyType    string
 )
 
 const (

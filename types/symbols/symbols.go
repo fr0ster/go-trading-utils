@@ -12,7 +12,7 @@ type (
 		degree     int
 		symbols    btree.BTree
 		mu         sync.Mutex
-		getSymbols func() []*symbol_info.SymbolInfo
+		getSymbols func() []*symbol_info.Symbol
 	}
 )
 
@@ -28,16 +28,16 @@ func (s *Symbols) Len() int {
 	return s.symbols.Len()
 }
 
-func (s *Symbols) Insert(symbol *symbol_info.SymbolInfo) {
+func (s *Symbols) Insert(symbol *symbol_info.Symbol) {
 	s.symbols.ReplaceOrInsert(symbol)
 }
 
-func (s *Symbols) GetSymbol(symbol string) *symbol_info.SymbolInfo {
-	item := s.symbols.Get(&symbol_info.SymbolInfo{Symbol: symbol})
+func (s *Symbols) GetSymbol(symbol string) *symbol_info.Symbol {
+	item := s.symbols.Get(&symbol_info.Symbol{Symbol: symbol})
 	if item == nil {
 		return nil
 	}
-	return item.(*symbol_info.SymbolInfo)
+	return item.(*symbol_info.Symbol)
 }
 
 func (s *Symbols) Ascend(f func(btree.Item) bool) {
@@ -54,7 +54,7 @@ func (s *Symbols) Descend(f func(btree.Item) bool) {
 
 func New(
 	degree int,
-	getSymbols func() []*symbol_info.SymbolInfo) (s *Symbols, err error) {
+	getSymbols func() []*symbol_info.Symbol) (s *Symbols, err error) {
 	s = &Symbols{
 		degree:  degree,
 		symbols: *btree.New(degree),

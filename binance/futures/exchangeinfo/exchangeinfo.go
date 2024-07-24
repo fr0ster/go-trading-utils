@@ -80,7 +80,7 @@ func InitCreator(client *futures.Client, degree int, symbols ...string) func(val
 			}
 			val.Symbols, err = symbols_types.New(
 				degree,
-				func() (symbols []*symbol_types.SymbolInfo) {
+				func() (symbols []*symbol_types.Symbol) {
 					for _, s := range restrictedSymbols {
 						orderTypes := make([]symbol_types.OrderType, len(s.OrderType))
 						for i, ot := range s.OrderType {

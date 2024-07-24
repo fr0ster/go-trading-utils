@@ -52,7 +52,7 @@ func (pp *Processor) GetTargetSymbol() symbol_types.BaseAsset {
 	return pp.exchangeInfo.GetSymbol(pp.symbol).GetTargetSymbol()
 }
 
-func (pp *Processor) GetSymbolInfo() *symbol_types.SymbolInfo {
+func (pp *Processor) GetSymbolInfo() *symbol_types.Symbol {
 	return pp.exchangeInfo.GetSymbol(pp.symbol)
 }
 

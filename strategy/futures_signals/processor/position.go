@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/adshao/go-binance/v2/futures"
+	types "github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
@@ -53,13 +53,13 @@ func (pp *PairProcessor) SetLeverage(leverage int) (res *futures.SymbolLeverage,
 
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
-func (pp *PairProcessor) GetMarginType() pairs_types.MarginType {
+func (pp *PairProcessor) GetMarginType() types.MarginType {
 	return pp.marginType
 }
 
 // MarginTypeIsolated MarginType = "ISOLATED"
 // MarginTypeCrossed  MarginType = "CROSSED"
-func (pp *PairProcessor) SetMarginType(marginType pairs_types.MarginType) (err error) {
+func (pp *PairProcessor) SetMarginType(marginType types.MarginType) (err error) {
 	return pp.client.
 		NewChangeMarginTypeService().
 		Symbol(pp.pairInfo.Symbol).
