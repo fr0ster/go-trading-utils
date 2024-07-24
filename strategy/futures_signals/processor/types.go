@@ -21,6 +21,10 @@ const (
 )
 
 type (
+	PairPrice struct {
+		Price    items_types.PriceType
+		Quantity items_types.QuantityType
+	}
 	PairProcessor struct {
 		// Дані про клієнта
 		client *futures.Client
@@ -82,3 +86,12 @@ type (
 		depth *depth_types.Depths
 	}
 )
+
+// DepthItemType - тип для зберігання заявок в стакані
+func (i *PairPrice) Less(than btree.Item) bool {
+	return i.Price < than.(*PairPrice).Price
+}
+
+func (i *PairPrice) Equal(than btree.Item) bool {
+	return i.Price == than.(*PairPrice).Price
+}

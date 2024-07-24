@@ -5,7 +5,6 @@ import (
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	pair_price_types "github.com/fr0ster/go-trading-utils/types/pair_price"
 	"github.com/sirupsen/logrus"
 )
 
@@ -107,7 +106,7 @@ func (pp *PairProcessor) InitPositionGridUp(price items_types.PriceType) (
 				pp.notional, float64(currentQuantityUp)*float64(price))
 			return
 		}
-		pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceUp, Quantity: currentQuantityUp})
+		pp.up.ReplaceOrInsert(&PairPrice{Price: priceUp, Quantity: currentQuantityUp})
 	}
 	return
 
@@ -143,7 +142,7 @@ func (pp *PairProcessor) InitPositionGridDown(price items_types.PriceType) (
 			err = fmt.Errorf("we need more money for position if price gone down: %v but can buy only for %v",
 				pp.notional, float64(currentQuantityDown)*float64(price))
 		}
-		pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: priceDown, Quantity: currentQuantityDown})
+		pp.down.ReplaceOrInsert(&PairPrice{Price: priceDown, Quantity: currentQuantityDown})
 	}
 	return
 
@@ -209,12 +208,12 @@ func (pp *PairProcessor) GetDownLength() int {
 	return pp.down.Len()
 }
 
-func (pp *PairProcessor) GetUpMin() *pair_price_types.PairPrice {
-	return pp.up.Min().(*pair_price_types.PairPrice)
+func (pp *PairProcessor) GetUpMin() *PairPrice {
+	return pp.up.Min().(*PairPrice)
 }
 
-func (pp *PairProcessor) GetDownMax() *pair_price_types.PairPrice {
-	return pp.down.Max().(*pair_price_types.PairPrice)
+func (pp *PairProcessor) GetDownMax() *PairPrice {
+	return pp.down.Max().(*PairPrice)
 }
 
 func (pp *PairProcessor) UpDownClear() {
@@ -249,12 +248,12 @@ func (pp *PairProcessor) NextUp(currentPrice items_types.PriceType, currentQuant
 	quantity items_types.QuantityType,
 	err error) {
 	if val := pp.up.Min(); val != nil {
-		pair := val.(*pair_price_types.PairPrice)
+		pair := val.(*PairPrice)
 		pp.up.Delete(val)
 		if len(currentQuantity) == 1 {
-			pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: currentQuantity[0]})
+			pp.down.ReplaceOrInsert(&PairPrice{Price: currentPrice, Quantity: currentQuantity[0]})
 		} else if len(currentQuantity) == 0 {
-			pp.down.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: pair.Quantity})
+			pp.down.ReplaceOrInsert(&PairPrice{Price: currentPrice, Quantity: pair.Quantity})
 		}
 		return pair.Price, pair.Quantity, nil
 	} else {
@@ -282,12 +281,12 @@ func (pp *PairProcessor) NextDown(currentPrice items_types.PriceType, currentQua
 	quantity items_types.QuantityType,
 	err error) {
 	if val := pp.down.Max(); val != nil {
-		pair := val.(*pair_price_types.PairPrice)
+		pair := val.(*PairPrice)
 		pp.down.Delete(val)
 		if len(currentQuantity) == 1 {
-			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: currentQuantity[0]})
+			pp.up.ReplaceOrInsert(&PairPrice{Price: currentPrice, Quantity: currentQuantity[0]})
 		} else if len(currentQuantity) == 0 {
-			pp.up.ReplaceOrInsert(&pair_price_types.PairPrice{Price: currentPrice, Quantity: pair.Quantity})
+			pp.up.ReplaceOrInsert(&PairPrice{Price: currentPrice, Quantity: pair.Quantity})
 		}
 		return pair.Price, pair.Quantity, nil
 	} else {
@@ -314,8 +313,8 @@ func (pp *PairProcessor) ResetUpDown(currentPrice items_types.PriceType) (err er
 	up := pp.up.Min()
 	down := pp.down.Max()
 	if up != nil && down != nil {
-		upPrice := up.(*pair_price_types.PairPrice).Price
-		downPrice := down.(*pair_price_types.PairPrice).Price
+		upPrice := up.(*PairPrice).Price
+		downPrice := down.(*PairPrice).Price
 		if currentPrice < upPrice && currentPrice > downPrice {
 			return
 		} else if currentPrice >= upPrice {
@@ -323,9 +322,9 @@ func (pp *PairProcessor) ResetUpDown(currentPrice items_types.PriceType) (err er
 		} else if currentPrice <= downPrice {
 			_, _, err = pp.nextDowns(currentPrice)
 		}
-	} else if up == nil && currentPrice <= down.(*pair_price_types.PairPrice).Price {
+	} else if up == nil && currentPrice <= down.(*PairPrice).Price {
 		_, _, err = pp.nextDowns(currentPrice)
-	} else if down == nil && currentPrice >= up.(*pair_price_types.PairPrice).Price {
+	} else if down == nil && currentPrice >= up.(*PairPrice).Price {
 		_, _, err = pp.nextUps(currentPrice)
 	}
 	return
