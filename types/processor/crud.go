@@ -63,7 +63,7 @@ func (pp *Processor) GetStepSizeExp() int {
 
 // Округлення ціни до TickSize знаків після коми
 func (pp *Processor) GetTickSizeExp() int {
-	return int(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSizeExp())
+	return int(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSize())
 }
 
 func (pp *Processor) GetNotional() items_types.ValueType {

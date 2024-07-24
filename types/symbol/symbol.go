@@ -55,7 +55,7 @@ func (si *Symbol) GetMinQty() items_types.QuantityType {
 	return si.minQty
 }
 
-func (si *Symbol) GetTickSizeExp() items_types.PriceType {
+func (si *Symbol) GetTickSize() items_types.PriceType {
 	return si.tickSize
 }
 

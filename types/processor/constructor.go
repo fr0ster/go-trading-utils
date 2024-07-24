@@ -20,8 +20,8 @@ func New(
 	stop chan struct{},
 	symbol string,
 	exchangeInfo *exchange_types.ExchangeInfo,
-	depths *depth_types.Depths,
-	orders *orders_types.Orders,
+	depthsCreator func(*Processor) *depth_types.Depths,
+	ordersCreator func(*Processor) *orders_types.Orders,
 
 	getBaseBalance GetBaseBalanceFunction,
 	getTargetBalance GetTargetBalanceFunction,
@@ -53,10 +53,11 @@ func New(
 		orderTypes: nil,
 		degree:     3,
 		timeOut:    1 * time.Hour,
-		depths:     depths,
-		orders:     orders,
+		depths:     nil,
+		orders:     nil,
 	}
 
+	// Налаштовуємо функції
 	if getBaseBalance != nil {
 		pp.getBaseBalance = getBaseBalance
 	}
@@ -115,6 +116,15 @@ func New(
 		if pp.setMarginType != nil {
 			_ = pp.SetMarginType(pp.GetMarginType()) // Встановлюємо тип маржі, як зміна не потрібна, помилку ігноруємо
 		}
+	}
+
+	// Ініціалізуємо об'єкт
+	if depthsCreator != nil {
+		pp.depths = depthsCreator(pp)
+	}
+
+	if ordersCreator != nil {
+		pp.orders = ordersCreator(pp)
 	}
 
 	return

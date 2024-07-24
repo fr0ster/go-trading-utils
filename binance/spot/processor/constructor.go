@@ -29,8 +29,8 @@ func New(
 	deltaQuantity items_types.QuantityPercentType,
 	callbackRate items_types.PricePercentType,
 	depthAPILimit depth_types.DepthAPILimit,
-	ordersCallBack func(o *orders_types.Orders) binance.WsUserDataHandler,
-	depthsCallBack func(d *depth_types.Depths) binance.WsDepthHandler,
+	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) binance.WsUserDataHandler,
+	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) binance.WsDepthHandler,
 	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
@@ -41,36 +41,38 @@ func New(
 		quit = make(chan struct{})
 	}
 	exchange := exchangeinfo_types.New(spot_exchangeinfo.InitCreator(client, degree, symbol))
-	depths := depth_types.New(
-		degree,
-		symbol,
-		spot_depth.DepthStreamCreator(
-			spot_depth.CallBackCreator(depthsCallBack),
-			spot_depth.WsErrorHandlerCreator()),
-		spot_depth.InitCreator(depthAPILimit, client))
 	symbolInfo := exchange.GetSymbols().GetSymbol(symbol)
-	orders := orders_types.New(
-		symbol, // symbol
-		spot_orders.UserDataStreamCreator(
-			client,
-			spot_orders.CallBackCreator(ordersCallBack),
-			spot_orders.WsErrorHandlerCreator()), // userDataStream
-		spot_orders.CreateOrderCreator(
-			client,
-			int(float64(symbolInfo.GetStepSize())),
-			int(float64(symbolInfo.GetTickSizeExp()))), // createOrder
-		spot_orders.GetOpenOrdersCreator(client),   // getOpenOrders
-		spot_orders.GetAllOrdersCreator(client),    // getAllOrders
-		spot_orders.GetOrderCreator(client),        // getOrder
-		spot_orders.CancelOrderCreator(client),     // cancelOrder
-		spot_orders.CancelAllOrdersCreator(client), // cancelAllOrders
-		quit)
 	pairProcessor, err = processor_types.New(
 		quit,     // quit
 		symbol,   // pair
 		exchange, // exchange
-		depths,   // depths
-		orders,   // orders
+		func(p *processor_types.Processor) *depth_types.Depths {
+			return depth_types.New(
+				degree,
+				symbol,
+				spot_depth.DepthStreamCreator(
+					spot_depth.CallBackCreator(depthsCallBack(p)),
+					spot_depth.WsErrorHandlerCreator()),
+				spot_depth.InitCreator(depthAPILimit, client))
+		}, // depthsCreator
+		func(p *processor_types.Processor) *orders_types.Orders {
+			return orders_types.New(
+				symbol, // symbol
+				spot_orders.UserDataStreamCreator(
+					client,
+					spot_orders.CallBackCreator(ordersCallBack(p)),
+					spot_orders.WsErrorHandlerCreator()), // userDataStream
+				spot_orders.CreateOrderCreator(
+					client,
+					int(float64(symbolInfo.GetStepSize())),
+					int(float64(symbolInfo.GetTickSize()))), // createOrder
+				spot_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+				spot_orders.GetAllOrdersCreator(client),    // getAllOrders
+				spot_orders.GetOrderCreator(client),        // getOrder
+				spot_orders.CancelOrderCreator(client),     // cancelOrder
+				spot_orders.CancelAllOrdersCreator(client), // cancelAllOrders
+				quit)
+		}, // orders
 		func() items_types.ValueType {
 			account, _ := client.NewGetAccountService().Do(context.Background())
 			for _, asset := range account.Balances {
