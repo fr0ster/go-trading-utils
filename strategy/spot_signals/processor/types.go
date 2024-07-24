@@ -68,7 +68,3 @@ type (
 		depth *depth_types.Depths
 	}
 )
-
-const (
-	errorMsg = "Error: %v"
-)

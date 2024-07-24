@@ -19,6 +19,10 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
+const (
+	degree = 3
+)
+
 func NewPairProcessor(
 	stop chan struct{},
 	client *binance.Client,
@@ -40,7 +44,7 @@ func NewPairProcessor(
 
 	pp = &PairProcessor{
 		client:       client,
-		exchangeInfo: exchange_types.New(spot_exchange_info.InitCreator(3, client, symbol)),
+		exchangeInfo: exchange_types.New(spot_exchange_info.InitCreator(client, degree, symbol)),
 
 		stop: stop,
 

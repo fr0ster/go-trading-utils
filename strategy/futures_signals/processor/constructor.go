@@ -23,6 +23,10 @@ import (
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
+const (
+	degree = 3
+)
+
 func NewPairProcessor(
 	stop chan struct{},
 	client *futures.Client,
@@ -48,14 +52,13 @@ func NewPairProcessor(
 
 	pp = &PairProcessor{
 		client:       client,
-		exchangeInfo: exchange_types.New(futures_exchange_info.RestrictedInitCreator(3, []string{symbol}, client)),
-		// symbol:       nil,
-		baseSymbol: "",
-		notional:   0,
-		StepSize:   0,
-		minSteps:   minSteps,
-		up:         btree.New(2),
-		down:       btree.New(2),
+		exchangeInfo: exchange_types.New(futures_exchange_info.InitCreator(client, degree, symbol)),
+		baseSymbol:   "",
+		notional:     0,
+		StepSize:     0,
+		minSteps:     minSteps,
+		up:           btree.New(2),
+		down:         btree.New(2),
 
 		stop: stop,
 

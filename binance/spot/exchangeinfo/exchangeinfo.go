@@ -14,7 +14,7 @@ import (
 
 type ExchangeInfo exchange_types.ExchangeInfo
 
-func InitCreator(degree int, client *binance.Client, symbol ...string) func(val *exchange_types.ExchangeInfo) types.InitFunction {
+func InitCreator(client *binance.Client, degree int, symbol ...string) func(val *exchange_types.ExchangeInfo) types.InitFunction {
 	return func(val *exchange_types.ExchangeInfo) types.InitFunction {
 		return func() (err error) {
 			var (

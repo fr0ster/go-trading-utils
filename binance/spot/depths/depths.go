@@ -45,7 +45,7 @@ func DepthStreamCreator(
 	return func(d *depths_types.Depths) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsDepthServe(d.Symbol(), handlerCreator(d), errHandlerCreator(d))
+			doneC, stopC, err = binance.WsDepthServe100Ms(d.Symbol(), handlerCreator(d), errHandlerCreator(d))
 			return
 		}
 	}

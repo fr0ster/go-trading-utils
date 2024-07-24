@@ -18,7 +18,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -31,7 +31,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
 	orderTypes := exchangeInfo.GetSymbol("BTCUSDT")
@@ -43,7 +43,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv("SECRET_KEY")
 	// futures.UseTestnet = true
 	client := futures.NewClient(api_key, secret_key)
-	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(degree, client))
+	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")

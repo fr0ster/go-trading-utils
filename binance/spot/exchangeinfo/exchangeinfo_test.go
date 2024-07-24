@@ -24,7 +24,7 @@ func TestGetExchangeInfo(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Check if the exchangeInfo is not nil
 	if exchangeInfo == nil {
@@ -37,7 +37,7 @@ func TestGetOrderTypes(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")
@@ -51,7 +51,7 @@ func TestGetPermissions(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")
@@ -64,7 +64,7 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
 	symbol := exchangeInfo.GetSymbol("BTCUSDT")
@@ -81,7 +81,7 @@ func TestInterface(t *testing.T) {
 	binance.UseTestnet = USE_TEST_NET
 	client := binance.NewClient(api_key, secret_key)
 
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(degree, client))
+	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
 	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
 		symbol := exchangeInfo.GetSymbol("BTCUSDT")
