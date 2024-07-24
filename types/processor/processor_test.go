@@ -132,17 +132,20 @@ func TestNewSpot(t *testing.T) {
 		func() items_types.ValueType { return 10000 }, // getFreeBalance
 		func() items_types.ValueType { return 10000 }, // getLockedBalance
 		func() items_types.PriceType { return 67000 }, // getCurrentPrice
-		nil,  // getPositionRisk
-		nil,  // setLeverage
-		nil,  // setMarginType
-		nil,  // setPositionMargin
-		nil,  // closePosition
-		nil,  // getDeltaPrice
-		nil,  // getDeltaQuantity
-		nil,  // getLimitOnPosition
-		nil,  // getLimitOnTransaction
-		nil,  // getUpAndLowBound
-		nil,  // getCallbackRate
+		nil, // getPositionRisk func(*Processor) GetPositionRiskFunction,
+		nil, // setLeverage func(*Processor) SetLeverageFunction,
+		nil, // setMarginType func(*Processor) SetMarginTypeFunction,
+		nil, // setPositionMargin func(*Processor) SetPositionMarginFunction,
+
+		nil, // closePosition func(*Processor) ClosePositionFunction,
+
+		nil, // getDeltaPrice GetDeltaPriceFunction,
+		nil, // getDeltaQuantity GetDeltaQuantityFunction,
+		nil, // getLimitOnPosition GetLimitOnPositionFunction,
+		nil, // getLimitOnTransaction GetLimitOnTransactionFunction,
+		nil, // getUpAndLowBound GetUpAndLowBoundFunction,
+
+		nil,  // getCallbackRate GetCallbackRateFunction,
 		true, // debug
 	)
 	assert.Nil(t, err)
@@ -193,18 +196,20 @@ func TestNewFutures(t *testing.T) {
 	closePosition := func(pp *processor.Processor) processor.ClosePositionFunction {
 		return func() (err error) {
 			risk := pp.GetPositionRisk()
-			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-				_, err = pp.GetOrders().CreateOrder(
-					orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-					orders_types.SideType(futures.SideTypeBuy),
-					orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
-					0, true, false, 0, 0, 0, 0)
-			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-				_, err = pp.GetOrders().CreateOrder(
-					orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-					orders_types.SideType(futures.SideTypeSell),
-					orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
-					0, true, false, 0, 0, 0, 0)
+			if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+				if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+					_, err = pp.GetOrders().CreateOrder(
+						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
+						orders_types.SideType(futures.SideTypeBuy),
+						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						0, true, false, 0, 0, 0, 0)
+				} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+					_, err = pp.GetOrders().CreateOrder(
+						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
+						orders_types.SideType(futures.SideTypeSell),
+						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						0, true, false, 0, 0, 0, 0)
+				}
 			}
 			return
 		}
@@ -238,7 +243,7 @@ func TestNewFutures(t *testing.T) {
 	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
 	assert.Equal(t, items_types.ValueType(10000), maintainer.GetBaseBalance())
 	assert.Equal(t, items_types.ValueType(10000), maintainer.GetTargetBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetFreeBalance())
+	assert.Equal(t, items_types.ValueType(1000), maintainer.GetFreeBalance())
 	assert.Equal(t, items_types.ValueType(10000), maintainer.GetLockedBalance())
 	assert.Equal(t, items_types.PriceType(67000), maintainer.GetCurrentPrice())
 	assert.Equal(t, items_types.ValueType(100), maintainer.GetNotional())

@@ -97,32 +97,32 @@ func (pp *Processor) GetBaseBalance() items_types.ValueType {
 	if pp.getBaseBalance == nil {
 		return 0
 	}
-	return pp.GetBaseBalance()
+	return pp.getBaseBalance()
 }
 func (pp *Processor) GetTargetBalance() items_types.ValueType {
 	if pp.getTargetBalance == nil {
 		return 0
 	}
-	return pp.GetTargetBalance()
+	return pp.getTargetBalance()
 
 }
 func (pp *Processor) GetFreeBalance() items_types.ValueType {
 	if pp.getFreeBalance == nil {
 		return 0
 	}
-	return pp.GetFreeBalance()
+	return pp.getFreeBalance()
 }
 func (pp *Processor) GetLockedBalance() items_types.ValueType {
 	if pp.getLockedBalance == nil {
 		return 0
 	}
-	return pp.GetLockedBalance()
+	return pp.getLockedBalance()
 }
 func (pp *Processor) GetCurrentPrice() items_types.PriceType {
 	if pp.getCurrentPrice == nil {
 		return 0
 	}
-	return pp.GetCurrentPrice()
+	return pp.getCurrentPrice()
 }
 
 // getBaseBalance func(*Processor) func() items_types.ValueType,
@@ -131,15 +131,3 @@ func (pp *Processor) SetGetBaseBalance(f func() items_types.ValueType) {
 		pp.getBaseBalance = f
 	}
 }
-
-// getTargetBalance func(*Processor) func() items_types.ValueType,
-// getFreeBalance func(*Processor) func() items_types.ValueType,
-// getLockedBalance func(*Processor) func() items_types.ValueType,
-// getCurrentPrice func(*Processor) func() items_types.PriceType,
-
-// getPositionRisk func(*Processor) func() *futures.PositionRisk,
-// setLeverage func(*Processor) func(int) (*futures.SymbolLeverage, error),
-// setMarginType func(*Processor) func(pairs_types.MarginType) error,
-// setPositionMargin func(*Processor) func(items_types.ValueType, int) error,
-
-// closePosition func(*Processor) func(*futures.PositionRisk) error,
