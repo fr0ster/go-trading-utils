@@ -23,6 +23,7 @@ func New(
 	degree int,
 	symbol string,
 	depthAPILimit depth_types.DepthAPILimit,
+	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
 	var quit chan struct{}
@@ -106,7 +107,8 @@ func New(
 		nil, // setLeverage
 		nil, // setMarginType
 		nil, // setPositionMargin
-		nil) // closePosition
+		nil, // closePosition
+		debug)
 	if err != nil {
 		logrus.Errorf("Can't init pair: %v", err)
 		close(quit)

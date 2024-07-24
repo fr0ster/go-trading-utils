@@ -26,6 +26,7 @@ func New(
 	depthAPILimit depth_types.DepthAPILimit,
 	depthStreamLevel depth_types.DepthStreamLevel,
 	depthStreamRate depth_types.DepthStreamRate,
+	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
 	var quit chan struct{}
@@ -152,7 +153,8 @@ func New(
 				}
 				return
 			}
-		}) // closePosition
+		}, // closePosition
+		debug)
 	if err != nil {
 		logrus.Errorf("Can't init pair: %v", err)
 		close(quit)
