@@ -64,6 +64,7 @@ func eventHandlerCreator(d *depth_types.Depths) futures.WsDepthHandler {
 			if event.PrevLastUpdateID != int64(d.LastUpdateID) {
 				d.Init()
 			} else if event.PrevLastUpdateID == int64(d.LastUpdateID) {
+				logrus.Debugf("Futures %v depth update event received", d.Symbol())
 				for _, bid := range event.Bids {
 					price, quantity, err := bid.Parse()
 					if err != nil {
