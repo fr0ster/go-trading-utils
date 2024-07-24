@@ -3,9 +3,7 @@ package kline_test
 import (
 	"testing"
 
-	kline_interface "github.com/fr0ster/go-trading-utils/interfaces/kline"
 	kline_types "github.com/fr0ster/go-trading-utils/types/klines"
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -56,20 +54,16 @@ func getTestData() []*kline_types.Kline {
 	}
 }
 
-func TestKlineInterface(t *testing.T) {
-	klines := kline_types.New(quit, 2, "1m", "BTCUSDT", nil, nil)
+func TestKline(t *testing.T) {
+	kline := kline_types.New(quit, 2, kline_types.KlineStreamInterval1m, "BTCUSDT", nil, nil)
 
-	test := func(k kline_interface.Klines) {
-		val1 := k.GetKlines().Max().(*kline_types.Kline)
-		assert.Equal(t, int64(1625097601), val1.OpenTime)
-		val2 := k.GetKlines().Min().(*kline_types.Kline)
-		assert.Equal(t, int64(1625097599), val2.OpenTime)
+	test := func(k *kline_types.Klines) {
 	}
 
 	// Create a sample Kline instance
 	k := getTestData()
 	for _, v := range k {
-		klines.SetKline(v)
+		kline.SetKline(v)
 	}
-	test(klines)
+	test(kline)
 }

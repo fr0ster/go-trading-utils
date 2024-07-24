@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"testing"
 
-	config_interfaces "github.com/fr0ster/go-trading-utils/interfaces/config"
 	"github.com/sirupsen/logrus"
 
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
@@ -211,7 +210,7 @@ func getTestData() []byte {
 		}`)
 }
 
-func assertTest(t *testing.T, config config_interfaces.Configuration) {
+func assertTest(t *testing.T, config *config_types.Configs) {
 	checkingDate, err := config.GetPairs()
 
 	assert.NoError(t, err)

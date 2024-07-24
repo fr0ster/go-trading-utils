@@ -1,13 +1,11 @@
 package bookticker_test
 
 import (
-	"errors"
 	"os"
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
 	spot_booktickers "github.com/fr0ster/go-trading-utils/binance/spot/booktickers"
-	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
 	"github.com/stretchr/testify/assert"
@@ -79,19 +77,5 @@ func TestSetBookTickerItem(t *testing.T) {
 		t.Errorf("SetItem did not update the item")
 	} else if item.GetBidPrice() != 99999 {
 		t.Errorf("SetItem did not update the item correctly")
-	}
-}
-
-func TestInterface(t *testing.T) {
-	btt := initBookTicker()
-	err := func(val bookticker_interface.BookTicker) error {
-		item := val.Get("BTCUSDT")
-		if item == nil {
-			return errors.New("GetItem returned an empty item")
-		}
-		return nil
-	}(btt)
-	if err != nil {
-		t.Error(err)
 	}
 }

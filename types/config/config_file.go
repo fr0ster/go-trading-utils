@@ -5,7 +5,6 @@ import (
 	"os"
 	"sync"
 
-	config_types "github.com/fr0ster/go-trading-utils/interfaces/config"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
@@ -80,12 +79,12 @@ func (cf *ConfigFile) Save() error {
 	return nil
 }
 
-func (cf *ConfigFile) GetConfigurations() config_types.Configuration {
+func (cf *ConfigFile) GetConfigurations() *Configs {
 	return cf.configs
 }
 
-func (cf *ConfigFile) SetConfigurations(config config_types.Configuration) {
-	cf.configs = config.(*Configs)
+func (cf *ConfigFile) SetConfigurations(config *Configs) {
+	cf.configs = config
 }
 
 // New creates a new ConfigRecord with the provided API key, API secret, and symbols.

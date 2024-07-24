@@ -8,7 +8,6 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 
 	futures_booktickers "github.com/fr0ster/go-trading-utils/binance/futures/booktickers"
-	bookticker_interface "github.com/fr0ster/go-trading-utils/interfaces/booktickers"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	bookticker_types "github.com/fr0ster/go-trading-utils/types/booktickers/items"
 
@@ -81,7 +80,7 @@ func TestSetBookTickerItem(t *testing.T) {
 
 func TestInterface(t *testing.T) {
 	btt := initBookTicker()
-	err := func(val bookticker_interface.BookTicker) error {
+	err := func(val *booktickers_types.BookTickers) error {
 		item := val.Get("BTCUSDT")
 		if item == nil {
 			return errors.New("GetItem returned an empty item")

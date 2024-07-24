@@ -6,7 +6,6 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 	exchangeinfo "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	exchange_interface "github.com/fr0ster/go-trading-utils/interfaces/exchangeinfo"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	"github.com/stretchr/testify/assert"
 )
@@ -73,26 +72,4 @@ func TestGetExchangeInfoSymbol(t *testing.T) {
 	if symbol == nil {
 		t.Error("GetPermissions returned empty permissions")
 	}
-}
-
-func TestInterface(t *testing.T) {
-	api_key := os.Getenv(API_KEY)
-	secret_key := os.Getenv(SECRET_KEY)
-	binance.UseTestnet = USE_TEST_NET
-	client := binance.NewClient(api_key, secret_key)
-
-	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
-
-	test := func(exchangeInfo exchange_interface.ExchangeInfo) {
-		symbol := exchangeInfo.GetSymbol("BTCUSDT")
-		for _, permissions := range symbol.GetPermissions() {
-			_ = permissions
-		}
-		_ = exchangeInfo.GetTimezone()
-		_ = exchangeInfo.GetServerTime()
-		_ = exchangeInfo.GetRateLimits()
-		_ = exchangeInfo.GetExchangeFilters()
-	}
-	test(exchangeInfo)
-
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	connection_interfaces "github.com/fr0ster/go-trading-utils/interfaces/connection"
 	"github.com/sirupsen/logrus"
 
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
@@ -31,7 +30,7 @@ type (
 )
 
 // GetSpotConnection implements config.Configuration.
-func (cf *Configs) GetConnection() connection_interfaces.Connection {
+func (cf *Configs) GetConnection() *connection_types.Connection {
 	return cf.Connection
 }
 

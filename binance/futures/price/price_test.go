@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	futures_price "github.com/fr0ster/go-trading-utils/binance/futures/price"
-	prices_interface "github.com/fr0ster/go-trading-utils/interfaces/price"
 	price_types "github.com/fr0ster/go-trading-utils/types/price"
 )
 
@@ -51,9 +50,9 @@ func getTestData() []*futures_price.PriceChangeStat {
 	}, nil...)
 }
 
-func TestPricesInterfaces(t *testing.T) {
+func TestPrices(t *testing.T) {
 	pcs := price_types.New(2)
-	test := func(p prices_interface.Prices) {
+	test := func(p *price_types.PriceChangeStats) {
 		p.Lock()
 		defer p.Unlock()
 		// p.Init("test", "test", "BTCUSDT", true)
