@@ -13,6 +13,9 @@ import (
 )
 
 type (
+	DepthConstructor  func() *depth_types.Depths
+	OrdersConstructor func() *orders_types.Orders
+
 	GetBaseBalanceFunction   func() items_types.ValueType
 	GetTargetBalanceFunction func() items_types.ValueType
 	GetFreeBalanceFunction   func() items_types.ValueType

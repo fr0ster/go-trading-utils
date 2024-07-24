@@ -11,17 +11,15 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 )
 
 func New(
 	stop chan struct{},
 	symbol string,
 	exchangeInfo *exchange_types.ExchangeInfo,
-	depthsCreator func(*Processor) *depth_types.Depths,
-	ordersCreator func(*Processor) *orders_types.Orders,
+	depthsCreator func(*Processor) DepthConstructor,
+	ordersCreator func(*Processor) OrdersConstructor,
 
 	getBaseBalance GetBaseBalanceFunction,
 	getTargetBalance GetTargetBalanceFunction,
@@ -120,11 +118,11 @@ func New(
 
 	// Ініціалізуємо об'єкт
 	if depthsCreator != nil {
-		pp.depths = depthsCreator(pp)
+		pp.depths = depthsCreator(pp)()
 	}
 
 	if ordersCreator != nil {
-		pp.orders = ordersCreator(pp)
+		pp.orders = ordersCreator(pp)()
 	}
 
 	return

@@ -51,34 +51,66 @@ func New(
 		quit,     // quit
 		symbol,   // pair
 		exchange, // exchange
-		func(p *processor_types.Processor) *depth_types.Depths {
-			return depth_types.New(
-				degree,
-				symbol,
-				futures_depth.DepthStreamCreator(
-					depthStreamLevel,
-					depthStreamRate,
-					futures_depth.CallBackCreator(depthsCallBack(p)),
-					futures_depth.WsErrorHandlerCreator(depthsErrHandler(p))),
-				futures_depth.InitCreator(depthAPILimit, client))
+		func(p *processor_types.Processor) processor_types.DepthConstructor {
+			return func() *depth_types.Depths {
+				var (
+					callBack   func(d *depth_types.Depths) futures.WsDepthHandler
+					errHandler func(*depth_types.Depths) futures.ErrHandler
+				)
+				if depthsCallBack != nil {
+					callBack = futures_depth.CallBackCreator(depthsCallBack(p))
+				} else {
+					callBack = futures_depth.CallBackCreator()
+				}
+				if depthsErrHandler != nil {
+					errHandler = futures_depth.WsErrorHandlerCreator(depthsErrHandler(p))
+				} else {
+					errHandler = futures_depth.WsErrorHandlerCreator()
+				}
+				return depth_types.New(
+					degree,
+					symbol,
+					futures_depth.DepthStreamCreator(
+						depthStreamLevel,
+						depthStreamRate,
+						callBack,
+						errHandler),
+					futures_depth.InitCreator(depthAPILimit, client))
+			}
 		}, // depthsCreator
-		func(p *processor_types.Processor) *orders_types.Orders {
-			return orders_types.New(
-				symbol, // symbol
-				futures_orders.UserDataStreamCreator(
-					client,
-					futures_orders.CallBackCreator(ordersCallBack(p)),
-					futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))), // userDataStream
-				futures_orders.CreateOrderCreator(
-					client,
-					int(float64(symbolInfo.GetStepSize())),
-					int(float64(symbolInfo.GetTickSize()))), // createOrder
-				futures_orders.GetOpenOrdersCreator(client),   // getOpenOrders
-				futures_orders.GetAllOrdersCreator(client),    // getAllOrders
-				futures_orders.GetOrderCreator(client),        // getOrder
-				futures_orders.CancelOrderCreator(client),     // cancelOrder
-				futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
-				quit)
+		func(p *processor_types.Processor) processor_types.OrdersConstructor {
+			return func() *orders_types.Orders {
+				var (
+					callBack   func(*orders_types.Orders) futures.WsUserDataHandler
+					errHandler func(*orders_types.Orders) futures.ErrHandler
+				)
+				if depthsCallBack != nil {
+					callBack = futures_orders.CallBackCreator(ordersCallBack(p))
+				} else {
+					callBack = futures_orders.CallBackCreator()
+				}
+				if depthsErrHandler != nil {
+					errHandler = futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))
+				} else {
+					errHandler = futures_orders.WsErrorHandlerCreator()
+				}
+				return orders_types.New(
+					symbol, // symbol
+					futures_orders.UserDataStreamCreator(
+						client,
+						callBack,
+						errHandler), // userDataStream
+					futures_orders.CreateOrderCreator(
+						client,
+						int(float64(symbolInfo.GetStepSize())),
+						int(float64(symbolInfo.GetTickSize()))), // createOrder
+					futures_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+					futures_orders.GetAllOrdersCreator(client),    // getAllOrders
+					futures_orders.GetOrderCreator(client),        // getOrder
+					futures_orders.CancelOrderCreator(client),     // cancelOrder
+					futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
+					quit)
+			}
 		}, // orders
 		func() items_types.ValueType {
 			account, _ := client.NewGetAccountService().Do(context.Background())
