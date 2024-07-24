@@ -32,6 +32,8 @@ func New(
 	depthAPILimit depth_types.DepthAPILimit,
 	depthStreamLevel depth_types.DepthStreamLevel,
 	depthStreamRate depth_types.DepthStreamRate,
+	ordersCallBack func(o *orders_types.Orders) futures.WsUserDataHandler,
+	depthsCallBack func(d *depth_types.Depths) futures.WsDepthHandler,
 	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
@@ -48,7 +50,7 @@ func New(
 		futures_depth.DepthStreamCreator(
 			depthStreamLevel,
 			depthStreamRate,
-			futures_depth.CallBackCreator(),
+			futures_depth.CallBackCreator(depthsCallBack),
 			futures_depth.WsErrorHandlerCreator()),
 		futures_depth.InitCreator(depthAPILimit, client))
 	symbolInfo := exchange.GetSymbols().GetSymbol(symbol)
@@ -56,7 +58,7 @@ func New(
 		symbol, // symbol
 		futures_orders.UserDataStreamCreator(
 			client,
-			futures_orders.CallBackCreator(),
+			futures_orders.CallBackCreator(ordersCallBack),
 			futures_orders.WsErrorHandlerCreator()), // userDataStream
 		futures_orders.CreateOrderCreator(
 			client,

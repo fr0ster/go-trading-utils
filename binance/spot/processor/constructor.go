@@ -29,6 +29,8 @@ func New(
 	deltaQuantity items_types.QuantityPercentType,
 	callbackRate items_types.PricePercentType,
 	depthAPILimit depth_types.DepthAPILimit,
+	ordersCallBack func(o *orders_types.Orders) binance.WsUserDataHandler,
+	depthsCallBack func(d *depth_types.Depths) binance.WsDepthHandler,
 	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
@@ -43,7 +45,7 @@ func New(
 		degree,
 		symbol,
 		spot_depth.DepthStreamCreator(
-			spot_depth.CallBackCreator(),
+			spot_depth.CallBackCreator(depthsCallBack),
 			spot_depth.WsErrorHandlerCreator()),
 		spot_depth.InitCreator(depthAPILimit, client))
 	symbolInfo := exchange.GetSymbols().GetSymbol(symbol)
@@ -51,7 +53,7 @@ func New(
 		symbol, // symbol
 		spot_orders.UserDataStreamCreator(
 			client,
-			spot_orders.CallBackCreator(),
+			spot_orders.CallBackCreator(ordersCallBack),
 			spot_orders.WsErrorHandlerCreator()), // userDataStream
 		spot_orders.CreateOrderCreator(
 			client,
