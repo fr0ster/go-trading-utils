@@ -12,6 +12,14 @@ func (pp *Processor) GetDepths() *depth_types.Depths {
 	return pp.depths
 }
 
+func (pp *Processor) SetDepths(depths *depth_types.Depths) {
+	if pp.depths != nil {
+		pp.depths.DepthEventStop()
+		pp.depths = nil
+	}
+	pp.depths = depths
+}
+
 func (pp *Processor) GetOrders() *orders_types.Orders {
 	return pp.orders
 }

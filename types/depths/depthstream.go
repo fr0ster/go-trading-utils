@@ -50,3 +50,12 @@ func (d *Depths) DepthEventStart() (err error) {
 	}()
 	return
 }
+
+func (d *Depths) DepthEventStop() (err error) {
+	if d.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(d.stop)
+	return
+}

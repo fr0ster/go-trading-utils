@@ -1,6 +1,7 @@
 package orders
 
 import (
+	"errors"
 	"time"
 )
 
@@ -43,5 +44,14 @@ func (o *Orders) UserDataEventStart() (err error) {
 			}
 		}
 	}()
+	return
+}
+
+func (o *Orders) UserDataEventStop() (err error) {
+	if o.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(o.stop)
 	return
 }
