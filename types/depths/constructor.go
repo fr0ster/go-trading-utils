@@ -36,11 +36,7 @@ func New(
 		startDepthStream: nil,
 		Init:             nil,
 	}
-	if startDepthStreamCreator != nil {
-		this.startDepthStream = startDepthStreamCreator(this)
-	}
-	if initCreator != nil {
-		this.Init = initCreator(this)
-	}
+	this.SetStartDepthStream(startDepthStreamCreator)
+	this.SetInit(initCreator)
 	return this
 }

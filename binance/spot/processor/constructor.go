@@ -41,16 +41,20 @@ func New(
 		spot_depth.InitCreator(depthAPILimit, client))
 	symbolInfo := exchange.GetSymbols().GetSymbol(symbol)
 	orders := orders_types.New(
-		symbol,
+		symbol, // symbol
 		spot_orders.UserDataStreamCreator(
 			client,
 			spot_orders.CallBackCreator(),
-			spot_orders.WsErrorHandlerCreator()),
+			spot_orders.WsErrorHandlerCreator()), // userDataStream
 		spot_orders.CreateOrderCreator(
 			client,
-			symbol,
 			int(float64(symbolInfo.GetStepSize())),
-			int(float64(symbolInfo.GetTickSizeExp()))),
+			int(float64(symbolInfo.GetTickSizeExp()))), // createOrder
+		spot_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+		spot_orders.GetAllOrdersCreator(client),    // getAllOrders
+		spot_orders.GetOrderCreator(client),        // getOrder
+		spot_orders.CancelOrderCreator(client),     // cancelOrder
+		spot_orders.CancelAllOrdersCreator(client), // cancelAllOrders
 		quit)
 	account, _ := client.NewGetAccountService().Do(context.Background())
 	pairProcessor, err = processor_types.New(

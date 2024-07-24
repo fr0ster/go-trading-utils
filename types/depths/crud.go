@@ -1,6 +1,7 @@
 package depth
 
 import (
+	"github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
@@ -64,4 +65,16 @@ func (d *Depths) NextPriceDown(percent items_types.PricePercentType, price ...it
 		next = max.GetPrice()
 	}
 	return
+}
+
+func (d *Depths) SetStartDepthStream(startDepthStreamCreator func(*Depths) types.StreamFunction) {
+	if startDepthStreamCreator != nil {
+		d.startDepthStream = startDepthStreamCreator(d)
+	}
+}
+
+func (d *Depths) SetInit(initCreator func(*Depths) types.InitFunction) {
+	if initCreator != nil {
+		d.Init = initCreator(d)
+	}
 }

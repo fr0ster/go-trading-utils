@@ -115,10 +115,9 @@ func createOrder(
 
 func CreateOrderCreator(
 	client *binance.Client,
-	symbol string,
 	quantityRound int,
 	priceRound int) func(*orders_types.Orders) orders_types.CreateOrderFunction {
-	return func(*orders_types.Orders) orders_types.CreateOrderFunction {
+	return func(o *orders_types.Orders) orders_types.CreateOrderFunction {
 		return func(
 			orderType orders_types.OrderType,
 			sideType orders_types.SideType,
@@ -133,7 +132,7 @@ func CreateOrderCreator(
 			var orders *binance.CreateOrderResponse
 			orders, err = createOrder(
 				client,
-				symbol,
+				o.Symbol(),
 				quantityRound,
 				priceRound,
 				binance.OrderType(orderType),

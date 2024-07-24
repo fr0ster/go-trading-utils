@@ -46,16 +46,20 @@ func New(
 		futures_depth.InitCreator(depthAPILimit, client))
 	symbolInfo := exchange.GetSymbols().GetSymbol(symbol)
 	orders := orders_types.New(
-		symbol,
+		symbol, // symbol
 		futures_orders.UserDataStreamCreator(
 			client,
 			futures_orders.CallBackCreator(),
-			futures_orders.WsErrorHandlerCreator()),
+			futures_orders.WsErrorHandlerCreator()), // userDataStream
 		futures_orders.CreateOrderCreator(
 			client,
-			symbol,
 			int(float64(symbolInfo.GetStepSize())),
-			int(float64(symbolInfo.GetTickSizeExp()))),
+			int(float64(symbolInfo.GetTickSizeExp()))), // createOrder
+		futures_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+		futures_orders.GetAllOrdersCreator(client),    // getAllOrders
+		futures_orders.GetOrderCreator(client),        // getOrder
+		futures_orders.CancelOrderCreator(client),     // cancelOrder
+		futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
 		quit)
 	account, _ := client.NewGetAccountService().Do(context.Background())
 	pairProcessor, err = processor_types.New(
