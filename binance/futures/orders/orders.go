@@ -127,7 +127,7 @@ func CreateOrderCreator(
 			price items_types.PriceType,
 			stopPrice items_types.PriceType,
 			activationPrice items_types.PriceType,
-			callbackRate items_types.PricePercentType) (response orders_types.CreateOrderResponse, err error) {
+			callbackRate items_types.PricePercentType) (response *orders_types.CreateOrderResponse, err error) {
 			var orders *futures.CreateOrderResponse
 			orders, err = createOrder(
 				client,
@@ -144,7 +144,7 @@ func CreateOrderCreator(
 				stopPrice,
 				activationPrice,
 				callbackRate)
-			response = orders_types.CreateOrderResponse{
+			response = &orders_types.CreateOrderResponse{
 				Symbol:           orders.Symbol,
 				OrderID:          orders.OrderID,
 				ClientOrderID:    orders.ClientOrderID,

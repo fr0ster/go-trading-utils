@@ -91,7 +91,7 @@ type (
 		price items_types.PriceType,
 		stopPrice items_types.PriceType,
 		activationPrice items_types.PriceType,
-		callbackRate items_types.PricePercentType) (CreateOrderResponse, error)
+		callbackRate items_types.PricePercentType) (*CreateOrderResponse, error)
 	OpenOrderFunction       func() ([]*Order, error)
 	AllOrdersFunction       func() ([]*Order, error)
 	GetOrderFunction        func(orderID int64) (*Order, error)
