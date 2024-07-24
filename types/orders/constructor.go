@@ -18,11 +18,11 @@ func New(
 	symbol string,
 	startUserDataStreamCreator func(*Orders) types.StreamFunction,
 	createOrderCreator func(*Orders) CreateOrderFunction,
-	openOrdersCreator func(*Orders) func() ([]*Order, error),
-	allOrdersCreator func(*Orders) func() ([]*Order, error),
-	getOrderCreator func(*Orders) func(orderID int64) (*Order, error),
-	cancelOrderCreator func(*Orders) func(orderID int64) (*CancelOrderResponse, error),
-	cancelAllOrdersCreator func(*Orders) func() (err error),
+	openOrdersCreator func(*Orders) OpenOrderFunction,
+	allOrdersCreator func(*Orders) AllOrdersFunction,
+	getOrderCreator func(*Orders) GetOrderFunction,
+	cancelOrderCreator func(*Orders) CancelOrderFunction,
+	cancelAllOrdersCreator func(*Orders) CancelAllOrdersFunction,
 	stops ...chan struct{}) (this *Orders) {
 	var stop chan struct{}
 	if len(stops) > 0 {

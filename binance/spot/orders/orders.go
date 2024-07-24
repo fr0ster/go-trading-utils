@@ -196,8 +196,8 @@ func futures2orders(input *binance.Order) *orders_types.Order {
 	}
 }
 
-func GetOpenOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) func() ([]*orders_types.Order, error) {
-	return func(orders *orders_types.Orders) func() ([]*orders_types.Order, error) {
+func GetOpenOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) orders_types.OpenOrderFunction {
+	return func(orders *orders_types.Orders) orders_types.OpenOrderFunction {
 		return func() ([]*orders_types.Order, error) {
 			var arrOrders []*orders_types.Order
 			futuresOrders, err := client.NewListOpenOrdersService().Symbol(orders.Symbol()).Do(context.Background())
@@ -212,8 +212,8 @@ func GetOpenOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) 
 	}
 }
 
-func GetAllOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) func() ([]*orders_types.Order, error) {
-	return func(orders *orders_types.Orders) func() (orders []*orders_types.Order, err error) {
+func GetAllOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) orders_types.AllOrdersFunction {
+	return func(orders *orders_types.Orders) orders_types.AllOrdersFunction {
 		return func() ([]*orders_types.Order, error) {
 			var arrOrders []*orders_types.Order
 			futuresOrders, err := client.NewListOrdersService().Symbol(orders.Symbol()).Do(context.Background())
@@ -228,8 +228,8 @@ func GetAllOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) f
 	}
 }
 
-func GetOrderCreator(client *binance.Client) func(pp *orders_types.Orders) func(orderID int64) (*orders_types.Order, error) {
-	return func(orders *orders_types.Orders) func(orderID int64) (*orders_types.Order, error) {
+func GetOrderCreator(client *binance.Client) func(pp *orders_types.Orders) orders_types.GetOrderFunction {
+	return func(orders *orders_types.Orders) orders_types.GetOrderFunction {
 		return func(orderID int64) (*orders_types.Order, error) {
 			futuresOrder, err := client.NewGetOrderService().Symbol(orders.Symbol()).OrderID(orderID).Do(context.Background())
 			if err != nil {
@@ -240,8 +240,8 @@ func GetOrderCreator(client *binance.Client) func(pp *orders_types.Orders) func(
 	}
 }
 
-func CancelOrderCreator(client *binance.Client) func(pp *orders_types.Orders) func(orderID int64) (*orders_types.CancelOrderResponse, error) {
-	return func(orders *orders_types.Orders) func(orderID int64) (*orders_types.CancelOrderResponse, error) {
+func CancelOrderCreator(client *binance.Client) func(pp *orders_types.Orders) orders_types.CancelOrderFunction {
+	return func(orders *orders_types.Orders) orders_types.CancelOrderFunction {
 		return func(orderID int64) (*orders_types.CancelOrderResponse, error) {
 			response, err := client.NewCancelOrderService().Symbol(orders.Symbol()).OrderID(orderID).Do(context.Background())
 			if err != nil {
@@ -274,8 +274,8 @@ func CancelOrderCreator(client *binance.Client) func(pp *orders_types.Orders) fu
 	}
 }
 
-func CancelAllOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) func() error {
-	return func(orders *orders_types.Orders) func() error {
+func CancelAllOrdersCreator(client *binance.Client) func(pp *orders_types.Orders) orders_types.CancelAllOrdersFunction {
+	return func(orders *orders_types.Orders) orders_types.CancelAllOrdersFunction {
 		return func() (err error) {
 			_, err = client.NewCancelOpenOrdersService().Symbol(orders.Symbol()).Do(context.Background())
 			return

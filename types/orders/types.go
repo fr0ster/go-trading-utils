@@ -92,17 +92,22 @@ type (
 		stopPrice items_types.PriceType,
 		activationPrice items_types.PriceType,
 		callbackRate items_types.PricePercentType) (CreateOrderResponse, error)
-	Orders struct {
+	OpenOrderFunction       func() ([]*Order, error)
+	AllOrdersFunction       func() ([]*Order, error)
+	GetOrderFunction        func(orderID int64) (*Order, error)
+	CancelOrderFunction     func(orderID int64) (*CancelOrderResponse, error)
+	CancelAllOrdersFunction func() (err error)
+	Orders                  struct {
 		symbol              string
 		stop                chan struct{}
 		resetEvent          chan error
 		timeOut             time.Duration
 		startUserDataStream types.StreamFunction
 		CreateOrder         CreateOrderFunction
-		GetOpenOrders       func() ([]*Order, error)
-		GetAllOrders        func() ([]*Order, error)
-		GetOrder            func(orderID int64) (*Order, error)
-		CancelOrder         func(orderID int64) (*CancelOrderResponse, error)
-		CancelAllOrders     func() (err error)
+		GetOpenOrders       OpenOrderFunction
+		GetAllOrders        AllOrdersFunction
+		GetOrder            GetOrderFunction
+		CancelOrder         CancelOrderFunction
+		CancelAllOrders     CancelAllOrdersFunction
 	}
 )

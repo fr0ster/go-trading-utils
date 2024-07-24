@@ -14,31 +14,31 @@ func (o *Orders) SetOrderCreator(createOrderCreator func(*Orders) CreateOrderFun
 	}
 }
 
-func (o *Orders) SetGetOpenOrders(getOpenOrders func(*Orders) func() ([]*Order, error)) {
+func (o *Orders) SetGetOpenOrders(getOpenOrders func(*Orders) OpenOrderFunction) {
 	if getOpenOrders != nil {
 		o.GetOpenOrders = getOpenOrders(o)
 	}
 }
 
-func (o *Orders) SetGetAllOrders(getAllOrders func(*Orders) func() ([]*Order, error)) {
+func (o *Orders) SetGetAllOrders(getAllOrders func(*Orders) AllOrdersFunction) {
 	if getAllOrders != nil {
 		o.GetAllOrders = getAllOrders(o)
 	}
 }
 
-func (o *Orders) SetGetOrder(getOrder func(*Orders) func(orderID int64) (*Order, error)) {
+func (o *Orders) SetGetOrder(getOrder func(*Orders) GetOrderFunction) {
 	if getOrder != nil {
 		o.GetOrder = getOrder(o)
 	}
 }
 
-func (o *Orders) SetCancelOrder(cancelOrder func(*Orders) func(orderID int64) (*CancelOrderResponse, error)) {
+func (o *Orders) SetCancelOrder(cancelOrder func(*Orders) CancelOrderFunction) {
 	if cancelOrder != nil {
 		o.CancelOrder = cancelOrder(o)
 	}
 }
 
-func (o *Orders) SetCancelAllOrders(cancelAllOrders func(*Orders) func() (err error)) {
+func (o *Orders) SetCancelAllOrders(cancelAllOrders func(*Orders) CancelAllOrdersFunction) {
 	if cancelAllOrders != nil {
 		o.CancelAllOrders = cancelAllOrders(o)
 	}
