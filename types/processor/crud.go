@@ -24,8 +24,20 @@ func (pp *Processor) GetOrders() *orders_types.Orders {
 	return pp.orders
 }
 
+func (pp *Processor) SetOrders(orders *orders_types.Orders) {
+	if pp.orders != nil {
+		pp.orders.UserDataEventStop()
+		pp.orders = nil
+	}
+	pp.orders = orders
+}
+
 func (pp *Processor) GetExchangeInfo() *exchange_types.ExchangeInfo {
 	return pp.exchangeInfo
+}
+
+func (pp *Processor) SetExchangeInfo(exchangeInfo *exchange_types.ExchangeInfo) {
+	pp.exchangeInfo = exchangeInfo
 }
 
 func (pp *Processor) GetSymbol() string {
@@ -79,14 +91,6 @@ func (pp *Processor) GetCallbackRate() items_types.PricePercentType {
 		return 0
 	}
 	return pp.getCallbackRate()
-}
-
-func (pp *Processor) GetDepth() *depth_types.Depths {
-	return pp.depths
-}
-
-func (pp *Processor) GetOrder() *orders_types.Orders {
-	return pp.orders
 }
 
 func (pp *Processor) GetBaseBalance() items_types.ValueType {
