@@ -7,16 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/sirupsen/logrus"
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
-	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
-	pairs_types "github.com/fr0ster/go-trading-utils/types/pairs"
 )
 
 func New(
@@ -26,19 +23,27 @@ func New(
 	depths *depth_types.Depths,
 	orders *orders_types.Orders,
 
-	getBaseBalance func() items_types.ValueType,
-	getTargetBalance func() items_types.ValueType,
-	getFreeBalance func() items_types.ValueType,
-	getLockedBalance func() items_types.ValueType,
-	getCurrentPrice func() items_types.PriceType,
+	getBaseBalance GetBaseBalanceFunction,
+	getTargetBalance GetTargetBalanceFunction,
+	getFreeBalance GetFreeBalanceFunction,
+	getLockedBalance GetLockedBalanceFunction,
+	getCurrentPrice GetCurrentPriceFunction,
 
-	// getSymbolInfo func(*Processor) func() *symbol_types.SymbolInfo,
-	getPositionRisk func() *futures.PositionRisk,
-	setLeverage func(*Processor) func(int) (*futures.SymbolLeverage, error),
-	setMarginType func(*Processor) func(pairs_types.MarginType) error,
-	setPositionMargin func(*Processor) func(items_types.ValueType, int) error,
+	getPositionRisk func(*Processor) GetPositionRiskFunction,
+	setLeverage func(*Processor) SetLeverageFunction,
+	setMarginType func(*Processor) SetMarginTypeFunction,
+	setPositionMargin func(*Processor) SetPositionMarginFunction,
 
-	closePosition func(*Processor) func(*futures.PositionRisk) error,
+	closePosition func(*Processor) ClosePositionFunction,
+
+	getDeltaPrice GetDeltaPriceFunction,
+	getDeltaQuantity GetDeltaQuantityFunction,
+	getLimitOnPosition GetLimitOnPositionFunction,
+	getLimitOnTransaction GetLimitOnTransactionFunction,
+	getUpAndLowBound GetUpAndLowBoundFunction,
+
+	getCallbackRate GetCallbackRateFunction,
+
 	debug ...bool) (pp *Processor, err error) {
 	pp = &Processor{
 		exchangeInfo: exchangeInfo,
@@ -67,12 +72,8 @@ func New(
 	if getCurrentPrice != nil {
 		pp.getCurrentPrice = getCurrentPrice
 	}
-	// if getSymbolInfo != nil {
-	// 	pp.getSymbolInfo = getSymbolInfo(pp)
-	// 	pp.symbolInfo = pp.getSymbolInfo()
-	// }
 	if getPositionRisk != nil {
-		pp.getPositionRisk = getPositionRisk
+		pp.getPositionRisk = getPositionRisk(pp)
 	}
 	if setLeverage != nil {
 		pp.setLeverage = setLeverage(pp)
@@ -86,10 +87,26 @@ func New(
 	if closePosition != nil {
 		pp.closePosition = closePosition(pp)
 	}
+	if getDeltaPrice != nil {
+		pp.getDeltaPrice = getDeltaPrice
+	}
+	if getDeltaQuantity != nil {
+		pp.getDeltaQuantity = getDeltaQuantity
+	}
+	if getLimitOnTransaction != nil {
+		pp.getLimitOnTransaction = getLimitOnTransaction
+	}
+	if getUpAndLowBound != nil {
+		pp.getUpAndLowBound = getUpAndLowBound
+	}
+	if getCallbackRate != nil {
+		pp.getCallbackRate = getCallbackRate
+	}
+
 	if len(debug) == 0 || (len(debug) > 0 && !debug[0]) {
 		if pp.setLeverage != nil {
-			res, _ := pp.SetLeverage(pp.GetLeverage())
-			if res.Leverage != pp.GetLeverage() {
+			leverage, _, _, _ := pp.SetLeverage(pp.GetLeverage())
+			if leverage != pp.GetLeverage() {
 				err = fmt.Errorf("leverage %v is not supported", pp.GetLeverage())
 				err = ParseError(err)
 				return

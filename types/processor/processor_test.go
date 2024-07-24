@@ -137,6 +137,12 @@ func TestNewSpot(t *testing.T) {
 		nil,  // setMarginType
 		nil,  // setPositionMargin
 		nil,  // closePosition
+		nil,  // getDeltaPrice
+		nil,  // getDeltaQuantity
+		nil,  // getLimitOnPosition
+		nil,  // getLimitOnTransaction
+		nil,  // getUpAndLowBound
+		nil,  // getCallbackRate
 		true, // debug
 	)
 	assert.Nil(t, err)
@@ -184,8 +190,9 @@ func TestNewFutures(t *testing.T) {
 		}
 	}
 	exchangeInfo := exchange_types.New(init)
-	closePosition := func(pp *processor.Processor) func(risk *futures.PositionRisk) error {
-		return func(risk *futures.PositionRisk) (err error) {
+	closePosition := func(pp *processor.Processor) processor.ClosePositionFunction {
+		return func() (err error) {
+			risk := pp.GetPositionRisk()
 			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 				_, err = pp.GetOrders().CreateOrder(
 					orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
@@ -210,7 +217,7 @@ func TestNewFutures(t *testing.T) {
 		nil,          // orders
 		func() items_types.ValueType { return 10000 }, // getBaseBalance
 		func() items_types.ValueType { return 10000 }, // getTargetBalance
-		func() items_types.ValueType { return 10000 }, // getFreeBalance
+		func() items_types.ValueType { return 1000 },  // getFreeBalance
 		func() items_types.ValueType { return 10000 }, // getLockedBalance
 		func() items_types.PriceType { return 67000 }, // getCurrentPrice
 		nil,           // getPositionRisk
@@ -218,6 +225,12 @@ func TestNewFutures(t *testing.T) {
 		nil,           // setMarginType
 		nil,           // setPositionMargin
 		closePosition, // closePosition
+		nil,           // getDeltaPrice
+		nil,           // getDeltaQuantity
+		nil,           // getLimitOnPosition
+		nil,           // getLimitOnTransaction
+		nil,           // getUpAndLowBound
+		nil,           // getCallbackRate
 		true,          // debug
 	)
 	assert.Nil(t, err)

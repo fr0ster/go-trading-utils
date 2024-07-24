@@ -23,6 +23,12 @@ func New(
 	client *futures.Client,
 	degree int,
 	symbol string,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	UpAndLowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
+	callbackRate items_types.PricePercentType,
 	depthAPILimit depth_types.DepthAPILimit,
 	depthStreamLevel depth_types.DepthStreamLevel,
 	depthStreamRate depth_types.DepthStreamRate,
@@ -108,25 +114,31 @@ func New(
 			}
 			return items_types.PriceType(utils.ConvStrToFloat64(price[0].Price))
 		}, // getCurrentPrice
-		func() *futures.PositionRisk {
-			risks, err := client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
-			if err == nil {
-				return risks[0]
+		func(*processor_types.Processor) processor_types.GetPositionRiskFunction {
+			return func() *futures.PositionRisk {
+				risks, err := client.NewGetPositionRiskService().Symbol(symbol).Do(context.Background())
+				if err == nil {
+					return risks[0]
+				}
+				return nil
 			}
-			return nil
 		}, // getPositionRisk
-		func(p *processor_types.Processor) func(int) (*futures.SymbolLeverage, error) {
-			return func(leverage int) (*futures.SymbolLeverage, error) {
-				res, err := client.NewChangeLeverageService().Symbol(symbol).Leverage(leverage).Do(context.Background())
-				return res, err
+		func(p *processor_types.Processor) processor_types.SetLeverageFunction {
+			return func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error) {
+				var res *futures.SymbolLeverage
+				res, err = client.NewChangeLeverageService().Symbol(symbol).Leverage(leverage).Do(context.Background())
+				Leverage = res.Leverage
+				MaxNotionalValue = res.MaxNotionalValue
+				Symbol = res.Symbol
+				return
 			}
 		}, // setLeverage
-		func(p *processor_types.Processor) func(pairs_types.MarginType) error {
+		func(p *processor_types.Processor) processor_types.SetMarginTypeFunction {
 			return func(marginType pairs_types.MarginType) error {
 				return client.NewChangeMarginTypeService().Symbol(symbol).MarginType(futures.MarginType(marginType)).Do(context.Background())
 			}
 		}, // setMarginType
-		func(p *processor_types.Processor) func(items_types.ValueType, int) error {
+		func(p *processor_types.Processor) processor_types.SetPositionMarginFunction {
 			return func(amountMargin items_types.ValueType, typeMargin int) error {
 				return client.
 					NewUpdatePositionMarginService().
@@ -136,8 +148,9 @@ func New(
 					Do(context.Background())
 			}
 		}, // setPositionMargin
-		func(p *processor_types.Processor) func(*futures.PositionRisk) error {
-			return func(risk *futures.PositionRisk) (err error) {
+		func(p *processor_types.Processor) processor_types.ClosePositionFunction {
+			return func() (err error) {
+				risk := p.GetPositionRisk()
 				if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 					_, err = p.GetOrders().CreateOrder(
 						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
@@ -154,6 +167,24 @@ func New(
 				return
 			}
 		}, // closePosition
+		func() items_types.PricePercentType {
+			return deltaPrice
+		}, // getDeltaPrice
+		func() items_types.QuantityPercentType {
+			return deltaQuantity
+		}, // getDeltaQuantity
+		func() items_types.ValueType {
+			return limitOnPosition
+		}, // getLimitOnPosition
+		func() items_types.ValuePercentType {
+			return limitOnTransaction
+		}, // getLimitOnTransaction
+		func() items_types.PricePercentType {
+			return UpAndLowBound
+		}, // getUpAndLowBound
+		func() items_types.PricePercentType {
+			return callbackRate
+		}, // getCallbackRate
 		debug)
 	if err != nil {
 		logrus.Errorf("Can't init pair: %v", err)

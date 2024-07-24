@@ -13,7 +13,32 @@ import (
 )
 
 type (
-	Processor struct {
+	GetBaseBalanceFunction   func() items_types.ValueType
+	GetTargetBalanceFunction func() items_types.ValueType
+	GetFreeBalanceFunction   func() items_types.ValueType
+	GetLockedBalanceFunction func() items_types.ValueType
+	GetCurrentPriceFunction  func() items_types.PriceType
+
+	GetPositionRiskFunction func() *futures.PositionRisk
+
+	SetLeverageFunction       func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error)
+	GetLeverageFunction       func() int
+	SetMarginTypeFunction     func(pairs_types.MarginType) error
+	GetMarginTypeFunction     func() pairs_types.MarginType
+	SetPositionMarginFunction func(items_types.ValueType, int) error
+
+	ClosePositionFunction func() (err error)
+
+	GetDeltaPriceFunction    func() items_types.PricePercentType
+	GetDeltaQuantityFunction func() items_types.QuantityPercentType
+
+	GetLimitOnPositionFunction    func() items_types.ValueType
+	GetLimitOnTransactionFunction func() items_types.ValuePercentType
+
+	GetUpAndLowBoundFunction func() items_types.PricePercentType
+
+	GetCallbackRateFunction func() items_types.PricePercentType
+	Processor               struct {
 		// Налаштування та обмеження, реалізація
 		orderTypes map[futures.OrderType]bool
 		degree     int
@@ -24,9 +49,6 @@ type (
 		// Дані про біржу
 		exchangeInfo *exchange_types.ExchangeInfo
 
-		// Дані про пару
-		// symbolInfo *symbol_types.SymbolInfo
-
 		// канал зупинки
 		stop chan struct{}
 
@@ -34,29 +56,29 @@ type (
 		depths *depth_types.Depths
 		orders *orders_types.Orders
 
-		getBaseBalance   func() items_types.ValueType
-		getTargetBalance func() items_types.ValueType
-		getFreeBalance   func() items_types.ValueType
-		getLockedBalance func() items_types.ValueType
-		getCurrentPrice  func() items_types.PriceType
+		getBaseBalance   GetBaseBalanceFunction
+		getTargetBalance GetTargetBalanceFunction
+		getFreeBalance   GetFreeBalanceFunction
+		getLockedBalance GetLockedBalanceFunction
+		getCurrentPrice  GetCurrentPriceFunction
 
-		getPositionRisk func() *futures.PositionRisk
+		getPositionRisk GetPositionRiskFunction
 
-		setLeverage func(leverage int) (*futures.SymbolLeverage, error)
-		getLeverage func() int
+		setLeverage SetLeverageFunction
+		getLeverage GetLeverageFunction
 
-		setMarginType func(pairs_types.MarginType) error
-		getMarginType func() pairs_types.MarginType
+		setMarginType SetMarginTypeFunction
+		getMarginType GetMarginTypeFunction
 
-		setPositionMargin func(items_types.ValueType, int) error
+		setPositionMargin SetPositionMarginFunction
 
-		getCallbackRate func() items_types.PricePercentType
+		closePosition ClosePositionFunction
 
-		closePosition func(*futures.PositionRisk) (err error)
+		getDeltaPrice         GetDeltaPriceFunction
+		getDeltaQuantity      GetDeltaQuantityFunction
+		getLimitOnTransaction GetLimitOnTransactionFunction
+		getUpAndLowBound      GetUpAndLowBoundFunction
 
-		getDeltaPrice         func() items_types.PriceType
-		getDeltaQuantity      func() items_types.QuantityType
-		getLimitOnTransaction func() items_types.ValueType
-		getUpAndLowBound      func() items_types.PricePercentType
+		getCallbackRate GetCallbackRateFunction
 	}
 )

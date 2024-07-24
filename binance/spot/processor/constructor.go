@@ -22,6 +22,12 @@ func New(
 	client *binance.Client,
 	degree int,
 	symbol string,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	UpAndLowBound items_types.PricePercentType,
+	deltaPrice items_types.PricePercentType,
+	deltaQuantity items_types.QuantityPercentType,
+	callbackRate items_types.PricePercentType,
 	depthAPILimit depth_types.DepthAPILimit,
 	debug bool,
 	quits ...chan struct{},
@@ -108,6 +114,24 @@ func New(
 		nil, // setMarginType
 		nil, // setPositionMargin
 		nil, // closePosition
+		func() items_types.PricePercentType {
+			return deltaPrice
+		}, // getDeltaPrice
+		func() items_types.QuantityPercentType {
+			return deltaQuantity
+		}, // getDeltaQuantity
+		func() items_types.ValueType {
+			return limitOnPosition
+		}, // getLimitOnPosition
+		func() items_types.ValuePercentType {
+			return limitOnTransaction
+		}, // getLimitOnTransaction
+		func() items_types.PricePercentType {
+			return UpAndLowBound
+		}, // getUpAndLowBound
+		func() items_types.PricePercentType {
+			return callbackRate
+		}, // getCallbackRate
 		debug)
 	if err != nil {
 		logrus.Errorf("Can't init pair: %v", err)

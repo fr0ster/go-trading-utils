@@ -4,14 +4,14 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 )
 
-func (pp *Processor) GetDeltaPrice() items_types.PriceType {
+func (pp *Processor) GetDeltaPrice() items_types.PricePercentType {
 	if pp.getDeltaPrice == nil {
 		return 0
 	}
 	return pp.getDeltaPrice()
 }
 
-func (pp *Processor) GetDeltaQuantity() items_types.QuantityType {
+func (pp *Processor) GetDeltaQuantity() items_types.QuantityPercentType {
 	if pp.getDeltaQuantity == nil {
 		return 0
 	}
@@ -22,7 +22,7 @@ func (pp *Processor) GetLimitOnTransaction() (limit items_types.ValueType) {
 	if pp.getLimitOnTransaction == nil {
 		return 0
 	}
-	return pp.getLimitOnTransaction() * pp.GetFreeBalance()
+	return items_types.ValueType(pp.getLimitOnTransaction()) * pp.GetFreeBalance()
 }
 
 func (pp *Processor) GetUpBound(price items_types.PriceType) items_types.PriceType {

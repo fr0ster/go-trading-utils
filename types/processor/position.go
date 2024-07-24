@@ -32,9 +32,10 @@ func (pp *Processor) GetLeverage() int {
 	return pp.getLeverage()
 }
 
-func (pp *Processor) SetLeverage(leverage int) (res *futures.SymbolLeverage, err error) {
+func (pp *Processor) SetLeverage(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error) {
 	if pp.setLeverage == nil {
-		return nil, fmt.Errorf("setLeverage is not set")
+		err = fmt.Errorf("setLeverage is not set")
+		return
 	}
 	return pp.setLeverage(leverage)
 }
@@ -71,11 +72,11 @@ func (pp *Processor) SetPositionMargin(amountMargin items_types.ValueType, typeM
 	return pp.setPositionMargin(amountMargin, typeMargin)
 }
 
-func (pp *Processor) ClosePosition(risk *futures.PositionRisk) (err error) {
+func (pp *Processor) ClosePosition() (err error) {
 	if pp.closePosition == nil {
 		return fmt.Errorf("closePosition is not set")
 	}
-	return pp.closePosition(risk)
+	return pp.closePosition()
 }
 
 func (pp *Processor) GetPositionAmt() (positionAmt float64) {
