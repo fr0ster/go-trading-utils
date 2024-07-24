@@ -68,7 +68,6 @@ func New(
 		futures_orders.CancelOrderCreator(client),     // cancelOrder
 		futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
 		quit)
-	account, _ := client.NewGetAccountService().Do(context.Background())
 	pairProcessor, err = processor_types.New(
 		quit,     // quit
 		symbol,   // pair
@@ -76,6 +75,7 @@ func New(
 		depths,   // depths
 		orders,   // orders
 		func() items_types.ValueType {
+			account, _ := client.NewGetAccountService().Do(context.Background())
 			for _, asset := range account.Assets {
 				if asset.Asset == string(exchange.GetSymbol(symbol).GetBaseSymbol()) {
 					return items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance))
@@ -84,6 +84,7 @@ func New(
 			return 0.0
 		}, // getBaseBalance
 		func() items_types.ValueType {
+			account, _ := client.NewGetAccountService().Do(context.Background())
 			for _, asset := range account.Assets {
 				if asset.Asset == string(exchange.GetSymbol(symbol).GetTargetSymbol()) {
 					return items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance))
@@ -92,6 +93,7 @@ func New(
 			return 0.0
 		}, // getTargetBalance
 		func() items_types.ValueType {
+			account, _ := client.NewGetAccountService().Do(context.Background())
 			for _, asset := range account.Assets {
 				if asset.Asset == string(exchange.GetSymbol(symbol).GetBaseSymbol()) {
 					return items_types.ValueType(utils.ConvStrToFloat64(asset.AvailableBalance))
@@ -100,6 +102,7 @@ func New(
 			return 0.0
 		}, // getFreeBalance
 		func() items_types.ValueType {
+			account, _ := client.NewGetAccountService().Do(context.Background())
 			for _, asset := range account.Assets {
 				if asset.Asset == string(exchange.GetSymbol(symbol).GetBaseSymbol()) {
 					return items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance) - utils.ConvStrToFloat64(asset.AvailableBalance))
