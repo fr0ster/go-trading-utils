@@ -8,83 +8,76 @@ import (
 )
 
 type (
-	OrderType           string
-	SideType            string
-	TimeInForceType     string
-	QuantityType        string
-	OrderStatusType     string
-	WorkingType         string
-	PositionSideType    string
 	CreateOrderResponse struct {
-		Symbol           string          `json:"symbol"`        //
-		OrderID          int64           `json:"orderId"`       //
-		ClientOrderID    string          `json:"clientOrderId"` //
-		Price            string          `json:"price"`         //
-		OrigQuantity     string          `json:"origQty"`       //
-		ExecutedQuantity string          `json:"executedQty"`   //
-		Status           OrderStatusType `json:"status"`        //
-		StopPrice        string          `json:"stopPrice"`     // please ignore when order type is TRAILING_STOP_MARKET
-		TimeInForce      TimeInForceType `json:"timeInForce"`   //
-		Type             OrderType       `json:"type"`          //
-		Side             SideType        `json:"side"`          //
-		UpdateTime       int64           `json:"updateTime"`    // update time
+		Symbol           string                `json:"symbol"`        //
+		OrderID          int64                 `json:"orderId"`       //
+		ClientOrderID    string                `json:"clientOrderId"` //
+		Price            string                `json:"price"`         //
+		OrigQuantity     string                `json:"origQty"`       //
+		ExecutedQuantity string                `json:"executedQty"`   //
+		Status           types.OrderStatusType `json:"status"`        //
+		StopPrice        string                `json:"stopPrice"`     // please ignore when order type is TRAILING_STOP_MARKET
+		TimeInForce      types.TimeInForceType `json:"timeInForce"`   //
+		Type             types.OrderType       `json:"type"`          //
+		Side             types.SideType        `json:"side"`          //
+		UpdateTime       int64                 `json:"updateTime"`    // update time
 	}
 	CancelOrderResponse struct {
-		ClientOrderID    string           `json:"clientOrderId"`
-		CumQuantity      string           `json:"cumQty"`
-		CumQuote         string           `json:"cumQuote"`
-		ExecutedQuantity string           `json:"executedQty"`
-		OrderID          int64            `json:"orderId"`
-		OrigQuantity     string           `json:"origQty"`
-		Price            string           `json:"price"`
-		ReduceOnly       bool             `json:"reduceOnly"`
-		Side             SideType         `json:"side"`
-		Status           OrderStatusType  `json:"status"`
-		StopPrice        string           `json:"stopPrice"`
-		Symbol           string           `json:"symbol"`
-		TimeInForce      TimeInForceType  `json:"timeInForce"`
-		Type             OrderType        `json:"type"`
-		UpdateTime       int64            `json:"updateTime"`
-		WorkingType      WorkingType      `json:"workingType"`
-		ActivatePrice    string           `json:"activatePrice"`
-		PriceRate        string           `json:"priceRate"`
-		OrigType         string           `json:"origType"`
-		PositionSide     PositionSideType `json:"positionSide"`
-		PriceProtect     bool             `json:"priceProtect"`
+		ClientOrderID    string                 `json:"clientOrderId"`
+		CumQuantity      string                 `json:"cumQty"`
+		CumQuote         string                 `json:"cumQuote"`
+		ExecutedQuantity string                 `json:"executedQty"`
+		OrderID          int64                  `json:"orderId"`
+		OrigQuantity     string                 `json:"origQty"`
+		Price            string                 `json:"price"`
+		ReduceOnly       bool                   `json:"reduceOnly"`
+		Side             types.SideType         `json:"side"`
+		Status           types.OrderStatusType  `json:"status"`
+		StopPrice        string                 `json:"stopPrice"`
+		Symbol           string                 `json:"symbol"`
+		TimeInForce      types.TimeInForceType  `json:"timeInForce"`
+		Type             types.OrderType        `json:"type"`
+		UpdateTime       int64                  `json:"updateTime"`
+		WorkingType      types.WorkingType      `json:"workingType"`
+		ActivatePrice    string                 `json:"activatePrice"`
+		PriceRate        string                 `json:"priceRate"`
+		OrigType         string                 `json:"origType"`
+		PositionSide     types.PositionSideType `json:"positionSide"`
+		PriceProtect     bool                   `json:"priceProtect"`
 	}
 	Order struct {
-		Symbol                  string           `json:"symbol"`
-		OrderID                 int64            `json:"orderId"`
-		ClientOrderID           string           `json:"clientOrderId"`
-		Price                   string           `json:"price"`
-		ReduceOnly              bool             `json:"reduceOnly"`
-		OrigQuantity            string           `json:"origQty"`
-		ExecutedQuantity        string           `json:"executedQty"`
-		CumQuantity             string           `json:"cumQty"`
-		CumQuote                string           `json:"cumQuote"`
-		Status                  OrderStatusType  `json:"status"`
-		TimeInForce             TimeInForceType  `json:"timeInForce"`
-		Type                    OrderType        `json:"type"`
-		Side                    SideType         `json:"side"`
-		StopPrice               string           `json:"stopPrice"`
-		Time                    int64            `json:"time"`
-		UpdateTime              int64            `json:"updateTime"`
-		WorkingType             WorkingType      `json:"workingType"`
-		ActivatePrice           string           `json:"activatePrice"`
-		PriceRate               string           `json:"priceRate"`
-		AvgPrice                string           `json:"avgPrice"`
-		OrigType                OrderType        `json:"origType"`
-		PositionSide            PositionSideType `json:"positionSide"`
-		PriceProtect            bool             `json:"priceProtect"`
-		ClosePosition           bool             `json:"closePosition"`
-		PriceMatch              string           `json:"priceMatch"`
-		SelfTradePreventionMode string           `json:"selfTradePreventionMode"`
-		GoodTillDate            int64            `json:"goodTillDate"`
+		Symbol                  string                 `json:"symbol"`
+		OrderID                 int64                  `json:"orderId"`
+		ClientOrderID           string                 `json:"clientOrderId"`
+		Price                   string                 `json:"price"`
+		ReduceOnly              bool                   `json:"reduceOnly"`
+		OrigQuantity            string                 `json:"origQty"`
+		ExecutedQuantity        string                 `json:"executedQty"`
+		CumQuantity             string                 `json:"cumQty"`
+		CumQuote                string                 `json:"cumQuote"`
+		Status                  types.OrderStatusType  `json:"status"`
+		TimeInForce             types.TimeInForceType  `json:"timeInForce"`
+		Type                    types.OrderType        `json:"type"`
+		Side                    types.SideType         `json:"side"`
+		StopPrice               string                 `json:"stopPrice"`
+		Time                    int64                  `json:"time"`
+		UpdateTime              int64                  `json:"updateTime"`
+		WorkingType             types.WorkingType      `json:"workingType"`
+		ActivatePrice           string                 `json:"activatePrice"`
+		PriceRate               string                 `json:"priceRate"`
+		AvgPrice                string                 `json:"avgPrice"`
+		OrigType                types.OrderType        `json:"origType"`
+		PositionSide            types.PositionSideType `json:"positionSide"`
+		PriceProtect            bool                   `json:"priceProtect"`
+		ClosePosition           bool                   `json:"closePosition"`
+		PriceMatch              string                 `json:"priceMatch"`
+		SelfTradePreventionMode string                 `json:"selfTradePreventionMode"`
+		GoodTillDate            int64                  `json:"goodTillDate"`
 	}
 	CreateOrderFunction func(
-		orderType OrderType,
-		sideType SideType,
-		timeInForce TimeInForceType,
+		orderType types.OrderType,
+		sideType types.SideType,
+		timeInForce types.TimeInForceType,
 		quantity items_types.QuantityType,
 		closePosition bool,
 		reduceOnly bool,

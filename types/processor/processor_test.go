@@ -13,7 +13,6 @@ import (
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	processor "github.com/fr0ster/go-trading-utils/types/processor"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	symbols_types "github.com/fr0ster/go-trading-utils/types/symbols"
@@ -199,15 +198,15 @@ func TestNewFutures(t *testing.T) {
 			if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
 				if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 					_, err = pp.GetOrders().CreateOrder(
-						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-						orders_types.SideType(futures.SideTypeBuy),
-						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						types.OrderType(futures.OrderTypeTakeProfitMarket),
+						types.SideType(futures.SideTypeBuy),
+						types.TimeInForceType(futures.TimeInForceTypeGTC),
 						0, true, false, 0, 0, 0, 0)
 				} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 					_, err = pp.GetOrders().CreateOrder(
-						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-						orders_types.SideType(futures.SideTypeSell),
-						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						types.OrderType(futures.OrderTypeTakeProfitMarket),
+						types.SideType(futures.SideTypeSell),
+						types.TimeInForceType(futures.TimeInForceTypeGTC),
 						0, true, false, 0, 0, 0, 0)
 				}
 			}

@@ -156,15 +156,15 @@ func New(
 				risk := p.GetPositionRisk()
 				if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 					_, err = p.GetOrders().CreateOrder(
-						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-						orders_types.SideType(futures.SideTypeBuy),
-						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						types.OrderType(futures.OrderTypeTakeProfitMarket),
+						types.SideType(futures.SideTypeBuy),
+						types.TimeInForceType(futures.TimeInForceTypeGTC),
 						0, true, false, 0, 0, 0, 0)
 				} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 					_, err = p.GetOrders().CreateOrder(
-						orders_types.OrderType(futures.OrderTypeTakeProfitMarket),
-						orders_types.SideType(futures.SideTypeBuy),
-						orders_types.TimeInForceType(futures.TimeInForceTypeGTC),
+						types.OrderType(futures.OrderTypeTakeProfitMarket),
+						types.SideType(futures.SideTypeBuy),
+						types.TimeInForceType(futures.TimeInForceTypeGTC),
 						0, true, false, 0, 0, 0, 0)
 				}
 				return

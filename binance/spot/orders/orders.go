@@ -5,6 +5,7 @@ import (
 
 	"github.com/adshao/go-binance/v2"
 
+	"github.com/fr0ster/go-trading-utils/types"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	utils "github.com/fr0ster/go-trading-utils/utils"
@@ -119,9 +120,9 @@ func CreateOrderCreator(
 	priceRound int) func(*orders_types.Orders) orders_types.CreateOrderFunction {
 	return func(o *orders_types.Orders) orders_types.CreateOrderFunction {
 		return func(
-			orderType orders_types.OrderType,
-			sideType orders_types.SideType,
-			timeInForce orders_types.TimeInForceType,
+			orderType types.OrderType,
+			sideType types.SideType,
+			timeInForce types.TimeInForceType,
 			quantity items_types.QuantityType,
 			closePosition bool,
 			reduceOnly bool,
@@ -139,11 +140,8 @@ func CreateOrderCreator(
 				binance.SideType(sideType),
 				binance.TimeInForceType(timeInForce),
 				quantity,
-				// closePosition,
-				// reduceOnly,
 				price,
 				stopPrice,
-				// activationPrice,
 				callbackRate)
 			response = &orders_types.CreateOrderResponse{
 				Symbol:           orders.Symbol,
@@ -152,12 +150,10 @@ func CreateOrderCreator(
 				Price:            orders.Price,
 				OrigQuantity:     orders.OrigQuantity,
 				ExecutedQuantity: orders.ExecutedQuantity,
-				Status:           orders_types.OrderStatusType(orders.Status),
-				// StopPrice:        orders.StopPrice,
-				TimeInForce: orders_types.TimeInForceType(orders.TimeInForce),
-				Type:        orders_types.OrderType(orders.Type),
-				Side:        orders_types.SideType(orders.Side),
-				// UpdateTime:       orders.UpdateTime,
+				Status:           types.OrderStatusType(orders.Status),
+				TimeInForce:      types.TimeInForceType(orders.TimeInForce),
+				Type:             types.OrderType(orders.Type),
+				Side:             types.SideType(orders.Side),
 			}
 			return response, err
 		}
@@ -175,24 +171,13 @@ func futures2orders(input *binance.Order) *orders_types.Order {
 		ExecutedQuantity: input.ExecutedQuantity,
 		CumQuantity:      input.CummulativeQuoteQuantity,
 		CumQuote:         input.CummulativeQuoteQuantity,
-		Status:           orders_types.OrderStatusType(input.Status),
-		TimeInForce:      orders_types.TimeInForceType(input.TimeInForce),
-		Type:             orders_types.OrderType(input.Type),
-		Side:             orders_types.SideType(input.Side),
+		Status:           types.OrderStatusType(input.Status),
+		TimeInForce:      types.TimeInForceType(input.TimeInForce),
+		Type:             types.OrderType(input.Type),
+		Side:             types.SideType(input.Side),
 		StopPrice:        input.StopPrice,
 		Time:             input.Time,
 		UpdateTime:       input.UpdateTime,
-		// WorkingType:             orders_types.WorkingType(input.WorkingType),
-		// ActivatePrice:           input.ActivatePrice,
-		// PriceRate:               input.PriceRate,
-		// AvgPrice:                input.AvgPrice,
-		// OrigType:                orders_types.OrderType(input.OrigType),
-		// PositionSide:            orders_types.PositionSideType(input.PositionSide),
-		// PriceProtect:            input.PriceProtect,
-		// ClosePosition:           input.ClosePosition,
-		// PriceMatch:              input.PriceMatch,
-		// SelfTradePreventionMode: input.SelfTradePreventionMode,
-		// GoodTillDate:            input.GoodTillDate,
 	}
 }
 
@@ -255,20 +240,11 @@ func CancelOrderCreator(client *binance.Client) func(pp *orders_types.Orders) or
 				OrderID:          response.OrderID,
 				OrigQuantity:     response.OrigQuantity,
 				Price:            response.Price,
-				// ReduceOnly:       response.ReduceOnly,
-				Side:   orders_types.SideType(response.Side),
-				Status: orders_types.OrderStatusType(response.Status),
-				// StopPrice:        response.StopPrice,
-				Symbol:      response.Symbol,
-				TimeInForce: orders_types.TimeInForceType(response.TimeInForce),
-				Type:        orders_types.OrderType(response.Type),
-				// UpdateTime:       response.UpdateTime,
-				// WorkingType:      orders_types.WorkingType(response.WorkingType),
-				// ActivatePrice:    response.ActivatePrice,
-				// PriceRate:        response.PriceRate,
-				// OrigType:         response.OrigType,
-				// PositionSide:     orders_types.PositionSideType(response.PositionSide),
-				// PriceProtect:     response.PriceProtect,
+				Side:             types.SideType(response.Side),
+				Status:           types.OrderStatusType(response.Status),
+				Symbol:           response.Symbol,
+				TimeInForce:      types.TimeInForceType(response.TimeInForce),
+				Type:             types.OrderType(response.Type),
 			}, nil
 		}
 	}
