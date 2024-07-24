@@ -43,11 +43,18 @@ func CallBackCreator(
 	}
 }
 
-func WsErrorHandlerCreator() func(d *orders_types.Orders) binance.ErrHandler {
+func WsErrorHandlerCreator(handlers ...func(*orders_types.Orders) binance.ErrHandler) func(*orders_types.Orders) binance.ErrHandler {
 	return func(o *orders_types.Orders) binance.ErrHandler {
+		var stack []binance.ErrHandler
+		for _, handler := range handlers {
+			stack = append(stack, handler(o))
+		}
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot wsErrorHandler error: %v", err)
 			o.ResetEvent(err)
+			for _, handler := range stack {
+				handler(err)
+			}
 		}
 	}
 }

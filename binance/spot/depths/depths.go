@@ -165,11 +165,18 @@ func PartialDepthCallBackCreator(
 	}
 }
 
-func WsErrorHandlerCreator() func(*depths_types.Depths) binance.ErrHandler {
+func WsErrorHandlerCreator(handlers ...func(d *depths_types.Depths) binance.ErrHandler) func(*depths_types.Depths) binance.ErrHandler {
 	return func(d *depths_types.Depths) binance.ErrHandler {
+		var stack []binance.ErrHandler
+		for _, handler := range handlers {
+			stack = append(stack, handler(d))
+		}
 		return func(err error) {
 			logrus.Errorf("Spot wsErrorHandler error: %v", err)
 			d.ResetEvent(err)
+			for _, handler := range stack {
+				handler(err)
+			}
 		}
 	}
 }

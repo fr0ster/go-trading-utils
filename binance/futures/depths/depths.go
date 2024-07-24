@@ -103,11 +103,18 @@ func CallBackCreator(
 	}
 }
 
-func WsErrorHandlerCreator() func(d *depth_types.Depths) futures.ErrHandler {
+func WsErrorHandlerCreator(handlers ...func(*depth_types.Depths) futures.ErrHandler) func(*depth_types.Depths) futures.ErrHandler {
 	return func(d *depth_types.Depths) futures.ErrHandler {
+		var stack []futures.ErrHandler
+		for _, handler := range handlers {
+			stack = append(stack, handler(d))
+		}
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot wsErrorHandler error: %v", err)
 			d.ResetEvent(err)
+			for _, handler := range stack {
+				handler(err)
+			}
 		}
 	}
 }

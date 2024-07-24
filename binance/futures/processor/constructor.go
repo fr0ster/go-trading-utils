@@ -33,7 +33,9 @@ func New(
 	depthStreamLevel depth_types.DepthStreamLevel,
 	depthStreamRate depth_types.DepthStreamRate,
 	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) futures.WsUserDataHandler,
+	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) futures.ErrHandler,
 	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) futures.WsDepthHandler,
+	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) futures.ErrHandler,
 	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
@@ -57,7 +59,7 @@ func New(
 					depthStreamLevel,
 					depthStreamRate,
 					futures_depth.CallBackCreator(depthsCallBack(p)),
-					futures_depth.WsErrorHandlerCreator()),
+					futures_depth.WsErrorHandlerCreator(depthsErrHandler(p))),
 				futures_depth.InitCreator(depthAPILimit, client))
 		}, // depthsCreator
 		func(p *processor_types.Processor) *orders_types.Orders {
@@ -66,7 +68,7 @@ func New(
 				futures_orders.UserDataStreamCreator(
 					client,
 					futures_orders.CallBackCreator(ordersCallBack(p)),
-					futures_orders.WsErrorHandlerCreator()), // userDataStream
+					futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))), // userDataStream
 				futures_orders.CreateOrderCreator(
 					client,
 					int(float64(symbolInfo.GetStepSize())),
