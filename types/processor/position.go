@@ -86,32 +86,7 @@ func (pp *Processor) GetPositionAmt() (positionAmt items_types.QuantityType) {
 	return
 }
 
-func (pp *Processor) GetPredictableProfitOrLoss(positionAmt items_types.QuantityType, price items_types.PriceType) (unRealizedProfit items_types.ValueType) {
-	if positionAmt == 0 { // No position
-		return 0
-	} else if positionAmt < 0 { // Short position
-		unRealizedProfit = items_types.ValueType(float64(pp.GetUpBound(price)-price) * float64(positionAmt))
-	} else if positionAmt > 0 { // Long position
-		unRealizedProfit = items_types.ValueType(float64(price-pp.GetLowBound(price)) * float64(positionAmt))
-	}
+func (pp *Processor) GetPredictableProfitOrLoss(positionAmt items_types.QuantityType, firstPrice, secondPrice items_types.PriceType) (unRealizedProfit items_types.ValueType) {
+	unRealizedProfit = items_types.ValueType(math.Abs(float64(secondPrice-firstPrice))) * items_types.ValueType(positionAmt)
 	return
-}
-
-func (pp *Processor) CheckPosition(positionAmt items_types.QuantityType, liquidationPrice, price items_types.PriceType) bool {
-	if positionAmt == 0 { // No position
-		return true
-	} else {
-		profitOrLoss := pp.GetPredictableProfitOrLoss(positionAmt, price)
-		free := pp.getLimitOnPosition()
-		if positionAmt < 0 { // Short position
-			upBound := pp.GetUpBound(price)
-			return liquidationPrice > upBound &&
-				profitOrLoss > -free
-		} else if positionAmt > 0 { // Long position
-			lowBound := pp.GetLowBound(price)
-			return liquidationPrice < lowBound &&
-				profitOrLoss > -free
-		}
-	}
-	return false
 }
