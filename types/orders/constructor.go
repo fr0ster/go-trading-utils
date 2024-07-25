@@ -42,5 +42,6 @@ func New(
 	this.SetGetAllOrders(allOrdersCreator)
 	this.SetGetOrder(getOrderCreator)
 	this.SetCancelOrder(cancelOrderCreator)
+	this.SetCancelAllOrders(cancelAllOrdersCreator)
 	return
 }
