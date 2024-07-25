@@ -135,8 +135,13 @@ func getSpotProcessor(
 		func() items_types.ValueType { return 10000 }, // getLockedBalance
 		func() items_types.PriceType { return 67000 }, // getCurrentPrice
 		nil, // getPositionRisk func(*Processor) GetPositionRiskFunction,
+
+		nil, // getLeverage func(*Processor) GetLeverageFunction,
 		nil, // setLeverage func(*Processor) SetLeverageFunction,
+
+		nil, // getMarginType func(*Processor) GetMarginTypeFunction,
 		nil, // setMarginType func(*Processor) SetMarginTypeFunction,
+
 		nil, // setPositionMargin func(*Processor) SetPositionMarginFunction,
 
 		nil, // closePosition func(*Processor) ClosePositionFunction,
@@ -236,7 +241,9 @@ func getFuturesProcessor(
 		func() items_types.ValueType { return 10000 }, // getLockedBalance
 		func() items_types.PriceType { return 67000 }, // getCurrentPrice
 		nil,           // getPositionRisk
+		nil,           // getLeverage
 		nil,           // setLeverage
+		nil,           // getMarginType
 		nil,           // setMarginType
 		nil,           // setPositionMargin
 		closePosition, // closePosition

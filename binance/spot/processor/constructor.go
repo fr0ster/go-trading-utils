@@ -151,7 +151,9 @@ func New(
 			return items_types.PriceType(utils.ConvStrToFloat64(price[0].Price))
 		}, // getCurrentPrice
 		nil, // getPositionRisk
+		nil, // getLeverage
 		nil, // setLeverage
+		nil, // getMarginType
 		nil, // setMarginType
 		nil, // setPositionMargin
 		nil, // closePosition

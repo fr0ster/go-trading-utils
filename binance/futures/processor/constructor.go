@@ -28,6 +28,8 @@ func New(
 	UpAndLowBound items_types.PricePercentType,
 	deltaPrice items_types.PricePercentType,
 	deltaQuantity items_types.QuantityPercentType,
+	leverage int,
+	marginType types.MarginType,
 	callbackRate items_types.PricePercentType,
 	depthAPILimit depth_types.DepthAPILimit,
 	depthStreamLevel depth_types.DepthStreamLevel,
@@ -164,6 +166,11 @@ func New(
 				return nil
 			}
 		}, // getPositionRisk
+		func(p *processor_types.Processor) processor_types.GetLeverageFunction {
+			return func() int {
+				return leverage
+			}
+		}, // getLeverage
 		func(p *processor_types.Processor) processor_types.SetLeverageFunction {
 			return func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error) {
 				var res *futures.SymbolLeverage
@@ -174,6 +181,11 @@ func New(
 				return
 			}
 		}, // setLeverage
+		func(p *processor_types.Processor) processor_types.GetMarginTypeFunction {
+			return func() types.MarginType {
+				return marginType
+			}
+		}, // getMarginType
 		func(p *processor_types.Processor) processor_types.SetMarginTypeFunction {
 			return func(marginType types.MarginType) error {
 				return client.NewChangeMarginTypeService().Symbol(symbol).MarginType(futures.MarginType(marginType)).Do(context.Background())

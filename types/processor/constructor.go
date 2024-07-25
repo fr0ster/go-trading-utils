@@ -28,8 +28,12 @@ func New(
 	getCurrentPrice GetCurrentPriceFunction,
 
 	getPositionRisk func(*Processor) GetPositionRiskFunction,
+	getLeverage func(*Processor) GetLeverageFunction,
 	setLeverage func(*Processor) SetLeverageFunction,
+
+	getMarginType func(*Processor) GetMarginTypeFunction,
 	setMarginType func(*Processor) SetMarginTypeFunction,
+
 	setPositionMargin func(*Processor) SetPositionMarginFunction,
 
 	closePosition func(*Processor) ClosePositionFunction,
@@ -74,12 +78,21 @@ func New(
 	if getPositionRisk != nil {
 		pp.getPositionRisk = getPositionRisk(pp)
 	}
+	// Leverage
+	if getLeverage != nil {
+		pp.getLeverage = getLeverage(pp)
+	}
 	if setLeverage != nil {
 		pp.setLeverage = setLeverage(pp)
+	}
+	// MarginType
+	if getMarginType != nil {
+		pp.getMarginType = getMarginType(pp)
 	}
 	if setMarginType != nil {
 		pp.setMarginType = setMarginType(pp)
 	}
+	// PositionMargin
 	if setPositionMargin != nil {
 		pp.setPositionMargin = setPositionMargin(pp)
 	}

@@ -24,10 +24,11 @@ type (
 
 	GetPositionRiskFunction func() *futures.PositionRisk
 
-	SetLeverageFunction       func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error)
-	GetLeverageFunction       func() int
-	SetMarginTypeFunction     func(types.MarginType) error
+	SetLeverageFunction func(leverage int) (Leverage int, MaxNotionalValue string, Symbol string, err error)
+	GetLeverageFunction func() int
+
 	GetMarginTypeFunction     func() types.MarginType
+	SetMarginTypeFunction     func(types.MarginType) error
 	SetPositionMarginFunction func(items_types.ValueType, int) error
 
 	ClosePositionFunction func() (err error)
@@ -67,8 +68,8 @@ type (
 
 		getPositionRisk GetPositionRiskFunction
 
-		setLeverage SetLeverageFunction
 		getLeverage GetLeverageFunction
+		setLeverage SetLeverageFunction
 
 		setMarginType SetMarginTypeFunction
 		getMarginType GetMarginTypeFunction
