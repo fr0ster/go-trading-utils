@@ -36,6 +36,13 @@ func (pp *Processor) GetLimitOnTransaction() (limit items_types.ValueType) {
 	return items_types.ValueType(pp.getLimitOnTransaction()/100) * pp.GetLimitOnPosition()
 }
 
+func (pp *Processor) GetUpAndLowBound() items_types.PricePercentType {
+	if pp.getUpAndLowBound == nil {
+		return 0
+	}
+	return pp.getUpAndLowBound()
+}
+
 func (pp *Processor) GetUpBound(price items_types.PriceType) items_types.PriceType {
 	if pp.getUpAndLowBound == nil {
 		return price
