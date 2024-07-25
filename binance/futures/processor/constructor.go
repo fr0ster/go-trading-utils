@@ -310,7 +310,7 @@ func closePosition() func(p *processor_types.Processor) processor_types.ClosePos
 			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
 				_, err = p.GetOrders().CreateOrder(
 					types.OrderType(futures.OrderTypeTakeProfitMarket),
-					types.SideType(futures.SideTypeBuy),
+					types.SideType(futures.SideTypeSell),
 					types.TimeInForceType(futures.TimeInForceTypeGTC),
 					0, true, false, 0, 0, 0, 0)
 			}
