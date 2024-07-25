@@ -145,19 +145,21 @@ func CreateOrderCreator(
 				stopPrice,
 				activationPrice,
 				callbackRate)
-			response = &orders_types.CreateOrderResponse{
-				Symbol:           orders.Symbol,
-				OrderID:          orders.OrderID,
-				ClientOrderID:    orders.ClientOrderID,
-				Price:            orders.Price,
-				OrigQuantity:     orders.OrigQuantity,
-				ExecutedQuantity: orders.ExecutedQuantity,
-				Status:           types.OrderStatusType(orders.Status),
-				StopPrice:        orders.StopPrice,
-				TimeInForce:      types.TimeInForceType(orders.TimeInForce),
-				Type:             types.OrderType(orders.Type),
-				Side:             types.SideType(orders.Side),
-				UpdateTime:       orders.UpdateTime,
+			if err == nil {
+				response = &orders_types.CreateOrderResponse{
+					Symbol:           orders.Symbol,
+					OrderID:          orders.OrderID,
+					ClientOrderID:    orders.ClientOrderID,
+					Price:            orders.Price,
+					OrigQuantity:     orders.OrigQuantity,
+					ExecutedQuantity: orders.ExecutedQuantity,
+					Status:           types.OrderStatusType(orders.Status),
+					StopPrice:        orders.StopPrice,
+					TimeInForce:      types.TimeInForceType(orders.TimeInForce),
+					Type:             types.OrderType(orders.Type),
+					Side:             types.SideType(orders.Side),
+					UpdateTime:       orders.UpdateTime,
+				}
 			}
 			return response, err
 		}
