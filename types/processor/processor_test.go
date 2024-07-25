@@ -90,22 +90,25 @@ func TestGetLimitPrices(t *testing.T) {
 	assert.Equal(t, items_types.ValueType(9000), bidMax.GetValue())
 }
 
-func TestNewSpot(t *testing.T) {
+func getSpotProcessor(
+	notional items_types.ValueType,
+	stepSize items_types.QuantityType,
+	tickSize items_types.PriceType) (pp *processor.Processor, err error) {
 	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
-			"BTCUSDT",
-			100,
-			0.001,
-			1000000,
-			0.1,
-			0.1,
-			100000,
-			100,
-			"USDT",
-			"BTC",
-			false,
-			nil,
-			nil,
+			"BTCUSDT", // symbol
+			notional,  // notional
+			stepSize,  // stepSize
+			1000000,   // maxQty
+			0.1,       // minQty
+			tickSize,  // tickSize
+			100000,    // maxPrice
+			100,       // minPrice
+			"USDT",    // quoteAsset
+			"BTC",     // baseAsset
+			false,     // isMarginTradingAllowed
+			nil,       // permissions
+			nil,       // orderType
 		))
 		return
 	}
@@ -120,7 +123,7 @@ func TestNewSpot(t *testing.T) {
 		}
 	}
 	exchangeInfo := exchange_types.New(init)
-	maintainer, err := processor.New(
+	pp, err = processor.New(
 		quit,         // stop
 		"BTCUSDT",    // symbol
 		exchangeInfo, // exchangeInfo
@@ -147,6 +150,11 @@ func TestNewSpot(t *testing.T) {
 		nil,  // getCallbackRate GetCallbackRateFunction,
 		true, // debug
 	)
+	return
+}
+
+func TestNewSpot(t *testing.T) {
+	maintainer, err := getSpotProcessor(100, 0.001, 0.1)
 	assert.Nil(t, err)
 	assert.NotNil(t, maintainer)
 	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
@@ -162,22 +170,25 @@ func TestNewSpot(t *testing.T) {
 	assert.Equal(t, items_types.PriceType(100000), maintainer.GetMaxPrice())
 }
 
-func TestNewFutures(t *testing.T) {
+func getFuturesProcessor(
+	notional items_types.ValueType,
+	stepSize items_types.QuantityType,
+	tickSize items_types.PriceType) (pp *processor.Processor, err error) {
 	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
-			"BTCUSDT",
-			100,
-			0.001,
-			1000000,
-			0.1,
-			0.1,
-			100000,
-			100,
-			"USDT",
-			"BTC",
-			false,
-			nil,
-			nil,
+			"BTCUSDT", // symbol
+			notional,  // notional
+			stepSize,  // stepSize
+			1000000,   // maxQty
+			0.1,       // minQty
+			tickSize,  // tickSize
+			100000,    // maxPrice
+			100,       // minPrice
+			"USDT",    // quoteAsset
+			"BTC",     // baseAsset
+			false,     // isMarginTradingAllowed
+			nil,       // permissions
+			nil,       // orderType
 		))
 		return
 	}
@@ -213,7 +224,7 @@ func TestNewFutures(t *testing.T) {
 			return
 		}
 	}
-	maintainer, err := processor.New(
+	pp, err = processor.New(
 		quit,         // stop
 		"BTCUSDT",    // symbol
 		exchangeInfo, // exchangeInfo
@@ -237,6 +248,11 @@ func TestNewFutures(t *testing.T) {
 		nil,           // getCallbackRate
 		true,          // debug
 	)
+	return
+}
+
+func TestNewFutures(t *testing.T) {
+	maintainer, err := getFuturesProcessor(100, 0.001, 0.1)
 	assert.Nil(t, err)
 	assert.NotNil(t, maintainer)
 	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
@@ -250,4 +266,24 @@ func TestNewFutures(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(1000000), maintainer.GetMaxQty())
 	assert.Equal(t, items_types.PriceType(100), maintainer.GetMinPrice())
 	assert.Equal(t, items_types.PriceType(100000), maintainer.GetMaxPrice())
+}
+
+func TestRoundPrice(t *testing.T) {
+	type pairs struct {
+		price  items_types.PriceType
+		result items_types.PriceType
+	}
+	prices := []pairs{
+		{67100.11, 67100.1},
+		{67100.111, 67100.1},
+		{67100.1111, 67100.1},
+		{67100.11111, 67100.1},
+		{67100.111111, 67100.1},
+		{67100.1111111, 67100.1},
+	}
+	pp, err := getSpotProcessor(100, 0.001, 0.1)
+	assert.Nil(t, err)
+	for _, price := range prices {
+		assert.Equal(t, price.result, pp.RoundPrice(price.price))
+	}
 }

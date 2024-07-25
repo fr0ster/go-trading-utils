@@ -1,6 +1,8 @@
 package processor
 
 import (
+	"math"
+
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
@@ -57,13 +59,17 @@ func (pp *Processor) GetSymbolInfo() *symbol_types.Symbol {
 }
 
 // Округлення ціни до StepSize знаків після коми
-func (pp *Processor) GetStepSizeExp() int {
-	return int(pp.exchangeInfo.GetSymbol(pp.symbol).GetStepSize())
+func (pp *Processor) GetStepSizeExp() (res int) {
+	exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetStepSize()))))
+	res = -exp
+	return
 }
 
 // Округлення ціни до TickSize знаків після коми
-func (pp *Processor) GetTickSizeExp() int {
-	return int(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSize())
+func (pp *Processor) GetTickSizeExp() (res int) {
+	exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSize()))))
+	res = -exp
+	return
 }
 
 func (pp *Processor) GetNotional() items_types.ValueType {
