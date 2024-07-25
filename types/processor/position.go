@@ -79,9 +79,9 @@ func (pp *Processor) ClosePosition() (err error) {
 	return pp.closePosition()
 }
 
-func (pp *Processor) GetPositionAmt() (positionAmt float64) {
+func (pp *Processor) GetPositionAmt() (positionAmt items_types.QuantityType) {
 	if risk := pp.GetPositionRisk(); risk != nil {
-		positionAmt = utils.ConvStrToFloat64(risk.PositionAmt)
+		positionAmt = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	}
 	return
 }
