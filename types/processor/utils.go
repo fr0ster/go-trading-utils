@@ -82,12 +82,13 @@ func (pp *Processor) GetPrices(
 		return
 	}
 	if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+		breakEvenPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.BreakEvenPrice))
 		if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-			priceDown = pp.NextPriceDown()
+			priceDown = pp.NextPriceDown(breakEvenPrice)
 			quantityDown = items_types.QuantityType(-utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyDown = true
 		} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-			priceUp = pp.NextPriceUp()
+			priceUp = pp.NextPriceUp(breakEvenPrice)
 			quantityUp = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 			reduceOnlyUp = true
 		}
