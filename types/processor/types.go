@@ -10,6 +10,7 @@ import (
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
+	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
 
 type (
@@ -52,6 +53,7 @@ type (
 
 		// Дані про біржу
 		exchangeInfo *exchange_types.ExchangeInfo
+		symbolInfo   *symbol_types.Symbol
 
 		// канал зупинки
 		stop chan struct{}
@@ -80,6 +82,7 @@ type (
 
 		getDeltaPrice         GetDeltaPriceFunction
 		getDeltaQuantity      GetDeltaQuantityFunction
+		getLimitOnPosition    GetLimitOnPositionFunction
 		getLimitOnTransaction GetLimitOnTransactionFunction
 		getUpAndLowBound      GetUpAndLowBoundFunction
 

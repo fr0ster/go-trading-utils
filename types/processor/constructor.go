@@ -28,10 +28,10 @@ func New(
 	getCurrentPrice GetCurrentPriceFunction,
 
 	getPositionRisk func(*Processor) GetPositionRiskFunction,
-	getLeverage func(*Processor) GetLeverageFunction,
+	getLeverage GetLeverageFunction,
 	setLeverage func(*Processor) SetLeverageFunction,
 
-	getMarginType func(*Processor) GetMarginTypeFunction,
+	getMarginType GetMarginTypeFunction,
 	setMarginType func(*Processor) SetMarginTypeFunction,
 
 	setPositionMargin func(*Processor) SetPositionMarginFunction,
@@ -47,8 +47,10 @@ func New(
 	getCallbackRate GetCallbackRateFunction,
 
 	debug ...bool) (pp *Processor, err error) {
+	symbolInfo := exchangeInfo.GetSymbols().GetSymbol(symbol)
 	pp = &Processor{
 		exchangeInfo: exchangeInfo,
+		symbolInfo:   symbolInfo,
 		symbol:       symbol,
 
 		stop:       stop,
@@ -80,14 +82,14 @@ func New(
 	}
 	// Leverage
 	if getLeverage != nil {
-		pp.getLeverage = getLeverage(pp)
+		pp.getLeverage = getLeverage
 	}
 	if setLeverage != nil {
 		pp.setLeverage = setLeverage(pp)
 	}
 	// MarginType
 	if getMarginType != nil {
-		pp.getMarginType = getMarginType(pp)
+		pp.getMarginType = getMarginType
 	}
 	if setMarginType != nil {
 		pp.setMarginType = setMarginType(pp)
@@ -104,6 +106,9 @@ func New(
 	}
 	if getDeltaQuantity != nil {
 		pp.getDeltaQuantity = getDeltaQuantity
+	}
+	if getLimitOnPosition != nil {
+		pp.getLimitOnPosition = getLimitOnPosition
 	}
 	if getLimitOnTransaction != nil {
 		pp.getLimitOnTransaction = getLimitOnTransaction

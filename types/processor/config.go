@@ -18,11 +18,22 @@ func (pp *Processor) GetDeltaQuantity() items_types.QuantityPercentType {
 	return pp.getDeltaQuantity()
 }
 
+func (pp *Processor) GetLimitOnPosition() (limit items_types.ValueType) {
+	if pp.getLimitOnPosition == nil {
+		return 0
+	}
+	if pp.GetFreeBalance() > pp.getLimitOnPosition() {
+		return pp.getLimitOnPosition()
+	} else {
+		return pp.getLimitOnPosition()
+	}
+}
+
 func (pp *Processor) GetLimitOnTransaction() (limit items_types.ValueType) {
 	if pp.getLimitOnTransaction == nil {
 		return 0
 	}
-	return items_types.ValueType(pp.getLimitOnTransaction()) * pp.GetFreeBalance()
+	return items_types.ValueType(pp.getLimitOnTransaction()/100) * pp.GetLimitOnPosition()
 }
 
 func (pp *Processor) GetUpBound(price items_types.PriceType) items_types.PriceType {

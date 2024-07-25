@@ -47,49 +47,59 @@ func (pp *Processor) GetSymbol() string {
 }
 
 func (pp *Processor) GetBaseSymbol() symbol_types.QuoteAsset {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetBaseSymbol()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetBaseSymbol()
+	return pp.symbolInfo.GetBaseSymbol()
 }
 
 func (pp *Processor) GetTargetSymbol() symbol_types.BaseAsset {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetTargetSymbol()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetTargetSymbol()
+	return pp.symbolInfo.GetTargetSymbol()
 }
 
 func (pp *Processor) GetSymbolInfo() *symbol_types.Symbol {
-	return pp.exchangeInfo.GetSymbol(pp.symbol)
+	// return pp.exchangeInfo.GetSymbol(pp.symbol)
+	return pp.symbolInfo
 }
 
 // Округлення ціни до StepSize знаків після коми
 func (pp *Processor) GetStepSizeExp() (res int) {
-	exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetStepSize()))))
+	// exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetStepSize()))))
+	exp := int(math.Floor(math.Log10(float64(pp.symbolInfo.GetStepSize()))))
 	res = -exp
 	return
 }
 
 // Округлення ціни до TickSize знаків після коми
 func (pp *Processor) GetTickSizeExp() (res int) {
-	exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSize()))))
+	// exp := int(math.Floor(math.Log10(float64(pp.exchangeInfo.GetSymbol(pp.symbol).GetTickSize()))))
+	exp := int(math.Floor(math.Log10(float64(pp.symbolInfo.GetTickSize()))))
 	res = -exp
 	return
 }
 
 func (pp *Processor) GetNotional() items_types.ValueType {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetNotional()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetNotional()
+	return pp.symbolInfo.GetNotional()
 }
 
 func (pp *Processor) GetMaxQty() items_types.QuantityType {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetMaxQty()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetMaxQty()
+	return pp.symbolInfo.GetMaxQty()
 }
 
 func (pp *Processor) GetMinQty() items_types.QuantityType {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetMinQty()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetMinQty()
+	return pp.symbolInfo.GetMinQty()
 }
 
 func (pp *Processor) GetMaxPrice() items_types.PriceType {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetMaxPrice()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetMaxPrice()
+	return pp.symbolInfo.GetMaxPrice()
 }
 
 func (pp *Processor) GetMinPrice() items_types.PriceType {
-	return pp.exchangeInfo.GetSymbol(pp.symbol).GetMinPrice()
+	// return pp.exchangeInfo.GetSymbol(pp.symbol).GetMinPrice()
+	return pp.symbolInfo.GetMinPrice()
 }
 
 func (pp *Processor) GetCallbackRate() items_types.PricePercentType {
@@ -129,11 +139,4 @@ func (pp *Processor) GetCurrentPrice() items_types.PriceType {
 		return 0
 	}
 	return pp.getCurrentPrice()
-}
-
-// getBaseBalance func(*Processor) func() items_types.ValueType,
-func (pp *Processor) SetGetBaseBalance(f func() items_types.ValueType) {
-	if f != nil {
-		pp.getBaseBalance = f
-	}
 }
