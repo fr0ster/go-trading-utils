@@ -100,12 +100,18 @@ func (pp *Processor) GetPredictableProfitOrLoss(positionAmt items_types.Quantity
 func (pp *Processor) CheckPosition(positionAmt items_types.QuantityType, liquidationPrice, price items_types.PriceType) bool {
 	if positionAmt == 0 { // No position
 		return true
-	} else if positionAmt < 0 { // Short position
-		return liquidationPrice > pp.GetUpBound(price) &&
-			pp.GetPredictableProfitOrLoss(positionAmt, price) > -(pp.getLimitOnPosition())
-	} else if positionAmt > 0 { // Long position
-		return liquidationPrice < pp.GetLowBound(price) &&
-			pp.GetPredictableProfitOrLoss(positionAmt, price) > -(pp.getLimitOnPosition())
+	} else {
+		profitOrLoss := pp.GetPredictableProfitOrLoss(positionAmt, price)
+		free := pp.getLimitOnPosition()
+		if positionAmt < 0 { // Short position
+			upBound := pp.GetUpBound(price)
+			return liquidationPrice > upBound &&
+				profitOrLoss > -free
+		} else if positionAmt > 0 { // Long position
+			lowBound := pp.GetLowBound(price)
+			return liquidationPrice < lowBound &&
+				profitOrLoss > -free
+		}
 	}
 	return false
 }
