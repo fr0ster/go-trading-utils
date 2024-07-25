@@ -237,8 +237,7 @@ func assertTest(t *testing.T, config *config_types.Configs) {
 	assert.Equal(t, (checkingDate)[0].GetLimitOnPosition(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[0].GetLimitOnTransaction(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLimitOnTransaction())
 
-	assert.Equal(t, (checkingDate)[0].GetUpBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpBound())
-	assert.Equal(t, (checkingDate)[0].GetLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetLowBound())
+	assert.Equal(t, (checkingDate)[0].GetUpAndLowBound(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetUpAndLowBound())
 	assert.Equal(t, (checkingDate)[0].GetMinSteps(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetMinSteps())
 
 	assert.Equal(t, (checkingDate)[0].GetValue(), config.GetPair(AccountType_1, StrategyType_1, StageType_1, Pair_1).GetValue())
@@ -258,8 +257,7 @@ func assertTest(t *testing.T, config *config_types.Configs) {
 	assert.Equal(t, (checkingDate)[1].GetLimitOnPosition(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnPosition())
 	assert.Equal(t, (checkingDate)[1].GetLimitOnTransaction(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLimitOnTransaction())
 
-	assert.Equal(t, (checkingDate)[1].GetUpBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpBound())
-	assert.Equal(t, (checkingDate)[1].GetLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetLowBound())
+	assert.Equal(t, (checkingDate)[1].GetUpAndLowBound(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetUpAndLowBound())
 	assert.Equal(t, (checkingDate)[1].GetMinSteps(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetMinSteps())
 
 	assert.Equal(t, (checkingDate)[1].GetValue(), config.GetPair(AccountType_2, StrategyType_2, StageType_2, Pair_2).GetValue())
@@ -370,7 +368,7 @@ func TestPairGetter(t *testing.T) {
 	assert.Equal(t, Pair_1, pair.GetPair())
 	assert.Equal(t, LimitOnPosition_1, pair.GetLimitOnPosition())
 	assert.Equal(t, LimitOnTransaction_1, pair.GetLimitOnTransaction())
-	assert.Equal(t, UpAndLowBoundPercent_1, pair.GetUpBound())
+	assert.Equal(t, UpAndLowBoundPercent_1, pair.GetUpAndLowBound())
 	assert.Equal(t, Value_1, pair.GetValue())
 }
 

@@ -87,10 +87,7 @@ func assertPair(
 	assert.Equal(t, items_types.ValuePercentType(10), pair.GetLimitOnTransaction())
 
 	// Test GetUpBoundPercent
-	assert.Equal(t, items_types.PricePercentType(10), pair.GetUpBound())
-
-	// Test GetLowBoundPercent
-	assert.Equal(t, items_types.PricePercentType(10), pair.GetLowBound())
+	assert.Equal(t, items_types.PricePercentType(10), pair.GetUpAndLowBound())
 
 	// Test GetDeltaPrice
 	assert.Equal(t, items_types.PricePercentType(1), pair.GetDeltaPrice())

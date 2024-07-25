@@ -184,11 +184,7 @@ func (pr *Pairs) GetLimitOnTransaction() items_types.ValuePercentType {
 	return pr.LimitOnTransaction
 }
 
-func (pr *Pairs) GetUpBound() items_types.PricePercentType {
-	return pr.UpAndLowBound
-}
-
-func (pr *Pairs) GetLowBound() items_types.PricePercentType {
+func (pr *Pairs) GetUpAndLowBound() items_types.PricePercentType {
 	return pr.UpAndLowBound
 }
 
