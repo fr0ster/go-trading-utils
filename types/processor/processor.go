@@ -37,5 +37,5 @@ func (pp *Processor) NextQuantityUp(quantity items_types.QuantityType) items_typ
 }
 
 func (pp *Processor) NextQuantityDown(quantity items_types.QuantityType) items_types.QuantityType {
-	return pp.RoundQuantity(quantity * items_types.QuantityType(1-pp.GetDeltaQuantity()/100))
+	return pp.RoundQuantity(quantity * items_types.QuantityType(1-pp.GetDeltaQuantity()))
 }

@@ -62,7 +62,6 @@ func eventHandlerCreator(d *depths_types.Depths) binance.WsDepthHandler {
 			if event.LastUpdateID != int64(d.LastUpdateID)+1 {
 				d.Init()
 			} else if event.LastUpdateID == int64(d.LastUpdateID)+1 {
-				logrus.Debugf("Spot %v depth update event received", d.Symbol())
 				for _, bid := range event.Bids {
 					price, quantity, err := bid.Parse()
 					if err != nil {
