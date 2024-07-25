@@ -40,12 +40,12 @@ func (pp *Processor) GetUpBound(price items_types.PriceType) items_types.PriceTy
 	if pp.getUpAndLowBound == nil {
 		return price
 	}
-	return price * (1 + items_types.PriceType(pp.getUpAndLowBound()))
+	return price * (1 + items_types.PriceType(pp.getUpAndLowBound()/100))
 }
 
 func (pp *Processor) GetLowBound(price items_types.PriceType) items_types.PriceType {
 	if pp.getUpAndLowBound == nil {
 		return price
 	}
-	return price * (1 - items_types.PriceType(pp.getUpAndLowBound()))
+	return price * (1 - items_types.PriceType(pp.getUpAndLowBound()/100))
 }
