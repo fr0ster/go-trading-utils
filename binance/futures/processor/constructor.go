@@ -86,12 +86,12 @@ func New(
 					callBack   func(*orders_types.Orders) futures.WsUserDataHandler
 					errHandler func(*orders_types.Orders) futures.ErrHandler
 				)
-				if depthsCallBack != nil {
+				if ordersCallBack != nil {
 					callBack = futures_orders.CallBackCreator(ordersCallBack(p))
 				} else {
 					callBack = futures_orders.CallBackCreator()
 				}
-				if depthsErrHandler != nil {
+				if ordersErrHandler != nil {
 					errHandler = futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))
 				} else {
 					errHandler = futures_orders.WsErrorHandlerCreator()
