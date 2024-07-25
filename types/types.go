@@ -1,5 +1,7 @@
 package types
 
+import "github.com/google/btree"
+
 type (
 	OrderSide        string
 	OrderType        string
@@ -20,6 +22,8 @@ type (
 	ProgressionType string
 	StageType       string
 	StrategyType    string
+
+	OrderIdType int64
 )
 
 const (
@@ -29,3 +33,12 @@ const (
 	SideTypeSell OrderSide = "SELL"
 	SideTypeNone OrderSide = "NONE"
 )
+
+// Функції для btree.Btree
+func (i OrderIdType) Less(than btree.Item) bool {
+	return i < than.(OrderIdType)
+}
+
+func (i OrderIdType) Equal(than btree.Item) bool {
+	return i == than.(OrderIdType)
+}
