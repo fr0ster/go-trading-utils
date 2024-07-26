@@ -149,3 +149,30 @@ func (pp *Processor) GetQuantityByUPnL(
 	}
 	return
 }
+
+func (pp *Processor) CheckPosition(
+	price items_types.PriceType,
+	targetOfLoss items_types.ValueType,
+	debug ...*futures.PositionRisk) (err error) {
+	risk := pp.GetPositionRisk(debug...)
+	position := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	if position == 0 { // No position
+		return
+	} else {
+		liquidationPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.LiquidationPrice))
+		profitOrLoss := items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+		if profitOrLoss > targetOfLoss {
+			err = fmt.Errorf("profit or loss %f is more than limit of loss %f", profitOrLoss, targetOfLoss)
+			return
+		}
+		delta := price * items_types.PriceType(pp.GetUpAndLowBound()/100)
+		if position < 0 && // Short position
+			liquidationPrice < price+delta {
+			err = fmt.Errorf("liquidation price %f is less than price %f + delta %f", liquidationPrice, price, delta)
+		} else if position > 0 && // Long position
+			liquidationPrice < price-delta {
+			err = fmt.Errorf("liquidation price %f is less than price %f - delta %f", liquidationPrice, price, delta)
+		}
+	}
+	return
+}
