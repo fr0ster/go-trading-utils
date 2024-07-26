@@ -86,7 +86,60 @@ func (pp *Processor) GetPositionAmt() (positionAmt items_types.QuantityType) {
 	return
 }
 
-func (pp *Processor) GetPredictableProfitOrLoss(positionAmt items_types.QuantityType, firstPrice, secondPrice items_types.PriceType) (unRealizedProfit items_types.ValueType) {
-	unRealizedProfit = items_types.ValueType(math.Abs(float64(secondPrice-firstPrice))) * items_types.ValueType(positionAmt)
+func (pp *Processor) GetPredictableProfitOrLoss(quantity items_types.QuantityType, delta items_types.PriceType) (unRealizedProfit items_types.ValueType) {
+	unRealizedProfit = items_types.ValueType(delta) * items_types.ValueType(quantity) * items_types.ValueType(pp.GetLeverage())
+	return
+}
+
+func (pp *Processor) GetQuantityByUPnL(
+	targetOfPossibleLoss items_types.ValueType,
+	price items_types.PriceType,
+	delta items_types.PriceType) (quantity items_types.QuantityType, err error) {
+	var (
+		minOfPossibleLoss items_types.ValueType
+	)
+	ceilQuantity := func(value items_types.QuantityType) (quantity items_types.QuantityType) {
+		coefficient := math.Pow10(pp.GetStepSizeExp())
+		step := math.Ceil(float64(value) * coefficient)
+		quantity = items_types.QuantityType(float64(step) / coefficient)
+		return
+	}
+	floorQuantity := func(value items_types.QuantityType) (quantity items_types.QuantityType) {
+		coefficient := math.Pow10(pp.GetStepSizeExp())
+		step := math.Floor(float64(value) * coefficient)
+		quantity = items_types.QuantityType(float64(step) / coefficient)
+		return
+	}
+	risk := pp.GetPositionRisk()
+	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
+	leverage := int(utils.ConvStrToFloat64(risk.Leverage))
+
+	oldQuantity := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	oldDelta := items_types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.BreakEvenPrice)-float64(price))) + delta
+	oldPossibleLoss := items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
+
+	minQuantity := ceilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))
+	minLoss := items_types.ValueType(delta) * items_types.ValueType(minQuantity) * items_types.ValueType(leverage)
+
+	if targetOfPossibleLoss-oldPossibleLoss < minLoss {
+		if oldPossibleLoss > 0 {
+			err = fmt.Errorf("we have open position with possible loss %f and we couldn't open new position with possible loss %f, we need limit of possible loss more than %f",
+				oldPossibleLoss,
+				targetOfPossibleLoss-oldPossibleLoss,
+				minLoss+oldPossibleLoss)
+		} else {
+			err = fmt.Errorf("target of loss %f is less than min loss %f", targetOfPossibleLoss, minLoss)
+		}
+		return
+	} else {
+		minOfPossibleLoss = targetOfPossibleLoss - oldPossibleLoss
+	}
+
+	deltaOnQuantity := minOfPossibleLoss / items_types.ValueType(leverage)
+
+	quantity = floorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
+	if quantity < minQuantity {
+		quantity = minQuantity
+	}
 	return
 }
