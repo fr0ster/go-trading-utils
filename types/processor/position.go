@@ -10,7 +10,10 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-func (pp *Processor) GetPositionRisk() *futures.PositionRisk {
+func (pp *Processor) GetPositionRisk(debug ...*futures.PositionRisk) *futures.PositionRisk {
+	if len(debug) > 0 {
+		return debug[0]
+	}
 	if pp.getPositionRisk != nil {
 		return pp.getPositionRisk()
 	}
@@ -86,7 +89,9 @@ func (pp *Processor) GetPositionAmt() (positionAmt items_types.QuantityType) {
 	return
 }
 
-func (pp *Processor) GetPredictableProfitOrLoss(quantity items_types.QuantityType, delta items_types.PriceType) (unRealizedProfit items_types.ValueType) {
+func (pp *Processor) GetPredictableProfitOrLoss(
+	quantity items_types.QuantityType,
+	delta items_types.PriceType) (unRealizedProfit items_types.ValueType) {
 	unRealizedProfit = items_types.ValueType(delta) * items_types.ValueType(quantity) * items_types.ValueType(pp.GetLeverage())
 	return
 }
@@ -94,7 +99,8 @@ func (pp *Processor) GetPredictableProfitOrLoss(quantity items_types.QuantityTyp
 func (pp *Processor) GetQuantityByUPnL(
 	targetOfPossibleLoss items_types.ValueType,
 	price items_types.PriceType,
-	delta items_types.PriceType) (quantity items_types.QuantityType, err error) {
+	delta items_types.PriceType,
+	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	var (
 		minOfPossibleLoss items_types.ValueType
 	)
@@ -110,7 +116,7 @@ func (pp *Processor) GetQuantityByUPnL(
 		quantity = items_types.QuantityType(float64(step) / coefficient)
 		return
 	}
-	risk := pp.GetPositionRisk()
+	risk := pp.GetPositionRisk(debug...)
 	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
 	leverage := int(utils.ConvStrToFloat64(risk.Leverage))
 
