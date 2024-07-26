@@ -107,7 +107,7 @@ func (pp *Processor) GetQuantityByUPnL(
 	transaction := pp.GetLimitOnTransaction()
 
 	oldQuantity := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	oldDelta := items_types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.EntryPrice) - float64(price)))
+	oldDelta := items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice)-float64(price)) + delta
 	oldPossibleLoss := items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
 
 	minQuantity := pp.CeilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))

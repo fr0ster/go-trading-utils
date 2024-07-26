@@ -311,7 +311,7 @@ func TestGetQuantityByUPnL(t *testing.T) {
 	risk.Notional = utils.ConvFloat64ToStrDefault(float64(notional))
 	risk.Leverage = utils.ConvFloat64ToStrDefault(float64(leverage))
 	risk.BreakEvenPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice) * 0.99)
-	risk.EntryPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice * 1.01))
+	risk.EntryPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice * (1 - 0.01)))
 	risk.Symbol = pp.GetSymbol()
 	risk.PositionSide = "LONG"
 	deltaLiquidation := float64(targetOfLoss) / (float64(oldPosition) * float64(leverage))
