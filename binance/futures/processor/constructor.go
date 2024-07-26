@@ -279,7 +279,7 @@ func getPositionRisk(client *futures.Client) func(*processor_types.Processor) pr
 			if err == nil {
 				return risks[0]
 			}
-			return nil
+			return &futures.PositionRisk{}
 		}
 	}
 } // getPositionRisk

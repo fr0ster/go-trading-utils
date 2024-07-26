@@ -137,8 +137,14 @@ func (pp *Processor) GetQuantityByUPnL(
 func (pp *Processor) CheckPosition(
 	price items_types.PriceType,
 	debug ...*futures.PositionRisk) (err error) {
+	var (
+		position items_types.QuantityType
+	)
 	risk := pp.GetPositionRisk(debug...)
-	position := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	if risk == nil {
+		return
+	}
+	position = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	targetOfLoss := pp.GetLimitOnPosition()
 	if position == 0 { // No position
 		return

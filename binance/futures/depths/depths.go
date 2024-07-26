@@ -109,7 +109,7 @@ func WsErrorHandlerCreator(handlers ...func(*depth_types.Depths) futures.ErrHand
 			stack = append(stack, handler(d))
 		}
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Futures wsErrorHandler error: %v", err)
 			d.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)

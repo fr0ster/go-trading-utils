@@ -50,7 +50,7 @@ func WsErrorHandlerCreator(handlers ...func(*orders_types.Orders) futures.ErrHan
 			stack = append(stack, handler(o))
 		}
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Futures wsErrorHandler error: %v", err)
 			o.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)
