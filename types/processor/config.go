@@ -25,7 +25,7 @@ func (pp *Processor) GetLimitOnPosition() (limit items_types.ValueType) {
 	if pp.GetFreeBalance() > pp.getLimitOnPosition() {
 		return pp.getLimitOnPosition()
 	} else {
-		return pp.getLimitOnPosition()
+		return pp.GetFreeBalance()
 	}
 }
 
