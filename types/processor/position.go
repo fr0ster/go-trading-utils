@@ -170,8 +170,8 @@ func (pp *Processor) CheckPosition(
 			liquidationPrice < price+delta {
 			err = fmt.Errorf("liquidation price %f is less than price %f + delta %f == %f", liquidationPrice, price, delta, price+delta)
 		} else if position > 0 && // Long position
-			liquidationPrice < price-delta {
-			err = fmt.Errorf("liquidation price %f is less than price %f - delta %f == %f", liquidationPrice, price, delta, price+delta)
+			liquidationPrice > price-delta {
+			err = fmt.Errorf("liquidation price %f is more than price %f - delta %f == %f", liquidationPrice, price, delta, price-delta)
 		}
 	}
 	return
