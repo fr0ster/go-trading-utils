@@ -294,3 +294,34 @@ func TestRoundPrice(t *testing.T) {
 		assert.Equal(t, price.result, pp.RoundPrice(price.price))
 	}
 }
+
+func TestGetQuantityByUPnL(t *testing.T) {
+	pp, err := getFuturesProcessor(100, 0.001, 0.1)
+	assert.Nil(t, err)
+	risk := &futures.PositionRisk{}
+	currentPrice := 5.0
+	deltaPercent := 10.0
+	delta := currentPrice * deltaPercent / 100
+	targetOfLoss := items_types.ValueType(200)
+	pp.SetGetterLimitOnPositionFunction(func() items_types.ValueType { return targetOfLoss })
+	pp.SetGetterLimitOnTransactionFunction(func() items_types.ValuePercentType { return 10 })
+	oldPosition := 10
+	notional := 5
+	leverage := 10
+	risk.Notional = utils.ConvFloat64ToStrDefault(float64(notional))
+	risk.Leverage = utils.ConvFloat64ToStrDefault(float64(leverage))
+	risk.BreakEvenPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice) * 0.99)
+	risk.EntryPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice * 1.01))
+	risk.Symbol = pp.GetSymbol()
+	risk.PositionSide = "LONG"
+	deltaLiquidation := float64(targetOfLoss) / (float64(oldPosition) * float64(leverage))
+	if risk.PositionSide == "LONG" {
+		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(oldPosition))
+		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice - deltaLiquidation))
+	} else {
+		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
+		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
+	}
+	quantity, _ := pp.GetQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), risk)
+	assert.Equal(t, 4.0, float64(quantity))
+}

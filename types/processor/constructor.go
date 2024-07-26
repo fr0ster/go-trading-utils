@@ -62,63 +62,34 @@ func New(
 	}
 
 	// Налаштовуємо функції
-	if getBaseBalance != nil {
-		pp.getBaseBalance = getBaseBalance
-	}
-	if getTargetBalance != nil {
-		pp.getTargetBalance = getTargetBalance
-	}
-	if getFreeBalance != nil {
-		pp.getFreeBalance = getFreeBalance
-	}
-	if getLockedBalance != nil {
-		pp.getLockedBalance = getLockedBalance
-	}
-	if getCurrentPrice != nil {
-		pp.getCurrentPrice = getCurrentPrice
-	}
-	if getPositionRisk != nil {
-		pp.getPositionRisk = getPositionRisk(pp)
-	}
+	pp.SetGetterBaseBalanceFunction(getBaseBalance)
+	pp.SetGetterTargetBalanceFunction(getTargetBalance)
+	pp.SetGetterFreeBalanceFunction(getFreeBalance)
+	pp.SetGetterLockedBalanceFunction(getLockedBalance)
+	pp.SetGetterCurrentPriceFunction(getCurrentPrice)
+	pp.SetGetterPositionRiskFunction(getPositionRisk)
 	// Leverage
-	if getLeverage != nil {
-		pp.getLeverage = getLeverage
-	}
-	if setLeverage != nil {
-		pp.setLeverage = setLeverage(pp)
-	}
+	pp.SetGetterLeverageFunction(getLeverage)
+	pp.SetSetterLeverageFunction(setLeverage)
 	// MarginType
-	if getMarginType != nil {
-		pp.getMarginType = getMarginType
-	}
-	if setMarginType != nil {
-		pp.setMarginType = setMarginType(pp)
-	}
+	pp.SetGetterMarginTypeFunction(getMarginType)
+	pp.SetSetterMarginTypeFunction(setMarginType)
 	// PositionMargin
-	if setPositionMargin != nil {
-		pp.setPositionMargin = setPositionMargin(pp)
-	}
-	if closePosition != nil {
-		pp.closePosition = closePosition(pp)
-	}
-	if getDeltaPrice != nil {
-		pp.getDeltaPrice = getDeltaPrice
-	}
-	if getDeltaQuantity != nil {
-		pp.getDeltaQuantity = getDeltaQuantity
-	}
-	if getLimitOnPosition != nil {
-		pp.getLimitOnPosition = getLimitOnPosition
-	}
-	if getLimitOnTransaction != nil {
-		pp.getLimitOnTransaction = getLimitOnTransaction
-	}
-	if getUpAndLowBound != nil {
-		pp.getUpAndLowBound = getUpAndLowBound
-	}
-	if getCallbackRate != nil {
-		pp.getCallbackRate = getCallbackRate
-	}
+	pp.SetSetterPositionMarginFunction(setPositionMargin)
+	// ClosePosition
+	pp.SetClosePositionFunction(closePosition)
+	// DeltaPrice
+	pp.SetGetterDeltaPriceFunction(getDeltaPrice)
+	// DeltaQuantity
+	pp.SetGetterDeltaQuantityFunction(getDeltaQuantity)
+	// LimitOnPosition
+	pp.SetGetterLimitOnPositionFunction(getLimitOnPosition)
+	// LimitOnTransaction
+	pp.SetGetterLimitOnTransactionFunction(getLimitOnTransaction)
+	// UpAndLowBound
+	pp.SetGetterUpAndLowBoundFunction(getUpAndLowBound)
+	// CallbackRate
+	pp.SetGetterCallbackRateFunction(getCallbackRate)
 
 	if len(debug) == 0 || (len(debug) > 0 && !debug[0]) {
 		if pp.setLeverage != nil {
@@ -182,5 +153,97 @@ func ParseError(err error) error {
 		return fmt.Errorf("way too many requests; IP %s banned until: %s", ip, bannedTime)
 	default:
 		return err
+	}
+}
+
+// Налаштовуємо функції
+func (pp *Processor) SetGetterBaseBalanceFunction(function GetBaseBalanceFunction) {
+	if function != nil {
+		pp.getBaseBalance = function
+	}
+}
+func (pp *Processor) SetGetterTargetBalanceFunction(function GetTargetBalanceFunction) {
+	if function != nil {
+		pp.getTargetBalance = function
+	}
+}
+func (pp *Processor) SetGetterFreeBalanceFunction(function GetFreeBalanceFunction) {
+	if function != nil {
+		pp.getFreeBalance = function
+	}
+}
+func (pp *Processor) SetGetterLockedBalanceFunction(function GetLockedBalanceFunction) {
+	if function != nil {
+		pp.getLockedBalance = function
+	}
+}
+func (pp *Processor) SetGetterCurrentPriceFunction(function GetCurrentPriceFunction) {
+	if function != nil {
+		pp.getCurrentPrice = function
+	}
+}
+func (pp *Processor) SetGetterPositionRiskFunction(function func(*Processor) GetPositionRiskFunction) {
+	if function != nil {
+		pp.getPositionRisk = function(pp)
+	}
+}
+func (pp *Processor) SetGetterLeverageFunction(function GetLeverageFunction) {
+	if function != nil {
+		pp.getLeverage = function
+	}
+}
+func (pp *Processor) SetSetterLeverageFunction(function func(*Processor) SetLeverageFunction) {
+	if function != nil {
+		pp.setLeverage = function(pp)
+	}
+}
+func (pp *Processor) SetGetterMarginTypeFunction(function GetMarginTypeFunction) {
+	if function != nil {
+		pp.getMarginType = function
+	}
+}
+func (pp *Processor) SetSetterMarginTypeFunction(function func(*Processor) SetMarginTypeFunction) {
+	if function != nil {
+		pp.setMarginType = function(pp)
+	}
+}
+func (pp *Processor) SetSetterPositionMarginFunction(function func(*Processor) SetPositionMarginFunction) {
+	if function != nil {
+		pp.setPositionMargin = function(pp)
+	}
+}
+func (pp *Processor) SetClosePositionFunction(function func(*Processor) ClosePositionFunction) {
+	if function != nil {
+		pp.closePosition = function(pp)
+	}
+}
+func (pp *Processor) SetGetterDeltaPriceFunction(function GetDeltaPriceFunction) {
+	if function != nil {
+		pp.getDeltaPrice = function
+	}
+}
+func (pp *Processor) SetGetterDeltaQuantityFunction(function GetDeltaQuantityFunction) {
+	if function != nil {
+		pp.getDeltaQuantity = function
+	}
+}
+func (pp *Processor) SetGetterLimitOnPositionFunction(function GetLimitOnPositionFunction) {
+	if function != nil {
+		pp.getLimitOnPosition = function
+	}
+}
+func (pp *Processor) SetGetterLimitOnTransactionFunction(function GetLimitOnTransactionFunction) {
+	if function != nil {
+		pp.getLimitOnTransaction = function
+	}
+}
+func (pp *Processor) SetGetterUpAndLowBoundFunction(function GetUpAndLowBoundFunction) {
+	if function != nil {
+		pp.getUpAndLowBound = function
+	}
+}
+func (pp *Processor) SetGetterCallbackRateFunction(function GetCallbackRateFunction) {
+	if function != nil {
+		pp.getCallbackRate = function
 	}
 }

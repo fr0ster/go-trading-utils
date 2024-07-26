@@ -97,34 +97,20 @@ func (pp *Processor) GetPredictableProfitOrLoss(
 }
 
 func (pp *Processor) GetQuantityByUPnL(
-	targetOfPossibleLoss items_types.ValueType,
 	price items_types.PriceType,
 	delta items_types.PriceType,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
-	var (
-		minOfPossibleLoss items_types.ValueType
-	)
-	ceilQuantity := func(value items_types.QuantityType) (quantity items_types.QuantityType) {
-		coefficient := math.Pow10(pp.GetStepSizeExp())
-		step := math.Ceil(float64(value) * coefficient)
-		quantity = items_types.QuantityType(float64(step) / coefficient)
-		return
-	}
-	floorQuantity := func(value items_types.QuantityType) (quantity items_types.QuantityType) {
-		coefficient := math.Pow10(pp.GetStepSizeExp())
-		step := math.Floor(float64(value) * coefficient)
-		quantity = items_types.QuantityType(float64(step) / coefficient)
-		return
-	}
 	risk := pp.GetPositionRisk(debug...)
 	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
 	leverage := int(utils.ConvStrToFloat64(risk.Leverage))
+	targetOfPossibleLoss := pp.GetLimitOnPosition()
+	transaction := pp.GetLimitOnTransaction()
 
 	oldQuantity := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	oldDelta := items_types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.BreakEvenPrice)-float64(price))) + delta
+	oldDelta := items_types.PriceType(math.Abs(utils.ConvStrToFloat64(risk.EntryPrice) - float64(price)))
 	oldPossibleLoss := items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
 
-	minQuantity := ceilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))
+	minQuantity := pp.CeilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))
 	minLoss := items_types.ValueType(delta) * items_types.ValueType(minQuantity) * items_types.ValueType(leverage)
 
 	if targetOfPossibleLoss-oldPossibleLoss < minLoss {
@@ -137,13 +123,11 @@ func (pp *Processor) GetQuantityByUPnL(
 			err = fmt.Errorf("target of loss %f is less than min loss %f", targetOfPossibleLoss, minLoss)
 		}
 		return
-	} else {
-		minOfPossibleLoss = targetOfPossibleLoss - oldPossibleLoss
 	}
 
-	deltaOnQuantity := minOfPossibleLoss / items_types.ValueType(leverage)
+	deltaOnQuantity := transaction / items_types.ValueType(leverage)
 
-	quantity = floorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
+	quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
 	if quantity < minQuantity {
 		quantity = minQuantity
 	}
