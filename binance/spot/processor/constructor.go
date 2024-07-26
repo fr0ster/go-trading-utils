@@ -189,9 +189,13 @@ func ordersCreator(
 	}
 } // ordersCreator
 
-func getBaseBalance(client *binance.Client, symbol string) func() items_types.ValueType {
+func getBaseBalance(client *binance.Client, symbol string) processor_types.GetBaseBalanceFunction {
 	return func() items_types.ValueType {
-		account, _ := client.NewGetAccountService().Do(context.Background())
+		account, err := client.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			logrus.Errorf("Can't get account: %v", err)
+			return 0
+		}
 		for _, asset := range account.Balances {
 			if asset.Asset == symbol {
 				return items_types.ValueType(utils.ConvStrToFloat64(asset.Free) + utils.ConvStrToFloat64(asset.Locked))
@@ -200,9 +204,13 @@ func getBaseBalance(client *binance.Client, symbol string) func() items_types.Va
 		return 0.0
 	}
 } // getBaseBalance
-func getTargetBalance(client *binance.Client, symbol string) func() items_types.ValueType {
+func getTargetBalance(client *binance.Client, symbol string) processor_types.GetTargetBalanceFunction {
 	return func() items_types.ValueType {
-		account, _ := client.NewGetAccountService().Do(context.Background())
+		account, err := client.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			logrus.Errorf("Can't get account: %v", err)
+			return 0
+		}
 		for _, asset := range account.Balances {
 			if asset.Asset == symbol {
 				return items_types.ValueType(utils.ConvStrToFloat64(asset.Free) + utils.ConvStrToFloat64(asset.Locked))
@@ -211,9 +219,13 @@ func getTargetBalance(client *binance.Client, symbol string) func() items_types.
 		return 0.0
 	}
 } // getTargetBalance
-func getFreeBalance(client *binance.Client, symbol string) func() items_types.ValueType {
+func getFreeBalance(client *binance.Client, symbol string) processor_types.GetFreeBalanceFunction {
 	return func() items_types.ValueType {
-		account, _ := client.NewGetAccountService().Do(context.Background())
+		account, err := client.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			logrus.Errorf("Can't get account: %v", err)
+			return 0
+		}
 		for _, asset := range account.Balances {
 			if asset.Asset == symbol {
 				return items_types.ValueType(utils.ConvStrToFloat64(asset.Free))
@@ -222,9 +234,13 @@ func getFreeBalance(client *binance.Client, symbol string) func() items_types.Va
 		return 0.0
 	}
 } // getFreeBalance
-func getLockedBalance(client *binance.Client, symbol string) func() items_types.ValueType {
+func getLockedBalance(client *binance.Client, symbol string) processor_types.GetLockedBalanceFunction {
 	return func() items_types.ValueType {
-		account, _ := client.NewGetAccountService().Do(context.Background())
+		account, err := client.NewGetAccountService().Do(context.Background())
+		if err != nil {
+			logrus.Errorf("Can't get account: %v", err)
+			return 0
+		}
 		for _, asset := range account.Balances {
 			if asset.Asset == symbol {
 				return items_types.ValueType(utils.ConvStrToFloat64(asset.Locked))
@@ -233,10 +249,11 @@ func getLockedBalance(client *binance.Client, symbol string) func() items_types.
 		return 0.0
 	}
 } // getLockedBalance
-func getCurrentPrice(client *binance.Client, symbol string) func() items_types.PriceType {
+func getCurrentPrice(client *binance.Client, symbol string) processor_types.GetCurrentPriceFunction {
 	return func() items_types.PriceType {
 		price, err := client.NewListPricesService().Symbol(symbol).Do(context.Background())
 		if err != nil {
+			logrus.Errorf("Can't get price: %v", err)
 			return 0
 		}
 		return items_types.PriceType(utils.ConvStrToFloat64(price[0].Price))
