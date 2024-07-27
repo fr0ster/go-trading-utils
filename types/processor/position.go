@@ -20,8 +20,8 @@ func (pp *Processor) GetPositionRisk(debug ...*futures.PositionRisk) *futures.Po
 	return nil
 }
 
-func (pp *Processor) GetLiquidationDistance(price float64) (distance float64) {
-	if risk := pp.GetPositionRisk(); risk != nil {
+func (pp *Processor) GetLiquidationDistance(price float64, debug ...*futures.PositionRisk) (distance float64) {
+	if risk := pp.GetPositionRisk(debug...); risk != nil {
 		return math.Abs((price - utils.ConvStrToFloat64(risk.LiquidationPrice)) / utils.ConvStrToFloat64(risk.LiquidationPrice))
 	} else {
 		return 0
@@ -61,8 +61,8 @@ func (pp *Processor) SetMarginType(marginType types.MarginType) (err error) {
 	return pp.setMarginType(marginType)
 }
 
-func (pp *Processor) GetPositionMargin() (margin float64) {
-	if risk := pp.GetPositionRisk(); risk != nil {
+func (pp *Processor) GetPositionMargin(debug ...*futures.PositionRisk) (margin float64) {
+	if risk := pp.GetPositionRisk(debug...); risk != nil {
 		margin = utils.ConvStrToFloat64(risk.IsolatedMargin) // Convert string to float64
 	}
 	return
@@ -82,8 +82,8 @@ func (pp *Processor) ClosePosition() (err error) {
 	return pp.closePosition()
 }
 
-func (pp *Processor) GetPositionAmt() (positionAmt items_types.QuantityType) {
-	if risk := pp.GetPositionRisk(); risk != nil {
+func (pp *Processor) GetPositionAmt(debug ...*futures.PositionRisk) (positionAmt items_types.QuantityType) {
+	if risk := pp.GetPositionRisk(debug...); risk != nil {
 		positionAmt = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	}
 	return
@@ -102,7 +102,13 @@ func (pp *Processor) GetQuantityByUPnL(
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	risk := pp.GetPositionRisk(debug...)
 	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
+	if notional == 0 {
+		notional = pp.GetNotional()
+	}
 	leverage := int(utils.ConvStrToFloat64(risk.Leverage))
+	if leverage == 0 {
+		leverage = pp.GetLeverage()
+	}
 	targetOfPossibleLoss := pp.GetLimitOnPosition()
 	transaction := pp.GetLimitOnTransaction()
 
