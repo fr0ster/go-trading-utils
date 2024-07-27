@@ -105,20 +105,23 @@ func (pp *Processor) GetQuantityByUPnL(
 		oldQuantity     items_types.QuantityType
 		oldDelta        items_types.PriceType
 		oldPossibleLoss items_types.ValueType
+		leverage        int
 	)
 	risk := pp.GetPositionRisk(debug...)
 	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
 	if notional == 0 {
 		notional = pp.GetNotional()
 	}
-	leverage := int(utils.ConvStrToFloat64(risk.Leverage))
+	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	if oldQuantity != 0 {
+		leverage = int(utils.ConvStrToFloat64(risk.Leverage))
+	}
 	if leverage == 0 {
 		leverage = pp.GetLeverage()
 	}
 	targetOfPossibleLoss := pp.GetLimitOnPosition()
 	transaction := pp.GetLimitOnTransaction()
 
-	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	if oldQuantity != 0 {
 		oldDelta = items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice)-float64(price)) + delta
 		oldPossibleLoss = items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
