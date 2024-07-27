@@ -146,8 +146,13 @@ func (pp *Processor) GetQuantityByUPnL(
 	deltaOnQuantity := transaction / items_types.ValueType(leverage)
 
 	quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
-	if quantity < minQuantity && isCorrected {
-		quantity = minQuantity
+	if quantity < minQuantity {
+		if isCorrected {
+			quantity = minQuantity
+			err = nil
+		} else {
+			err = fmt.Errorf("quantity %f is less than min quantity %f", quantity, minQuantity)
+		}
 	}
 	return
 }
