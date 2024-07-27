@@ -11,67 +11,6 @@ import (
 	"github.com/google/btree"
 )
 
-const (
-	// SpotAccountType is a constant for spot account type.
-	// SPOT/MARGIN/ISOLATED_MARGIN/USDT_FUTURE/COIN_FUTURE
-	SpotAccountType           types.AccountType = "SPOT"
-	MarginAccountType         types.AccountType = "MARGIN"
-	IsolatedMarginAccountType types.AccountType = "ISOLATED_MARGIN"
-	USDTFutureType            types.AccountType = "USDT_FUTURE"
-	CoinFutureType            types.AccountType = "COIN_FUTURE"
-	// SpotStrategyType is a constant for spot strategy type.
-	// HOLDING - Накопичуємо цільовий токен
-	// SCALPING - Купуємо/продаемо цільовий токен за базовий
-	// ARBITRAGE - Арбітраж, поки не реалізовано
-	// TRADING - Трейдинг, накопичуємо цільовий токен, потім продаємо лімітним ордером
-	// GRID - Грід, розміщуємо лімітні ордери на купівлю/продажу по сітці,
-	// як спрацює ордер, ставимо новий, поки не вийдемо з позиції
-	// Відслідковуємо рівень можливих втрат, якщо втрати перевищують ліміт, зупиняемо збільшення позиції
-	// Коли ціна ліквідаціі починає наближатися, зменшуємо позицію
-	// HOLDING/SCALPING/ARBITRAGE/TRADING/GRID
-	HoldingStrategyType   types.StrategyType = "HOLDING"
-	ScalpingStrategyType  types.StrategyType = "SCALPING"
-	ArbitrageStrategyType types.StrategyType = "ARBITRAGE"
-	TradingStrategyType   types.StrategyType = "TRADING"
-	GridStrategyType      types.StrategyType = "GRID"
-	GridStrategyTypeV2    types.StrategyType = "GRID_V2"
-	GridStrategyTypeV3    types.StrategyType = "GRID_V3"
-	GridStrategyTypeV4    types.StrategyType = "GRID_V4"
-	GridStrategyTypeV5    types.StrategyType = "GRID_V5"
-	// INPUT_INTO_POSITION - Режим входу - накопичуємо цільовий токен
-	// WORK_IN_POSITION - Режим спекуляції - купуємо/продаемо цільовий токен за базовий
-	// OUTPUT_OF_POSITION - Режим виходу - продаемо цільовий токен
-	// SpotStageType is a constant for spot stage type.
-	// INPUT_INTO_POSITION/WORK_IN_POSITION/OUTPUT_OF_POSITION/CLOSED
-	InputIntoPositionStage types.StageType = "INPUT_INTO_POSITION"
-	WorkInPositionStage    types.StageType = "WORK_IN_POSITION"
-	OutputOfPositionStage  types.StageType = "OUTPUT_OF_POSITION"
-	PositionClosedStage    types.StageType = "CLOSED"
-
-	// Для USDT_FUTURE/COIN_FUTURE
-	CrossMarginType    types.MarginType = "CROSS"
-	IsolatedMarginType types.MarginType = "ISOLATED"
-
-	// Арифметична прогресія
-	ArithmeticProgression types.ProgressionType = "ARITHMETIC"
-	// Геометрична прогресія
-	GeometricProgression types.ProgressionType = "GEOMETRIC"
-	// Експоненціальна прогресія
-	ExponentialProgression types.ProgressionType = "EXPONENTIAL"
-	// Логарифмічна прогресія
-	LogarithmicProgression types.ProgressionType = "LOGARITHMIC"
-	// Квадратична прогресія
-	QuadraticProgression types.ProgressionType = "QUADRATIC"
-	// Кубічна прогресія
-	CubicProgression types.ProgressionType = "CUBIC"
-	// Квадратно-коренева прогресія
-	SquareRootProgression types.ProgressionType = "SQUARE_ROOT"
-	// Кубічно-коренева прогресія
-	CubicRootProgression types.ProgressionType = "CUBIC_ROOT"
-	// Гармонічна прогресія
-	HarmonicProgression types.ProgressionType = "HARMONIC"
-)
-
 type (
 	Pairs struct {
 		AccountType  types.AccountType  `json:"account_type"`  // Тип акаунта

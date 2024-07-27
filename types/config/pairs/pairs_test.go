@@ -15,11 +15,11 @@ import (
 func getTestData() *btree.BTree {
 	res := btree.New(2)
 	res.ReplaceOrInsert(&pairs_types.Pairs{
-		AccountType:        pairs_types.SpotAccountType,
-		StrategyType:       pairs_types.HoldingStrategyType,
-		StageType:          pairs_types.InputIntoPositionStage,
+		AccountType:        types.SpotAccountType,
+		StrategyType:       types.HoldingStrategyType,
+		StageType:          types.InputIntoPositionStage,
 		Pair:               "BTCUSDT",
-		MarginType:         pairs_types.CrossMarginType,
+		MarginType:         types.CrossMarginType,
 		Leverage:           20,
 		LimitOnPosition:    1000,
 		LimitOnTransaction: 10,   // LimitOnTransaction 10%
@@ -32,11 +32,11 @@ func getTestData() *btree.BTree {
 		DepthsN:            50,  // DepthsN 50
 	})
 	res.ReplaceOrInsert(&pairs_types.Pairs{
-		AccountType:        pairs_types.USDTFutureType,
-		StrategyType:       pairs_types.ScalpingStrategyType,
-		StageType:          pairs_types.WorkInPositionStage,
+		AccountType:        types.USDTFutureType,
+		StrategyType:       types.ScalpingStrategyType,
+		StageType:          types.WorkInPositionStage,
 		Pair:               "BTCUSDT",
-		MarginType:         pairs_types.CrossMarginType,
+		MarginType:         types.CrossMarginType,
 		Leverage:           20,
 		LimitOnPosition:    1000,
 		LimitOnTransaction: 10,   // LimitOnTransaction 10%
@@ -68,14 +68,14 @@ func assertPair(
 	assert.Equal(t, stageType, pair.GetStage())
 
 	// Test SetStage
-	pair.SetStage(pairs_types.WorkInPositionStage)
-	assert.Equal(t, pairs_types.WorkInPositionStage, pair.GetStage())
+	pair.SetStage(types.WorkInPositionStage)
+	assert.Equal(t, types.WorkInPositionStage, pair.GetStage())
 
 	// Test GetPair
 	assert.Equal(t, "BTCUSDT", pair.GetPair())
 
 	// Test GetMarginType
-	assert.Equal(t, pairs_types.CrossMarginType, pair.GetMarginType())
+	assert.Equal(t, types.CrossMarginType, pair.GetMarginType())
 
 	// Test GetLeverage
 	assert.Equal(t, 20, pair.GetLeverage())
@@ -96,7 +96,7 @@ func assertPair(
 	assert.Equal(t, items_types.QuantityPercentType(10.0), pair.GetDeltaQuantity())
 
 	// Test GetProgression
-	assert.Equal(t, pairs_types.GeometricProgression, pair.GetProgression())
+	assert.Equal(t, types.GeometricProgression, pair.GetProgression())
 
 	// Test GetValue
 	assert.Equal(t, items_types.ValueType(200.0), pair.GetValue())
@@ -111,19 +111,19 @@ func assertPair(
 func TestPairs(t *testing.T) {
 	pairs := getTestData()
 	val := pairs.Get(&pairs_types.Pairs{
-		AccountType:  pairs_types.SpotAccountType,
-		StrategyType: pairs_types.HoldingStrategyType,
-		StageType:    pairs_types.InputIntoPositionStage,
+		AccountType:  types.SpotAccountType,
+		StrategyType: types.HoldingStrategyType,
+		StageType:    types.InputIntoPositionStage,
 		Pair:         "BTCUSDT"})
 	assert.NotNil(t, val)
 	pair_1 := val.(*pairs_types.Pairs)
-	assertPair(t, pair_1, pairs_types.SpotAccountType, pairs_types.HoldingStrategyType, pairs_types.InputIntoPositionStage)
+	assertPair(t, pair_1, types.SpotAccountType, types.HoldingStrategyType, types.InputIntoPositionStage)
 	val = pairs.Get(&pairs_types.Pairs{
-		AccountType:  pairs_types.USDTFutureType,
-		StrategyType: pairs_types.ScalpingStrategyType,
-		StageType:    pairs_types.WorkInPositionStage,
+		AccountType:  types.USDTFutureType,
+		StrategyType: types.ScalpingStrategyType,
+		StageType:    types.WorkInPositionStage,
 		Pair:         "BTCUSDT"})
 	assert.NotNil(t, val)
 	pair_2 := val.(*pairs_types.Pairs)
-	assertPair(t, pair_2, pairs_types.USDTFutureType, pairs_types.ScalpingStrategyType, pairs_types.WorkInPositionStage)
+	assertPair(t, pair_2, types.USDTFutureType, types.ScalpingStrategyType, types.WorkInPositionStage)
 }

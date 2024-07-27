@@ -5,7 +5,8 @@ import (
 	"os"
 	"sync"
 
-	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
+	types "github.com/fr0ster/go-trading-utils/types"
+	pair_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
 )
 
@@ -56,11 +57,11 @@ func (cf *ConfigFile) Save() error {
 	defer cf.Unlock()
 	if cf.configs.Pairs.Len() == 0 {
 		cf.configs.Pairs.ReplaceOrInsert(
-			pairs_types.New(
+			pair_types.New(
 				&connection_types.Connection{},
-				pairs_types.SpotAccountType,
-				pairs_types.HoldingStrategyType,
-				pairs_types.InputIntoPositionStage,
+				types.SpotAccountType,
+				types.HoldingStrategyType,
+				types.InputIntoPositionStage,
 				"BTCUSDT",
 				"BTC",
 				"USDT"))

@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	types "github.com/fr0ster/go-trading-utils/types"
 	config_types "github.com/fr0ster/go-trading-utils/types/config"
 	pairs_types "github.com/fr0ster/go-trading-utils/types/config/pairs"
 	connection_types "github.com/fr0ster/go-trading-utils/types/connection"
@@ -39,15 +40,15 @@ const (
 	MaintainPartiallyFilledOrders = true // Підтримувати частково виконані ордери
 
 	// Для USDT_FUTURE/COIN_FUTURE
-	MarginType_1 = pairs_types.CrossMarginType // Кросова маржа
-	Leverage_1   = 20                          // Плече 20
+	MarginType_1 = types.CrossMarginType // Кросова маржа
+	Leverage_1   = 20                    // Плече 20
 
-	AccountType_1                = pairs_types.SpotAccountType        // Тип акаунта
-	StrategyType_1               = pairs_types.HoldingStrategyType    // Тип стратегії
-	StageType_1                  = pairs_types.InputIntoPositionStage // Стадія стратегії
-	Pair_1                       = "BTCUSDT"                          // Пара
-	SleepingTime_1               = 5                                  // Час сплячки, міллісекунди
-	TakingPositionSleepingTime_1 = 60                                 // Час сплячки при вході в позицію, хвилини
+	AccountType_1                = types.SpotAccountType        // Тип акаунта
+	StrategyType_1               = types.HoldingStrategyType    // Тип стратегії
+	StageType_1                  = types.InputIntoPositionStage // Стадія стратегії
+	Pair_1                       = "BTCUSDT"                    // Пара
+	SleepingTime_1               = 5                            // Час сплячки, міллісекунди
+	TakingPositionSleepingTime_1 = 60                           // Час сплячки при вході в позицію, хвилини
 
 	LimitOnPosition_1    items_types.ValueType        = 1000.0 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_1 items_types.ValuePercentType = 10.0   // Ліміт на транзакцію, відсоток від ліміту на позицію
@@ -65,13 +66,13 @@ const (
 	DepthsN_1 int = 50 // Глибина
 
 	// Для USDT_FUTURE/COIN_FUTURE
-	MarginType_2 = pairs_types.IsolatedMarginType // Ізольована маржа
-	Leverage_2   = 10                             // Плече 10
+	MarginType_2 = types.IsolatedMarginType // Ізольована маржа
+	Leverage_2   = 10                       // Плече 10
 
-	AccountType_2  = pairs_types.USDTFutureType      // Тип акаунта
-	StrategyType_2 = pairs_types.TradingStrategyType // Тип стратегії
-	StageType_2    = pairs_types.WorkInPositionStage // Тип стадії
-	Pair_2         = "ETHUSDT"                       // Пара
+	AccountType_2  = types.USDTFutureType      // Тип акаунта
+	StrategyType_2 = types.TradingStrategyType // Тип стратегії
+	StageType_2    = types.WorkInPositionStage // Тип стадії
+	Pair_2         = "ETHUSDT"                 // Пара
 
 	LimitOnPosition_2    items_types.ValueType        = 2000.0 // Ліміт на позицію, відсоток від балансу базової валюти
 	LimitOnTransaction_2 items_types.ValuePercentType = 1.0    // Ліміт на транзакцію, відсоток від ліміту на позицію
