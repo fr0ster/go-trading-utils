@@ -100,6 +100,11 @@ func (pp *Processor) GetQuantityByUPnL(
 	price items_types.PriceType,
 	delta items_types.PriceType,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
+	var (
+		oldQuantity     items_types.QuantityType
+		oldDelta        items_types.PriceType
+		oldPossibleLoss items_types.ValueType
+	)
 	risk := pp.GetPositionRisk(debug...)
 	notional := items_types.ValueType(utils.ConvStrToFloat64(risk.Notional))
 	if notional == 0 {
@@ -112,9 +117,11 @@ func (pp *Processor) GetQuantityByUPnL(
 	targetOfPossibleLoss := pp.GetLimitOnPosition()
 	transaction := pp.GetLimitOnTransaction()
 
-	oldQuantity := items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	oldDelta := items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice)-float64(price)) + delta
-	oldPossibleLoss := items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
+	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
+	if oldQuantity != 0 {
+		oldDelta = items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice)-float64(price)) + delta
+		oldPossibleLoss = items_types.ValueType(oldDelta) * items_types.ValueType(oldQuantity) * items_types.ValueType(leverage)
+	}
 
 	minQuantity := pp.CeilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))
 	minLoss := items_types.ValueType(delta) * items_types.ValueType(minQuantity) * items_types.ValueType(leverage)
