@@ -99,6 +99,7 @@ func (pp *Processor) GetPredictableProfitOrLoss(
 func (pp *Processor) GetQuantityByUPnL(
 	price items_types.PriceType,
 	delta items_types.PriceType,
+	correctUpToNotional bool,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	var (
 		oldQuantity     items_types.QuantityType

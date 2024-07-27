@@ -322,6 +322,6 @@ func TestGetQuantityByUPnL(t *testing.T) {
 		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
 		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
 	}
-	quantity, _ := pp.GetQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), risk)
+	quantity, _ := pp.GetQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), false, risk)
 	assert.Equal(t, 4.0, float64(quantity))
 }
