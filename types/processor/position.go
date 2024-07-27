@@ -99,7 +99,7 @@ func (pp *Processor) GetPredictableProfitOrLoss(
 func (pp *Processor) GetQuantityByUPnL(
 	price items_types.PriceType,
 	delta items_types.PriceType,
-	correctUpToNotional bool,
+	isCorrected bool,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	var (
 		oldQuantity     items_types.QuantityType
@@ -136,13 +136,17 @@ func (pp *Processor) GetQuantityByUPnL(
 		} else {
 			err = fmt.Errorf("target of loss %f is less than min loss %f", targetOfPossibleLoss, minLoss)
 		}
+		if isCorrected {
+			quantity = minQuantity
+			err = nil
+		}
 		return
 	}
 
 	deltaOnQuantity := transaction / items_types.ValueType(leverage)
 
 	quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
-	if quantity < minQuantity {
+	if quantity < minQuantity && isCorrected {
 		quantity = minQuantity
 	}
 	return
