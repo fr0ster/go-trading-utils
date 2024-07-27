@@ -117,11 +117,6 @@ func (pp *Processor) GetQuantityByUPnL(
 	}
 	targetOfPossibleLoss := pp.GetLimitOnPosition()
 	transaction := pp.GetLimitOnTransaction()
-	if transaction < notional {
-		err = fmt.Errorf("limit on transaction %f isn't enough for open positions, we need at least %f",
-			transaction, notional)
-		return
-	}
 
 	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	if oldQuantity != 0 {
@@ -131,6 +126,11 @@ func (pp *Processor) GetQuantityByUPnL(
 
 	minQuantity := pp.CeilQuantity(items_types.QuantityType(notional) / items_types.QuantityType(price))
 	minLoss := items_types.ValueType(delta) * items_types.ValueType(minQuantity) * items_types.ValueType(leverage)
+	if transaction < minLoss {
+		err = fmt.Errorf("limit on transaction %f isn't enough for open positions, we need at least %f",
+			transaction, minLoss)
+		return
+	}
 
 	if targetOfPossibleLoss-oldPossibleLoss < minLoss {
 		if oldPossibleLoss > 0 {
