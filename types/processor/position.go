@@ -118,8 +118,8 @@ func (pp *Processor) GetQuantityByUPnL(
 	targetOfPossibleLoss := pp.GetLimitOnPosition()
 	transaction := pp.GetLimitOnTransaction()
 	if transaction < notional {
-		err = fmt.Errorf("limit on transaction %f isn't enough for open position with leverage %d, we need at least %f",
-			transaction, leverage, notional)
+		err = fmt.Errorf("limit on transaction %f isn't enough for open positions, we need at least %f",
+			transaction, notional)
 		return
 	}
 
