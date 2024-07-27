@@ -314,10 +314,10 @@ func setPositionMargin(client *futures.Client) func(p *processor_types.Processor
 		}
 	}
 } // setPositionMargin
-func closePosition() func(p *processor_types.Processor) processor_types.ClosePositionFunction {
+func closePosition(debug ...*futures.PositionRisk) func(p *processor_types.Processor) processor_types.ClosePositionFunction {
 	return func(p *processor_types.Processor) processor_types.ClosePositionFunction {
 		return func() (err error) {
-			risk := p.GetPositionRisk()
+			risk := p.GetPositionRisk(debug...)
 			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
 				_, err = p.GetOrders().CreateOrder(
 					types.OrderType(futures.OrderTypeTakeProfitMarket),
