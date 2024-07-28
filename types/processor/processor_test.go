@@ -512,4 +512,7 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 	assert.Equal(t, items_types.QuantityType(1), minQuantity)
 	minLoss := pp.PossibleLoss(minQuantity, delta, leverage)
 	assert.Equal(t, items_types.ValueType(5), minLoss)
+
+	test := pp.CheckPosition(price)
+	assert.Nil(t, test)
 }
