@@ -11,7 +11,6 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
-	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 )
 
@@ -95,12 +94,12 @@ func New(
 	func() {
 		price := pp.GetCurrentPrice()
 		leverage := pp.GetLeverage()
-		transaction := pp.GetLimitOnTransaction()
-		_, minLoss := pp.MinPossibleLoss(pp.GetCurrentPrice(), items_types.PriceType(pp.GetUpAndLowBound()), leverage)
+		limitOfTransactionLoss := pp.GetLimitOnTransaction()
+		notional := pp.GetNotional()
 
-		if transaction < minLoss {
+		if limitOfTransactionLoss < notional {
 			err = fmt.Errorf("limit on transaction %f with price %f isn't enough for open position with leverage %d, we need at least %f or decrease leverage",
-				transaction, price, leverage, minLoss)
+				limitOfTransactionLoss, price, leverage, notional)
 			return
 		}
 	}()

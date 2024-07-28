@@ -279,23 +279,41 @@ func getFuturesProcessor(
 		exchangeInfo, // exchangeInfo
 		nil,          // depths
 		nil,          // orders
-		func() items_types.ValueType { return baseBalance },       // getBaseBalance
-		func() items_types.QuantityType { return targetBalance },  // getTargetBalance
-		func() items_types.ValueType { return baseBalance * 0.5 }, // getFreeBalance
-		func() items_types.ValueType { return baseBalance * 0.5 }, // getLockedBalance
-		func() items_types.PriceType { return price },             // getCurrentPrice
-		nil,                            // getPositionRisk
-		func() int { return leverage }, // getLeverage
-		nil,                            // setLeverage
-		nil,                            // getMarginType
-		nil,                            // setMarginType
-		nil,                            // setPositionMargin
-		closePosition,                  // closePosition
-		nil,                            // getDeltaPrice
-		nil,                            // getDeltaQuantity
-		func() items_types.ValueType { return limitOnPosition },           // getLimitOnPosition
-		func() items_types.ValuePercentType { return limitOnTransaction }, // getLimitOnTransaction
-		func() items_types.PricePercentType { return upAndLowBound },      // getUpAndLowBound
+		func() items_types.ValueType {
+			return baseBalance
+		}, // getBaseBalance
+		func() items_types.QuantityType {
+			return targetBalance
+		}, // getTargetBalance
+		func() items_types.ValueType {
+			return baseBalance * 0.5
+		}, // getFreeBalance
+		func() items_types.ValueType {
+			return baseBalance * 0.5
+		}, // getLockedBalance
+		func() items_types.PriceType {
+			return price
+		}, // getCurrentPrice
+		nil, // getPositionRisk
+		func() int {
+			return leverage
+		}, // getLeverage
+		nil,           // setLeverage
+		nil,           // getMarginType
+		nil,           // setMarginType
+		nil,           // setPositionMargin
+		closePosition, // closePosition
+		nil,           // getDeltaPrice
+		nil,           // getDeltaQuantity
+		func() items_types.ValueType {
+			return limitOnPosition
+		}, // getLimitOnPosition
+		func() items_types.ValuePercentType {
+			return limitOnTransaction
+		}, // getLimitOnTransaction
+		func() items_types.PricePercentType {
+			return upAndLowBound
+		}, // getUpAndLowBound
 		nil,  // getCallbackRate
 		true, // debug
 	)
@@ -390,13 +408,12 @@ func TestRoundPrice(t *testing.T) {
 	}
 }
 
-func TestGetQuantityByUPnLFutures(t *testing.T) {
-
+func TestGetQuantityByUPnL(t *testing.T) {
 	symbol := "CYBERUSDT"
 	baseSymbol := "CYBER"
 	targetSymbol := "USDT"
 	baseBalance := items_types.ValueType(10000)
-	price := items_types.PriceType(67000)
+	price := items_types.PriceType(5)
 	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
 	limitOnPosition := baseBalance * 0.25
 	limitOnTransaction := items_types.ValuePercentType(10)
@@ -442,6 +459,59 @@ func TestGetQuantityByUPnLFutures(t *testing.T) {
 		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
 		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
 	}
-	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), false, risk)
+	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), risk)
 	assert.Equal(t, 4.0, float64(quantity))
+}
+
+func TestQuantityAndLossCalculation(t *testing.T) {
+	symbol := "CYBERUSDT"
+	baseSymbol := "CYBER"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(5)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(5)
+	stepSize := items_types.QuantityType(0.1)
+	tickSize := items_types.PriceType(100)
+	leverage := 10
+	pp, err := getFuturesProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize,
+		leverage)
+	assert.Nil(t, err)
+	deltaLiquidation := pp.DeltaLiquidation(leverage)
+	assert.Equal(t, items_types.PricePercentType(10), deltaLiquidation)
+	delta := items_types.PriceType(deltaLiquidation) * price / 100
+	assert.Equal(t, items_types.PriceType(0.5), delta)
+
+	deltaOnQuantity := pp.CalcDeltaOnQuantity(pp.GetLimitOnTransaction(), leverage)
+	assert.Equal(t, items_types.PriceOnQuantityType(25.0), deltaOnQuantity)
+	deltaPercentOnQuantity := pp.CalcDeltaPercentOnQuantity(leverage)
+	assert.Equal(t, items_types.PricePercentOnQuantityType(10.0), deltaPercentOnQuantity)
+
+	quantity := pp.PossibleQuantity(pp.GetLimitOnTransaction(), price)
+	assert.Equal(t, items_types.QuantityType(50), quantity)
+
+	loss := pp.PossibleLoss(quantity, delta, leverage)
+	assert.Equal(t, items_types.ValueType(250), loss)
+
+	assert.Equal(t, float64(deltaOnQuantity), float64(delta)*float64(quantity))
+
+	minQuantity := pp.PossibleQuantity(notional, price)
+	assert.Equal(t, items_types.QuantityType(1), minQuantity)
+	minLoss := pp.PossibleLoss(minQuantity, delta, leverage)
+	assert.Equal(t, items_types.ValueType(5), minLoss)
 }
