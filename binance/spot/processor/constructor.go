@@ -110,7 +110,6 @@ func New(
 		debug)
 	if err != nil {
 		logrus.Errorf("Can't init pair: %v", err)
-		close(quit)
 		return
 	}
 	return
