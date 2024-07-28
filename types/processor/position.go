@@ -22,7 +22,7 @@ func (pp *Processor) PossibleQuantity(
 	value items_types.ValueType,
 	delta items_types.PriceType,
 	leverage int) (minQuantity items_types.QuantityType) {
-	minQuantity = pp.FloorQuantity(items_types.QuantityType(value) / items_types.QuantityType(delta) / items_types.QuantityType(leverage))
+	minQuantity = pp.FloorQuantity(items_types.QuantityType(value) / (items_types.QuantityType(delta) * items_types.QuantityType(leverage)))
 	return
 }
 
