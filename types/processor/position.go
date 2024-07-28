@@ -46,11 +46,9 @@ func (pp *Processor) CalcDeltaPercentOnQuantity(leverage int) (res items_types.P
 
 func (pp *Processor) CalcQuantityByUPnL(
 	price items_types.PriceType,
-	delta items_types.PriceType,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	var (
 		oldQuantity     items_types.QuantityType
-		oldDelta        items_types.PriceType
 		oldPossibleLoss items_types.ValueType
 		leverage        int
 	)
@@ -62,13 +60,13 @@ func (pp *Processor) CalcQuantityByUPnL(
 		err = fmt.Errorf("limit on transaction %f isn't enough for open position with notional %f", limitOfTransactionLoss, notional)
 		return
 	}
+	delta := items_types.PriceType(pp.DeltaLiquidation(pp.GetLeverage())) * price / 100
 
 	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	leverage = pp.GetLeverage()
 
 	if oldQuantity != 0 {
-		oldDelta = items_types.PriceType(utils.ConvStrToFloat64(risk.EntryPrice)-float64(price)) + delta
-		oldPossibleLoss = pp.PossibleLoss(oldQuantity, oldDelta, leverage)
+		oldPossibleLoss = pp.PossibleLoss(oldQuantity, delta, leverage) + items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 	}
 
 	if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {

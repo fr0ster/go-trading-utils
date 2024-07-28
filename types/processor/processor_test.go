@@ -439,8 +439,6 @@ func TestGetQuantityByUPnL(t *testing.T) {
 	assert.Nil(t, err)
 	risk := &futures.PositionRisk{}
 	currentPrice := 5.0
-	deltaPercent := 10.0
-	delta := currentPrice * deltaPercent / 100
 	targetOfLoss := items_types.ValueType(200)
 	pp.SetGetterLimitOnPositionFunction(func() items_types.ValueType { return targetOfLoss })
 	pp.SetGetterLimitOnTransactionFunction(func() items_types.ValuePercentType { return 10 })
@@ -459,7 +457,7 @@ func TestGetQuantityByUPnL(t *testing.T) {
 		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
 		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
 	}
-	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), risk)
+	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), risk)
 	assert.Equal(t, 4.0, float64(quantity))
 }
 
