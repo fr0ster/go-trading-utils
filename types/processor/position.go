@@ -66,7 +66,7 @@ func (pp *Processor) CalcQuantityByUPnL(
 	leverage = pp.GetLeverage()
 
 	if oldQuantity != 0 {
-		oldPossibleLoss = pp.PossibleLoss(oldQuantity, delta, leverage) + items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+		oldPossibleLoss = pp.PossibleLoss(oldQuantity, delta, leverage) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 	}
 
 	if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
