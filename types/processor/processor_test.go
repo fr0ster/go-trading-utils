@@ -502,7 +502,7 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 	deltaPercentOnQuantity := pp.CalcDeltaPercentOnQuantity(leverage)
 	assert.Equal(t, items_types.PricePercentOnQuantityType(10.0), deltaPercentOnQuantity)
 
-	quantity := pp.PossibleQuantity(pp.GetLimitOnTransaction(), price)
+	quantity := pp.PossibleQuantity(pp.GetLimitOnTransaction(), delta, leverage)
 	assert.Equal(t, items_types.QuantityType(50), quantity)
 
 	loss := pp.PossibleLoss(quantity, delta, leverage)
@@ -510,7 +510,7 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 
 	assert.Equal(t, float64(deltaOnQuantity), float64(delta)*float64(quantity))
 
-	minQuantity := pp.PossibleQuantity(notional, price)
+	minQuantity := pp.PossibleQuantity(notional, delta, leverage)
 	assert.Equal(t, items_types.QuantityType(1), minQuantity)
 	minLoss := pp.PossibleLoss(minQuantity, delta, leverage)
 	assert.Equal(t, items_types.ValueType(5), minLoss)
