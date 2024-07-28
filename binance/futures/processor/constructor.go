@@ -116,10 +116,6 @@ func New(
 			return callbackRate
 		}, // getCallbackRate
 		debug)
-	if err != nil {
-		logrus.Errorf("Can't init pair: %v", err)
-		return
-	}
 	return
 }
 
