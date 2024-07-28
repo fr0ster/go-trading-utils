@@ -11,6 +11,7 @@ import (
 
 	utils "github.com/fr0ster/go-trading-utils/utils"
 
+	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 )
 
@@ -90,6 +91,19 @@ func New(
 	pp.SetGetterUpAndLowBoundFunction(getUpAndLowBound)
 	// CallbackRate
 	pp.SetGetterCallbackRateFunction(getCallbackRate)
+
+	func() {
+		price := pp.GetCurrentPrice()
+		leverage := pp.GetLeverage()
+		transaction := pp.GetLimitOnTransaction()
+		_, minLoss := pp.MinPossibleLoss(pp.GetCurrentPrice(), items_types.PriceType(pp.GetUpAndLowBound()), leverage)
+
+		if transaction < minLoss {
+			err = fmt.Errorf("limit on transaction %f with price %f isn't enough for open position with leverage %d, we need at least %f or decrease leverage",
+				transaction, price, leverage, minLoss)
+			return
+		}
+	}()
 
 	if len(debug) == 0 || (len(debug) > 0 && !debug[0]) {
 		if pp.setLeverage != nil {

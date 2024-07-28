@@ -18,7 +18,7 @@ type (
 	OrdersConstructor func() *orders_types.Orders
 
 	GetBaseBalanceFunction   func() items_types.ValueType
-	GetTargetBalanceFunction func() items_types.ValueType
+	GetTargetBalanceFunction func() items_types.QuantityType
 	GetFreeBalanceFunction   func() items_types.ValueType
 	GetLockedBalanceFunction func() items_types.ValueType
 	GetCurrentPriceFunction  func() items_types.PriceType

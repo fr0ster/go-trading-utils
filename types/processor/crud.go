@@ -115,7 +115,7 @@ func (pp *Processor) GetBaseBalance() items_types.ValueType {
 	}
 	return pp.getBaseBalance()
 }
-func (pp *Processor) GetTargetBalance() items_types.ValueType {
+func (pp *Processor) GetTargetBalance() items_types.QuantityType {
 	if pp.getTargetBalance == nil {
 		return 0
 	}

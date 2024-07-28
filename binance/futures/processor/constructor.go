@@ -218,7 +218,7 @@ func getBaseBalance(client *futures.Client, symbol string) processor_types.GetBa
 	}
 } // getBaseBalance
 func getTargetBalance(client *futures.Client, symbol string) processor_types.GetTargetBalanceFunction {
-	return func() items_types.ValueType {
+	return func() items_types.QuantityType {
 		account, err := client.NewGetAccountService().Do(context.Background())
 		if err != nil {
 			logrus.Errorf("Can't get account: %v", err)
@@ -226,7 +226,7 @@ func getTargetBalance(client *futures.Client, symbol string) processor_types.Get
 		}
 		for _, asset := range account.Assets {
 			if asset.Asset == symbol {
-				return items_types.ValueType(utils.ConvStrToFloat64(asset.WalletBalance))
+				return items_types.QuantityType(utils.ConvStrToFloat64(asset.WalletBalance))
 			}
 		}
 		return 0.0

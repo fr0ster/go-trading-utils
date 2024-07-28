@@ -91,24 +91,33 @@ func TestGetLimitPrices(t *testing.T) {
 }
 
 func getSpotProcessor(
+	symbol string,
+	baseSymbol string,
+	targetSymbol string,
+	baseBalance items_types.ValueType,
+	targetBalance items_types.QuantityType,
+	price items_types.PriceType,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upAndLowBound items_types.PricePercentType,
 	notional items_types.ValueType,
 	stepSize items_types.QuantityType,
 	tickSize items_types.PriceType) (pp *processor.Processor, err error) {
 	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
-			"BTCUSDT", // symbol
-			notional,  // notional
-			stepSize,  // stepSize
-			1000000,   // maxQty
-			0.1,       // minQty
-			tickSize,  // tickSize
-			100000,    // maxPrice
-			100,       // minPrice
-			"USDT",    // quoteAsset
-			"BTC",     // baseAsset
-			false,     // isMarginTradingAllowed
-			nil,       // permissions
-			nil,       // orderType
+			symbol,                               // symbol
+			notional,                             // notional
+			stepSize,                             // stepSize
+			1000000,                              // maxQty
+			0.1,                                  // minQty
+			tickSize,                             // tickSize
+			100000,                               // maxPrice
+			100,                                  // minPrice
+			symbol_types.QuoteAsset(baseSymbol),  // quoteAsset
+			symbol_types.BaseAsset(targetSymbol), // baseAsset
+			false,                                // isMarginTradingAllowed
+			nil,                                  // permissions
+			nil,                                  // orderType
 		))
 		return
 	}
@@ -125,15 +134,15 @@ func getSpotProcessor(
 	exchangeInfo := exchange_types.New(init)
 	pp, err = processor.New(
 		quit,         // stop
-		"BTCUSDT",    // symbol
+		symbol,       // symbol
 		exchangeInfo, // exchangeInfo
 		nil,          // depths
 		nil,          // orders
-		func() items_types.ValueType { return 10000 }, // getBaseBalance
-		func() items_types.ValueType { return 10000 }, // getTargetBalance
-		func() items_types.ValueType { return 10000 }, // getFreeBalance
-		func() items_types.ValueType { return 10000 }, // getLockedBalance
-		func() items_types.PriceType { return 67000 }, // getCurrentPrice
+		func() items_types.ValueType { return baseBalance },       // getBaseBalance
+		func() items_types.QuantityType { return targetBalance },  // getTargetBalance
+		func() items_types.ValueType { return baseBalance * 0.5 }, // getFreeBalance
+		func() items_types.ValueType { return baseBalance * 0.5 }, // getLockedBalance
+		func() items_types.PriceType { return price },             // getCurrentPrice
 		nil, // getPositionRisk func(*Processor) GetPositionRiskFunction,
 
 		nil, // getLeverage func(*Processor) GetLeverageFunction,
@@ -148,9 +157,10 @@ func getSpotProcessor(
 
 		nil, // getDeltaPrice GetDeltaPriceFunction,
 		nil, // getDeltaQuantity GetDeltaQuantityFunction,
-		nil, // getLimitOnPosition GetLimitOnPositionFunction,
-		nil, // getLimitOnTransaction GetLimitOnTransactionFunction,
-		nil, // getUpAndLowBound GetUpAndLowBoundFunction,
+
+		func() items_types.ValueType { return limitOnPosition },           // getLimitOnPosition
+		func() items_types.ValuePercentType { return limitOnTransaction }, // getLimitOnTransaction
+		func() items_types.PricePercentType { return upAndLowBound },      // getUpAndLowBound
 
 		nil,  // getCallbackRate GetCallbackRateFunction,
 		true, // debug
@@ -159,16 +169,40 @@ func getSpotProcessor(
 }
 
 func TestNewSpot(t *testing.T) {
-	maintainer, err := getSpotProcessor(100, 0.001, 0.1)
+	symbol := "BTCUSDT"
+	baseSymbol := "BTC"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(67000)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(100)
+	stepSize := items_types.QuantityType(0.001)
+	tickSize := items_types.PriceType(0.1)
+	maintainer, err := getSpotProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize)
 	assert.Nil(t, err)
 	assert.NotNil(t, maintainer)
 	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetBaseBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetTargetBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetFreeBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetLockedBalance())
-	assert.Equal(t, items_types.PriceType(67000), maintainer.GetCurrentPrice())
-	assert.Equal(t, items_types.ValueType(100), maintainer.GetNotional())
+	assert.Equal(t, items_types.ValueType(baseBalance), maintainer.GetBaseBalance())
+	assert.Equal(t, items_types.QuantityType(targetBalance), maintainer.GetTargetBalance())
+	assert.Equal(t, items_types.ValueType(baseBalance*0.5), maintainer.GetFreeBalance())
+	assert.Equal(t, items_types.ValueType(baseBalance*0.5), maintainer.GetLockedBalance())
+	assert.Equal(t, items_types.PriceType(price), maintainer.GetCurrentPrice())
+	assert.Equal(t, items_types.ValueType(notional), maintainer.GetNotional())
 	assert.Equal(t, items_types.QuantityType(0.1), maintainer.GetMinQty())
 	assert.Equal(t, items_types.QuantityType(1000000), maintainer.GetMaxQty())
 	assert.Equal(t, items_types.PriceType(100), maintainer.GetMinPrice())
@@ -176,24 +210,34 @@ func TestNewSpot(t *testing.T) {
 }
 
 func getFuturesProcessor(
+	symbol string,
+	baseSymbol string,
+	targetSymbol string,
+	baseBalance items_types.ValueType,
+	targetBalance items_types.QuantityType,
+	price items_types.PriceType,
+	limitOnPosition items_types.ValueType,
+	limitOnTransaction items_types.ValuePercentType,
+	upAndLowBound items_types.PricePercentType,
 	notional items_types.ValueType,
 	stepSize items_types.QuantityType,
-	tickSize items_types.PriceType) (pp *processor.Processor, err error) {
+	tickSize items_types.PriceType,
+	leverage int) (pp *processor.Processor, err error) {
 	getSymbols := func() (symbols []*symbol_types.Symbol) {
 		symbols = append(symbols, symbol_types.New(
-			"BTCUSDT", // symbol
-			notional,  // notional
-			stepSize,  // stepSize
-			1000000,   // maxQty
-			0.1,       // minQty
-			tickSize,  // tickSize
-			100000,    // maxPrice
-			100,       // minPrice
-			"USDT",    // quoteAsset
-			"BTC",     // baseAsset
-			false,     // isMarginTradingAllowed
-			nil,       // permissions
-			nil,       // orderType
+			symbol,                               // symbol
+			notional,                             // notional
+			stepSize,                             // stepSize
+			1000000,                              // maxQty
+			0.1,                                  // minQty
+			tickSize,                             // tickSize
+			100000,                               // maxPrice
+			100,                                  // minPrice
+			symbol_types.QuoteAsset(baseSymbol),  // quoteAsset
+			symbol_types.BaseAsset(targetSymbol), // baseAsset
+			false,                                // isMarginTradingAllowed
+			nil,                                  // permissions
+			nil,                                  // orderType
 		))
 		return
 	}
@@ -231,44 +275,70 @@ func getFuturesProcessor(
 	}
 	pp, err = processor.New(
 		quit,         // stop
-		"BTCUSDT",    // symbol
+		symbol,       // symbol
 		exchangeInfo, // exchangeInfo
 		nil,          // depths
 		nil,          // orders
-		func() items_types.ValueType { return 10000 }, // getBaseBalance
-		func() items_types.ValueType { return 10000 }, // getTargetBalance
-		func() items_types.ValueType { return 1000 },  // getFreeBalance
-		func() items_types.ValueType { return 10000 }, // getLockedBalance
-		func() items_types.PriceType { return 67000 }, // getCurrentPrice
-		nil,           // getPositionRisk
-		nil,           // getLeverage
-		nil,           // setLeverage
-		nil,           // getMarginType
-		nil,           // setMarginType
-		nil,           // setPositionMargin
-		closePosition, // closePosition
-		nil,           // getDeltaPrice
-		nil,           // getDeltaQuantity
-		nil,           // getLimitOnPosition
-		nil,           // getLimitOnTransaction
-		nil,           // getUpAndLowBound
-		nil,           // getCallbackRate
-		true,          // debug
+		func() items_types.ValueType { return baseBalance },       // getBaseBalance
+		func() items_types.QuantityType { return targetBalance },  // getTargetBalance
+		func() items_types.ValueType { return baseBalance * 0.5 }, // getFreeBalance
+		func() items_types.ValueType { return baseBalance * 0.5 }, // getLockedBalance
+		func() items_types.PriceType { return price },             // getCurrentPrice
+		nil,                            // getPositionRisk
+		func() int { return leverage }, // getLeverage
+		nil,                            // setLeverage
+		nil,                            // getMarginType
+		nil,                            // setMarginType
+		nil,                            // setPositionMargin
+		closePosition,                  // closePosition
+		nil,                            // getDeltaPrice
+		nil,                            // getDeltaQuantity
+		func() items_types.ValueType { return limitOnPosition },           // getLimitOnPosition
+		func() items_types.ValuePercentType { return limitOnTransaction }, // getLimitOnTransaction
+		func() items_types.PricePercentType { return upAndLowBound },      // getUpAndLowBound
+		nil,  // getCallbackRate
+		true, // debug
 	)
 	return
 }
 
 func TestNewFutures(t *testing.T) {
-	maintainer, err := getFuturesProcessor(100, 0.001, 0.1)
+	symbol := "BTCUSDT"
+	baseSymbol := "BTC"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(67000)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(100)
+	stepSize := items_types.QuantityType(0.001)
+	tickSize := items_types.PriceType(0.1)
+	leverage := 10
+	maintainer, err := getFuturesProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize,
+		leverage)
 	assert.Nil(t, err)
 	assert.NotNil(t, maintainer)
 	assert.Equal(t, "BTCUSDT", maintainer.GetSymbol())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetBaseBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetTargetBalance())
-	assert.Equal(t, items_types.ValueType(1000), maintainer.GetFreeBalance())
-	assert.Equal(t, items_types.ValueType(10000), maintainer.GetLockedBalance())
-	assert.Equal(t, items_types.PriceType(67000), maintainer.GetCurrentPrice())
-	assert.Equal(t, items_types.ValueType(100), maintainer.GetNotional())
+	assert.Equal(t, items_types.ValueType(baseBalance), maintainer.GetBaseBalance())
+	assert.Equal(t, items_types.QuantityType(targetBalance), maintainer.GetTargetBalance())
+	assert.Equal(t, items_types.ValueType(baseBalance*0.5), maintainer.GetFreeBalance())
+	assert.Equal(t, items_types.ValueType(baseBalance*0.5), maintainer.GetLockedBalance())
+	assert.Equal(t, items_types.PriceType(price), maintainer.GetCurrentPrice())
+	assert.Equal(t, items_types.ValueType(notional), maintainer.GetNotional())
 	assert.Equal(t, items_types.QuantityType(0.1), maintainer.GetMinQty())
 	assert.Equal(t, items_types.QuantityType(1000000), maintainer.GetMaxQty())
 	assert.Equal(t, items_types.PriceType(100), maintainer.GetMinPrice())
@@ -288,15 +358,67 @@ func TestRoundPrice(t *testing.T) {
 		{67100.111111, 67100.1},
 		{67100.1111111, 67100.1},
 	}
-	pp, err := getSpotProcessor(100, 0.001, 0.1)
+
+	symbol := "BTCUSDT"
+	baseSymbol := "BTC"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(67000)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(100)
+	stepSize := items_types.QuantityType(0.001)
+	tickSize := items_types.PriceType(0.1)
+	pp, err := getSpotProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize)
 	assert.Nil(t, err)
 	for _, price := range prices {
 		assert.Equal(t, price.result, pp.RoundPrice(price.price))
 	}
 }
 
-func TestGetQuantityByUPnL(t *testing.T) {
-	pp, err := getFuturesProcessor(100, 0.001, 0.1)
+func TestGetQuantityByUPnLFutures(t *testing.T) {
+
+	symbol := "CYBERUSDT"
+	baseSymbol := "CYBER"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(67000)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(5)
+	stepSize := items_types.QuantityType(0.1)
+	tickSize := items_types.PriceType(100)
+	leverage := 10
+	pp, err := getFuturesProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize,
+		leverage)
 	assert.Nil(t, err)
 	risk := &futures.PositionRisk{}
 	currentPrice := 5.0
@@ -306,8 +428,6 @@ func TestGetQuantityByUPnL(t *testing.T) {
 	pp.SetGetterLimitOnPositionFunction(func() items_types.ValueType { return targetOfLoss })
 	pp.SetGetterLimitOnTransactionFunction(func() items_types.ValuePercentType { return 10 })
 	oldPosition := 10
-	notional := 5
-	leverage := 10
 	risk.Notional = utils.ConvFloat64ToStrDefault(float64(notional))
 	risk.Leverage = utils.ConvFloat64ToStrDefault(float64(leverage))
 	risk.BreakEvenPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice) * 0.99)
@@ -322,6 +442,6 @@ func TestGetQuantityByUPnL(t *testing.T) {
 		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
 		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
 	}
-	quantity, _ := pp.GetQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), false, risk)
+	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), items_types.PriceType(delta), false, risk)
 	assert.Equal(t, 4.0, float64(quantity))
 }
