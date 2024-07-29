@@ -96,16 +96,9 @@ func (pp *Processor) CheckPosition(
 		return
 	} else {
 		profitOrLoss := items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
-		if items_types.ValueType(math.Abs(float64(profitOrLoss))) > targetOfLoss {
+		if profitOrLoss < -targetOfLoss {
 			err = fmt.Errorf("profit or loss %f is more than limit of loss %f", profitOrLoss, targetOfLoss)
 			return
-		}
-		liquidationPrice := items_types.PriceType(utils.ConvStrToFloat64(risk.LiquidationPrice))
-		delta := price * items_types.PriceType(pp.GetUpAndLowBound()/100)
-		if position < 0 && liquidationPrice < price+delta { // Short position
-			err = fmt.Errorf("liquidation price %f is less than price %f + delta %f == %f", liquidationPrice, price, delta, price+delta)
-		} else if position > 0 && liquidationPrice > price-delta { // Long position
-			err = fmt.Errorf("liquidation price %f is more than price %f - delta %f == %f", liquidationPrice, price, delta, price-delta)
 		}
 	}
 	return
