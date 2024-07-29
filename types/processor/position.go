@@ -2,8 +2,10 @@ package processor
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/adshao/go-binance/v2/futures"
+	depth_types "github.com/fr0ster/go-trading-utils/types/depths/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
@@ -29,7 +31,7 @@ func (pp *Processor) PossibleLoss(
 	quantity items_types.QuantityType,
 	delta items_types.PriceType,
 	leverage int) (possibleLoss items_types.ValueType) {
-	possibleLoss = items_types.ValueType(delta) * items_types.ValueType(quantity) * items_types.ValueType(leverage)
+	possibleLoss = items_types.ValueType(delta) * items_types.ValueType(math.Abs(float64(quantity))) * items_types.ValueType(leverage)
 	return
 }
 
@@ -44,10 +46,11 @@ func (pp *Processor) CalcDeltaPercentOnQuantity(leverage int) (res items_types.P
 }
 
 func (pp *Processor) CalcQuantityByUPnL(
+	upOrDown depth_types.UpOrDown,
 	price items_types.PriceType,
 	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
 	var (
-		oldQuantity     items_types.QuantityType
+		position        items_types.QuantityType
 		oldPossibleLoss items_types.ValueType
 		leverage        int
 	)
@@ -55,26 +58,27 @@ func (pp *Processor) CalcQuantityByUPnL(
 	limitOfPositionLoss := pp.GetLimitOnPosition()
 	limitOfTransactionLoss := pp.GetLimitOnTransaction()
 	notional := pp.GetNotional()
-	if limitOfTransactionLoss < notional {
-		err = fmt.Errorf("limit on transaction %f isn't enough for open position with notional %f", limitOfTransactionLoss, notional)
-		return
-	}
+	position = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	delta := items_types.PriceType(pp.DeltaLiquidation(pp.GetLeverage())) * price / 100
-
-	oldQuantity = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	leverage = pp.GetLeverage()
+	if upOrDown == depth_types.UP && position < 0 || upOrDown == depth_types.DOWN && position > 0 {
+		if limitOfTransactionLoss < notional {
+			err = fmt.Errorf("limit on transaction %f isn't enough for open position with notional %f", limitOfTransactionLoss, notional)
+			return
+		}
 
-	if oldQuantity != 0 {
-		oldPossibleLoss = pp.PossibleLoss(oldQuantity, delta, leverage) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
-	}
+		if position != 0 {
+			oldPossibleLoss = pp.PossibleLoss(position, delta, leverage) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+		}
 
-	if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
-		err = fmt.Errorf("we have open position with possible loss %f with price %f and we couldn't open new position with possible loss %f, we need limit of possible loss more than %f",
-			oldPossibleLoss,
-			price,
-			limitOfPositionLoss-oldPossibleLoss,
-			notional+oldPossibleLoss)
-		return
+		if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
+			err = fmt.Errorf("we have open position with possible loss %f with price %f and we couldn't open new position with possible loss %f, we need limit of possible loss more than %f",
+				oldPossibleLoss,
+				price,
+				limitOfPositionLoss-oldPossibleLoss,
+				notional+oldPossibleLoss)
+			return
+		}
 	}
 
 	deltaOnQuantity := pp.CalcDeltaOnQuantity(limitOfTransactionLoss, leverage)

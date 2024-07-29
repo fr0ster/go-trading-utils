@@ -11,6 +11,7 @@ import (
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	asks_types "github.com/fr0ster/go-trading-utils/types/depths/asks"
 	bids_types "github.com/fr0ster/go-trading-utils/types/depths/bids"
+	depths_types "github.com/fr0ster/go-trading-utils/types/depths/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	processor "github.com/fr0ster/go-trading-utils/types/processor"
@@ -438,26 +439,52 @@ func TestGetQuantityByUPnL(t *testing.T) {
 		leverage)
 	assert.Nil(t, err)
 	risk := &futures.PositionRisk{}
-	currentPrice := 5.0
+	currentPrice := items_types.PriceType(5.0)
 	targetOfLoss := items_types.ValueType(200)
 	pp.SetGetterLimitOnPositionFunction(func() items_types.ValueType { return targetOfLoss })
 	pp.SetGetterLimitOnTransactionFunction(func() items_types.ValuePercentType { return 10 })
-	oldPosition := 10
-	risk.Notional = utils.ConvFloat64ToStrDefault(float64(notional))
-	risk.Leverage = utils.ConvFloat64ToStrDefault(float64(leverage))
-	risk.BreakEvenPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice) * 0.99)
-	risk.EntryPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice * (1 - 0.01)))
-	risk.Symbol = pp.GetSymbol()
-	risk.PositionSide = "LONG"
-	deltaLiquidation := float64(targetOfLoss) / (float64(oldPosition) * float64(leverage))
-	if risk.PositionSide == "LONG" {
-		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(oldPosition))
-		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice - deltaLiquidation))
-	} else {
-		risk.PositionAmt = utils.ConvFloat64ToStrDefault(float64(-oldPosition))
-		risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(currentPrice + deltaLiquidation))
+	modRisk := func(
+		pp *processor.Processor,
+		price items_types.PriceType,
+		riskIn *futures.PositionRisk,
+		side string,
+		position float64,
+		entryPercent items_types.PricePercentType,
+		lossPercent items_types.PricePercentType) (risk *futures.PositionRisk) {
+		risk = riskIn
+		risk.Notional = utils.ConvFloat64ToStrDefault(float64(notional))
+		risk.Leverage = utils.ConvFloat64ToStrDefault(float64(leverage))
+		risk.BreakEvenPrice = utils.ConvFloat64ToStrDefault(float64(price) * float64(1+entryPercent/100))
+		risk.EntryPrice = utils.ConvFloat64ToStrDefault(float64(price) * float64(1+entryPercent/100))
+		risk.Symbol = pp.GetSymbol()
+		risk.PositionSide = side
+		deltaLiquidation := float64(targetOfLoss) / (position * float64(leverage))
+		if risk.PositionSide == "LONG" {
+			risk.PositionAmt = utils.ConvFloat64ToStrDefault(position)
+			risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(price) - deltaLiquidation)
+		} else {
+			risk.PositionAmt = utils.ConvFloat64ToStrDefault(-position)
+			risk.LiquidationPrice = utils.ConvFloat64ToStrDefault(float64(price) + deltaLiquidation)
+		}
+		risk.UnRealizedProfit = utils.ConvFloat64ToStrDefault(
+			float64(-pp.PossibleLoss(
+				items_types.QuantityType(position),
+				items_types.PriceType(price*items_types.PriceType(lossPercent/100)),
+				leverage)))
+		return
 	}
-	quantity, _ := pp.CalcQuantityByUPnL(items_types.PriceType(currentPrice), risk)
+	riskLong := modRisk(pp, currentPrice, risk, "LONG", 100, 10, 10)
+	quantity, _ := pp.CalcQuantityByUPnL(depths_types.UP, items_types.PriceType(currentPrice), riskLong)
+	assert.Equal(t, 4.0, float64(quantity))
+	riskShort := modRisk(pp, currentPrice, risk, "LONG", 100, -10, 10)
+	quantity, _ = pp.CalcQuantityByUPnL(depths_types.DOWN, items_types.PriceType(currentPrice), riskShort)
+	assert.Equal(t, 0.0, float64(quantity))
+
+	riskLong = modRisk(pp, currentPrice, risk, "SHORT", 100, -10, 10)
+	quantity, _ = pp.CalcQuantityByUPnL(depths_types.UP, items_types.PriceType(currentPrice), riskLong)
+	assert.Equal(t, 0.0, float64(quantity))
+	riskShort = modRisk(pp, currentPrice, risk, "SHORT", 100, 10, 10)
+	quantity, _ = pp.CalcQuantityByUPnL(depths_types.DOWN, items_types.PriceType(currentPrice), riskShort)
 	assert.Equal(t, 4.0, float64(quantity))
 }
 
