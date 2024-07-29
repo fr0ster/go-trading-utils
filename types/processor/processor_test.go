@@ -527,7 +527,7 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 	deltaPercentOnQuantity := pp.CalcDeltaPercentOnQuantity(leverage)
 	assert.Equal(t, items_types.PricePercentOnQuantityType(10.0), deltaPercentOnQuantity)
 
-	quantity := pp.PossibleQuantity(pp.GetLimitOnTransaction(), delta, leverage)
+	quantity := pp.PossibleQuantity(pp.GetLimitOnTransaction(), price)
 	assert.Equal(t, items_types.QuantityType(50), quantity)
 
 	loss := pp.PossibleLoss(quantity, delta, leverage)
@@ -535,11 +535,47 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 
 	assert.Equal(t, float64(deltaOnQuantity), float64(delta)*float64(quantity))
 
-	minQuantity := pp.PossibleQuantity(notional, delta, leverage)
+	minQuantity := pp.PossibleQuantity(notional, price)
 	assert.Equal(t, items_types.QuantityType(1), minQuantity)
 	minLoss := pp.PossibleLoss(minQuantity, delta, leverage)
 	assert.Equal(t, items_types.ValueType(5), minLoss)
 
 	test := pp.CheckPosition(price)
 	assert.Nil(t, test)
+}
+
+func TestGetQuantityAndLoss(t *testing.T) {
+	symbol := "CYBERUSDT"
+	baseSymbol := "CYBER"
+	targetSymbol := "USDT"
+	baseBalance := items_types.ValueType(10000)
+	price := items_types.PriceType(5)
+	targetBalance := items_types.QuantityType(baseBalance) / items_types.QuantityType(price)
+	limitOnPosition := baseBalance * 0.25
+	limitOnTransaction := items_types.ValuePercentType(10)
+	upAndLowBound := items_types.PricePercentType(10)
+	notional := items_types.ValueType(5)
+	stepSize := items_types.QuantityType(0.1)
+	tickSize := items_types.PriceType(100)
+	leverage := 10
+	pp, err := getFuturesProcessor(
+		symbol,
+		baseSymbol,
+		targetSymbol,
+		baseBalance,
+		targetBalance,
+		price,
+		limitOnPosition,
+		limitOnTransaction,
+		upAndLowBound,
+		notional,
+		stepSize,
+		tickSize,
+		leverage)
+	assert.Nil(t, err)
+	value := items_types.PriceType(5.0)
+	quantity := items_types.QuantityType(float64(value) / float64(price))
+	assert.Equal(t, items_types.QuantityType(1), quantity)
+	loss := pp.PossibleLoss(quantity, items_types.PriceType(0.5), leverage)
+	assert.Equal(t, items_types.ValueType(5), loss)
 }
