@@ -23,14 +23,18 @@ func (pp *Processor) PossibleQuantity(
 	value items_types.ValueType,
 	price items_types.PriceType,
 	leverage int) (possibleQuantity items_types.QuantityType) {
-	possibleQuantity = pp.FloorQuantity(items_types.QuantityType(value) * items_types.QuantityType(leverage) / items_types.QuantityType(price))
+	possibleQuantity =
+		pp.FloorQuantity(items_types.QuantityType(value) *
+			items_types.QuantityType(leverage) /
+			items_types.QuantityType(price))
 	return
 }
 
 func (pp *Processor) PossibleLoss(
 	quantity items_types.QuantityType,
-	delta items_types.PriceType) (possibleLoss items_types.ValueType) {
-	possibleLoss = items_types.ValueType(delta) * items_types.ValueType(math.Abs(float64(quantity)))
+	price items_types.PriceType,
+	leverage int) (possibleLoss items_types.ValueType) {
+	possibleLoss = items_types.ValueType(price) * items_types.ValueType(math.Abs(float64(quantity))) / items_types.ValueType(leverage)
 	return
 }
 
@@ -48,7 +52,6 @@ func (pp *Processor) CalcQuantityByUPnL(
 	limitOfTransactionLoss := pp.GetLimitOnTransaction()
 	notional := pp.GetNotional()
 	position = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	delta := items_types.PriceType(pp.DeltaLiquidation(pp.GetLeverage())) * price / 100
 	leverage = pp.GetLeverage()
 	if upOrDown == depth_types.UP && position < 0 || upOrDown == depth_types.DOWN && position > 0 {
 		if limitOfTransactionLoss < notional {
@@ -57,7 +60,7 @@ func (pp *Processor) CalcQuantityByUPnL(
 		}
 
 		if position != 0 {
-			oldPossibleLoss = pp.PossibleLoss(position, delta) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+			oldPossibleLoss = pp.PossibleLoss(position, price, leverage) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 		}
 
 		if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
