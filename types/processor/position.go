@@ -22,11 +22,18 @@ func (pp *Processor) DeltaLiquidation(leverage int, lossPercent ...items_types.V
 func (pp *Processor) PossibleQuantity(
 	value items_types.ValueType,
 	price items_types.PriceType,
-	leverage int) (possibleQuantity items_types.QuantityType) {
-	possibleQuantity =
-		pp.FloorQuantity(items_types.QuantityType(value) *
+	leverage int,
+	round ...bool) (possibleQuantity items_types.QuantityType) {
+	if len(round) > 0 && !round[0] {
+		possibleQuantity = items_types.QuantityType(value) *
 			items_types.QuantityType(leverage) /
-			items_types.QuantityType(price))
+			items_types.QuantityType(price)
+	} else {
+		possibleQuantity =
+			pp.FloorQuantity(items_types.QuantityType(value) *
+				items_types.QuantityType(leverage) /
+				items_types.QuantityType(price))
+	}
 	return
 }
 
