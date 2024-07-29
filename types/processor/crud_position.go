@@ -30,7 +30,7 @@ func (pp *Processor) GetLiquidationDistance(price float64, debug ...*futures.Pos
 
 func (pp *Processor) GetLeverage() int {
 	if pp.getLeverage == nil {
-		return 0
+		return 1
 	}
 	return pp.getLeverage()
 }
