@@ -96,7 +96,7 @@ func (pp *Processor) CheckPosition(
 		return
 	} else {
 		profitOrLoss := items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
-		if profitOrLoss > targetOfLoss {
+		if items_types.ValueType(math.Abs(float64(profitOrLoss))) > targetOfLoss {
 			err = fmt.Errorf("profit or loss %f is more than limit of loss %f", profitOrLoss, targetOfLoss)
 			return
 		}
