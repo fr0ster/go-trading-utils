@@ -79,10 +79,6 @@ func (pp *Processor) CalcQuantityByUPnL(
 			return
 		}
 	}
-
-	// deltaOnQuantity := pp.CalcDeltaOnQuantity(limitOfTransactionLoss, price, leverage)
-
-	// quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
 	quantity = pp.PossibleQuantity(limitOfTransactionLoss, price, leverage)
 	return
 }
