@@ -21,26 +21,16 @@ func (pp *Processor) DeltaLiquidation(leverage int, lossPercent ...items_types.V
 
 func (pp *Processor) PossibleQuantity(
 	value items_types.ValueType,
-	price items_types.PriceType) (minQuantity items_types.QuantityType) {
-	minQuantity = pp.FloorQuantity(items_types.QuantityType(value) / items_types.QuantityType(price))
+	price items_types.PriceType,
+	leverage int) (possibleQuantity items_types.QuantityType) {
+	possibleQuantity = pp.FloorQuantity(items_types.QuantityType(value) * items_types.QuantityType(leverage) / items_types.QuantityType(price))
 	return
 }
 
 func (pp *Processor) PossibleLoss(
 	quantity items_types.QuantityType,
-	delta items_types.PriceType,
-	leverage int) (possibleLoss items_types.ValueType) {
-	possibleLoss = items_types.ValueType(delta) * items_types.ValueType(math.Abs(float64(quantity))) * items_types.ValueType(leverage)
-	return
-}
-
-func (pp *Processor) CalcDeltaOnQuantity(limitLossOnTransaction items_types.ValueType, leverage int) (res items_types.PriceOnQuantityType) {
-	res = items_types.PriceOnQuantityType(float64(limitLossOnTransaction) / float64(leverage))
-	return
-}
-
-func (pp *Processor) CalcDeltaPercentOnQuantity(leverage int) (res items_types.PricePercentOnQuantityType) {
-	res = items_types.PricePercentOnQuantityType(100 / float64(leverage))
+	delta items_types.PriceType) (possibleLoss items_types.ValueType) {
+	possibleLoss = items_types.ValueType(delta) * items_types.ValueType(math.Abs(float64(quantity)))
 	return
 }
 
@@ -67,7 +57,7 @@ func (pp *Processor) CalcQuantityByUPnL(
 		}
 
 		if position != 0 {
-			oldPossibleLoss = pp.PossibleLoss(position, delta, leverage) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+			oldPossibleLoss = pp.PossibleLoss(position, delta) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 		}
 
 		if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
@@ -80,9 +70,10 @@ func (pp *Processor) CalcQuantityByUPnL(
 		}
 	}
 
-	deltaOnQuantity := pp.CalcDeltaOnQuantity(limitOfTransactionLoss, leverage)
+	// deltaOnQuantity := pp.CalcDeltaOnQuantity(limitOfTransactionLoss, price, leverage)
 
-	quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
+	// quantity = pp.FloorQuantity(items_types.QuantityType(deltaOnQuantity) / items_types.QuantityType(delta))
+	quantity = pp.PossibleQuantity(limitOfTransactionLoss, price, leverage)
 	return
 }
 
