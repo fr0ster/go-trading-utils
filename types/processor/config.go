@@ -40,7 +40,11 @@ func (pp *Processor) GetUpAndLowBound() items_types.PricePercentType {
 	if pp.getUpAndLowBound == nil {
 		return 0
 	}
-	return pp.getUpAndLowBound()
+	if pp.getUpAndLowBound() < pp.DeltaLiquidation(pp.GetLeverage()) {
+		return pp.getUpAndLowBound()
+	} else {
+		return pp.DeltaLiquidation(pp.GetLeverage())
+	}
 }
 
 func (pp *Processor) GetUpBound(price items_types.PriceType) items_types.PriceType {
