@@ -21,31 +21,17 @@ func (pp *Processor) DeltaLiquidation(leverage int, lossPercent ...items_types.V
 
 func (pp *Processor) PossibleQuantity(
 	value items_types.ValueType,
-	price items_types.PriceType,
-	leverage int,
+	delta items_types.DeltaPriceType,
 	round ...bool) (possibleQuantity items_types.QuantityType) {
 	if len(round) > 0 && !round[0] {
-		possibleQuantity = items_types.QuantityType(value) *
-			items_types.QuantityType(leverage) /
-			items_types.QuantityType(price)
+		possibleQuantity = items_types.QuantityType(value) / items_types.QuantityType(delta)
 	} else {
-		possibleQuantity =
-			pp.FloorQuantity(items_types.QuantityType(value) *
-				items_types.QuantityType(leverage) /
-				items_types.QuantityType(price))
+		possibleQuantity = pp.FloorQuantity(items_types.QuantityType(value) / items_types.QuantityType(delta))
 	}
 	return
 }
 
-func (pp *Processor) PossibleLossByPrice(
-	quantity items_types.QuantityType,
-	price items_types.PriceType,
-	leverage int) (possibleLoss items_types.ValueType) {
-	possibleLoss = items_types.ValueType(quantity) * items_types.ValueType(price) / items_types.ValueType(leverage)
-	return
-}
-
-func (pp *Processor) PossibleLossByDeltaPrice(
+func (pp *Processor) PossibleLoss(
 	quantity items_types.QuantityType,
 	delta items_types.DeltaPriceType) (possibleLoss items_types.ValueType) {
 	possibleLoss = items_types.ValueType(quantity) * (items_types.ValueType(delta))
@@ -75,7 +61,10 @@ func (pp *Processor) CalcQuantityByUPnL(
 		}
 
 		if position != 0 {
-			oldPossibleLoss = pp.PossibleLossByDeltaPrice(items_types.QuantityType(math.Abs(float64(position))), items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100))) - items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
+			oldPossibleLoss = pp.PossibleLoss(
+				items_types.QuantityType(math.Abs(float64(position))),
+				items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100))) -
+				items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 		}
 
 		if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
@@ -87,7 +76,7 @@ func (pp *Processor) CalcQuantityByUPnL(
 			return
 		}
 	}
-	quantity = pp.PossibleQuantity(limitOfTransactionLoss, price, leverage)
+	quantity = pp.PossibleQuantity(limitOfTransactionLoss, items_types.DeltaPriceType(price)*items_types.DeltaPriceType(deltaLiquidation/100))
 	return
 }
 
