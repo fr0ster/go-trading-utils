@@ -469,8 +469,7 @@ func TestGetQuantityByUPnL(t *testing.T) {
 		risk.UnRealizedProfit = utils.ConvFloat64ToStrDefault(
 			float64(-pp.PossibleLoss(
 				items_types.QuantityType(position),
-				items_types.PriceType(price*items_types.PriceType(lossPercent/100)),
-				leverage)))
+				items_types.DeltaPriceType(price*items_types.PriceType(lossPercent/100)))))
 		return
 	}
 	riskLong := modRisk(pp, currentPrice, risk, "LONG", 1000, 10, 10)
@@ -526,12 +525,12 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 	quantity := pp.PossibleQuantity(transaction, price, leverage)
 	assert.Equal(t, items_types.QuantityType(500), quantity)
 
-	loss := pp.PossibleLoss(quantity, price, leverage)
+	loss := pp.PossibleLoss(quantity, items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100)))
 	assert.Equal(t, transaction, loss)
 
 	minQuantity := pp.PossibleQuantity(notional, price, leverage)
 	assert.Equal(t, items_types.QuantityType(10), minQuantity)
-	minLoss := pp.PossibleLoss(minQuantity, price, leverage)
+	minLoss := pp.PossibleLoss(minQuantity, items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100)))
 	assert.Equal(t, notional, minLoss)
 
 	test := pp.CheckPosition(price)
@@ -572,6 +571,6 @@ func TestGetQuantityAndLoss(t *testing.T) {
 	assert.Equal(t, items_types.PricePercentType(10), deltaLiquidation)
 	quantity := pp.PossibleQuantity(value, price, leverage)
 	assert.Equal(t, items_types.QuantityType(10), quantity)
-	loss := pp.PossibleLoss(quantity, price, leverage)
+	loss := pp.PossibleLoss(quantity, items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100)))
 	assert.Equal(t, items_types.ValueType(5), loss)
 }
