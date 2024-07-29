@@ -93,13 +93,12 @@ func New(
 
 	func() {
 		price := pp.GetCurrentPrice()
-		leverage := pp.GetLeverage()
 		limitOfTransactionLoss := pp.GetLimitOnTransaction()
 		notional := pp.GetNotional()
 
 		if limitOfTransactionLoss < notional {
-			err = fmt.Errorf("limit on transaction %f with price %f isn't enough for open position with leverage %d, we need at least %f or decrease leverage",
-				limitOfTransactionLoss, price, leverage, notional)
+			err = fmt.Errorf("limit on transaction %f with price %f isn't enough for open position, we need to have at least %f",
+				limitOfTransactionLoss, price, notional)
 			return
 		}
 	}()
