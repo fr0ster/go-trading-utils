@@ -50,7 +50,7 @@ func (pp *Processor) CalcQuantityByUPnL(
 	var (
 		position         items_types.QuantityType
 		fullPossibleLoss items_types.ValueType
-		leverage         int
+		// leverage         int
 	)
 	risk := pp.GetPositionRisk(debug...)
 	limitOfPositionLoss := pp.GetLimitOnPosition()
@@ -63,15 +63,20 @@ func (pp *Processor) CalcQuantityByUPnL(
 	}
 
 	position = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
-	leverage = pp.GetLeverage()
-	deltaLiquidation := pp.DeltaLiquidation(leverage)
-	newQuantity = pp.PossibleQuantity(limitOfTransactionLoss, items_types.DeltaPriceType(price)*items_types.DeltaPriceType(deltaLiquidation/100))
+	deltaBound := pp.GetUpAndLowBound()
+	newQuantity = pp.PossibleQuantity(
+		limitOfTransactionLoss,
+		pp.DeltaPrice(
+			price,
+			items_types.PricePercentType(deltaBound)))
 	if upOrDown == depth_types.UP && position < 0 || upOrDown == depth_types.DOWN && position > 0 {
 
 		if position != 0 {
 			fullPossibleLoss = pp.PossibleLoss(
 				items_types.QuantityType(math.Abs(float64(position+newQuantity))),
-				items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100))) -
+				pp.DeltaPrice(
+					price,
+					items_types.PricePercentType(deltaBound))) -
 				items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 		}
 
