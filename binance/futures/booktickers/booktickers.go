@@ -54,7 +54,7 @@ func BookTickerStreamCreator(
 func WsErrorHandlerCreator() func(bt *booktickers_types.BookTickers) futures.ErrHandler {
 	return func(bt *booktickers_types.BookTickers) futures.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Future BookTickers error: %v", err)
 			bt.ResetEvent(err)
 		}
 	}

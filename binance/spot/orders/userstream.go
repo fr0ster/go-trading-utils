@@ -23,6 +23,10 @@ func UserDataStreamCreator(
 			}
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsUserDataServe(listenKey, handlerCreator(o), errHandlerCreator(o))
+			if err != nil {
+				return
+			}
+			o.MarkStreamAsStarted()
 			return
 		}
 	}
@@ -50,7 +54,7 @@ func WsErrorHandlerCreator(handlers ...func(*orders_types.Orders) binance.ErrHan
 			stack = append(stack, handler(o))
 		}
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot Orders error: %v", err)
 			o.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)

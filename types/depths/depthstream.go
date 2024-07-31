@@ -5,6 +5,18 @@ import (
 	"time"
 )
 
+func (o *Depths) MarkStreamAsStarted() {
+	o.isStartedStream = true
+}
+
+func (o *Depths) MarkStreamAsStopped() {
+	o.isStartedStream = false
+}
+
+func (o *Depths) IsStreamStarted() bool {
+	return o.isStartedStream
+}
+
 func (d *Depths) DepthEventStart() (err error) {
 	if d.Init == nil || d.startDepthStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
@@ -57,5 +69,6 @@ func (d *Depths) DepthEventStop() (err error) {
 		return
 	}
 	close(d.stop)
+	d.MarkStreamAsStopped()
 	return
 }

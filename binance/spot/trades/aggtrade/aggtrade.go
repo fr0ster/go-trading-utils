@@ -70,7 +70,7 @@ func TradeStreamCreator(
 func WsErrorHandlerCreator() func(*aggtrade_types.AggTrades) binance.ErrHandler {
 	return func(trade *aggtrade_types.AggTrades) binance.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot AggTrades error: %v", err)
 			trade.ResetEvent(err)
 		}
 	}

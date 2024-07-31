@@ -66,7 +66,7 @@ func ListMarginTradesInitCreator(client *binance.Client, limit int) func(a *trad
 func WsErrorHandlerCreator() func(*trade_types.TradesV3) binance.ErrHandler {
 	return func(trade *trade_types.TradesV3) binance.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot TradesV3 error: %v", err)
 			trade.ResetEvent(err)
 		}
 	}

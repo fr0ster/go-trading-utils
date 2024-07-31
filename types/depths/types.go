@@ -43,6 +43,7 @@ type (
 
 		stop             chan struct{}
 		resetEvent       chan error
+		isStartedStream  bool
 		timeOut          time.Duration
 		startDepthStream types.StreamFunction
 		Init             types.InitFunction

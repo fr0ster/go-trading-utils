@@ -1,4 +1,4 @@
-package depth
+package depths
 
 import (
 	"context"
@@ -47,7 +47,16 @@ func DepthStreamCreator(
 	return func(d *depth_types.Depths) types.StreamFunction {
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
-			doneC, stopC, err = futures.WsPartialDepthServeWithRate(d.Symbol(), int(levels), time.Duration(rate), handlerCreator(d), errHandlerCreator(d))
+			doneC, stopC, err = futures.WsPartialDepthServeWithRate(
+				d.Symbol(),
+				int(levels),
+				time.Duration(rate),
+				handlerCreator(d),
+				errHandlerCreator(d))
+			if err != nil {
+				return
+			}
+			d.MarkStreamAsStarted()
 			return
 		}
 	}
@@ -109,7 +118,7 @@ func WsErrorHandlerCreator(handlers ...func(*depth_types.Depths) futures.ErrHand
 			stack = append(stack, handler(d))
 		}
 		return func(err error) {
-			logrus.Errorf("Futures wsErrorHandler error: %v", err)
+			logrus.Errorf("Futures Depths error: %v", err)
 			d.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)

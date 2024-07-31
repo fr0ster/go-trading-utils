@@ -90,7 +90,7 @@ func CallBackCreator(
 func WsErrorHandlerCreator() func(*kline_types.Klines) binance.ErrHandler {
 	return func(kl *kline_types.Klines) binance.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot Klines error: %v", err)
 			kl.ResetEvent(err)
 		}
 	}

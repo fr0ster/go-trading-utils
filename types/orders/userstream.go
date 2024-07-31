@@ -5,6 +5,18 @@ import (
 	"time"
 )
 
+func (o *Orders) MarkStreamAsStarted() {
+	o.isStartedStream = true
+}
+
+func (o *Orders) MarkStreamAsStopped() {
+	o.isStartedStream = false
+}
+
+func (o *Orders) IsStreamStarted() bool {
+	return o.isStartedStream
+}
+
 func (o *Orders) UserDataEventStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(o.timeOut)
@@ -12,6 +24,10 @@ func (o *Orders) UserDataEventStart() (err error) {
 	lastResponse := time.Now()
 	// Запускаємо стрім подій користувача
 	_, stopC, err := o.startUserDataStream()
+	if err != nil {
+		close(o.stop)
+		return
+	}
 	// Запускаємо стрім для перевірки часу відповіді та оновлення стріму подій користувача при необхідності
 	go func() {
 		for {
@@ -53,5 +69,6 @@ func (o *Orders) UserDataEventStop() (err error) {
 		return
 	}
 	close(o.stop)
+	o.MarkStreamAsStopped()
 	return
 }

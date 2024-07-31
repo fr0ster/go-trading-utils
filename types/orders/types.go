@@ -93,6 +93,7 @@ type (
 	Orders                  struct {
 		symbol              string
 		stop                chan struct{}
+		isStartedStream     bool
 		resetEvent          chan error
 		timeOut             time.Duration
 		startUserDataStream types.StreamFunction

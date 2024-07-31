@@ -7,7 +7,9 @@ import (
 )
 
 func (o *Orders) ResetEvent(err error) {
-	o.resetEvent <- err
+	if o.isStartedStream {
+		o.resetEvent <- err
+	}
 }
 
 func (o *Orders) Symbol() string {
@@ -31,10 +33,11 @@ func New(
 		stop = make(chan struct{})
 	}
 	this = &Orders{
-		symbol:     symbol,
-		stop:       stop,
-		resetEvent: make(chan error),
-		timeOut:    1 * time.Hour,
+		symbol:          symbol,
+		stop:            stop,
+		isStartedStream: false,
+		resetEvent:      make(chan error),
+		timeOut:         1 * time.Hour,
 	}
 	this.SetStartUserDataStream(startUserDataStreamCreator)
 	this.SetOrderCreator(createOrderCreator)

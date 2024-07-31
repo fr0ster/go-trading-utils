@@ -90,7 +90,7 @@ func CallBackCreator(
 func WsErrorHandlerCreator() func(*kline_types.Klines) futures.ErrHandler {
 	return func(kl *kline_types.Klines) futures.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Future Klines error: %v", err)
 			kl.ResetEvent(err)
 		}
 	}

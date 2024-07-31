@@ -70,7 +70,7 @@ func TradeStreamCreator(
 func WsErrorHandlerCreator() func(*aggtrade_types.AggTrades) futures.ErrHandler {
 	return func(at *aggtrade_types.AggTrades) futures.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Future AggTrade error: %v", err)
 			at.ResetEvent(err)
 		}
 	}

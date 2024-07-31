@@ -88,7 +88,7 @@ func CallBackCreator(
 func WsErrorHandlerCreator() func(*booktickers_types.BookTickers) binance.ErrHandler {
 	return func(btt *booktickers_types.BookTickers) binance.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Future BookTickers error: %v", err)
 			btt.ResetEvent(err)
 		}
 	}

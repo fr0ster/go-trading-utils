@@ -46,6 +46,10 @@ func DepthStreamCreator(
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsDepthServe100Ms(d.Symbol(), handlerCreator(d), errHandlerCreator(d))
+			if err != nil {
+				return
+			}
+			d.MarkStreamAsStarted()
 			return
 		}
 	}
@@ -109,6 +113,10 @@ func PartialDepthStreamCreator(
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsPartialDepthServe100Ms(d.Symbol(), string(rune(levels)), handlerCreator(d), errHandlerCreator(d))
+			if err != nil {
+				return
+			}
+			d.MarkStreamAsStarted()
 			return
 		}
 	}
@@ -171,7 +179,7 @@ func WsErrorHandlerCreator(handlers ...func(d *depths_types.Depths) binance.ErrH
 			stack = append(stack, handler(d))
 		}
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot Depths error: %v", err)
 			d.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)

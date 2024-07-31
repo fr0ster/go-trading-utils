@@ -32,6 +32,7 @@ func New(
 		mutex:            &sync.Mutex{},
 		stop:             stop,
 		resetEvent:       make(chan error, 1),
+		isStartedStream:  false,
 		timeOut:          1 * time.Hour,
 		startDepthStream: nil,
 		Init:             nil,

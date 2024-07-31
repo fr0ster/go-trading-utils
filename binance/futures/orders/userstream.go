@@ -23,6 +23,10 @@ func UserDataStreamCreator(
 			}
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsUserDataServe(listenKey, handlerCreator(o), errHandlerCreator(o))
+			if err != nil {
+				return
+			}
+			o.MarkStreamAsStarted()
 			return
 		}
 	}
@@ -50,7 +54,7 @@ func WsErrorHandlerCreator(handlers ...func(*orders_types.Orders) futures.ErrHan
 			stack = append(stack, handler(o))
 		}
 		return func(err error) {
-			logrus.Errorf("Futures wsErrorHandler error: %v", err)
+			logrus.Errorf("Futures UserDataStream error: %v", err)
 			o.ResetEvent(err)
 			for _, handler := range stack {
 				handler(err)

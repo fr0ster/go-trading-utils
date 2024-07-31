@@ -59,7 +59,7 @@ func RecentTradesInitCreator(client *futures.Client, limit int) func(a *trade_ty
 func WsErrorHandlerCreator() func(*trade_types.Trades) futures.ErrHandler {
 	return func(at *trade_types.Trades) futures.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Future wsErrorHandler error: %v", err)
+			logrus.Errorf("Future Trades error: %v", err)
 			at.ResetEvent(err)
 		}
 	}

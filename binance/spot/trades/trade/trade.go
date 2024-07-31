@@ -59,7 +59,7 @@ func RecentTradesInitCreator(client *binance.Client, limit int) func(a *trade_ty
 func WsErrorHandlerCreator() func(*trade_types.Trades) binance.ErrHandler {
 	return func(trade *trade_types.Trades) binance.ErrHandler {
 		return func(err error) {
-			logrus.Errorf("Spot wsErrorHandler error: %v", err)
+			logrus.Errorf("Spot Trades error: %v", err)
 			trade.ResetEvent(err)
 		}
 	}
