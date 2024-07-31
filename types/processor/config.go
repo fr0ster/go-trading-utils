@@ -40,10 +40,9 @@ func (pp *Processor) GetUpAndLowBound() items_types.PricePercentType {
 	if pp.getUpAndLowBound == nil {
 		return 0
 	}
-	liquidationPercent := 100 / items_types.PricePercentType(pp.GetLeverage())
 	bound := pp.getUpAndLowBound()
-	if bound == 0 || pp.getUpAndLowBound() > liquidationPercent {
-		return liquidationPercent
+	if bound == 0 {
+		return 100 / items_types.PricePercentType(pp.GetLeverage())
 	} else {
 		return bound
 	}
