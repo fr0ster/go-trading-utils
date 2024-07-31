@@ -41,42 +41,45 @@ func (pp *Processor) PossibleLoss(
 func (pp *Processor) CalcQuantityByUPnL(
 	upOrDown depth_types.UpOrDown,
 	price items_types.PriceType,
-	debug ...*futures.PositionRisk) (quantity items_types.QuantityType, err error) {
+	debug ...*futures.PositionRisk) (newQuantity items_types.QuantityType, err error) {
 	var (
-		position        items_types.QuantityType
-		oldPossibleLoss items_types.ValueType
-		leverage        int
+		position         items_types.QuantityType
+		fullPossibleLoss items_types.ValueType
+		leverage         int
 	)
 	risk := pp.GetPositionRisk(debug...)
 	limitOfPositionLoss := pp.GetLimitOnPosition()
+	// Частка на транзакцію залежить від наявних коштів, бо якшо маємо коштів меньше ліміту на позицію, то і ліміт на транзакцію відповідно менший
 	limitOfTransactionLoss := pp.GetLimitOnTransaction()
 	notional := pp.GetNotional()
+	if limitOfTransactionLoss < notional {
+		err = fmt.Errorf("limit on transaction %f isn't enough for open position with notional %f", limitOfTransactionLoss, notional)
+		return
+	}
+
 	position = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))
 	leverage = pp.GetLeverage()
 	deltaLiquidation := pp.DeltaLiquidation(leverage)
+	newQuantity = pp.PossibleQuantity(limitOfTransactionLoss, items_types.DeltaPriceType(price)*items_types.DeltaPriceType(deltaLiquidation/100))
 	if upOrDown == depth_types.UP && position < 0 || upOrDown == depth_types.DOWN && position > 0 {
-		if limitOfTransactionLoss < notional {
-			err = fmt.Errorf("limit on transaction %f isn't enough for open position with notional %f", limitOfTransactionLoss, notional)
-			return
-		}
 
 		if position != 0 {
-			oldPossibleLoss = pp.PossibleLoss(
-				items_types.QuantityType(math.Abs(float64(position))),
+			fullPossibleLoss = pp.PossibleLoss(
+				items_types.QuantityType(math.Abs(float64(position+newQuantity))),
 				items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100))) -
 				items_types.ValueType(utils.ConvStrToFloat64(risk.UnRealizedProfit))
 		}
 
-		if oldPossibleLoss > 0 && limitOfPositionLoss-oldPossibleLoss < notional {
+		if fullPossibleLoss > 0 && limitOfPositionLoss-fullPossibleLoss < notional {
+			newQuantity = 0
 			err = fmt.Errorf("we have open position with possible loss %f with price %f and we couldn't open new position with possible loss %f, we need limit of possible loss more than %f",
-				oldPossibleLoss,
+				fullPossibleLoss,
 				price,
-				limitOfPositionLoss-oldPossibleLoss,
-				notional+oldPossibleLoss)
+				limitOfPositionLoss-fullPossibleLoss,
+				notional+fullPossibleLoss)
 			return
 		}
 	}
-	quantity = pp.PossibleQuantity(limitOfTransactionLoss, items_types.DeltaPriceType(price)*items_types.DeltaPriceType(deltaLiquidation/100))
 	return
 }
 
