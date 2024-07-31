@@ -10,12 +10,17 @@ import (
 	utils "github.com/fr0ster/go-trading-utils/utils"
 )
 
-func (pp *Processor) DeltaLiquidation(leverage int, lossPercent ...items_types.ValuePercentType) (res items_types.PricePercentType) {
+func (pp *Processor) DeltaLiquidation(leverage int, lossPercent ...items_types.ValuePercentType) (res items_types.DeltaPriceType) {
 	if len(lossPercent) != 0 {
-		res = items_types.PricePercentType(float64(lossPercent[0]) * 100 / float64(leverage))
+		res = items_types.DeltaPriceType(float64(lossPercent[0]) * 100 / float64(leverage))
 	} else {
-		res = items_types.PricePercentType(100 / float64(leverage))
+		res = items_types.DeltaPriceType(100 / float64(leverage))
 	}
+	return
+}
+
+func (pp *Processor) DeltaPrice(price items_types.PriceType, delta items_types.PricePercentType) (res items_types.DeltaPriceType) {
+	res = items_types.DeltaPriceType(price) * items_types.DeltaPriceType(delta/100)
 	return
 }
 
