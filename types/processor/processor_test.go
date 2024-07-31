@@ -518,7 +518,7 @@ func TestQuantityAndLossCalculation(t *testing.T) {
 	assert.Nil(t, err)
 	transaction := pp.GetLimitOnTransaction()
 	deltaLiquidation := pp.DeltaLiquidation(leverage)
-	assert.Equal(t, items_types.PricePercentType(10), deltaLiquidation)
+	assert.Equal(t, items_types.DeltaPriceType(10), deltaLiquidation)
 	delta := items_types.DeltaPriceType(items_types.PriceType(deltaLiquidation) * price / 100)
 	assert.Equal(t, items_types.DeltaPriceType(0.5), delta)
 
@@ -569,7 +569,7 @@ func TestGetQuantityAndLoss(t *testing.T) {
 	value := items_types.ValueType(5.0)
 	deltaLiquidation := pp.DeltaLiquidation(leverage)
 	delta := items_types.DeltaPriceType(price * items_types.PriceType(deltaLiquidation) / 100)
-	assert.Equal(t, items_types.PricePercentType(10), deltaLiquidation)
+	assert.Equal(t, items_types.DeltaPriceType(10), deltaLiquidation)
 	quantity := pp.PossibleQuantity(value, delta)
 	assert.Equal(t, items_types.QuantityType(10), quantity)
 	loss := pp.PossibleLoss(quantity, items_types.DeltaPriceType(price*items_types.PriceType(deltaLiquidation/100)))
