@@ -84,5 +84,7 @@ func (a *Depths) UpdateBid(item *items_types.Bid) bool {
 }
 
 func (a *Depths) ResetEvent(err error) {
-	a.resetEvent <- err
+	if a.isStartedStream {
+		a.resetEvent <- err
+	}
 }
