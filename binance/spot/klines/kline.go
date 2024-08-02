@@ -39,6 +39,7 @@ func KlineStreamCreator(
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = binance.WsKlineServe(kl.GetSymbolname(), string(kl.GetInterval()), handler(kl), errHandler(kl))
+			kl.MarkStreamAsStarted()
 			return
 		}
 	}

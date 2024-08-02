@@ -34,7 +34,7 @@ func TestEvents(t *testing.T) {
 			futures_depth.WsErrorHandlerCreator()),
 		futures_depth.InitCreator(depth_types.DepthAPILimit10, client))
 	assert.NotNil(t, depths)
-	depths.DepthEventStart()
+	depths.StreamStart()
 	depths.ResetEvent(fmt.Errorf("test"))
 	fmt.Println("test pass")
 	time.Sleep(3 * time.Second)

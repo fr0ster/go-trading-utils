@@ -5,19 +5,19 @@ import (
 	"time"
 )
 
-func (o *Depths) MarkStreamAsStarted() {
-	o.isStartedStream = true
+func (d *Depths) MarkStreamAsStarted() {
+	d.isStartedStream = true
 }
 
-func (o *Depths) MarkStreamAsStopped() {
-	o.isStartedStream = false
+func (d *Depths) MarkStreamAsStopped() {
+	d.isStartedStream = false
 }
 
-func (o *Depths) IsStreamStarted() bool {
-	return o.isStartedStream
+func (d *Depths) IsStreamStarted() bool {
+	return d.isStartedStream
 }
 
-func (d *Depths) DepthEventStart() (err error) {
+func (d *Depths) StreamStart() (err error) {
 	if d.Init == nil || d.startDepthStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return
@@ -40,7 +40,7 @@ func (d *Depths) DepthEventStart() (err error) {
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = d.startDepthStream()
 				if err != nil {
-					close(d.stop)
+					d.StreamStop()
 					return
 				}
 			case <-ticker.C:
@@ -51,7 +51,7 @@ func (d *Depths) DepthEventStart() (err error) {
 					// Запускаємо новий стрім подій користувача
 					_, stopC, err = d.startDepthStream()
 					if err != nil {
-						close(d.stop)
+						d.StreamStop()
 						return
 					}
 					// Встановлюємо новий час відповіді
@@ -63,7 +63,7 @@ func (d *Depths) DepthEventStart() (err error) {
 	return
 }
 
-func (d *Depths) DepthEventStop() (err error) {
+func (d *Depths) StreamStop() (err error) {
 	if d.stop == nil {
 		err = errors.New("stop channel is not initialized")
 		return

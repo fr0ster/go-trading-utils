@@ -16,7 +16,7 @@ func (pp *Processor) GetDepths() *depth_types.Depths {
 
 func (pp *Processor) SetDepths(depths *depth_types.Depths) {
 	if pp.depths != nil {
-		pp.depths.DepthEventStop()
+		pp.depths.StreamStop()
 		pp.depths = nil
 	}
 	pp.depths = depths
@@ -28,7 +28,7 @@ func (pp *Processor) GetOrders() *orders_types.Orders {
 
 func (pp *Processor) SetOrders(orders *orders_types.Orders) {
 	if pp.orders != nil {
-		pp.orders.UserDataEventStop()
+		pp.orders.StreamStop()
 		pp.orders = nil
 	}
 	pp.orders = orders

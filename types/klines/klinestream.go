@@ -29,7 +29,19 @@ type (
 	KlineStreamInterval string
 )
 
-func (kl *Klines) KlineEventStart() (err error) {
+func (kl *Klines) MarkStreamAsStarted() {
+	kl.isStartedStream = true
+}
+
+func (kl *Klines) MarkStreamAsStopped() {
+	kl.isStartedStream = false
+}
+
+func (kl *Klines) IsStreamStarted() bool {
+	return kl.isStartedStream
+}
+
+func (kl *Klines) StreamStart() (err error) {
 	if kl.init == nil || kl.startKlineStream == nil {
 		err = errors.New("initial functions for Streams and Data are not initialized")
 		return
@@ -52,7 +64,7 @@ func (kl *Klines) KlineEventStart() (err error) {
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = kl.startKlineStream()
 				if err != nil {
-					close(kl.stop)
+					kl.StreamStop()
 					return
 				}
 			case <-ticker.C:
@@ -63,7 +75,7 @@ func (kl *Klines) KlineEventStart() (err error) {
 					// Запускаємо новий стрім подій користувача
 					_, stopC, err = kl.startKlineStream()
 					if err != nil {
-						close(kl.stop)
+						kl.StreamStop()
 						return
 					}
 					// Встановлюємо новий час відповіді
@@ -72,5 +84,15 @@ func (kl *Klines) KlineEventStart() (err error) {
 			}
 		}
 	}()
+	return
+}
+
+func (kl *Klines) StreamStop() (err error) {
+	if kl.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(kl.stop)
+	kl.MarkStreamAsStopped()
 	return
 }

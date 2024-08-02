@@ -14,6 +14,7 @@ type (
 	BookTickers struct {
 		symbol                string
 		tree                  *btree.BTree
+		isStartedStream       bool
 		mutex                 sync.Mutex
 		degree                int
 		timeOut               time.Duration
@@ -60,7 +61,9 @@ func (btt *BookTickers) GetSymbol() string {
 }
 
 func (btt *BookTickers) ResetEvent(err error) {
-	btt.resetEvent <- err
+	if btt.isStartedStream {
+		btt.resetEvent <- err
+	}
 }
 
 func New(
@@ -74,13 +77,14 @@ func New(
 		symbol = symbols[0]
 	}
 	this := &BookTickers{
-		symbol:     symbol,
-		tree:       btree.New(degree),
-		mutex:      sync.Mutex{},
-		degree:     degree,
-		timeOut:    1 * time.Hour,
-		stop:       stop,
-		resetEvent: make(chan error),
+		symbol:          symbol,
+		tree:            btree.New(degree),
+		mutex:           sync.Mutex{},
+		degree:          degree,
+		timeOut:         1 * time.Hour,
+		stop:            stop,
+		resetEvent:      make(chan error),
+		isStartedStream: false,
 	}
 	if startBookTickerStreamCreator != nil {
 		this.startBookTickerStream = startBookTickerStreamCreator(this)

@@ -46,6 +46,7 @@ func BookTickerStreamCreator(
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsBookTickerServe(bt.GetSymbol(), handler, errHandler)
+			bt.MarkStreamAsStarted()
 			return
 		}
 	}

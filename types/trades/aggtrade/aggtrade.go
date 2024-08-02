@@ -16,6 +16,7 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
+		isStartedStream  bool
 		startTradeStream types.StreamFunction
 		Init             types.InitFunction
 	}
@@ -97,10 +98,12 @@ func New(
 	startTradeStream func(*AggTrades) types.StreamFunction,
 	initCreator func(*AggTrades) types.InitFunction) *AggTrades {
 	this := &AggTrades{
-		symbol: symbol,
-		tree:   btree.New(2),
-		mu:     &sync.Mutex{},
-		stop:   stop,
+		symbol:          symbol,
+		tree:            btree.New(2),
+		mu:              &sync.Mutex{},
+		stop:            stop,
+		resetEvent:      make(chan error),
+		isStartedStream: false,
 	}
 	if startTradeStream != nil {
 		this.startTradeStream = startTradeStream(this)

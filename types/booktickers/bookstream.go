@@ -7,7 +7,19 @@ import (
 	"github.com/adshao/go-binance/v2/futures"
 )
 
-func (bt *BookTickers) BookTickerEventStart(
+func (bt *BookTickers) MarkStreamAsStarted() {
+	bt.isStartedStream = true
+}
+
+func (bt *BookTickers) MarkStreamAsStopped() {
+	bt.isStartedStream = false
+}
+
+func (bt *BookTickers) IsStreamStarted() bool {
+	return bt.isStartedStream
+}
+
+func (bt *BookTickers) StreamStart(
 	levels int,
 	rate time.Duration,
 	callBack futures.WsBookTickerHandler) (err error) {
@@ -33,7 +45,7 @@ func (bt *BookTickers) BookTickerEventStart(
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = bt.startBookTickerStream()
 				if err != nil {
-					close(bt.stop)
+					bt.StreamStop()
 					return
 				}
 			case <-ticker.C:
@@ -44,7 +56,7 @@ func (bt *BookTickers) BookTickerEventStart(
 					// Запускаємо новий стрім подій користувача
 					_, stopC, err = bt.startBookTickerStream()
 					if err != nil {
-						close(bt.stop)
+						bt.StreamStop()
 						return
 					}
 					// Встановлюємо новий час відповіді
@@ -53,5 +65,15 @@ func (bt *BookTickers) BookTickerEventStart(
 			}
 		}
 	}()
+	return
+}
+
+func (bt *BookTickers) StreamStop() (err error) {
+	if bt.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(bt.stop)
+	bt.MarkStreamAsStopped()
 	return
 }

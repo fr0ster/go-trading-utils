@@ -1,8 +1,21 @@
 package aggtrade
 
 import (
+	"errors"
 	"time"
 )
+
+func (at *AggTrades) MarkStreamAsStarted() {
+	at.isStartedStream = true
+}
+
+func (at *AggTrades) MarkStreamAsStopped() {
+	at.isStartedStream = false
+}
+
+func (at *AggTrades) IsStreamStarted() bool {
+	return at.isStartedStream
+}
 
 func (at *AggTrades) TradeEventStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
@@ -23,7 +36,7 @@ func (at *AggTrades) TradeEventStart() (err error) {
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = at.startTradeStream()
 				if err != nil {
-					close(at.stop)
+					at.StreamStop()
 					return
 				}
 			case <-ticker.C:
@@ -34,7 +47,7 @@ func (at *AggTrades) TradeEventStart() (err error) {
 					// Запускаємо новий стрім подій користувача
 					_, stopC, err = at.startTradeStream()
 					if err != nil {
-						close(at.stop)
+						at.StreamStop()
 						return
 					}
 					// Встановлюємо новий час відповіді
@@ -43,5 +56,15 @@ func (at *AggTrades) TradeEventStart() (err error) {
 			}
 		}
 	}()
+	return
+}
+
+func (at *AggTrades) StreamStop() (err error) {
+	if at.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(at.stop)
+	at.MarkStreamAsStopped()
 	return
 }

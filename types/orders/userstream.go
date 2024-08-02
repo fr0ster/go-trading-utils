@@ -17,7 +17,7 @@ func (o *Orders) IsStreamStarted() bool {
 	return o.isStartedStream
 }
 
-func (o *Orders) UserDataEventStart() (err error) {
+func (o *Orders) StreamStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(o.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
@@ -40,7 +40,7 @@ func (o *Orders) UserDataEventStart() (err error) {
 				// Запускаємо новий стрім подій користувача
 				_, stopC, err = o.startUserDataStream()
 				if err != nil {
-					close(o.stop)
+					o.StreamStop()
 					return
 				}
 			case <-ticker.C:
@@ -51,7 +51,7 @@ func (o *Orders) UserDataEventStart() (err error) {
 					// Запускаємо новий стрім подій користувача
 					_, stopC, err = o.startUserDataStream()
 					if err != nil {
-						close(o.stop)
+						o.StreamStop()
 						return
 					}
 					// Встановлюємо новий час відповіді
@@ -63,7 +63,7 @@ func (o *Orders) UserDataEventStart() (err error) {
 	return
 }
 
-func (o *Orders) UserDataEventStop() (err error) {
+func (o *Orders) StreamStop() (err error) {
 	if o.stop == nil {
 		err = errors.New("stop channel is not initialized")
 		return

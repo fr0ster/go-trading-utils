@@ -34,6 +34,7 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
+		isStartedStream  bool
 		startKlineStream types.StreamFunction
 		init             types.InitFunction
 	}
@@ -102,7 +103,9 @@ func (kl *Klines) SetInterval(interval KlineStreamInterval) {
 }
 
 func (kl *Klines) ResetEvent(err error) {
-	kl.resetEvent <- err
+	if kl.startKlineStream != nil {
+		kl.resetEvent <- err
+	}
 }
 
 // Kline - B-дерево для зберігання стакана заявок
@@ -114,13 +117,15 @@ func New(
 	startKlineStream func(*Klines) types.StreamFunction,
 	initCreator func(*Klines) types.InitFunction) *Klines {
 	this := &Klines{
-		symbolname:   symbolname,
-		interval:     interval,
-		klines_final: btree.New(degree),
-		mutex:        sync.Mutex{},
-		degree:       degree,
-		timeOut:      0,
-		stop:         stop,
+		symbolname:      symbolname,
+		interval:        interval,
+		klines_final:    btree.New(degree),
+		mutex:           sync.Mutex{},
+		degree:          degree,
+		timeOut:         0,
+		stop:            stop,
+		resetEvent:      make(chan error),
+		isStartedStream: false,
 	}
 	if startKlineStream != nil {
 		this.startKlineStream = startKlineStream(this)

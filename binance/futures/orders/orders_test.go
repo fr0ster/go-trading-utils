@@ -42,7 +42,7 @@ func TestEvents(t *testing.T) {
 		futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
 		quit) // quit
 	assert.NotNil(t, orders)
-	orders.UserDataEventStart()
+	orders.StreamStart()
 	orders.ResetEvent(fmt.Errorf("test"))
 	fmt.Println("test pass")
 	time.Sleep(3 * time.Second)
