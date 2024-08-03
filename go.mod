@@ -1,6 +1,6 @@
 module github.com/fr0ster/go-trading-utils
 
-go 1.22.2
+go 1.22.5
 
 require (
 	github.com/adshao/go-binance/v2 v2.5.0
