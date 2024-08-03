@@ -10,10 +10,8 @@ import (
 
 	futures_exchangeinfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
 
-	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
 	exchangeinfo_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
-	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	processor_types "github.com/fr0ster/go-trading-utils/types/processor"
 )
 
@@ -29,13 +27,13 @@ func New(
 	leverage int,
 	marginType types.MarginType,
 	callbackRate items_types.PricePercentType,
-	depthAPILimit depth_types.DepthAPILimit,
-	depthStreamLevel depth_types.DepthStreamLevel,
-	depthStreamRate depth_types.DepthStreamRate,
-	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) futures.WsUserDataHandler,
-	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) futures.ErrHandler,
-	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) futures.WsDepthHandler,
-	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) futures.ErrHandler,
+	// depthAPILimit depth_types.DepthAPILimit,
+	// depthStreamLevel depth_types.DepthStreamLevel,
+	// depthStreamRate depth_types.DepthStreamRate,
+	// ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) futures.WsUserDataHandler,
+	// ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) futures.ErrHandler,
+	// depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) futures.WsDepthHandler,
+	// depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) futures.ErrHandler,
 	debug bool,
 	quits ...chan struct{},
 ) (pairProcessor *processor_types.Processor, err error) {
