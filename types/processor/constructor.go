@@ -9,17 +9,17 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 	utils "github.com/fr0ster/go-trading-utils/utils"
-
-	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 )
 
 func New(
 	stop chan struct{},
 	symbol string,
-	exchangeInfo *exchange_types.ExchangeInfo,
-	depthsCreator func(*Processor) DepthConstructor,
-	ordersCreator func(*Processor) OrdersConstructor,
+	// exchangeInfo *exchange_types.ExchangeInfo,
+	symbolInfo *symbol_types.Symbol,
+	// depthsCreator func(*Processor) DepthConstructor,
+	// ordersCreator func(*Processor) OrdersConstructor,
 
 	getBaseBalance GetBaseBalanceFunction,
 	getTargetBalance GetTargetBalanceFunction,
@@ -36,7 +36,7 @@ func New(
 
 	setPositionMargin func(*Processor) SetPositionMarginFunction,
 
-	closePosition func(*Processor) ClosePositionFunction,
+	// closePosition func(*Processor) ClosePositionFunction,
 
 	getDeltaPrice GetDeltaPriceFunction,
 	getDeltaQuantity GetDeltaQuantityFunction,
@@ -47,18 +47,18 @@ func New(
 	getCallbackRate GetCallbackRateFunction,
 
 	debug ...bool) (pp *Processor, err error) {
-	symbolInfo := exchangeInfo.GetSymbols().GetSymbol(symbol)
+	// symbolInfo := exchangeInfo.GetSymbols().GetSymbol(symbol)
 	pp = &Processor{
-		exchangeInfo: exchangeInfo,
-		symbolInfo:   symbolInfo,
-		symbol:       symbol,
+		// exchangeInfo: exchangeInfo,
+		symbolInfo: symbolInfo,
+		symbol:     symbol,
 
 		stop:       stop,
 		orderTypes: nil,
 		degree:     3,
 		timeOut:    1 * time.Hour,
-		depths:     nil,
-		orders:     nil,
+		// depths:     nil,
+		// orders:     nil,
 	}
 
 	// Налаштовуємо функції
@@ -76,8 +76,8 @@ func New(
 	pp.SetSetterMarginTypeFunction(setMarginType)
 	// PositionMargin
 	pp.SetSetterPositionMarginFunction(setPositionMargin)
-	// ClosePosition
-	pp.SetClosePositionFunction(closePosition)
+	// // ClosePosition
+	// pp.SetClosePositionFunction(closePosition)
 	// DeltaPrice
 	pp.SetGetterDeltaPriceFunction(getDeltaPrice)
 	// DeltaQuantity
@@ -117,14 +117,14 @@ func New(
 		}
 	}
 
-	// Ініціалізуємо об'єкт
-	if depthsCreator != nil {
-		pp.depths = depthsCreator(pp)()
-	}
+	// // Ініціалізуємо об'єкт
+	// if depthsCreator != nil {
+	// 	pp.depths = depthsCreator(pp)()
+	// }
 
-	if ordersCreator != nil {
-		pp.orders = ordersCreator(pp)()
-	}
+	// if ordersCreator != nil {
+	// 	pp.orders = ordersCreator(pp)()
+	// }
 
 	return
 }

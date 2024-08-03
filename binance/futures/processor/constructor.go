@@ -8,9 +8,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 
-	futures_depth "github.com/fr0ster/go-trading-utils/binance/futures/depths"
 	futures_exchangeinfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
-	futures_orders "github.com/fr0ster/go-trading-utils/binance/futures/orders"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
@@ -48,27 +46,29 @@ func New(
 		quit = make(chan struct{})
 	}
 	exchange := exchangeinfo_types.New(futures_exchangeinfo.InitCreator(client, degree, symbol))
+	symbolInfo := exchange.GetSymbol(symbol)
 	baseSymbol := string(exchange.GetSymbol(symbol).GetBaseSymbol())
 	targetSymbol := string(exchange.GetSymbol(symbol).GetTargetSymbol())
 	pairProcessor, err = processor_types.New(
-		quit,     // quit
-		symbol,   // pair
-		exchange, // exchange
-		depthsCreator(
-			client,           // client
-			degree,           // degree
-			depthAPILimit,    // depthAPILimit
-			depthStreamLevel, // depthStreamLevel
-			depthStreamRate,  // depthStreamRate
-			depthsCallBack,   // depthsCallBack
-			depthsErrHandler, // depthsErrHandler
-		), // depthsCreator
-		ordersCreator(
-			client,           // client
-			ordersCallBack,   // ordersCallBack
-			ordersErrHandler, // ordersCreator
-			quit,             // ordersCreator
-		), // ordersCreator
+		quit,   // quit
+		symbol, // pair
+		// exchange, // exchange
+		symbolInfo, // symbolInfo
+		// depthsCreator(
+		// 	client,           // client
+		// 	degree,           // degree
+		// 	depthAPILimit,    // depthAPILimit
+		// 	depthStreamLevel, // depthStreamLevel
+		// 	depthStreamRate,  // depthStreamRate
+		// 	depthsCallBack,   // depthsCallBack
+		// 	depthsErrHandler, // depthsErrHandler
+		// ), // depthsCreator
+		// ordersCreator(
+		// 	client,           // client
+		// 	ordersCallBack,   // ordersCallBack
+		// 	ordersErrHandler, // ordersCreator
+		// 	quit,             // ordersCreator
+		// ), // ordersCreator
 		getBaseBalance(
 			client,     // client
 			baseSymbol, // symbol
@@ -96,7 +96,7 @@ func New(
 		}, // getMarginType
 		setMarginType(client),     // setMarginType
 		setPositionMargin(client), // setPositionMargin
-		closePosition(),           // closePosition
+		// closePosition(),           // closePosition
 		func() items_types.PricePercentType {
 			return deltaPrice
 		}, // getDeltaPrice
@@ -119,83 +119,83 @@ func New(
 	return
 }
 
-func depthsCreator(
-	client *futures.Client,
-	degree int,
-	depthAPILimit depth_types.DepthAPILimit,
-	depthStreamLevel depth_types.DepthStreamLevel,
-	depthStreamRate depth_types.DepthStreamRate,
-	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) futures.WsDepthHandler,
-	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) futures.ErrHandler) func(p *processor_types.Processor) processor_types.DepthConstructor {
-	return func(p *processor_types.Processor) processor_types.DepthConstructor {
-		return func() *depth_types.Depths {
-			var (
-				callBack   func(d *depth_types.Depths) futures.WsDepthHandler
-				errHandler func(*depth_types.Depths) futures.ErrHandler
-			)
-			if depthsCallBack != nil {
-				callBack = futures_depth.CallBackCreator(depthsCallBack(p))
-			} else {
-				callBack = futures_depth.CallBackCreator()
-			}
-			if depthsErrHandler != nil {
-				errHandler = futures_depth.WsErrorHandlerCreator(depthsErrHandler(p))
-			} else {
-				errHandler = futures_depth.WsErrorHandlerCreator()
-			}
-			return depth_types.New(
-				degree,
-				p.GetSymbol(),
-				futures_depth.DepthStreamCreator(
-					depthStreamLevel,
-					depthStreamRate,
-					callBack,
-					errHandler),
-				futures_depth.InitCreator(depthAPILimit, client))
-		}
-	}
-} // depthsCreator
+// func depthsCreator(
+// 	client *futures.Client,
+// 	degree int,
+// 	depthAPILimit depth_types.DepthAPILimit,
+// 	depthStreamLevel depth_types.DepthStreamLevel,
+// 	depthStreamRate depth_types.DepthStreamRate,
+// 	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) futures.WsDepthHandler,
+// 	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) futures.ErrHandler) func(p *processor_types.Processor) processor_types.DepthConstructor {
+// 	return func(p *processor_types.Processor) processor_types.DepthConstructor {
+// 		return func() *depth_types.Depths {
+// 			var (
+// 				callBack   func(d *depth_types.Depths) futures.WsDepthHandler
+// 				errHandler func(*depth_types.Depths) futures.ErrHandler
+// 			)
+// 			if depthsCallBack != nil {
+// 				callBack = futures_depth.CallBackCreator(depthsCallBack(p))
+// 			} else {
+// 				callBack = futures_depth.CallBackCreator()
+// 			}
+// 			if depthsErrHandler != nil {
+// 				errHandler = futures_depth.WsErrorHandlerCreator(depthsErrHandler(p))
+// 			} else {
+// 				errHandler = futures_depth.WsErrorHandlerCreator()
+// 			}
+// 			return depth_types.New(
+// 				degree,
+// 				p.GetSymbol(),
+// 				futures_depth.DepthStreamCreator(
+// 					depthStreamLevel,
+// 					depthStreamRate,
+// 					callBack,
+// 					errHandler),
+// 				futures_depth.InitCreator(depthAPILimit, client))
+// 		}
+// 	}
+// } // depthsCreator
 
-func ordersCreator(
-	client *futures.Client,
-	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) futures.WsUserDataHandler,
-	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) futures.ErrHandler,
-	quit chan struct{}) func(p *processor_types.Processor) processor_types.OrdersConstructor {
-	return func(p *processor_types.Processor) processor_types.OrdersConstructor {
-		return func() *orders_types.Orders {
-			var (
-				callBack   func(*orders_types.Orders) futures.WsUserDataHandler
-				errHandler func(*orders_types.Orders) futures.ErrHandler
-			)
-			if ordersCallBack != nil {
-				callBack = futures_orders.CallBackCreator(ordersCallBack(p))
-			} else {
-				callBack = futures_orders.CallBackCreator()
-			}
-			if ordersErrHandler != nil {
-				errHandler = futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))
-			} else {
-				errHandler = futures_orders.WsErrorHandlerCreator()
-			}
-			return orders_types.New(
-				p.GetSymbol(), // symbol
-				futures_orders.UserDataStreamCreator(
-					client,
-					callBack,
-					errHandler), // userDataStream
-				futures_orders.CreateOrderCreator(
-					client,
-					int(float64(p.GetStepSizeExp())),
-					int(float64(p.GetTickSizeExp()))), // createOrder
-				futures_orders.GetOpenOrdersCreator(client),   // getOpenOrders
-				futures_orders.GetAllOrdersCreator(client),    // getAllOrders
-				futures_orders.GetOrderCreator(client),        // getOrder
-				futures_orders.CancelOrderCreator(client),     // cancelOrder
-				futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
-				quit)
-		}
-	}
-} // ordersCreator
+// func ordersCreator(
+// 	client *futures.Client,
+// 	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) futures.WsUserDataHandler,
+// 	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) futures.ErrHandler,
+// 	quit chan struct{}) func(p *processor_types.Processor) processor_types.OrdersConstructor {
+// 	return func(p *processor_types.Processor) processor_types.OrdersConstructor {
+// 		return func() *orders_types.Orders {
+// 			var (
+// 				callBack   func(*orders_types.Orders) futures.WsUserDataHandler
+// 				errHandler func(*orders_types.Orders) futures.ErrHandler
+// 			)
+// 			if ordersCallBack != nil {
+// 				callBack = futures_orders.CallBackCreator(ordersCallBack(p))
+// 			} else {
+// 				callBack = futures_orders.CallBackCreator()
+// 			}
+// 			if ordersErrHandler != nil {
+// 				errHandler = futures_orders.WsErrorHandlerCreator(ordersErrHandler(p))
+// 			} else {
+// 				errHandler = futures_orders.WsErrorHandlerCreator()
+// 			}
+// 			return orders_types.New(
+// 				p.GetSymbol(), // symbol
+// 				futures_orders.UserDataStreamCreator(
+// 					client,
+// 					callBack,
+// 					errHandler), // userDataStream
+// 				futures_orders.CreateOrderCreator(
+// 					client,
+// 					int(float64(p.GetStepSizeExp())),
+// 					int(float64(p.GetTickSizeExp()))), // createOrder
+// 				futures_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+// 				futures_orders.GetAllOrdersCreator(client),    // getAllOrders
+// 				futures_orders.GetOrderCreator(client),        // getOrder
+// 				futures_orders.CancelOrderCreator(client),     // cancelOrder
+// 				futures_orders.CancelAllOrdersCreator(client), // cancelAllOrders
+// 				quit)
+// 		}
+// 	}
+// } // ordersCreator
 
 func getBaseBalance(client *futures.Client, symbol string) processor_types.GetBaseBalanceFunction {
 	return func() items_types.ValueType {
@@ -309,24 +309,24 @@ func setPositionMargin(client *futures.Client) func(p *processor_types.Processor
 		}
 	}
 } // setPositionMargin
-func closePosition(debug ...*futures.PositionRisk) func(p *processor_types.Processor) processor_types.ClosePositionFunction {
-	return func(p *processor_types.Processor) processor_types.ClosePositionFunction {
-		return func() (err error) {
-			risk := p.GetPositionRisk(debug...)
-			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-				_, err = p.GetOrders().CreateOrder(
-					types.OrderType(futures.OrderTypeTakeProfitMarket),
-					types.SideType(futures.SideTypeBuy),
-					types.TimeInForceType(futures.TimeInForceTypeGTC),
-					0, true, false, 0, 0, 0, 0)
-			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-				_, err = p.GetOrders().CreateOrder(
-					types.OrderType(futures.OrderTypeTakeProfitMarket),
-					types.SideType(futures.SideTypeSell),
-					types.TimeInForceType(futures.TimeInForceTypeGTC),
-					0, true, false, 0, 0, 0, 0)
-			}
-			return
-		}
-	}
-} // closePosition
+// func closePosition(debug ...*futures.PositionRisk) func(p *processor_types.Processor) processor_types.ClosePositionFunction {
+// 	return func(p *processor_types.Processor) processor_types.ClosePositionFunction {
+// 		return func() (err error) {
+// 			risk := p.GetPositionRisk(debug...)
+// 			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+// 				_, err = p.GetOrders().CreateOrder(
+// 					types.OrderType(futures.OrderTypeTakeProfitMarket),
+// 					types.SideType(futures.SideTypeBuy),
+// 					types.TimeInForceType(futures.TimeInForceTypeGTC),
+// 					0, true, false, 0, 0, 0, 0)
+// 			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+// 				_, err = p.GetOrders().CreateOrder(
+// 					types.OrderType(futures.OrderTypeTakeProfitMarket),
+// 					types.SideType(futures.SideTypeSell),
+// 					types.TimeInForceType(futures.TimeInForceTypeGTC),
+// 					0, true, false, 0, 0, 0, 0)
+// 			}
+// 			return
+// 		}
+// 	}
+// } // closePosition

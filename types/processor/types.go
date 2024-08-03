@@ -8,7 +8,8 @@ import (
 	"github.com/fr0ster/go-trading-utils/types"
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
-	exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
+
+	// exchange_types "github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 	symbol_types "github.com/fr0ster/go-trading-utils/types/symbol"
 )
@@ -52,15 +53,15 @@ type (
 		symbol string
 
 		// Дані про біржу
-		exchangeInfo *exchange_types.ExchangeInfo
-		symbolInfo   *symbol_types.Symbol
+		// exchangeInfo *exchange_types.ExchangeInfo
+		symbolInfo *symbol_types.Symbol
 
 		// канал зупинки
 		stop chan struct{}
 
-		// Дані про стакан
-		depths *depth_types.Depths
-		orders *orders_types.Orders
+		// // Дані про стакан
+		// depths *depth_types.Depths
+		// orders *orders_types.Orders
 
 		getBaseBalance   GetBaseBalanceFunction
 		getTargetBalance GetTargetBalanceFunction

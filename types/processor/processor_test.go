@@ -132,13 +132,14 @@ func getSpotProcessor(
 			return
 		}
 	}
-	exchangeInfo := exchange_types.New(init)
+	symbolInfo := exchange_types.New(init).GetSymbols().GetSymbol(symbol)
 	pp, err = processor.New(
-		quit,         // stop
-		symbol,       // symbol
-		exchangeInfo, // exchangeInfo
-		nil,          // depths
-		nil,          // orders
+		quit,   // stop
+		symbol, // symbol
+		// exchangeInfo, // exchangeInfo
+		symbolInfo, // symbolInfo
+		// nil,          // depths
+		// nil,          // orders
 		func() items_types.ValueType { return baseBalance },       // getBaseBalance
 		func() items_types.QuantityType { return targetBalance },  // getTargetBalance
 		func() items_types.ValueType { return baseBalance * 0.5 }, // getFreeBalance
@@ -154,7 +155,7 @@ func getSpotProcessor(
 
 		nil, // setPositionMargin func(*Processor) SetPositionMarginFunction,
 
-		nil, // closePosition func(*Processor) ClosePositionFunction,
+		// nil, // closePosition func(*Processor) ClosePositionFunction,
 
 		nil, // getDeltaPrice GetDeltaPriceFunction,
 		nil, // getDeltaQuantity GetDeltaQuantityFunction,
@@ -252,34 +253,36 @@ func getFuturesProcessor(
 			return
 		}
 	}
-	exchangeInfo := exchange_types.New(init)
-	closePosition := func(pp *processor.Processor) processor.ClosePositionFunction {
-		return func() (err error) {
-			risk := pp.GetPositionRisk()
-			if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
-				if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
-					_, err = pp.GetOrders().CreateOrder(
-						types.OrderType(futures.OrderTypeTakeProfitMarket),
-						types.SideType(futures.SideTypeBuy),
-						types.TimeInForceType(futures.TimeInForceTypeGTC),
-						0, true, false, 0, 0, 0, 0)
-				} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
-					_, err = pp.GetOrders().CreateOrder(
-						types.OrderType(futures.OrderTypeTakeProfitMarket),
-						types.SideType(futures.SideTypeSell),
-						types.TimeInForceType(futures.TimeInForceTypeGTC),
-						0, true, false, 0, 0, 0, 0)
-				}
-			}
-			return
-		}
-	}
+	// exchangeInfo := exchange_types.New(init)
+	// closePosition := func(pp *processor.Processor) processor.ClosePositionFunction {
+	// 	return func() (err error) {
+	// 		risk := pp.GetPositionRisk()
+	// 		if risk != nil && utils.ConvStrToFloat64(risk.PositionAmt) != 0 {
+	// 			if utils.ConvStrToFloat64(risk.PositionAmt) < 0 {
+	// 				_, err = pp.GetOrders().CreateOrder(
+	// 					types.OrderType(futures.OrderTypeTakeProfitMarket),
+	// 					types.SideType(futures.SideTypeBuy),
+	// 					types.TimeInForceType(futures.TimeInForceTypeGTC),
+	// 					0, true, false, 0, 0, 0, 0)
+	// 			} else if utils.ConvStrToFloat64(risk.PositionAmt) > 0 {
+	// 				_, err = pp.GetOrders().CreateOrder(
+	// 					types.OrderType(futures.OrderTypeTakeProfitMarket),
+	// 					types.SideType(futures.SideTypeSell),
+	// 					types.TimeInForceType(futures.TimeInForceTypeGTC),
+	// 					0, true, false, 0, 0, 0, 0)
+	// 			}
+	// 		}
+	// 		return
+	// 	}
+	// }
+	symbolInfo := exchange_types.New(init).GetSymbols().GetSymbol(symbol)
 	pp, err = processor.New(
-		quit,         // stop
-		symbol,       // symbol
-		exchangeInfo, // exchangeInfo
-		nil,          // depths
-		nil,          // orders
+		quit,   // stop
+		symbol, // symbol
+		// exchangeInfo, // exchangeInfo
+		symbolInfo, // symbolInfo
+		// nil,          // depths
+		// nil,          // orders
 		func() items_types.ValueType {
 			return baseBalance
 		}, // getBaseBalance
@@ -299,13 +302,13 @@ func getFuturesProcessor(
 		func() int {
 			return leverage
 		}, // getLeverage
-		nil,           // setLeverage
-		nil,           // getMarginType
-		nil,           // setMarginType
-		nil,           // setPositionMargin
-		closePosition, // closePosition
-		nil,           // getDeltaPrice
-		nil,           // getDeltaQuantity
+		nil, // setLeverage
+		nil, // getMarginType
+		nil, // setMarginType
+		nil, // setPositionMargin
+		// closePosition, // closePosition
+		nil, // getDeltaPrice
+		nil, // getDeltaQuantity
 		func() items_types.ValueType {
 			return limitOnPosition
 		}, // getLimitOnPosition

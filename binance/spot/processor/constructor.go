@@ -7,9 +7,7 @@ import (
 	"github.com/fr0ster/go-trading-utils/utils"
 	"github.com/sirupsen/logrus"
 
-	spot_depth "github.com/fr0ster/go-trading-utils/binance/spot/depths"
 	spot_exchangeinfo "github.com/fr0ster/go-trading-utils/binance/spot/exchangeinfo"
-	spot_orders "github.com/fr0ster/go-trading-utils/binance/spot/orders"
 
 	depth_types "github.com/fr0ster/go-trading-utils/types/depths"
 	items_types "github.com/fr0ster/go-trading-utils/types/depths/items"
@@ -43,25 +41,27 @@ func New(
 		quit = make(chan struct{})
 	}
 	exchange := exchangeinfo_types.New(spot_exchangeinfo.InitCreator(client, degree, symbol))
+	symbolInfo := exchange.GetSymbol(symbol)
 	baseSymbol := string(exchange.GetSymbol(symbol).GetBaseSymbol())
 	targetSymbol := string(exchange.GetSymbol(symbol).GetTargetSymbol())
 	pairProcessor, err = processor_types.New(
-		quit,     // quit
-		symbol,   // pair
-		exchange, // exchange
-		depthsCreator(
-			client, // client
-			degree, // degree
-			depthAPILimit,
-			depthsCallBack,   // depthsCallBack
-			depthsErrHandler, // depthsCreator
-		), // depthsCreator
-		ordersCreator(
-			client,           // client
-			ordersCallBack,   // ordersCallBack
-			ordersErrHandler, // ordersErrHandler
-			quit,             // ordersCreator
-		), // orders
+		quit,   // quit
+		symbol, // pair
+		// exchange, // exchange
+		symbolInfo, // symbolInfo
+		// depthsCreator(
+		// 	client, // client
+		// 	degree, // degree
+		// 	depthAPILimit,
+		// 	depthsCallBack,   // depthsCallBack
+		// 	depthsErrHandler, // depthsCreator
+		// ), // depthsCreator
+		// ordersCreator(
+		// 	client,           // client
+		// 	ordersCallBack,   // ordersCallBack
+		// 	ordersErrHandler, // ordersErrHandler
+		// 	quit,             // ordersCreator
+		// ), // orders
 		getBaseBalance(
 			client, // client
 			baseSymbol,
@@ -88,7 +88,7 @@ func New(
 		nil, // getMarginType
 		nil, // setMarginType
 		nil, // setPositionMargin
-		nil, // closePosition
+		// nil, // closePosition
 		func() items_types.PricePercentType {
 			return deltaPrice
 		}, // getDeltaPrice
@@ -110,79 +110,80 @@ func New(
 		debug)
 	return
 }
-func depthsCreator(
-	client *binance.Client,
-	degree int,
-	depthAPILimit depth_types.DepthAPILimit,
-	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) binance.WsDepthHandler,
-	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) binance.ErrHandler) func(p *processor_types.Processor) processor_types.DepthConstructor {
-	return func(p *processor_types.Processor) processor_types.DepthConstructor {
-		return func() *depth_types.Depths {
-			var (
-				callBack   func(d *depth_types.Depths) binance.WsDepthHandler
-				errHandler func(*depth_types.Depths) binance.ErrHandler
-			)
-			if depthsCallBack != nil {
-				callBack = spot_depth.CallBackCreator(depthsCallBack(p))
-			} else {
-				callBack = spot_depth.CallBackCreator()
-			}
-			if depthsErrHandler != nil {
-				errHandler = spot_depth.WsErrorHandlerCreator(depthsErrHandler(p))
-			} else {
-				errHandler = spot_depth.WsErrorHandlerCreator()
-			}
-			return depth_types.New(
-				degree,
-				p.GetSymbol(),
-				spot_depth.DepthStreamCreator(
-					callBack,
-					errHandler),
-				spot_depth.InitCreator(depthAPILimit, client))
-		}
-	}
-} // depthsCreator
 
-func ordersCreator(
-	client *binance.Client,
-	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) binance.WsUserDataHandler,
-	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) binance.ErrHandler,
-	quit chan struct{}) func(p *processor_types.Processor) processor_types.OrdersConstructor {
-	return func(p *processor_types.Processor) processor_types.OrdersConstructor {
-		return func() *orders_types.Orders {
-			var (
-				callBack   func(*orders_types.Orders) binance.WsUserDataHandler
-				errHandler func(*orders_types.Orders) binance.ErrHandler
-			)
-			if ordersCallBack != nil {
-				callBack = spot_orders.CallBackCreator(ordersCallBack(p))
-			} else {
-				callBack = spot_orders.CallBackCreator()
-			}
-			if ordersErrHandler != nil {
-				errHandler = spot_orders.WsErrorHandlerCreator(ordersErrHandler(p))
-			} else {
-				errHandler = spot_orders.WsErrorHandlerCreator()
-			}
-			return orders_types.New(
-				p.GetSymbol(), // symbol
-				spot_orders.UserDataStreamCreator(
-					client,
-					callBack,
-					errHandler), // userDataStream
-				spot_orders.CreateOrderCreator(
-					client,
-					int(float64(p.GetStepSizeExp())),
-					int(float64(p.GetTickSizeExp()))), // createOrder
-				spot_orders.GetOpenOrdersCreator(client),   // getOpenOrders
-				spot_orders.GetAllOrdersCreator(client),    // getAllOrders
-				spot_orders.GetOrderCreator(client),        // getOrder
-				spot_orders.CancelOrderCreator(client),     // cancelOrder
-				spot_orders.CancelAllOrdersCreator(client), // cancelAllOrders
-				quit)
-		}
-	}
-} // ordersCreator
+// func depthsCreator(
+// 	client *binance.Client,
+// 	degree int,
+// 	depthAPILimit depth_types.DepthAPILimit,
+// 	depthsCallBack func(p *processor_types.Processor) func(d *depth_types.Depths) binance.WsDepthHandler,
+// 	depthsErrHandler func(p *processor_types.Processor) func(d *depth_types.Depths) binance.ErrHandler) func(p *processor_types.Processor) processor_types.DepthConstructor {
+// 	return func(p *processor_types.Processor) processor_types.DepthConstructor {
+// 		return func() *depth_types.Depths {
+// 			var (
+// 				callBack   func(d *depth_types.Depths) binance.WsDepthHandler
+// 				errHandler func(*depth_types.Depths) binance.ErrHandler
+// 			)
+// 			if depthsCallBack != nil {
+// 				callBack = spot_depth.CallBackCreator(depthsCallBack(p))
+// 			} else {
+// 				callBack = spot_depth.CallBackCreator()
+// 			}
+// 			if depthsErrHandler != nil {
+// 				errHandler = spot_depth.WsErrorHandlerCreator(depthsErrHandler(p))
+// 			} else {
+// 				errHandler = spot_depth.WsErrorHandlerCreator()
+// 			}
+// 			return depth_types.New(
+// 				degree,
+// 				p.GetSymbol(),
+// 				spot_depth.DepthStreamCreator(
+// 					callBack,
+// 					errHandler),
+// 				spot_depth.InitCreator(depthAPILimit, client))
+// 		}
+// 	}
+// } // depthsCreator
+
+// func ordersCreator(
+// 	client *binance.Client,
+// 	ordersCallBack func(p *processor_types.Processor) func(o *orders_types.Orders) binance.WsUserDataHandler,
+// 	ordersErrHandler func(p *processor_types.Processor) func(o *orders_types.Orders) binance.ErrHandler,
+// 	quit chan struct{}) func(p *processor_types.Processor) processor_types.OrdersConstructor {
+// 	return func(p *processor_types.Processor) processor_types.OrdersConstructor {
+// 		return func() *orders_types.Orders {
+// 			var (
+// 				callBack   func(*orders_types.Orders) binance.WsUserDataHandler
+// 				errHandler func(*orders_types.Orders) binance.ErrHandler
+// 			)
+// 			if ordersCallBack != nil {
+// 				callBack = spot_orders.CallBackCreator(ordersCallBack(p))
+// 			} else {
+// 				callBack = spot_orders.CallBackCreator()
+// 			}
+// 			if ordersErrHandler != nil {
+// 				errHandler = spot_orders.WsErrorHandlerCreator(ordersErrHandler(p))
+// 			} else {
+// 				errHandler = spot_orders.WsErrorHandlerCreator()
+// 			}
+// 			return orders_types.New(
+// 				p.GetSymbol(), // symbol
+// 				spot_orders.UserDataStreamCreator(
+// 					client,
+// 					callBack,
+// 					errHandler), // userDataStream
+// 				spot_orders.CreateOrderCreator(
+// 					client,
+// 					int(float64(p.GetStepSizeExp())),
+// 					int(float64(p.GetTickSizeExp()))), // createOrder
+// 				spot_orders.GetOpenOrdersCreator(client),   // getOpenOrders
+// 				spot_orders.GetAllOrdersCreator(client),    // getAllOrders
+// 				spot_orders.GetOrderCreator(client),        // getOrder
+// 				spot_orders.CancelOrderCreator(client),     // cancelOrder
+// 				spot_orders.CancelAllOrdersCreator(client), // cancelAllOrders
+// 				quit)
+// 		}
+// 	}
+// } // ordersCreator
 
 func getBaseBalance(client *binance.Client, symbol string) processor_types.GetBaseBalanceFunction {
 	return func() items_types.ValueType {
