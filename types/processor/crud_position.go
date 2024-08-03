@@ -75,13 +75,6 @@ func (pp *Processor) SetPositionMargin(amountMargin items_types.ValueType, typeM
 	return pp.setPositionMargin(amountMargin, typeMargin)
 }
 
-func (pp *Processor) ClosePosition() (err error) {
-	if pp.closePosition == nil {
-		return fmt.Errorf("closePosition is not set")
-	}
-	return pp.closePosition()
-}
-
 func (pp *Processor) GetPositionAmt(debug ...*futures.PositionRisk) (positionAmt items_types.QuantityType) {
 	if risk := pp.GetPositionRisk(debug...); risk != nil {
 		positionAmt = items_types.QuantityType(utils.ConvStrToFloat64(risk.PositionAmt))

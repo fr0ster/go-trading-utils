@@ -16,10 +16,7 @@ import (
 func New(
 	stop chan struct{},
 	symbol string,
-	// exchangeInfo *exchange_types.ExchangeInfo,
 	symbolInfo *symbol_types.Symbol,
-	// depthsCreator func(*Processor) DepthConstructor,
-	// ordersCreator func(*Processor) OrdersConstructor,
 
 	getBaseBalance GetBaseBalanceFunction,
 	getTargetBalance GetTargetBalanceFunction,
@@ -36,8 +33,6 @@ func New(
 
 	setPositionMargin func(*Processor) SetPositionMarginFunction,
 
-	// closePosition func(*Processor) ClosePositionFunction,
-
 	getDeltaPrice GetDeltaPriceFunction,
 	getDeltaQuantity GetDeltaQuantityFunction,
 	getLimitOnPosition GetLimitOnPositionFunction,
@@ -49,7 +44,6 @@ func New(
 	debug ...bool) (pp *Processor, err error) {
 	// symbolInfo := exchangeInfo.GetSymbols().GetSymbol(symbol)
 	pp = &Processor{
-		// exchangeInfo: exchangeInfo,
 		symbolInfo: symbolInfo,
 		symbol:     symbol,
 
@@ -57,8 +51,6 @@ func New(
 		orderTypes: nil,
 		degree:     3,
 		timeOut:    1 * time.Hour,
-		// depths:     nil,
-		// orders:     nil,
 	}
 
 	// Налаштовуємо функції
@@ -222,11 +214,6 @@ func (pp *Processor) SetSetterMarginTypeFunction(function func(*Processor) SetMa
 func (pp *Processor) SetSetterPositionMarginFunction(function func(*Processor) SetPositionMarginFunction) {
 	if function != nil {
 		pp.setPositionMargin = function(pp)
-	}
-}
-func (pp *Processor) SetClosePositionFunction(function func(*Processor) ClosePositionFunction) {
-	if function != nil {
-		pp.closePosition = function(pp)
 	}
 }
 func (pp *Processor) SetGetterDeltaPriceFunction(function GetDeltaPriceFunction) {

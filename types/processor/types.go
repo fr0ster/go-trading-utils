@@ -33,8 +33,6 @@ type (
 	SetMarginTypeFunction     func(types.MarginType) error
 	SetPositionMarginFunction func(items_types.ValueType, int) error
 
-	ClosePositionFunction func() (err error)
-
 	GetDeltaPriceFunction    func() items_types.PricePercentType
 	GetDeltaQuantityFunction func() items_types.QuantityPercentType
 
@@ -53,15 +51,10 @@ type (
 		symbol string
 
 		// Дані про біржу
-		// exchangeInfo *exchange_types.ExchangeInfo
 		symbolInfo *symbol_types.Symbol
 
 		// канал зупинки
 		stop chan struct{}
-
-		// // Дані про стакан
-		// depths *depth_types.Depths
-		// orders *orders_types.Orders
 
 		getBaseBalance   GetBaseBalanceFunction
 		getTargetBalance GetTargetBalanceFunction
@@ -78,8 +71,6 @@ type (
 		getMarginType GetMarginTypeFunction
 
 		setPositionMargin SetPositionMarginFunction
-
-		closePosition ClosePositionFunction
 
 		getDeltaPrice         GetDeltaPriceFunction
 		getDeltaQuantity      GetDeltaQuantityFunction
