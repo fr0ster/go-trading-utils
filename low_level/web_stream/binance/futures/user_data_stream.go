@@ -106,9 +106,14 @@ func parseJSON(data []byte) (*WsUserDataEvent, error) {
 	return &orderTradeUpdate, nil
 }
 
-func UserDataStream(apiKey string, symbol string, callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
+type UserDataStream struct {
+	apiKey string
+	symbol string
+}
+
+func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
 	baseUrl := GetWsEndpoint(useTestNet...)
-	listenKey, err := futures_api.ListenKey(apiKey, useTestNet...)
+	listenKey, err := futures_api.ListenKey(uds.apiKey, useTestNet...)
 	if err != nil {
 		logrus.Fatalf("Error getting listen key: %v", err)
 	}
@@ -122,4 +127,11 @@ func UserDataStream(apiKey string, symbol string, callBack func(*WsUserDataEvent
 			callBack(orderTradeUpdate)
 		}
 	}, quit)
+}
+
+func NewUserDataStream(apiKey, symbol string) *UserDataStream {
+	return &UserDataStream{
+		apiKey: apiKey,
+		symbol: symbol,
+	}
 }

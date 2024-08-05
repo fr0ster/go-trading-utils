@@ -20,6 +20,8 @@ func CallAPI(baseUrl, method string, params url.Values, endpoint string, sign *c
 
 	if params != nil && (sign == nil || sign.GetAPIKey() == "" || sign.GetAPISecret() == "") {
 		return nil, fmt.Errorf("sign is required")
+	} else if sign != nil && sign.GetAPIKey() == "" {
+		return nil, fmt.Errorf("api key is required")
 	}
 
 	// Створення HTTP клієнта
@@ -41,6 +43,9 @@ func CallAPI(baseUrl, method string, params url.Values, endpoint string, sign *c
 		// Додавання параметрів до URL
 		req.URL.RawQuery = fmt.Sprintf("%s&%s", queryString, v.Encode())
 
+		// Додавання заголовків
+		req.Header.Set("X-MBX-APIKEY", sign.GetAPIKey())
+	} else if sign != nil {
 		// Додавання заголовків
 		req.Header.Set("X-MBX-APIKEY", sign.GetAPIKey())
 	}
