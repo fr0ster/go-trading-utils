@@ -8,7 +8,7 @@ const (
 	BaseCombinedTestnetURL = "wss://stream.binancefuture.com/stream?streams="
 )
 
-func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
+func GetWsBaseUrl(useTestNet ...bool) (endpoint string) {
 	if len(useTestNet) > 0 && useTestNet[0] {
 		endpoint = BaseWsTestnetUrl
 	} else {

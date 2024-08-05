@@ -36,7 +36,7 @@ func parseAggTradeJSON(data []byte) (*types.AggTrade, error) {
 }
 
 func AggTradeStream(symbol string, callBack func(*types.AggTrade), quit chan struct{}, useTestNet ...bool) {
-	baseUrl := GetAPIBaseUrl(useTestNet...)
+	baseUrl := GetWsBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@aggTrade", baseUrl, strings.ToLower(symbol))
 	common.StartStreamer(wsURL, func(message []byte) {
 		// Парсинг JSON

@@ -34,7 +34,7 @@ func parseFuturesDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
 }
 
 func DepthStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
-	baseUrl := GetAPIBaseUrl(useTestNet...)
+	baseUrl := GetWsBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@depth%s%s", baseUrl, strings.ToLower(symbol), levels, rateStr)
 	common.StartStreamer(wsURL, func(message []byte) {
 		// Парсинг JSON

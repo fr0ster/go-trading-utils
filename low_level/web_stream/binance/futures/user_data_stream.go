@@ -7,6 +7,7 @@ import (
 	"time"
 
 	api_common "github.com/fr0ster/go-trading-utils/low_level/common"
+	futures_rest "github.com/fr0ster/go-trading-utils/low_level/rest_api/binance/futures"
 	api "github.com/fr0ster/go-trading-utils/low_level/rest_api/common"
 	common "github.com/fr0ster/go-trading-utils/low_level/web_stream/common"
 	types "github.com/fr0ster/go-trading-utils/types"
@@ -114,7 +115,7 @@ type UserDataStream struct {
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
-	baseURL := GetAPIBaseUrl(useTestNet...)
+	baseURL := GetWsBaseUrl(useTestNet...)
 	endpoint := "/fapi/v1/listenKey"
 	var result map[string]interface{}
 
@@ -130,7 +131,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 }
 
 func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
-	wss := GetAPIBaseUrl(useTestNet...)
+	wss := futures_rest.GetAPIBaseUrl(useTestNet...)
 	listenKey, err := uds.listenKey(http.MethodPost, useTestNet...)
 	if err != nil {
 		logrus.Fatalf("Error getting listen key: %v", err)

@@ -48,7 +48,7 @@ func parseKlineJSON(data []byte) (*types.Kline, error) {
 }
 
 func KlinesStream(symbol string, interval string, callBack func(*types.Kline), quit chan struct{}, useTestNet ...bool) {
-	wss := GetAPIBaseUrl(useTestNet...)
+	wss := GetWsBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@kline_%s", wss, strings.ToLower(symbol), interval)
 	common.StartStreamer(wsURL, func(message []byte) {
 		// Парсинг JSON
