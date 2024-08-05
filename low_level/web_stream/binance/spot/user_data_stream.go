@@ -134,13 +134,10 @@ type GeneralResponse struct {
 }
 
 // Функція для парсингу JSON
-func parseResponse(data []byte) (*GeneralResponse, error) {
+func parseResponse(data []byte) *GeneralResponse {
 	var generalResponse GeneralResponse
-	err := json.Unmarshal(data, &generalResponse)
-	if err != nil {
-		return nil, err
-	}
-	return &generalResponse, nil
+	_ = json.Unmarshal(data, &generalResponse)
+	return &generalResponse
 }
 
 type UserDataStream struct {
@@ -171,10 +168,10 @@ func (uds *UserDataStream) Start(callBack func(*GeneralResponse), quit chan stru
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
 	common.StartStreamer(wsURL, func(message []byte) {
-		orderTradeUpdate, err := parseResponse(message)
-		if err != nil {
-			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
-		}
+		orderTradeUpdate := parseResponse(message)
+		// if err != nil {
+		// 	logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+		// }
 		if callBack != nil {
 			callBack(orderTradeUpdate)
 		}
