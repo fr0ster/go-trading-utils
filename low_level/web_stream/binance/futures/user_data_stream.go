@@ -20,7 +20,7 @@ type UserDataStream struct {
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
-	baseURL := GetWsBaseUrl(useTestNet...)
+	baseURL := futures_rest.GetAPIBaseUrl(useTestNet...)
 	endpoint := "/fapi/v1/listenKey"
 	var result map[string]interface{}
 
@@ -36,7 +36,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 }
 
 func (uds *UserDataStream) Start(callBack func(*simplejson.Json), quit chan struct{}, useTestNet ...bool) {
-	wss := futures_rest.GetAPIBaseUrl(useTestNet...)
+	wss := GetWsBaseUrl(useTestNet...)
 	listenKey, err := uds.listenKey(http.MethodPost, useTestNet...)
 	if err != nil {
 		logrus.Fatalf("Error getting listen key: %v", err)

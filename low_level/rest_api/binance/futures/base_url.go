@@ -1,11 +1,9 @@
 package futures
 
 import (
-	"encoding/json"
-	"net/http"
-
 	common "github.com/fr0ster/go-trading-utils/low_level/common"
 	api "github.com/fr0ster/go-trading-utils/low_level/rest_api/common"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -22,53 +20,19 @@ func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
 	return
 }
 
-func ListenKey(apiKey string, useTestNet ...bool) (listenKey string, err error) {
+func ListenKey(apiKey string, method string, useTestNet ...bool) (listenKey string, err error) {
 	baseURL := GetAPIBaseUrl(useTestNet...)
 	endpoint := "/fapi/v1/listenKey"
-	var result map[string]interface{}
-	// // Створення запиту
-	// req, err := http.NewRequest("POST", url, nil)
-	// if err != nil {
-	// 	fmt.Println("Error creating request:", err)
-	// 	return
-	// }
 
-	// // Додавання заголовків
-	// req.Header.Set("X-MBX-APIKEY", apiKey)
-
-	// // Виконання запиту
-	// client := &http.Client{}
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	fmt.Println("Error making request:", err)
-	// 	return
-	// }
-	// defer resp.Body.Close()
-
-	// // Читання відповіді
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Println("Error reading response:", err)
-	// 	return
-	// }
-
-	// // Перевірка статусу відповіді
-	// if resp.StatusCode != http.StatusOK {
-	// 	fmt.Printf("Error: status code %d\n", resp.StatusCode)
-	// 	fmt.Println(string(body))
-	// 	return
-	// }
-
-	body, err := api.CallAPI(baseURL, http.MethodPost, nil, endpoint, common.NewSign(apiKey, ""))
+	body, err := api.CallAPI(baseURL, method, nil, endpoint, common.NewSign(apiKey, ""))
 	if err != nil {
 		return
 	}
 
-	// Парсинг відповіді
-	err = json.Unmarshal(body, &result)
+	json, err := common.NewJSON(body)
 	if err != nil {
-		return
+		logrus.Fatalf("Error parsing JSON: %v, message: %s", err, json)
 	}
-	listenKey = result["listenKey"].(string)
+	listenKey = json.Get("listenKey").MustString()
 	return
 }
