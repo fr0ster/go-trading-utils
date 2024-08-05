@@ -108,7 +108,6 @@ func parseJSON(data []byte) (*WsUserDataEvent, error) {
 
 type UserDataStream struct {
 	apiKey string
-	symbol string
 }
 
 func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
@@ -132,6 +131,5 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 func NewUserDataStream(apiKey, symbol string) *UserDataStream {
 	return &UserDataStream{
 		apiKey: apiKey,
-		symbol: symbol,
 	}
 }
