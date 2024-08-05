@@ -24,19 +24,6 @@ type BookTicker struct {
 	BestAskQty   string `json:"A"`
 }
 
-// Визначення структури для JSON DepthUpdate
-type DepthUpdate struct {
-	EventType     string     `json:"e"`
-	EventTime     int64      `json:"E"`
-	TransactTime  int64      `json:"T"`
-	Symbol        string     `json:"s"`
-	FirstUpdateID int64      `json:"U"`
-	LastUpdateID  int64      `json:"u"`
-	PrevUpdateID  int64      `json:"pu"`
-	Bids          [][]string `json:"b"`
-	Asks          [][]string `json:"a"`
-}
-
 // Визначення структури для JSON Kline
 type Kline struct {
 	EventType string `json:"e"`

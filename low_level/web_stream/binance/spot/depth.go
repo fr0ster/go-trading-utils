@@ -5,21 +5,20 @@ import (
 	"fmt"
 	"strings"
 
-	types "github.com/fr0ster/go-trading-utils/low_level/web_stream/binance/common"
 	common "github.com/fr0ster/go-trading-utils/low_level/web_stream/common"
 
 	"github.com/sirupsen/logrus"
 )
 
-// type DepthUpdate struct {
-// 	LastUpdateID int64      `json:"lastUpdateId"`
-// 	Bids         [][]string `json:"bids"`
-// 	Asks         [][]string `json:"asks"`
-// }
+type DepthUpdate struct {
+	LastUpdateID int64      `json:"lastUpdateId"`
+	Bids         [][]string `json:"bids"`
+	Asks         [][]string `json:"asks"`
+}
 
 // Функція для парсингу JSON
-func parseDepthUpdateJSON(data []byte) (*types.DepthUpdate, error) {
-	var orderBook types.DepthUpdate
+func parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
+	var orderBook DepthUpdate
 	err := json.Unmarshal(data, &orderBook)
 	if err != nil {
 		return nil, err
@@ -27,7 +26,7 @@ func parseDepthUpdateJSON(data []byte) (*types.DepthUpdate, error) {
 	return &orderBook, nil
 }
 
-func DepthSpotStream(symbol string, levels string, rateStr string, callBack func(*types.DepthUpdate), quit chan struct{}, useTestNet ...bool) {
+func DepthSpotStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
 	wss := GetWsEndpoint(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(symbol), levels, rateStr)
 	common.StartStreamer(wsURL, func(message []byte) {
