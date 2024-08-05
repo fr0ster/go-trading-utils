@@ -141,7 +141,12 @@ func parseResponse(data []byte) *GeneralResponse {
 }
 
 type UserDataStream struct {
-	apiKey string
+	apiKey  string
+	baseUrl string
+	// accountUpdateCallBack func(*WsAccountUpdateList)
+	// balanceUpdateCallBack func(*WsBalanceUpdate)
+	// orderUpdateCallBack   func(*WsOrderUpdate)
+	// ocoUpdateCallBack     func(*WsOCOUpdate)
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -168,13 +173,22 @@ func (uds *UserDataStream) Start(callBack func(*GeneralResponse), quit chan stru
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
 	common.StartStreamer(wsURL, func(message []byte) {
-		orderTradeUpdate := parseResponse(message)
-		// if err != nil {
-		// 	logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
-		// }
-		if callBack != nil {
-			callBack(orderTradeUpdate)
+		json, err := api_common.NewJSON(message)
+		if err != nil {
+			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 		}
+		logrus.Debugf("Message: %s", json.MustString())
+		// switch json.Get("e").MustString() {
+		// case "ACCOUNT_UPDATE":
+		// 	var accountUpdateList WsAccountUpdateList
+		// 	err := json.Unmarshal(&accountUpdateList)
+		// 	if err != nil {
+		// 		logrus.Fatalf("Error parsing ACCOUNT_UPDATE: %v, message: %s", err, message)
+		// 	}
+		// 	if uds.accountUpdateCallBack != nil {
+		// 		uds.accountUpdateCallBack(&accountUpdateList)
+		// 	}
+		// }
 	}, quit)
 	go func() {
 		for {

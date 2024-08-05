@@ -148,13 +148,18 @@ func (uds *UserDataStream) Start(callBack func(*GeneralResponse), quit chan stru
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
 	common.StartStreamer(wsURL, func(message []byte) {
-		orderTradeUpdate := parseResponse(message)
+		json, err := api_common.NewJSON(message)
+		if err != nil {
+			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+		}
+		logrus.Debugf("Message: %s", json.MustString())
+		// orderTradeUpdate := parseResponse(message)
 		// if err != nil {
 		// 	logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 		// }
-		if callBack != nil {
-			callBack(orderTradeUpdate)
-		}
+		// if callBack != nil {
+		// 	callBack(orderTradeUpdate)
+		// }
 	}, quit)
 	go func() {
 		for {

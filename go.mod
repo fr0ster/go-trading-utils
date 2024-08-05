@@ -12,7 +12,7 @@ require (
 require golang.org/x/net v0.24.0 // indirect
 
 require (
-	github.com/bitly/go-simplejson v0.5.1 // indirect
+	github.com/bitly/go-simplejson v0.5.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
