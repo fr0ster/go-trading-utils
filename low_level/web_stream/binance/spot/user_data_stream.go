@@ -42,15 +42,20 @@ func (uds *UserDataStream) Start(callBack func(*simplejson.Json), quit chan stru
 		logrus.Fatalf("Error getting listen key: %v", err)
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
-	common.StartStreamer(wsURL, func(message []byte) {
-		json, err := api_common.NewJSON(message)
-		if err != nil {
-			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
-		}
-		if callBack != nil {
-			callBack(json)
-		}
-	}, quit)
+	common.StartStreamer(
+		wsURL,
+		func(message []byte) {
+			json, err := api_common.NewJSON(message)
+			if err != nil {
+				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+			}
+			if callBack != nil {
+				callBack(json)
+			}
+		},
+		func(err error) {
+			logrus.Fatalf("Error reading from websocket: %v", err)
+		})
 	go func() {
 		for {
 			select {

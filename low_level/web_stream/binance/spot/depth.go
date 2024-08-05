@@ -29,14 +29,19 @@ func parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
 func DepthStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
 	wss := GetWsBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(symbol), levels, rateStr)
-	common.StartStreamer(wsURL, func(message []byte) {
-		// Парсинг JSON
-		depthUpdate, err := parseDepthUpdateJSON([]byte(message))
-		if err != nil {
-			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
-		}
-		if callBack != nil {
-			callBack(depthUpdate)
-		}
-	}, quit)
+	common.StartStreamer(
+		wsURL,
+		func(message []byte) {
+			// Парсинг JSON
+			depthUpdate, err := parseDepthUpdateJSON([]byte(message))
+			if err != nil {
+				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+			}
+			if callBack != nil {
+				callBack(depthUpdate)
+			}
+		},
+		func(err error) {
+			logrus.Fatalf("Error reading from websocket: %v", err)
+		})
 }

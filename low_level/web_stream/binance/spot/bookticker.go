@@ -34,14 +34,19 @@ func parseBookTickerJSON(data []byte) (*types.BookTicker, error) {
 func BookTickersStream(symbol string, callBack func(*types.BookTicker), quit chan struct{}, useTestNet ...bool) {
 	wss := GetWsBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@bookTicker", wss, strings.ToLower(symbol))
-	common.StartStreamer(wsURL, func(message []byte) {
-		// Парсинг JSON
-		kline, err := parseBookTickerJSON([]byte(message))
-		if err != nil {
-			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
-		}
-		if callBack != nil {
-			callBack(kline)
-		}
-	}, quit)
+	common.StartStreamer(
+		wsURL,
+		func(message []byte) {
+			// Парсинг JSON
+			kline, err := parseBookTickerJSON([]byte(message))
+			if err != nil {
+				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+			}
+			if callBack != nil {
+				callBack(kline)
+			}
+		},
+		func(err error) {
+			logrus.Fatalf("Error reading from websocket: %v", err)
+		})
 }
