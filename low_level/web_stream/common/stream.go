@@ -60,11 +60,11 @@ func StartStreamer(url string, callBack func([]byte), quit chan struct{}) {
 }
 
 var (
-	// Endpoints
-	BaseWsMainURL          = "wss://stream.binance.com:9443/ws"
-	BaseWsTestnetURL       = "wss://testnet.binance.vision/ws"
-	BaseCombinedMainURL    = "wss://stream.binance.com:9443/stream?streams="
-	BaseCombinedTestnetURL = "wss://testnet.binance.vision/stream?streams="
+	// // Endpoints
+	// BaseWsMainURL          = "wss://stream.binance.com:9443/ws"
+	// BaseWsTestnetURL       = "wss://testnet.binance.vision/ws"
+	// BaseCombinedMainURL    = "wss://stream.binance.com:9443/stream?streams="
+	// BaseCombinedTestnetURL = "wss://testnet.binance.vision/stream?streams="
 
 	// WebsocketTimeout is an interval for sending ping/pong messages if WebsocketKeepalive is enabled
 	WebsocketTimeout = time.Second * 60
