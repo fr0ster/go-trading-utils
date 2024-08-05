@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 
-	common "github.com/fr0ster/streamer_client/common"
-	web_api "github.com/fr0ster/streamer_client/web_api/common"
+	common "github.com/fr0ster/go-trading-utils/low_level/common"
+	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
 )
 
 // Функція для логіну
