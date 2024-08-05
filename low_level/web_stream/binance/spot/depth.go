@@ -1,0 +1,43 @@
+package spot_api
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	types "github.com/fr0ster/go-trading-utils/low_level/web_stream/binance/common"
+	common "github.com/fr0ster/go-trading-utils/low_level/web_stream/common"
+
+	"github.com/sirupsen/logrus"
+)
+
+// type DepthUpdate struct {
+// 	LastUpdateID int64      `json:"lastUpdateId"`
+// 	Bids         [][]string `json:"bids"`
+// 	Asks         [][]string `json:"asks"`
+// }
+
+// Функція для парсингу JSON
+func parseDepthUpdateJSON(data []byte) (*types.DepthUpdate, error) {
+	var orderBook types.DepthUpdate
+	err := json.Unmarshal(data, &orderBook)
+	if err != nil {
+		return nil, err
+	}
+	return &orderBook, nil
+}
+
+func DepthSpotStream(symbol string, levels string, rateStr string, callBack func(*types.DepthUpdate), quit chan struct{}, useTestNet ...bool) {
+	wss := GetWsEndpoint(useTestNet...)
+	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(symbol), levels, rateStr)
+	common.StartStreamer(wsURL, func(message []byte) {
+		// Парсинг JSON
+		depthUpdate, err := parseDepthUpdateJSON([]byte(message))
+		if err != nil {
+			logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
+		}
+		if callBack != nil {
+			callBack(depthUpdate)
+		}
+	}, quit)
+}
