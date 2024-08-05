@@ -32,7 +32,7 @@ func parseBookTickerJSON(data []byte) (*types.BookTicker, error) {
 }
 
 func BookTickersStream(symbol string, callBack func(*types.BookTicker), quit chan struct{}, useTestNet ...bool) {
-	wss := GetWsEndpoint(useTestNet...)
+	wss := GetAPIBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@bookTicker", wss, strings.ToLower(symbol))
 	common.StartStreamer(wsURL, func(message []byte) {
 		// Парсинг JSON

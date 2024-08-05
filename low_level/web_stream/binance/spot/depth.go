@@ -26,8 +26,8 @@ func parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
 	return &orderBook, nil
 }
 
-func DepthSpotStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
-	wss := GetWsEndpoint(useTestNet...)
+func DepthStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
+	wss := GetAPIBaseUrl(useTestNet...)
 	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(symbol), levels, rateStr)
 	common.StartStreamer(wsURL, func(message []byte) {
 		// Парсинг JSON
