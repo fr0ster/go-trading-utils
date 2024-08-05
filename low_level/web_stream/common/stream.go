@@ -31,7 +31,9 @@ func StartStreamer(url string, callBack func([]byte), quit chan struct{}) {
 			cancel()
 		}()
 		for {
-			// select {
+			select {
+			case <-quit:
+				cancel()
 			// case <-ctx.Done():
 			// 	// Закриваємо з'єднання з сервером
 			// 	err = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
@@ -40,14 +42,14 @@ func StartStreamer(url string, callBack func([]byte), quit chan struct{}) {
 			// 		return
 			// 	}
 			// 	return
-			// default:
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				return
+			default:
+				_, message, err := conn.ReadMessage()
+				if err != nil {
+					return
+				}
+				callBack(message)
+				// time.Sleep(1000 * time.Microsecond)
 			}
-			callBack(message)
-			// time.Sleep(1000 * time.Microsecond)
-			// }
 		}
 	}()
 
