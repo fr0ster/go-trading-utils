@@ -14,7 +14,7 @@ require golang.org/x/net v0.24.0 // indirect
 require (
 	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gorilla/websocket v1.5.1 // indirect
+	github.com/gorilla/websocket v1.5.1
 	github.com/jinzhu/copier v0.4.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
