@@ -3,15 +3,18 @@ package types
 import "github.com/google/btree"
 
 type (
-	OrderSide        string
-	OrderType        string
-	SideType         string
-	TimeInForceType  string
-	QuantityType     string
-	OrderStatusType  string
-	WorkingType      string
-	PositionSideType string
-	DepthSide        string
+	UserDataEventReasonType string
+	UserDataEventType       string
+	OrderSide               string
+	OrderType               string
+	SideType                string
+	TimeInForceType         string
+	QuantityType            string
+	OrderExecutionType      string
+	OrderStatusType         string
+	WorkingType             string
+	PositionSideType        string
+	DepthSide               string
 
 	StreamFunction       func() (chan struct{}, chan struct{}, error)
 	InitFunction         func() (err error)
