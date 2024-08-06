@@ -13,7 +13,7 @@ import (
 )
 
 // Функція для логіну
-func (wa *WebApi) Logon() (response []byte, err error) {
+func (wa *WebApi) Logon() (response []byte, limit []byte, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	message := "apiKey=" + wa.apiKey + "&timestamp=" + strconv.FormatInt(timestamp, 10)
@@ -38,34 +38,5 @@ func (wa *WebApi) Logon() (response []byte, err error) {
 		return
 	}
 
-	// // Підключення до WebSocket
-	// u := url.URL{Scheme: "wss", Host: "ws-api.binance.com", Path: "/ws-api/v3"}
-	// conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	// if err != nil {
-	// 	err = fmt.Errorf("error connecting to WebSocket: %v", err)
-	// 	return
-	// }
-	// defer conn.Close()
-
-	// // Відправка запиту на логін
-	// err = conn.WriteMessage(websocket.TextMessage, requestBody)
-	// if err != nil {
-	// 	err = fmt.Errorf("error sending message: %v", err)
-	// 	return
-	// }
-
-	// // Читання відповіді
-	// _, body, err := conn.ReadMessage()
-	// if err != nil {
-	// 	err = fmt.Errorf("error reading message: %v", err)
-	// 	return
-	// }
-
-	// response, err = web_api.ParseResponse(body)
-	// if err != nil {
-	// 	err = fmt.Errorf("error parsing response: %v", err)
-	// 	return
-	// }
-	// return
 	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
 }

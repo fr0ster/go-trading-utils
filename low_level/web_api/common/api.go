@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/bitly/go-simplejson"
 	"github.com/gorilla/websocket"
 )
 
@@ -13,6 +14,7 @@ type (
 		ID         string      `json:"id"`
 		Status     int         `json:"status"`
 		Error      ErrorDetail `json:"error"`
+		Result     interface{} `json:"result"`
 		RateLimits []RateLimit `json:"rateLimits"`
 	}
 
@@ -40,7 +42,7 @@ func ParseResponse(data []byte) (*Response, error) {
 }
 
 // Функція для розміщення ордера через WebSocket
-func CallWebAPI(host, path string, requestBody []byte) (response []byte, err error) {
+func CallWebAPI(host, path string, requestBody []byte) (response []byte, limit []byte, err error) {
 	// Підключення до WebSocket
 	u := url.URL{Scheme: "wss", Host: host, Path: path}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -65,7 +67,19 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, err err
 		return
 	}
 	if msg.Status != 200 {
-		err = fmt.Errorf("error response: %v", msg.Error.Msg)
+		err = fmt.Errorf("error response: %v", msg.Error)
+	}
+	jMap, err := simplejson.NewJson(response)
+	if err != nil {
+		return
+	}
+	response, err = jMap.Get("result").Encode()
+	if err != nil {
+		return
+	}
+	limit, err = jMap.Get("rateLimits").Encode()
+	if err != nil {
+		return
 	}
 	return
 }
