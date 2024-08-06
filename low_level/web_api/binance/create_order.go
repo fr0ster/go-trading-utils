@@ -16,6 +16,7 @@ type (
 		NewOrderRespType string `json:"newOrderRespType"`
 		Price            string `json:"price"`
 		Quantity         string `json:"quantity"`
+		RecvWindow       int    `json:"recvWindow"`
 		Side             string `json:"side"`
 		Symbol           string `json:"symbol"`
 		TimeInForce      string `json:"timeInForce"`
@@ -52,6 +53,7 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		Type:             orderType,
 		TimeInForce:      timeInForce,
 		Price:            price,
+		RecvWindow:       5000,
 		Quantity:         quantity,
 		ApiKey:           wa.apiKey,
 		Timestamp:        timestamp,
