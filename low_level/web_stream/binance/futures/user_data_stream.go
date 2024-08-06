@@ -13,7 +13,17 @@ import (
 	"github.com/fr0ster/go-trading-utils/types"
 
 	"github.com/sirupsen/logrus"
-) // WsUserDataEvent define user data event
+)
+
+const (
+	UserDataEventTypeListenKeyExpired    types.UserDataEventType = "listenKeyExpired"
+	UserDataEventTypeMarginCall          types.UserDataEventType = "MARGIN_CALL"
+	UserDataEventTypeAccountUpdate       types.UserDataEventType = "ACCOUNT_UPDATE"
+	UserDataEventTypeOrderTradeUpdate    types.UserDataEventType = "ORDER_TRADE_UPDATE"
+	UserDataEventTypeAccountConfigUpdate types.UserDataEventType = "ACCOUNT_CONFIG_UPDATE"
+)
+
+// WsUserDataEvent define user data event
 type WsUserDataEvent struct {
 	Event               types.UserDataEventType `json:"e"`
 	Time                int64                   `json:"E"`
