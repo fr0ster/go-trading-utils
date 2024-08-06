@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
@@ -15,16 +14,31 @@ import (
 )
 
 // Структура для параметрів запиту
+//
+//	type OrderParams struct {
+//		ApiKey           string `json:"apiKey"`
+//		NewOrderRespType string `json:"newOrderRespType"`
+//		Price            string `json:"price"`
+//		Quantity         string `json:"quantity"`
+//		RecvWindow       int    `json:"recvWindow"`
+//		Side             string `json:"side"`
+//		Symbol           string `json:"symbol"`
+//		TimeInForce      string `json:"timeInForce"`
+//		Timestamp        int64  `json:"timestamp"`
+//		Type             string `json:"type"`
+//	}
 type OrderParams struct {
-	Symbol      string `json:"symbol"`
-	Side        string `json:"side"`
-	Type        string `json:"type"`
-	TimeInForce string `json:"timeInForce"`
-	Price       string `json:"price"`
-	Quantity    string `json:"quantity"`
-	APIKey      string `json:"apiKey"`
-	Signature   string `json:"signature"`
-	Timestamp   int64  `json:"timestamp"`
+	ApiKey           string `json:"apiKey"`
+	NewOrderRespType string `json:"newOrderRespType"`
+	Price            string `json:"price"`
+	Quantity         string `json:"quantity"`
+	RecvWindow       int    `json:"recvWindow"`
+	Side             string `json:"side"`
+	Symbol           string `json:"symbol"`
+	TimeInForce      string `json:"timeInForce"`
+	Timestamp        int64  `json:"timestamp"`
+	Type             string `json:"type"`
+	Signature        string `json:"signature"`
 }
 
 type OrderRequest struct {
@@ -44,7 +58,17 @@ func createSignature(secret, message string) string {
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	message := "symbol=" + wa.symbol + "&side=" + side + "&type=" + orderType + "&timeInForce=" + timeInForce + "&price=" + price + "&quantity=" + quantity + "&timestamp=" + strconv.FormatInt(timestamp, 10)
+	message :=
+		"apiKey=" + wa.apiKey +
+			"&newOrderRespType=ACK&price=" + price +
+			"&quantity=" + quantity +
+			"&recvWindow=5000" +
+			"&side=" + side +
+			"&symbol=" + wa.symbol +
+			"&timeInForce=" + timeInForce +
+			"&timestamp=" +
+			fmt.Sprintf("%d", timestamp) +
+			"&type=" + orderType
 	signature := createSignature(wa.apiSecret, message)
 
 	params := OrderParams{
@@ -54,9 +78,9 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		TimeInForce: timeInForce,
 		Price:       price,
 		Quantity:    quantity,
-		APIKey:      wa.apiKey,
-		Signature:   signature,
+		ApiKey:      wa.apiKey,
 		Timestamp:   timestamp,
+		Signature:   signature,
 	}
 
 	request := OrderRequest{
