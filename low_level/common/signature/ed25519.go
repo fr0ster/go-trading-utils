@@ -9,6 +9,7 @@ import (
 )
 
 type SignEd25519 struct {
+	apiKey     string
 	privateKey ed25519.PrivateKey
 	publicKey  ed25519.PublicKey
 }
@@ -20,10 +21,10 @@ func (sign *SignEd25519) CreateSignature(queryString string) string {
 }
 
 func (sign *SignEd25519) GetAPIKey() string {
-	return string(sign.publicKey)
+	return sign.apiKey
 }
 
-func NewSignEd25519(publicKeyFile string, privateKeyFile string) (signer *SignEd25519, err error) {
+func NewSignEd25519(apiKey string, publicKeyFile string, privateKeyFile string) (signer *SignEd25519, err error) {
 	private, err := loadEd25519PrivateKeyFromPEM(privateKeyFile)
 	if err != nil {
 		return
@@ -33,6 +34,7 @@ func NewSignEd25519(publicKeyFile string, privateKeyFile string) (signer *SignEd
 		return
 	}
 	signer = &SignEd25519{
+		apiKey:     apiKey,
 		privateKey: ed25519.PrivateKey(private),
 		publicKey:  ed25519.PublicKey(public),
 	}

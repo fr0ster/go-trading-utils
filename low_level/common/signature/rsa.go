@@ -13,6 +13,7 @@ import (
 )
 
 type SignRSA struct {
+	apiKey     string
 	privateKey rsa.PrivateKey
 	publicKey  rsa.PublicKey
 }
@@ -28,10 +29,10 @@ func (sign *SignRSA) CreateSignature(queryString string) string {
 }
 
 func (sign *SignRSA) GetAPIKey() string {
-	return sign.publicKey.N.String()
+	return sign.apiKey
 }
 
-func NewSignRSA(publicKeyFile string, privateKeyFile string) (sign *SignRSA, err error) {
+func NewSignRSA(apiKey string, publicKeyFile string, privateKeyFile string) (sign *SignRSA, err error) {
 	private, err := loadRSAPrivateKeyFromPEM(privateKeyFile)
 	if err != nil {
 		return
@@ -42,6 +43,7 @@ func NewSignRSA(publicKeyFile string, privateKeyFile string) (sign *SignRSA, err
 	}
 
 	sign = &SignRSA{
+		apiKey:     apiKey,
 		privateKey: *private,
 		publicKey:  *public,
 	}
