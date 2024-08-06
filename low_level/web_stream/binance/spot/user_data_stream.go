@@ -148,7 +148,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	return
 }
 
-func wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
+func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
 	return func(message []byte) {
 		j, err := api_common.NewJSON(message)
 		if err != nil {
@@ -207,7 +207,7 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}
 	common.StartStreamer(
 		wsURL,
-		wsHandler(callBack, wsErrorHandler),
+		uds.wsHandler(callBack, wsErrorHandler),
 		wsErrorHandler)
 	go func() {
 		for {

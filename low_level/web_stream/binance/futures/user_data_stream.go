@@ -111,6 +111,7 @@ type WsAccountConfigUpdate struct {
 type UserDataStream struct {
 	apiKey string
 	sign   signature.Sign
+	symbol string
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -129,12 +130,15 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	return
 }
 
-func wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
+func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
 	return func(message []byte) {
 		event := new(WsUserDataEvent)
 		err := json.Unmarshal(message, event)
 		if err != nil {
 			errHandler(err)
+			return
+		}
+		if event.Event == UserDataEventTypeOrderTradeUpdate && event.OrderTradeUpdate.Symbol != uds.symbol {
 			return
 		}
 		handler(event)
@@ -153,7 +157,7 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}
 	common.StartStreamer(
 		wsURL,
-		wsHandler(callBack, wsErrorHandler),
+		uds.wsHandler(callBack, wsErrorHandler),
 		wsErrorHandler)
 	go func() {
 		for {
@@ -175,9 +179,10 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}()
 }
 
-func NewUserDataStream(apiKey string, sign signature.Sign) *UserDataStream {
+func NewUserDataStream(apiKey string, symbol string, sign signature.Sign) *UserDataStream {
 	return &UserDataStream{
 		apiKey: apiKey,
 		sign:   sign,
+		symbol: symbol,
 	}
 }
