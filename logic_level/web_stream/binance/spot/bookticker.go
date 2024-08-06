@@ -5,21 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/common/web_stream"
-	types "github.com/fr0ster/go-trading-utils/low_level/web_stream/binance/common"
+	types "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common"
+	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 
 	"github.com/sirupsen/logrus"
 )
-
-// // Визначення структури для JSON
-// type BookTicker struct {
-// 	UpdateID     int64  `json:"u"`
-// 	Symbol       string `json:"s"`
-// 	BestBidPrice string `json:"b"`
-// 	BestBidQty   string `json:"B"`
-// 	BestAskPrice string `json:"a"`
-// 	BestAskQty   string `json:"A"`
-// }
 
 // Функція для парсингу JSON
 func parseBookTickerJSON(data []byte) (*types.BookTicker, error) {

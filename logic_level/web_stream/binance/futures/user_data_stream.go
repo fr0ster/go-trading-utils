@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	futures_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
 	api "github.com/fr0ster/go-trading-utils/low_level/rest_api"
-	futures_rest "github.com/fr0ster/go-trading-utils/low_level/rest_api/futures"
 	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
 	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 	types "github.com/fr0ster/go-trading-utils/types"

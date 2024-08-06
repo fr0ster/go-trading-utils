@@ -1,8 +1,8 @@
 package spot_web_api
 
 import (
-	signature "github.com/fr0ster/go-trading-utils/low_level/common/utils/signature"
-	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/binance/common"
+	web_api "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common"
+	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
 )
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *web_api.WebApi {

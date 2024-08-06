@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/common/rest_api"
-	api "github.com/fr0ster/go-trading-utils/low_level/rest_api/binance/spot"
+	api "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
+	common "github.com/fr0ster/go-trading-utils/low_level/rest_api"
 )
 
 type (

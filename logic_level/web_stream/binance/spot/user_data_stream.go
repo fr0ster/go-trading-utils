@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/fr0ster/go-trading-utils/low_level/common/rest_api"
-	api_common "github.com/fr0ster/go-trading-utils/low_level/common/utils/json"
-	signature "github.com/fr0ster/go-trading-utils/low_level/common/utils/signature"
-	common "github.com/fr0ster/go-trading-utils/low_level/common/web_stream"
-	spot_rest "github.com/fr0ster/go-trading-utils/low_level/rest_api/binance/spot"
+	spot_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
+	api "github.com/fr0ster/go-trading-utils/low_level/rest_api"
+	api_common "github.com/fr0ster/go-trading-utils/low_level/utils/json"
+	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
+	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 	"github.com/fr0ster/go-trading-utils/types"
 
 	"github.com/sirupsen/logrus"

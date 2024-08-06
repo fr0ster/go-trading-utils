@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/common/web_stream"
-	types "github.com/fr0ster/go-trading-utils/low_level/web_stream/binance/common"
+	types "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common"
+	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 
 	"github.com/sirupsen/logrus"
 )

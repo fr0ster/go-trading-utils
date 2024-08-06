@@ -3,8 +3,8 @@ package orders_rest
 import (
 	"sync"
 
-	signature "github.com/fr0ster/go-trading-utils/low_level/common/utils/signature"
-	api "github.com/fr0ster/go-trading-utils/low_level/rest_api/binance/futures"
+	api "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
+	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
 )
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *Orders {

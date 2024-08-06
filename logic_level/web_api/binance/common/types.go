@@ -3,7 +3,7 @@ package common
 import (
 	"sync"
 
-	signature "github.com/fr0ster/go-trading-utils/low_level/common/utils/signature"
+	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
 )
 
 type (
