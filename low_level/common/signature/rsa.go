@@ -31,12 +31,12 @@ func (sign *SignRSA) GetAPIKey() string {
 	return sign.publicKey.N.String()
 }
 
-func NewSignRSA(publicKey PublicKey, privateKey SecretKey) (sign *SignRSA, err error) {
-	private, err := loadPrivateKeyFromPEM(string(privateKey))
+func NewSignRSA(publicKeyFile string, privateKeyFile string) (sign *SignRSA, err error) {
+	private, err := loadRSAPrivateKeyFromPEM(privateKeyFile)
 	if err != nil {
 		return
 	}
-	public, err := loadPublicKeyFromPEM(string(publicKey))
+	public, err := loadRSAPublicKeyFromPEM(publicKeyFile)
 	if err != nil {
 		return
 	}
@@ -49,8 +49,13 @@ func NewSignRSA(publicKey PublicKey, privateKey SecretKey) (sign *SignRSA, err e
 }
 
 // Функція для завантаження приватного ключа з PEM рядка
-func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(pemStr))
+func loadRSAPrivateKeyFromPEM(pemFile string) (*rsa.PrivateKey, error) {
+	// Конвертуємо байтовий зріз у строку
+	content, err := loadFile(pemFile)
+	if err != nil {
+		return nil, err
+	}
+	block, _ := pem.Decode([]byte(content))
 	if block == nil || block.Type != "RSA PRIVATE KEY" {
 		return nil, errors.New("failed to decode PEM block containing private key")
 	}
@@ -64,8 +69,14 @@ func loadPrivateKeyFromPEM(pemStr string) (*rsa.PrivateKey, error) {
 }
 
 // Функція для завантаження публічного ключа з PEM рядка
-func loadPublicKeyFromPEM(pemStr string) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode([]byte(pemStr))
+func loadRSAPublicKeyFromPEM(pemFile string) (*rsa.PublicKey, error) {
+	// Конвертуємо байтовий зріз у строку
+	content, err := loadFile(pemFile)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode([]byte(content))
 	if block == nil || block.Type != "RSA PUBLIC KEY" {
 		return nil, errors.New("failed to decode PEM block containing public key")
 	}
