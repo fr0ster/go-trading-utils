@@ -47,14 +47,15 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	// Перетворення структури в строку
 
 	params := OrderParams{
-		Symbol:      wa.symbol,
-		Side:        side,
-		Type:        orderType,
-		TimeInForce: timeInForce,
-		Price:       price,
-		Quantity:    quantity,
-		ApiKey:      wa.apiKey,
-		Timestamp:   timestamp,
+		Symbol:           wa.symbol,
+		NewOrderRespType: "ACK",
+		Side:             side,
+		Type:             orderType,
+		TimeInForce:      timeInForce,
+		Price:            price,
+		Quantity:         quantity,
+		ApiKey:           wa.apiKey,
+		Timestamp:        timestamp,
 	}
 	message, err := common.StructToQueryString(params)
 	if err != nil {
