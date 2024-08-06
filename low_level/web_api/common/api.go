@@ -59,5 +59,13 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, err err
 
 	// Читання відповіді
 	_, response, err = conn.ReadMessage()
+	msg, err := ParseResponse(response)
+	if err != nil {
+		err = fmt.Errorf("error parsing response: %v", err)
+		return
+	}
+	if msg.Status != 200 {
+		err = fmt.Errorf("error response: %v", msg.Error.Msg)
+	}
 	return
 }

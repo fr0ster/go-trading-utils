@@ -13,20 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Структура для параметрів запиту
-//
-//	type OrderParams struct {
-//		ApiKey           string `json:"apiKey"`
-//		NewOrderRespType string `json:"newOrderRespType"`
-//		Price            string `json:"price"`
-//		Quantity         string `json:"quantity"`
-//		RecvWindow       int    `json:"recvWindow"`
-//		Side             string `json:"side"`
-//		Symbol           string `json:"symbol"`
-//		TimeInForce      string `json:"timeInForce"`
-//		Timestamp        int64  `json:"timestamp"`
-//		Type             string `json:"type"`
-//	}
 type OrderParams struct {
 	ApiKey           string `json:"apiKey"`
 	NewOrderRespType string `json:"newOrderRespType"`
