@@ -77,6 +77,7 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, limits 
 	}
 	if msg.Status != 200 {
 		err = fmt.Errorf("error response: %v", msg.Error)
+		return
 	}
 	jMap, err := simplejson.NewJson(body)
 	if err != nil {

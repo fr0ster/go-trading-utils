@@ -20,20 +20,3 @@ func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
 	}
 	return
 }
-
-// func ListenKey(apiKey string, method string, sign signature.Sign, useTestNet ...bool) (listenKey string, err error) {
-// 	baseURL := GetAPIBaseUrl(useTestNet...)
-// 	endpoint := "/fapi/v1/listenKey"
-
-// 	body, err := api.CallAPI(baseURL, method, nil, endpoint, sign)
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	json, err := common.NewJSON(body)
-// 	if err != nil {
-// 		logrus.Fatalf("Error parsing JSON: %v, message: %s", err, json)
-// 	}
-// 	listenKey = json.Get("listenKey").MustString()
-// 	return
-// }
