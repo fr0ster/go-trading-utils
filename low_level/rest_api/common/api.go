@@ -8,20 +8,18 @@ import (
 	"strconv"
 	"time"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/common"
+	signature "github.com/fr0ster/go-trading-utils/low_level/common/signature"
 )
 
 // Функція для отримання масиву всіх спотових ордерів
-func CallAPI(baseUrl, method string, params url.Values, endpoint string, sign *common.Sign) (body []byte, err error) {
+func CallAPI(baseUrl, method string, params url.Values, endpoint string, sign signature.Sign) (body []byte, err error) {
 	var (
 		v           url.Values
 		queryString string
 	)
 
-	if params != nil && (sign == nil || sign.GetAPIKey() == "" || sign.GetAPISecret() == "") {
+	if params != nil && sign == nil {
 		return nil, fmt.Errorf("sign is required")
-	} else if sign != nil && sign.GetAPIKey() == "" {
-		return nil, fmt.Errorf("api key is required")
 	}
 
 	// Створення HTTP клієнта
@@ -38,7 +36,7 @@ func CallAPI(baseUrl, method string, params url.Values, endpoint string, sign *c
 		// Створення підпису
 		queryString = params.Encode()
 		v = url.Values{}
-		signature := common.CreateSignatureHMAC(sign.GetAPISecret(), queryString)
+		signature := sign.CreateSignature(queryString)
 		v.Set("signature", signature)
 		// Додавання параметрів до URL
 		req.URL.RawQuery = fmt.Sprintf("%s&%s", queryString, v.Encode())

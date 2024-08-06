@@ -1,6 +1,10 @@
 package spot_web_api
 
-import "sync"
+import (
+	"sync"
+
+	signature "github.com/fr0ster/go-trading-utils/low_level/common/signature"
+)
 
 type (
 	WebApi struct {
@@ -12,6 +16,7 @@ type (
 		waHost     string
 		waPath     string
 		mutex      *sync.Mutex
+		sign       signature.Sign
 	}
 
 	// Структура для параметрів запиту
@@ -36,7 +41,7 @@ func (wa *WebApi) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func New(apiKey, apiSecret, symbol string, useTestNet ...bool) *WebApi {
+func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *WebApi {
 	var (
 		waHost string
 		waPath string
@@ -59,5 +64,7 @@ func New(apiKey, apiSecret, symbol string, useTestNet ...bool) *WebApi {
 		useTestNet: useTestNet[0],
 		waHost:     waHost,
 		waPath:     waPath,
+		mutex:      &sync.Mutex{},
+		sign:       sign,
 	}
 }

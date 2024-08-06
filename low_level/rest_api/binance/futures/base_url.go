@@ -1,4 +1,4 @@
-package spot
+package futures
 
 // import (
 // common "github.com/fr0ster/go-trading-utils/low_level/common"
@@ -8,8 +8,8 @@ package spot
 // )
 
 const (
-	BaseAPIMainUrl    = "https://api.binance.com"
-	BaseAPITestnetUrl = "https://testnet.binance.vision"
+	BaseAPIMainUrl    = "https://fapi.binance.com"
+	BaseAPITestnetUrl = "https://testnet.binancefuture.com"
 )
 
 func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
@@ -23,7 +23,7 @@ func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
 
 // func ListenKey(apiKey string, method string, sign signature.Sign, useTestNet ...bool) (listenKey string, err error) {
 // 	baseURL := GetAPIBaseUrl(useTestNet...)
-// 	endpoint := "/api/v3/userDataStream"
+// 	endpoint := "/fapi/v1/listenKey"
 
 // 	body, err := api.CallAPI(baseURL, method, nil, endpoint, sign)
 // 	if err != nil {

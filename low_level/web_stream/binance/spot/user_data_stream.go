@@ -7,10 +7,11 @@ import (
 	"time"
 
 	api_common "github.com/fr0ster/go-trading-utils/low_level/common"
+	signature "github.com/fr0ster/go-trading-utils/low_level/common/signature"
 	spot_rest "github.com/fr0ster/go-trading-utils/low_level/rest_api/binance/spot"
 	api "github.com/fr0ster/go-trading-utils/low_level/rest_api/common"
 	common "github.com/fr0ster/go-trading-utils/low_level/web_stream/common"
-	"github.com/fr0ster/go-trading-utils/types"
+	types "github.com/fr0ster/go-trading-utils/types"
 
 	"github.com/sirupsen/logrus"
 )
@@ -128,6 +129,7 @@ type WsOCOOrder struct {
 
 type UserDataStream struct {
 	apiKey string
+	sign   signature.Sign
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -135,7 +137,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	endpoint := "/api/v3/userDataStream"
 	var result map[string]interface{}
 
-	body, err := api.CallAPI(baseURL, method, nil, endpoint, api_common.NewSign(uds.apiKey, ""))
+	body, err := api.CallAPI(baseURL, method, nil, endpoint, uds.sign)
 	if err != nil {
 		return
 	}
@@ -227,8 +229,9 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}()
 }
 
-func NewUserDataStream(apiKey, symbol string) *UserDataStream {
+func NewUserDataStream(apiKey, symbol string, sign signature.Sign) *UserDataStream {
 	return &UserDataStream{
 		apiKey: apiKey,
+		sign:   sign,
 	}
 }

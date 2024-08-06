@@ -1,9 +1,6 @@
 package spot_web_api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -43,13 +40,6 @@ type (
 	}
 )
 
-// Функція для створення підпису
-func createSignature(secret, message string) string {
-	h := hmac.New(sha256.New, []byte(secret))
-	h.Write([]byte(message))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
 // Функція для розміщення ордера через WebSocket
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response *OrderResponse, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
@@ -65,7 +55,7 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 			"&timestamp=" +
 			fmt.Sprintf("%d", timestamp) +
 			"&type=" + orderType
-	signature := createSignature(wa.apiSecret, message)
+	signature := wa.sign.CreateSignature(message)
 
 	params := OrderParams{
 		ApiKey:           wa.apiKey,

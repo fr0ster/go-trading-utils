@@ -3,6 +3,7 @@ package orders_rest
 import (
 	"sync"
 
+	signature "github.com/fr0ster/go-trading-utils/low_level/common/signature"
 	"github.com/fr0ster/go-trading-utils/types"
 )
 
@@ -55,6 +56,7 @@ type (
 		symbol    string
 		baseUrl   string
 		mutex     *sync.Mutex
+		sign      signature.Sign
 	}
 
 	CreateOrderResponse struct {

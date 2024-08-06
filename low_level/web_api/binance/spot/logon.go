@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/common"
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
 )
 
@@ -17,7 +16,7 @@ func (wa *WebApi) Logon() (response []byte, limit []web_api.RateLimit, err error
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	message := "apiKey=" + wa.apiKey + "&timestamp=" + strconv.FormatInt(timestamp, 10)
-	signature := common.CreateSignatureHMAC(wa.apiSecret, message)
+	signature := wa.sign.CreateSignature(message)
 
 	params := LogonParams{
 		APIKey:    wa.apiKey,
