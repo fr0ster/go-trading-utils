@@ -8,15 +8,14 @@ import (
 
 type (
 	WebApi struct {
-		apiKey     string
-		apiSecret  string
-		symbol     string
-		useTestNet bool
-		baseUrl    string
-		waHost     string
-		waPath     string
-		mutex      *sync.Mutex
-		sign       signature.Sign
+		apiKey    string
+		apiSecret string
+		symbol    string
+		baseUrl   string
+		waHost    string
+		waPath    string
+		mutex     *sync.Mutex
+		sign      signature.Sign
 	}
 
 	// Структура для параметрів запиту
@@ -59,19 +58,15 @@ func (wa *WebApi) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath string, sign signature.Sign, useTestNet ...bool) *WebApi {
-	if len(useTestNet) == 0 {
-		useTestNet = append(useTestNet, false)
-	}
+func NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath string, sign signature.Sign) *WebApi {
 	return &WebApi{
-		apiKey:     apiKey,
-		apiSecret:  apiSecret,
-		symbol:     symbol,
-		baseUrl:    baseUrl,
-		useTestNet: useTestNet[0],
-		waHost:     waHost,
-		waPath:     waPath,
-		mutex:      &sync.Mutex{},
-		sign:       sign,
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
+		symbol:    symbol,
+		baseUrl:   baseUrl,
+		waHost:    waHost,
+		waPath:    waPath,
+		mutex:     &sync.Mutex{},
+		sign:      sign,
 	}
 }

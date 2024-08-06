@@ -15,12 +15,12 @@ func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bo
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		waHost = "testnet.binancefuture.com"
-		waPath = "/ws-fapi/v1"
+		waHost = "testnet.binance.vision"
+		waPath = "/ws-api/v3"
 	} else {
-		waHost = "ws-fapi.binance.com"
-		waPath = "/ws-fapi/v1"
+		waHost = "ws-api.binance.com:443"
+		waPath = "/ws-api/v3"
 	}
 	baseUrl = GetWsBaseUrl(useTestNet...)
-	return web_api.NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign, useTestNet[0])
+	return web_api.NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign)
 }

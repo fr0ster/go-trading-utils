@@ -22,5 +22,5 @@ func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bo
 		waPath = "/ws-fapi/v1"
 	}
 	baseUrl = GetWsBaseUrl(useTestNet...)
-	return web_api.NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign, useTestNet[0])
+	return web_api.NewWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign)
 }
