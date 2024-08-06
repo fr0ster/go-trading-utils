@@ -13,25 +13,35 @@ import (
 	"github.com/google/uuid"
 )
 
-type OrderParams struct {
-	ApiKey           string `json:"apiKey"`
-	NewOrderRespType string `json:"newOrderRespType"`
-	Price            string `json:"price"`
-	Quantity         string `json:"quantity"`
-	RecvWindow       int    `json:"recvWindow"`
-	Side             string `json:"side"`
-	Symbol           string `json:"symbol"`
-	TimeInForce      string `json:"timeInForce"`
-	Timestamp        int64  `json:"timestamp"`
-	Type             string `json:"type"`
-	Signature        string `json:"signature"`
-}
+type (
+	OrderParams struct {
+		ApiKey           string `json:"apiKey"`
+		NewOrderRespType string `json:"newOrderRespType"`
+		Price            string `json:"price"`
+		Quantity         string `json:"quantity"`
+		RecvWindow       int    `json:"recvWindow"`
+		Side             string `json:"side"`
+		Symbol           string `json:"symbol"`
+		TimeInForce      string `json:"timeInForce"`
+		Timestamp        int64  `json:"timestamp"`
+		Type             string `json:"type"`
+		Signature        string `json:"signature"`
+	}
 
-type OrderRequest struct {
-	ID     string      `json:"id"`
-	Method string      `json:"method"`
-	Params OrderParams `json:"params"`
-}
+	OrderRequest struct {
+		ID     string      `json:"id"`
+		Method string      `json:"method"`
+		Params OrderParams `json:"params"`
+	}
+	// {\"clientOrderId\":\"uvFtKz2FWfC8B4eYw1gGYJ\",\"orderId\":10489480,\"orderListId\":-1,\"symbol\":\"BTCUSDT\",\"transactTime\":1722931112847}
+	OrderResponse struct {
+		ClientOrderId string `json:"clientOrderId"`
+		OrderId       int    `json:"orderId"`
+		OrderListId   int    `json:"orderListId"`
+		Symbol        string `json:"symbol"`
+		TransactTime  int64  `json:"transactTime"`
+	}
+)
 
 // Функція для створення підпису
 func createSignature(secret, message string) string {
@@ -41,7 +51,7 @@ func createSignature(secret, message string) string {
 }
 
 // Функція для розміщення ордера через WebSocket
-func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, limit []byte, err error) {
+func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response *OrderResponse, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	message :=
@@ -84,5 +94,14 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		return
 	}
 
-	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(msg, &response)
+	if err != nil {
+		return
+	}
+
+	return
 }

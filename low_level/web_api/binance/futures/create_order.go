@@ -40,7 +40,7 @@ func createSignature(secret, message string) string {
 }
 
 // Функція для розміщення ордера через WebSocket
-func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, limit []byte, err error) {
+func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	message := "symbol=" + wa.symbol + "&side=" + side + "&type=" + orderType + "&timeInForce=" + timeInForce + "&price=" + price + "&quantity=" + quantity + "&timestamp=" + strconv.FormatInt(timestamp, 10)

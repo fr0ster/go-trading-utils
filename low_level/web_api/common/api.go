@@ -41,8 +41,17 @@ func ParseResponse(data []byte) (*Response, error) {
 	return &response, nil
 }
 
+func ParseLimit(data []byte) ([]RateLimit, error) {
+	var response []RateLimit
+	err := json.Unmarshal(data, &response)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+	return response, nil
+}
+
 // Функція для розміщення ордера через WebSocket
-func CallWebAPI(host, path string, requestBody []byte) (response []byte, limit []byte, err error) {
+func CallWebAPI(host, path string, requestBody []byte) (response []byte, limits []RateLimit, err error) {
 	// Підключення до WebSocket
 	u := url.URL{Scheme: "wss", Host: host, Path: path}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -60,8 +69,8 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, limit [
 	}
 
 	// Читання відповіді
-	_, response, err = conn.ReadMessage()
-	msg, err := ParseResponse(response)
+	_, body, err := conn.ReadMessage()
+	msg, err := ParseResponse(body)
 	if err != nil {
 		err = fmt.Errorf("error parsing response: %v", err)
 		return
@@ -69,7 +78,7 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, limit [
 	if msg.Status != 200 {
 		err = fmt.Errorf("error response: %v", msg.Error)
 	}
-	jMap, err := simplejson.NewJson(response)
+	jMap, err := simplejson.NewJson(body)
 	if err != nil {
 		return
 	}
@@ -77,9 +86,10 @@ func CallWebAPI(host, path string, requestBody []byte) (response []byte, limit [
 	if err != nil {
 		return
 	}
-	limit, err = jMap.Get("rateLimits").Encode()
+	limit, err := jMap.Get("rateLimits").Encode()
 	if err != nil {
 		return
 	}
+	limits, err = ParseLimit(limit)
 	return
 }

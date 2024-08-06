@@ -13,7 +13,7 @@ import (
 )
 
 // Функція для логіну
-func (wa *WebApi) Logon() (response []byte, limit []byte, err error) {
+func (wa *WebApi) Logon() (response []byte, limit []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	message := "apiKey=" + wa.apiKey + "&timestamp=" + strconv.FormatInt(timestamp, 10)
