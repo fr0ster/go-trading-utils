@@ -16,6 +16,10 @@ type (
 		Method string      `json:"method"`
 		Params interface{} `json:"params"`
 	}
+	RequestWithoutParams struct {
+		ID     string `json:"id"`
+		Method string `json:"method"`
+	}
 	Response struct {
 		ID         string      `json:"id"`
 		Status     int         `json:"status"`
@@ -58,18 +62,32 @@ func ParseLimit(data []byte) ([]RateLimit, error) {
 
 // Функція для розміщення ордера через WebSocket
 func CallWebAPI(host, path string, method string, params interface{}) (response []byte, limits []RateLimit, err error) {
-	request := Request{
-		ID:     uuid.New().String(),
-		Method: method,
-		Params: params,
+	var requestBody []byte
+	if params == nil {
+		request := RequestWithoutParams{
+			ID:     uuid.New().String(),
+			Method: method,
+		}
+		// Серіалізація запиту в JSON
+		requestBody, err = json.Marshal(request)
+		if err != nil {
+			err = fmt.Errorf("error marshaling request: %v", err)
+			return
+		}
+	} else {
+		request := Request{
+			ID:     uuid.New().String(),
+			Method: method,
+			Params: params,
+		}
+		// Серіалізація запиту в JSON
+		requestBody, err = json.Marshal(request)
+		if err != nil {
+			err = fmt.Errorf("error marshaling request: %v", err)
+			return
+		}
 	}
 
-	// Серіалізація запиту в JSON
-	requestBody, err := json.Marshal(request)
-	if err != nil {
-		err = fmt.Errorf("error marshaling request: %v", err)
-		return
-	}
 	// Підключення до WebSocket
 	u := url.URL{Scheme: "wss", Host: host, Path: path}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
