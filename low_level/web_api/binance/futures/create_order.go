@@ -37,19 +37,6 @@ type (
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	// message := "symbol=" + wa.symbol + "&side=" + side + "&type=" + orderType + "&timeInForce=" + timeInForce + "&price=" + price + "&quantity=" + quantity + "&timestamp=" + strconv.FormatInt(timestamp, 10)
-	// message :=
-	// 	"apiKey=" + wa.apiKey +
-	// 		"&newOrderRespType=ACK" +
-	// 		"&price=" + price +
-	// 		"&quantity=" + quantity +
-	// 		"&recvWindow=5000" +
-	// 		"&side=" + side +
-	// 		"&symbol=" + wa.symbol +
-	// 		"&timeInForce=" + timeInForce +
-	// 		"&timestamp=" +
-	// 		fmt.Sprintf("%d", timestamp) +
-	// 		"&type=" + orderType
 	// Перетворення структури в строку
 
 	params := OrderParams{
@@ -60,8 +47,7 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		Price:       price,
 		Quantity:    quantity,
 		ApiKey:      wa.apiKey,
-		// Signature:   signature,
-		Timestamp: timestamp,
+		Timestamp:   timestamp,
 	}
 	message, err := common.StructToQueryString(params)
 	if err != nil {

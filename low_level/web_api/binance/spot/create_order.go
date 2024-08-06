@@ -44,18 +44,6 @@ type (
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response *OrderResponse, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	// message :=
-	// 	"apiKey=" + wa.apiKey +
-	// 		"&newOrderRespType=ACK&price=" + price +
-	// 		"&quantity=" + quantity +
-	// 		"&recvWindow=5000" +
-	// 		"&side=" + side +
-	// 		"&symbol=" + wa.symbol +
-	// 		"&timeInForce=" + timeInForce +
-	// 		"&timestamp=" +
-	// 		fmt.Sprintf("%d", timestamp) +
-	// 		"&type=" + orderType
-	// signature := wa.sign.CreateSignature(message)
 
 	params := OrderParams{
 		ApiKey:           wa.apiKey,
@@ -68,7 +56,6 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		TimeInForce:      timeInForce,
 		Timestamp:        timestamp,
 		Type:             orderType,
-		// Signature:        signature,
 	}
 	message, err := common.StructToQueryString(params)
 	if err != nil {
@@ -77,9 +64,46 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	}
 	params.Signature = wa.sign.CreateSignature(message)
 
-	request := OrderRequest{
+	// request := OrderRequest{
+	// 	ID:     uuid.New().String(),
+	// 	Method: "order.place",
+	// 	Params: params,
+	// }
+
+	// // Серіалізація запиту в JSON
+	// requestBody, err := json.Marshal(request)
+	// if err != nil {
+	// 	err = fmt.Errorf("error marshaling request: %v", err)
+	// 	return
+	// }
+
+	// msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	// if err != nil {
+	// 	return
+	// }
+	msg, limits, err := wa.callWebApi("order.place", params)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(msg, &response)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+type Request struct {
+	ID     string      `json:"id"`
+	Method string      `json:"method"`
+	Params interface{} `json:"params"`
+}
+
+func (wa *WebApi) callWebApi(method string, params interface{}) (response []byte, limits []web_api.RateLimit, err error) {
+	request := Request{
 		ID:     uuid.New().String(),
-		Method: "order.place",
+		Method: method,
 		Params: params,
 	}
 
