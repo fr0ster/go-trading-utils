@@ -1,6 +1,10 @@
 package signature
 
-type Sign interface {
-	CreateSignature(queryString string) string
-	GetAPIKey() string
-}
+type (
+	PublicKey string
+	SecretKey string
+	Sign      interface {
+		CreateSignature(queryString string) string
+		GetAPIKey() string
+	}
+)

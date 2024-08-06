@@ -20,9 +20,9 @@ func (sign *SignEd25519) GetAPIKey() string {
 	return string(sign.publicKey)
 }
 
-func NewSignEd25519(privateKey ed25519.PrivateKey, publicKey ed25519.PublicKey) *SignEd25519 {
+func NewSignEd25519(publicKey PublicKey, privateKey SecretKey) *SignEd25519 {
 	return &SignEd25519{
-		privateKey: privateKey,
-		publicKey:  publicKey,
+		privateKey: ed25519.PrivateKey(privateKey),
+		publicKey:  ed25519.PublicKey(publicKey),
 	}
 }

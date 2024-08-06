@@ -22,9 +22,9 @@ func (sign *SignHMAC) GetAPIKey() string {
 	return sign.apiKey
 }
 
-func NewSignHMAC(apiSecret string, apiKey string) *SignHMAC {
+func NewSignHMAC(apiKey PublicKey, apiSecret SecretKey) *SignHMAC {
 	return &SignHMAC{
-		apiSecret: apiSecret,
-		apiKey:    apiKey,
+		apiSecret: string(apiSecret),
+		apiKey:    string(apiKey),
 	}
 }
