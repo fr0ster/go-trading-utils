@@ -11,21 +11,9 @@ import (
 
 // Функція для логіну
 func (wa *WebApi) Logout() (response []byte, limit []web_api.RateLimit, err error) {
-	// // Створення параметрів запиту
-	// timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	// message := "apiKey=" + wa.apiKey + "&timestamp=" + strconv.FormatInt(timestamp, 10)
-	// signature := wa.sign.CreateSignature(message)
-
-	// params := LogonParams{
-	// 	APIKey:    wa.apiKey,
-	// 	Signature: signature,
-	// 	Timestamp: timestamp,
-	// }
-
-	request := LogonRequest{
+	request := LogoutRequest{
 		ID:     uuid.New().String(),
 		Method: "session.logout",
-		// Params: params,
 	}
 
 	// Серіалізація запиту в JSON

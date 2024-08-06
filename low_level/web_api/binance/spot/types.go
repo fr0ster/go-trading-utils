@@ -31,6 +31,16 @@ type (
 		Method string      `json:"method"`
 		Params LogonParams `json:"params"`
 	}
+
+	StatusRequest struct {
+		ID     string `json:"id"`
+		Method string `json:"method"`
+	}
+
+	LogoutRequest struct {
+		ID     string `json:"id"`
+		Method string `json:"method"`
+	}
 )
 
 func (wa *WebApi) Lock() {
