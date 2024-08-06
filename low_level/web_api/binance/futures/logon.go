@@ -37,6 +37,5 @@ func (wa *WebApi) Logon() (response []byte, limit []web_api.RateLimit, err error
 		return
 	}
 
-	// Підключення до WebSocket
 	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
 }
