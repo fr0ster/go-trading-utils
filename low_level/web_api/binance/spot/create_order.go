@@ -114,14 +114,7 @@ func (wa *WebApi) callWebApi(method string, params interface{}) (response []byte
 		return
 	}
 
-	msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(msg, &response)
-	if err != nil {
-		return
-	}
+	response, limits, err = web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
 
 	return
 }
