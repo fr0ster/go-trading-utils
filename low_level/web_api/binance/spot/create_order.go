@@ -6,12 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strconv"
 	"time"
 
+	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
+
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 // Структура для параметрів запиту
@@ -72,23 +72,5 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		return
 	}
 
-	// Підключення до WebSocket
-	u := url.URL{Scheme: "wss", Host: "ws-api.binance.com", Path: "/ws-api/v3"}
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		err = fmt.Errorf("error connecting to WebSocket: %v", err)
-		return
-	}
-	defer conn.Close()
-
-	// Відправка запиту на розміщення ордера
-	err = conn.WriteMessage(websocket.TextMessage, requestBody)
-	if err != nil {
-		err = fmt.Errorf("error sending message: %v", err)
-		return
-	}
-
-	// Читання відповіді
-	_, response, err = conn.ReadMessage()
-	return
+	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
 }

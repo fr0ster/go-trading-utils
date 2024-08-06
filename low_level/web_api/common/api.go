@@ -3,6 +3,9 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+
+	"github.com/gorilla/websocket"
 )
 
 type (
@@ -34,4 +37,27 @@ func ParseResponse(data []byte) (*Response, error) {
 		return nil, fmt.Errorf("error unmarshaling response: %v", err)
 	}
 	return &response, nil
+}
+
+// Функція для розміщення ордера через WebSocket
+func CallWebAPI(host, path string, requestBody []byte) (response []byte, err error) {
+	// Підключення до WebSocket
+	u := url.URL{Scheme: "wss", Host: host, Path: path}
+	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	if err != nil {
+		err = fmt.Errorf("error connecting to WebSocket: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	// Відправка запиту на розміщення ордера
+	err = conn.WriteMessage(websocket.TextMessage, requestBody)
+	if err != nil {
+		err = fmt.Errorf("error sending message: %v", err)
+		return
+	}
+
+	// Читання відповіді
+	_, response, err = conn.ReadMessage()
+	return
 }

@@ -146,7 +146,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	return
 }
 
-var wsHandler = func(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
+func wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
 	return func(message []byte) {
 		j, err := api_common.NewJSON(message)
 		if err != nil {

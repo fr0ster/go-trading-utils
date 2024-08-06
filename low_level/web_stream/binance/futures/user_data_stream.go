@@ -110,6 +110,7 @@ type WsAccountConfigUpdate struct {
 
 type UserDataStream struct {
 	apiKey string
+	symbol string
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -128,7 +129,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	return
 }
 
-var wsHandler = func(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
+func wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
 	return func(message []byte) {
 		event := new(WsUserDataEvent)
 		err := json.Unmarshal(message, event)
@@ -177,5 +178,6 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 func NewUserDataStream(apiKey, symbol string) *UserDataStream {
 	return &UserDataStream{
 		apiKey: apiKey,
+		symbol: symbol,
 	}
 }
