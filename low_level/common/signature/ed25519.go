@@ -42,8 +42,13 @@ func NewSignEd25519(apiKey string, publicKeyFile string, privateKeyFile string) 
 }
 
 // Функція для завантаження приватного ключа з PEM рядка
-func loadEd25519PrivateKeyFromPEM(pemStr string) (ed25519.PrivateKey, error) {
-	block, _ := pem.Decode([]byte(pemStr))
+func loadEd25519PrivateKeyFromPEM(pemFile string) (ed25519.PrivateKey, error) {
+	content, err := loadFile(pemFile)
+	if err != nil {
+		return nil, err
+	}
+	// Конвертуємо байтовий зріз у строку
+	block, _ := pem.Decode([]byte(content))
 	if block == nil || block.Type != "PRIVATE KEY" {
 		return nil, errors.New("failed to decode PEM block containing private key")
 	}
@@ -62,8 +67,13 @@ func loadEd25519PrivateKeyFromPEM(pemStr string) (ed25519.PrivateKey, error) {
 }
 
 // Функція для завантаження публічного ключа з PEM рядка
-func loadEd25519PublicKeyFromPEM(pemStr string) (ed25519.PublicKey, error) {
-	block, _ := pem.Decode([]byte(pemStr))
+func loadEd25519PublicKeyFromPEM(pemFile string) (ed25519.PublicKey, error) {
+	content, err := loadFile(pemFile)
+	if err != nil {
+		return nil, err
+	}
+	// Конвертуємо байтовий зріз у строку
+	block, _ := pem.Decode([]byte(content))
 	if block == nil || block.Type != "PUBLIC KEY" {
 		return nil, errors.New("failed to decode PEM block containing public key")
 	}
