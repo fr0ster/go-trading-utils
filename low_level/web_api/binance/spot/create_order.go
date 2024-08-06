@@ -72,15 +72,17 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	signature := createSignature(wa.apiSecret, message)
 
 	params := OrderParams{
-		Symbol:      wa.symbol,
-		Side:        side,
-		Type:        orderType,
-		TimeInForce: timeInForce,
-		Price:       price,
-		Quantity:    quantity,
-		ApiKey:      wa.apiKey,
-		Timestamp:   timestamp,
-		Signature:   signature,
+		ApiKey:           wa.apiKey,
+		NewOrderRespType: "ACK",
+		Price:            price,
+		Quantity:         quantity,
+		RecvWindow:       5000,
+		Side:             side,
+		Symbol:           wa.symbol,
+		TimeInForce:      timeInForce,
+		Timestamp:        timestamp,
+		Type:             orderType,
+		Signature:        signature,
 	}
 
 	request := OrderRequest{
