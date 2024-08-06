@@ -16,7 +16,6 @@ type (
 		NewOrderRespType string `json:"newOrderRespType"`
 		Price            string `json:"price"`
 		Quantity         string `json:"quantity"`
-		RecvWindow       int    `json:"recvWindow"`
 		Side             string `json:"side"`
 		Symbol           string `json:"symbol"`
 		TimeInForce      string `json:"timeInForce"`
