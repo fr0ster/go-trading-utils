@@ -1,9 +1,9 @@
 package spot
 
 // import (
-// common "github.com/fr0ster/go-trading-utils/low_level/common"
-// signature "github.com/fr0ster/go-trading-utils/low_level/common/signature"
-// api "github.com/fr0ster/go-trading-utils/low_level/rest_api/common"
+// common "github.com/fr0ster/turbo-restler/common"
+// signature "github.com/fr0ster/turbo-restler/common/signature"
+// api "github.com/fr0ster/turbo-restler/rest_api/common"
 // "github.com/sirupsen/logrus"
 // )
 

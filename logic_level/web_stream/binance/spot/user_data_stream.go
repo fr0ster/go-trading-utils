@@ -7,11 +7,11 @@ import (
 	"time"
 
 	spot_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
-	api "github.com/fr0ster/go-trading-utils/low_level/rest_api"
-	api_common "github.com/fr0ster/go-trading-utils/low_level/utils/json"
-	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
-	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 	"github.com/fr0ster/go-trading-utils/types"
+	api "github.com/fr0ster/turbo-restler/rest_api"
+	api_common "github.com/fr0ster/turbo-restler/utils/json"
+	signature "github.com/fr0ster/turbo-restler/utils/signature"
+	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
 )

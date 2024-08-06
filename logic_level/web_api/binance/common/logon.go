@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 // Функція для логіну

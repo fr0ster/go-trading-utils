@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
+	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
 )

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	futures_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
-	api "github.com/fr0ster/go-trading-utils/low_level/rest_api"
-	signature "github.com/fr0ster/go-trading-utils/low_level/utils/signature"
-	common "github.com/fr0ster/go-trading-utils/low_level/web_stream"
 	types "github.com/fr0ster/go-trading-utils/types"
+	api "github.com/fr0ster/turbo-restler/rest_api"
+	signature "github.com/fr0ster/turbo-restler/utils/signature"
+	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
 )

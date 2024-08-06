@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	api "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
-	common "github.com/fr0ster/go-trading-utils/low_level/rest_api"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 type (

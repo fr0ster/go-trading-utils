@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/fr0ster/go-trading-utils/low_level/utils/json"
-	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api"
+	common "github.com/fr0ster/turbo-restler/utils/json"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 // Структура для параметрів запиту
