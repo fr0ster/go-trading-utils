@@ -10,7 +10,7 @@ import (
 )
 
 // Функція для логіну
-func (wa *WebApi) Logout() (response []byte, limit []web_api.RateLimit, err error) {
+func (wa *WebApi) Logout() (response *LogonResponse, limit []web_api.RateLimit, err error) {
 	request := LogoutRequest{
 		ID:     uuid.New().String(),
 		Method: "session.logout",
@@ -23,5 +23,11 @@ func (wa *WebApi) Logout() (response []byte, limit []web_api.RateLimit, err erro
 		return
 	}
 
-	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	body, limit, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &response)
+	return
+
 }

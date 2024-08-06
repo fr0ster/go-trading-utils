@@ -10,7 +10,7 @@ import (
 )
 
 // Функція для логіну
-func (wa *WebApi) Status() (response []byte, limit []web_api.RateLimit, err error) {
+func (wa *WebApi) Status() (response *LogonResponse, limit []web_api.RateLimit, err error) {
 
 	request := StatusRequest{
 		ID:     uuid.New().String(),
@@ -24,5 +24,10 @@ func (wa *WebApi) Status() (response []byte, limit []web_api.RateLimit, err erro
 		return
 	}
 
-	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	body, limit, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(body, &response)
+	return
 }

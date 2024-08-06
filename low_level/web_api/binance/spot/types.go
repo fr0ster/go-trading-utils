@@ -32,6 +32,14 @@ type (
 		Params LogonParams `json:"params"`
 	}
 
+	LogonResponse struct {
+		APIKey           string `json:"apiKey"`
+		AuthorizedSince  int64  `json:"authorizedSince"`
+		ConnectedSince   int64  `json:"connectedSince"`
+		ReturnRateLimits bool   `json:"returnRateLimits"`
+		ServerTime       int64  `json:"serverTime"`
+	}
+
 	StatusRequest struct {
 		ID     string `json:"id"`
 		Method string `json:"method"`
