@@ -6,10 +6,16 @@ import (
 	"net/url"
 
 	"github.com/bitly/go-simplejson"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type (
+	Request struct {
+		ID     string      `json:"id"`
+		Method string      `json:"method"`
+		Params interface{} `json:"params"`
+	}
 	Response struct {
 		ID         string      `json:"id"`
 		Status     int         `json:"status"`
@@ -51,7 +57,19 @@ func ParseLimit(data []byte) ([]RateLimit, error) {
 }
 
 // Функція для розміщення ордера через WebSocket
-func CallWebAPI(host, path string, requestBody []byte) (response []byte, limits []RateLimit, err error) {
+func CallWebAPI(host, path string, method string, params interface{}) (response []byte, limits []RateLimit, err error) {
+	request := Request{
+		ID:     uuid.New().String(),
+		Method: method,
+		Params: params,
+	}
+
+	// Серіалізація запиту в JSON
+	requestBody, err := json.Marshal(request)
+	if err != nil {
+		err = fmt.Errorf("error marshaling request: %v", err)
+		return
+	}
 	// Підключення до WebSocket
 	u := url.URL{Scheme: "wss", Host: host, Path: path}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)

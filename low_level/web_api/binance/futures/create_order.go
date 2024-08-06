@@ -7,7 +7,6 @@ import (
 
 	common "github.com/fr0ster/go-trading-utils/low_level/common"
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
-	"github.com/google/uuid"
 )
 
 // Структура для параметрів запиту
@@ -35,6 +34,7 @@ type (
 
 // Функція для розміщення ордера через WebSocket
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response []byte, limits []web_api.RateLimit, err error) {
+	method := "order.place"
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	// Перетворення структури в строку
@@ -56,18 +56,15 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	}
 	params.Signature = wa.sign.CreateSignature(message)
 
-	request := OrderRequest{
-		ID:     uuid.New().String(),
-		Method: "order.place",
-		Params: params,
-	}
-
-	// Серіалізація запиту в JSON
-	requestBody, err := json.Marshal(request)
+	msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, method, params)
 	if err != nil {
-		err = fmt.Errorf("error marshaling request: %v", err)
 		return
 	}
 
-	return web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
+	err = json.Unmarshal(msg, &response)
+	if err != nil {
+		return
+	}
+
+	return
 }

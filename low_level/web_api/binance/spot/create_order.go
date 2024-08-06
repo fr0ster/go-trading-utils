@@ -7,8 +7,6 @@ import (
 
 	"github.com/fr0ster/go-trading-utils/low_level/common"
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
-
-	"github.com/google/uuid"
 )
 
 type (
@@ -42,6 +40,7 @@ type (
 
 // Функція для розміщення ордера через WebSocket
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response *OrderResponse, limits []web_api.RateLimit, err error) {
+	method := "order.place"
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 
@@ -64,24 +63,7 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	}
 	params.Signature = wa.sign.CreateSignature(message)
 
-	// request := OrderRequest{
-	// 	ID:     uuid.New().String(),
-	// 	Method: "order.place",
-	// 	Params: params,
-	// }
-
-	// // Серіалізація запиту в JSON
-	// requestBody, err := json.Marshal(request)
-	// if err != nil {
-	// 	err = fmt.Errorf("error marshaling request: %v", err)
-	// 	return
-	// }
-
-	// msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
-	// if err != nil {
-	// 	return
-	// }
-	msg, limits, err := wa.callWebApi("order.place", params)
+	msg, limits, err := web_api.CallWebAPI(wa.waHost, wa.waPath, method, params)
 	if err != nil {
 		return
 	}
@@ -90,31 +72,6 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-type Request struct {
-	ID     string      `json:"id"`
-	Method string      `json:"method"`
-	Params interface{} `json:"params"`
-}
-
-func (wa *WebApi) callWebApi(method string, params interface{}) (response []byte, limits []web_api.RateLimit, err error) {
-	request := Request{
-		ID:     uuid.New().String(),
-		Method: method,
-		Params: params,
-	}
-
-	// Серіалізація запиту в JSON
-	requestBody, err := json.Marshal(request)
-	if err != nil {
-		err = fmt.Errorf("error marshaling request: %v", err)
-		return
-	}
-
-	response, limits, err = web_api.CallWebAPI(wa.waHost, wa.waPath, requestBody)
 
 	return
 }
