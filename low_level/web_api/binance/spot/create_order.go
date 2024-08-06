@@ -1,13 +1,11 @@
 package spot_web_api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/fr0ster/go-trading-utils/low_level/common"
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/common"
 
 	"github.com/google/uuid"
@@ -33,7 +31,6 @@ type (
 		Method string      `json:"method"`
 		Params OrderParams `json:"params"`
 	}
-	// {\"clientOrderId\":\"uvFtKz2FWfC8B4eYw1gGYJ\",\"orderId\":10489480,\"orderListId\":-1,\"symbol\":\"BTCUSDT\",\"transactTime\":1722931112847}
 	OrderResponse struct {
 		ClientOrderId string `json:"clientOrderId"`
 		OrderId       int    `json:"orderId"`
@@ -43,29 +40,22 @@ type (
 	}
 )
 
-func CreateSignatureHMAC(apiSecret, queryString string) string {
-	h := hmac.New(sha256.New, []byte(apiSecret))
-	h.Write([]byte(queryString))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
 // Функція для розміщення ордера через WebSocket
 func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity string) (response *OrderResponse, limits []web_api.RateLimit, err error) {
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	message :=
-		"apiKey=" + wa.apiKey +
-			"&newOrderRespType=ACK&price=" + price +
-			"&quantity=" + quantity +
-			"&recvWindow=5000" +
-			"&side=" + side +
-			"&symbol=" + wa.symbol +
-			"&timeInForce=" + timeInForce +
-			"&timestamp=" +
-			fmt.Sprintf("%d", timestamp) +
-			"&type=" + orderType
+	// message :=
+	// 	"apiKey=" + wa.apiKey +
+	// 		"&newOrderRespType=ACK&price=" + price +
+	// 		"&quantity=" + quantity +
+	// 		"&recvWindow=5000" +
+	// 		"&side=" + side +
+	// 		"&symbol=" + wa.symbol +
+	// 		"&timeInForce=" + timeInForce +
+	// 		"&timestamp=" +
+	// 		fmt.Sprintf("%d", timestamp) +
+	// 		"&type=" + orderType
 	// signature := wa.sign.CreateSignature(message)
-	signature := CreateSignatureHMAC(wa.apiSecret, message)
 
 	params := OrderParams{
 		ApiKey:           wa.apiKey,
@@ -78,8 +68,14 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		TimeInForce:      timeInForce,
 		Timestamp:        timestamp,
 		Type:             orderType,
-		Signature:        signature,
+		// Signature:        signature,
 	}
+	message, err := common.StructToQueryString(params)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	params.Signature = wa.sign.CreateSignature(message)
 
 	request := OrderRequest{
 		ID:     uuid.New().String(),
