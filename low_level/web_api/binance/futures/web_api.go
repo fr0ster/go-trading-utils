@@ -5,7 +5,7 @@ import (
 	web_api "github.com/fr0ster/go-trading-utils/low_level/web_api/binance"
 )
 
-func NewWebApi(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *web_api.WebApi {
+func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *web_api.WebApi {
 	var (
 		waHost  string
 		waPath  string

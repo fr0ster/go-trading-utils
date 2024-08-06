@@ -8,21 +8,21 @@ import (
 )
 
 const (
-	BaseAPIMainUrl    = "wss://ws-api.binance.com:443/ws-api/v3"
-	BaseAPITestnetUrl = "wss://testnet.binance.vision/ws-api/v3"
+	BaseWsMainUrl    = "wss://ws-api.binance.com:443/ws-api/v3"
+	BaseWsTestnetUrl = "wss://testnet.binance.vision/ws-api/v3"
 )
 
-func GetAPIBaseUrl(useTestNet ...bool) (endpoint string) {
+func GetWsBaseUrl(useTestNet ...bool) (endpoint string) {
 	if len(useTestNet) > 0 && useTestNet[0] {
-		endpoint = BaseAPITestnetUrl
+		endpoint = BaseWsTestnetUrl
 	} else {
-		endpoint = BaseAPIMainUrl
+		endpoint = BaseWsMainUrl
 	}
 	return
 }
 
 func ListenKey(apiKey string, useTestNet ...bool) (listenKey string, err error) {
-	baseUrl := GetAPIBaseUrl(useTestNet...)
+	baseUrl := GetWsBaseUrl(useTestNet...)
 	url := fmt.Sprintf("%s/api/v3/userDataStream", baseUrl)
 	var result map[string]interface{}
 	// Створення запиту
