@@ -12,6 +12,7 @@ import (
 // Структура для параметрів запиту
 type (
 	PlaceOrderParams struct {
+		ApiKey                  string `json:"apiKey"`                  // YES
 		ActivationPrice         string `json:"activationPrice"`         // NO: Used with TRAILING_STOP_MARKET orders, default as the latest price(supporting different workingType)
 		CallbackRate            string `json:"callbackRate"`            // NO: Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
 		ClosePosition           string `json:"closePosition"`           // NO: true, false；Close-All，used with STOP_MARKET or TAKE_PROFIT_MARKET.
