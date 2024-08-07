@@ -139,7 +139,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 	endpoint := "/api/v3/userDataStream"
 	var result map[string]interface{}
 
-	body, err := api.CallAPI(baseURL, method, nil, endpoint, uds.sign)
+	body, err := api.CallRestAPI(baseURL, method, nil, endpoint, uds.sign)
 	if err != nil {
 		return
 	}

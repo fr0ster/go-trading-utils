@@ -8,5 +8,5 @@ import (
 
 // Функція для отримання масиву всіх спотових ордерів
 func (o *Orders) CallAPI(method string, params url.Values, endpoint string) (body []byte, err error) {
-	return api.CallAPI(o.baseUrl, method, params, endpoint, o.sign)
+	return api.CallRestAPI(o.baseUrl, method, params, endpoint, o.sign)
 }

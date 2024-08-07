@@ -12,7 +12,7 @@ require (
 require (
 	github.com/bitly/go-simplejson v0.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fr0ster/turbo-restler v0.0.0-20240806200835-d2d59d258e0f
+	github.com/fr0ster/turbo-restler v0.1.0
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jinzhu/copier v0.4.0
