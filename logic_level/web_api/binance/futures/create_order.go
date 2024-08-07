@@ -137,7 +137,7 @@ func (po *PlaceOrder) SetTrailingDelta(trailingDelta int) *PlaceOrder {
 func (po *PlaceOrder) Do() (order *PlaceOrderResult, err error) {
 	// Перетворення структури в строку
 	po.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-	message, err := common.StructToQueryString(po.params)
+	message, err := common.StructToQueryString(*po.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return

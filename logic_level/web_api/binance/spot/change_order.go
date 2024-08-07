@@ -196,7 +196,7 @@ func (cro *CancelReplaceOrder) SetRecvWindow(recvWindow int) *CancelReplaceOrder
 func (cro *CancelReplaceOrder) Do() (result *CancelReplaceOrderResult, err error) {
 	// Створення параметрів запиту
 	cro.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-	message, err := common.StructToQueryString(cro.params)
+	message, err := common.StructToQueryString(*cro.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
