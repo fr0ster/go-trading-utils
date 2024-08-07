@@ -128,8 +128,10 @@ type WsOCOOrder struct {
 }
 
 type UserDataStream struct {
-	apiKey string
-	sign   signature.Sign
+	apiKey             string
+	sign               signature.Sign
+	symbol             string
+	websocketKeepalive bool
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -161,6 +163,9 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 		err = json.Unmarshal(message, event)
 		if err != nil {
 			errHandler(err)
+			return
+		}
+		if event.Event == UserDataEventTypeExecutionReport && event.OrderUpdate.Symbol != uds.symbol {
 			return
 		}
 
@@ -208,7 +213,7 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	common.StartStreamer(
 		wsURL,
 		uds.wsHandler(callBack, wsErrorHandler),
-		wsErrorHandler)
+		wsErrorHandler, true)
 	go func() {
 		for {
 			select {
@@ -229,9 +234,15 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}()
 }
 
-func NewUserDataStream(apiKey, symbol string, sign signature.Sign) *UserDataStream {
+func NewUserDataStream(apiKey, symbol string, sign signature.Sign, websocketKeepalive ...bool) *UserDataStream {
+	var WebsocketKeepalive bool
+	if len(websocketKeepalive) > 0 {
+		WebsocketKeepalive = websocketKeepalive[0]
+	}
 	return &UserDataStream{
-		apiKey: apiKey,
-		sign:   sign,
+		apiKey:             apiKey,
+		sign:               sign,
+		symbol:             symbol,
+		websocketKeepalive: WebsocketKeepalive,
 	}
 }

@@ -109,9 +109,10 @@ type WsAccountConfigUpdate struct {
 }
 
 type UserDataStream struct {
-	apiKey string
-	sign   signature.Sign
-	symbol string
+	apiKey             string
+	sign               signature.Sign
+	symbol             string
+	websocketKeepalive bool
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -179,10 +180,15 @@ func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan stru
 	}()
 }
 
-func NewUserDataStream(apiKey string, symbol string, sign signature.Sign) *UserDataStream {
+func NewUserDataStream(apiKey string, symbol string, sign signature.Sign, websocketKeepalive ...bool) *UserDataStream {
+	var WebsocketKeepalive bool
+	if len(websocketKeepalive) > 0 {
+		WebsocketKeepalive = websocketKeepalive[0]
+	}
 	return &UserDataStream{
-		apiKey: apiKey,
-		sign:   sign,
-		symbol: symbol,
+		apiKey:             apiKey,
+		sign:               sign,
+		symbol:             symbol,
+		websocketKeepalive: WebsocketKeepalive,
 	}
 }
