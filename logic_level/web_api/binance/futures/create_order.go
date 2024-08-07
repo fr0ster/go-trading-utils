@@ -48,6 +48,11 @@ type (
 	}
 )
 
+func (po *PlaceOrder) SetSide(side string) *PlaceOrder {
+	po.params.Side = side
+	return po
+}
+
 func (po *PlaceOrder) SetIcebergQty(icebergQty float64) *PlaceOrder {
 	po.params.IcebergQty = icebergQty
 	return po
@@ -149,7 +154,7 @@ func (po *PlaceOrder) Do() (order *PlaceOrderResult, err error) {
 	return
 }
 
-func newOrder(apiKey, side, waHost, waPath string, sign signature.Sign) *PlaceOrder {
+func newOrder(apiKey, symbol, waHost, waPath string, sign signature.Sign) *PlaceOrder {
 	return &PlaceOrder{
 		sign:   sign,
 		waHost: waHost,
@@ -157,7 +162,7 @@ func newOrder(apiKey, side, waHost, waPath string, sign signature.Sign) *PlaceOr
 		method: "order.place",
 		params: &PlaceOrderParams{
 			ApiKey: apiKey,
-			Side:   side,
+			Symbol: symbol,
 		},
 	}
 }
