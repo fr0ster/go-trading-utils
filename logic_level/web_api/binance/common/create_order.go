@@ -44,8 +44,6 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 	method := "order.place"
 	// Створення параметрів запиту
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-	// Перетворення структури в строку
-
 	params := OrderParams{
 		Symbol:           wa.symbol,
 		NewOrderRespType: "ACK",
@@ -58,6 +56,7 @@ func (wa *WebApi) PlaceOrder(side, orderType, timeInForce, price, quantity strin
 		ApiKey:           wa.apiKey,
 		Timestamp:        timestamp,
 	}
+	// Перетворення структури в строку
 	message, err := common.StructToQueryString(params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
