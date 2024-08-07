@@ -29,10 +29,8 @@ func (bts *BookTickersStream) parseBookTickerJSON(data []byte) (*BookTicker, err
 	return &kline, nil
 }
 
-func (bts *BookTickersStream) Start(
-	symbol string,
-	callBack func(*BookTicker)) (err error) {
-	wsURL := fmt.Sprintf("%s/%s@bookTicker", bts.baseUrl, strings.ToLower(symbol))
+func (bts *BookTickersStream) Start(callBack func(*BookTicker)) (err error) {
+	wsURL := fmt.Sprintf("%s/%s@bookTicker", bts.baseUrl, strings.ToLower(bts.symbol))
 	bts.doneC, bts.stopC, err = common.StartStreamer(
 		wsURL,
 		func(message []byte) {

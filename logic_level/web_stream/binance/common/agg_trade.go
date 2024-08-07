@@ -29,8 +29,8 @@ func (ats *AggTradeStream) parseAggTradeJSON(data []byte) (*AggTrade, error) {
 	return &aggTrade, nil
 }
 
-func (ats *AggTradeStream) Start(symbol string, callBack func(*AggTrade)) (err error) {
-	wsURL := fmt.Sprintf("%s/%s@aggTrade", ats.baseUrl, strings.ToLower(symbol))
+func (ats *AggTradeStream) Start(callBack func(*AggTrade)) (err error) {
+	wsURL := fmt.Sprintf("%s/%s@aggTrade", ats.baseUrl, strings.ToLower(ats.symbol))
 	ats.doneC, ats.stopC, err = common.StartStreamer(
 		wsURL,
 		func(message []byte) {

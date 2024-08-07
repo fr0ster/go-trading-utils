@@ -29,8 +29,8 @@ func (ks *KlinesStream) parseKlineJSON(data []byte) (*Kline, error) {
 	return &kline, nil
 }
 
-func (ks *KlinesStream) Start(symbol string, interval string, callBack func(*Kline)) (err error) {
-	wsURL := fmt.Sprintf("%s/%s@kline_%s", ks.baseUrl, strings.ToLower(symbol), interval)
+func (ks *KlinesStream) Start(interval string, callBack func(*Kline)) (err error) {
+	wsURL := fmt.Sprintf("%s/%s@kline_%s", ks.baseUrl, strings.ToLower(ks.symbol), interval)
 	ks.doneC, ks.stopC, err = common.StartStreamer(
 		wsURL,
 		func(message []byte) {

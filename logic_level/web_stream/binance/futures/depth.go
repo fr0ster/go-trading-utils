@@ -41,9 +41,9 @@ func (ds *DepthStream) parseFuturesDepthUpdateJSON(data []byte) (*DepthUpdate, e
 	return &depthUpdate, nil
 }
 
-func (ds *DepthStream) Start(symbol string, levels string, rateStr string, callBack func(*DepthUpdate)) (err error) {
+func (ds *DepthStream) Start(levels string, rateStr string, callBack func(*DepthUpdate)) (err error) {
 	baseUrl := GetWsBaseUrl(ds.useTestNet)
-	wsURL := fmt.Sprintf("%s/%s@depth%s%s", baseUrl, strings.ToLower(symbol), levels, rateStr)
+	wsURL := fmt.Sprintf("%s/%s@depth%s%s", baseUrl, strings.ToLower(ds.symbol), levels, rateStr)
 	ds.doneC, ds.stopC, err = common.StartStreamer(
 		wsURL,
 		func(message []byte) {

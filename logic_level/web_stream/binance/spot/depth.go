@@ -16,8 +16,16 @@ type DepthUpdate struct {
 	Asks         [][]string `json:"asks"`
 }
 
+type DepthStream struct {
+	symbol             string
+	websocketKeepalive bool
+	useTestNet         bool
+	doneC              chan struct{}
+	stopC              chan struct{}
+}
+
 // Функція для парсингу JSON
-func parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
+func (ds *DepthStream) parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
 	var orderBook DepthUpdate
 	err := json.Unmarshal(data, &orderBook)
 	if err != nil {
@@ -26,14 +34,14 @@ func parseDepthUpdateJSON(data []byte) (*DepthUpdate, error) {
 	return &orderBook, nil
 }
 
-func DepthStream(symbol string, levels string, rateStr string, callBack func(*DepthUpdate), quit chan struct{}, useTestNet ...bool) {
-	wss := GetWsBaseUrl(useTestNet...)
-	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(symbol), levels, rateStr)
+func (ds *DepthStream) Start(levels string, rateStr string, callBack func(*DepthUpdate)) {
+	wss := GetWsBaseUrl(ds.useTestNet)
+	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(ds.symbol), levels, rateStr)
 	common.StartStreamer(
 		wsURL,
 		func(message []byte) {
 			// Парсинг JSON
-			depthUpdate, err := parseDepthUpdateJSON([]byte(message))
+			depthUpdate, err := ds.parseDepthUpdateJSON([]byte(message))
 			if err != nil {
 				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 			}
@@ -44,4 +52,18 @@ func DepthStream(symbol string, levels string, rateStr string, callBack func(*De
 		func(err error) {
 			logrus.Fatalf("Error reading from websocket: %v", err)
 		})
+}
+
+func NewDepthStream(symbol string, useTestNet bool, websocketKeepalive ...bool) *DepthStream {
+	var WebsocketKeepalive bool
+	if len(websocketKeepalive) > 0 {
+		WebsocketKeepalive = websocketKeepalive[0]
+	}
+	return &DepthStream{
+		symbol:             symbol,
+		websocketKeepalive: WebsocketKeepalive,
+		useTestNet:         useTestNet,
+		doneC:              make(chan struct{}),
+		stopC:              make(chan struct{}),
+	}
 }
