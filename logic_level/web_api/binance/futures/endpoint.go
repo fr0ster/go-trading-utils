@@ -1,4 +1,4 @@
-package spot_web_api
+package futures_web_api
 
 import (
 	"encoding/json"
