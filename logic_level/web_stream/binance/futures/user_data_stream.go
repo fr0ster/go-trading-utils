@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	futures_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
 	types "github.com/fr0ster/go-trading-utils/types"
 	api "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	common "github.com/fr0ster/turbo-restler/web_stream"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -113,10 +111,13 @@ type UserDataStream struct {
 	sign               signature.Sign
 	symbol             string
 	websocketKeepalive bool
+	useTestNet         bool
+	doneC              chan struct{}
+	stopC              chan struct{}
 }
 
-func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
-	baseURL := futures_rest.GetAPIBaseUrl(useTestNet...)
+func (uds *UserDataStream) listenKey(method string) (listenKey string, err error) {
+	baseURL := futures_rest.GetAPIBaseUrl(uds.useTestNet)
 	endpoint := "/fapi/v1/listenKey"
 	var result map[string]interface{}
 
@@ -146,41 +147,29 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 	}
 }
 
-func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
-	wss := GetWsBaseUrl(useTestNet...)
-	listenKey, err := uds.listenKey(http.MethodPost, useTestNet...)
+func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent)) (err error) {
+	var listenKey string
+	wss := GetWsBaseUrl(uds.useTestNet)
+	listenKey, err = uds.listenKey(http.MethodPost)
 	if err != nil {
-		logrus.Fatalf("Error getting listen key: %v", err)
+		return
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
 	wsErrorHandler := func(err error) {
-		logrus.Fatalf("Error reading from websocket: %v", err)
+		logrus.Errorf("error reading from websocket: %v", err)
 	}
-	common.StartStreamer(
+	uds.doneC, uds.stopC, err = common.StartStreamer(
 		wsURL,
 		uds.wsHandler(callBack, wsErrorHandler),
-		wsErrorHandler)
-	go func() {
-		for {
-			select {
-			case <-quit:
-				_, err := uds.listenKey(http.MethodDelete, useTestNet...)
-				if err != nil {
-					logrus.Fatalf("Error deleting listen key: %v", err)
-				}
-				close(quit)
-				return
-			case <-time.After(60 * time.Minute):
-				_, err := uds.listenKey(http.MethodPut, useTestNet...)
-				if err != nil {
-					logrus.Fatalf("Error refreshing listen key: %v", err)
-				}
-			}
-		}
-	}()
+		wsErrorHandler,
+		uds.websocketKeepalive)
+	if err != nil {
+		return
+	}
+	return
 }
 
-func NewUserDataStream(apiKey string, symbol string, sign signature.Sign, websocketKeepalive ...bool) *UserDataStream {
+func NewUserDataStream(apiKey string, symbol string, sign signature.Sign, useTestNet bool, websocketKeepalive ...bool) *UserDataStream {
 	var WebsocketKeepalive bool
 	if len(websocketKeepalive) > 0 {
 		WebsocketKeepalive = websocketKeepalive[0]
@@ -190,5 +179,8 @@ func NewUserDataStream(apiKey string, symbol string, sign signature.Sign, websoc
 		sign:               sign,
 		symbol:             symbol,
 		websocketKeepalive: WebsocketKeepalive,
+		useTestNet:         useTestNet,
+		doneC:              make(chan struct{}),
+		stopC:              make(chan struct{}),
 	}
 }

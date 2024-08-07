@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	spot_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
 	"github.com/fr0ster/go-trading-utils/types"
@@ -132,6 +131,9 @@ type UserDataStream struct {
 	sign               signature.Sign
 	symbol             string
 	websocketKeepalive bool
+	useTestNet         bool
+	doneC              chan struct{}
+	stopC              chan struct{}
 }
 
 func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenKey string, err error) {
@@ -200,41 +202,28 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 	}
 }
 
-func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent), quit chan struct{}, useTestNet ...bool) {
-	wss := GetWsBaseUrl(useTestNet...)
-	listenKey, err := uds.listenKey(http.MethodPost, useTestNet...)
+func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent)) (err error) {
+	wss := GetWsBaseUrl(uds.useTestNet)
+	listenKey, err := uds.listenKey(http.MethodPost, uds.useTestNet)
 	if err != nil {
-		logrus.Fatalf("Error getting listen key: %v", err)
+		return
 	}
 	wsURL := fmt.Sprintf("%s/%s", wss, listenKey)
 	wsErrorHandler := func(err error) {
 		logrus.Fatalf("Error reading from websocket: %v", err)
 	}
-	common.StartStreamer(
+	uds.doneC, uds.stopC, err = common.StartStreamer(
 		wsURL,
 		uds.wsHandler(callBack, wsErrorHandler),
-		wsErrorHandler, true)
-	go func() {
-		for {
-			select {
-			case <-quit:
-				_, err := uds.listenKey(http.MethodDelete, useTestNet...)
-				if err != nil {
-					logrus.Fatalf("Error deleting listen key: %v", err)
-				}
-				close(quit)
-				return
-			case <-time.After(60 * time.Minute):
-				_, err := uds.listenKey(http.MethodPut, useTestNet...)
-				if err != nil {
-					logrus.Fatalf("Error refreshing listen key: %v", err)
-				}
-			}
-		}
-	}()
+		wsErrorHandler,
+		uds.websocketKeepalive)
+	if err != nil {
+		return
+	}
+	return
 }
 
-func NewUserDataStream(apiKey, symbol string, sign signature.Sign, websocketKeepalive ...bool) *UserDataStream {
+func NewUserDataStream(apiKey, symbol string, sign signature.Sign, useTestNet bool, websocketKeepalive ...bool) *UserDataStream {
 	var WebsocketKeepalive bool
 	if len(websocketKeepalive) > 0 {
 		WebsocketKeepalive = websocketKeepalive[0]
@@ -244,5 +233,8 @@ func NewUserDataStream(apiKey, symbol string, sign signature.Sign, websocketKeep
 		sign:               sign,
 		symbol:             symbol,
 		websocketKeepalive: WebsocketKeepalive,
+		useTestNet:         useTestNet,
+		doneC:              make(chan struct{}),
+		stopC:              make(chan struct{}),
 	}
 }
