@@ -27,6 +27,7 @@ type (
 		ReduceOnly              string `json:"reduceOnly"`              // NO: "true" or "false". default "false". Cannot be sent in Hedge Mode; cannot be sent with closePosition=true
 		SelfTradePreventionMode string `json:"selfTradePreventionMode"` // NO: NONE:No STP / EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
 		Side                    string `json:"side"`                    // YES
+		Signature               string `json:"signature"`               // YES
 		StopPrice               string `json:"stopPrice"`               // NO: Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
 		Symbol                  string `json:"symbol"`                  // YES
 		Timestamp               int64  `json:"timestamp"`               // YES
