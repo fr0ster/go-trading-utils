@@ -21,4 +21,6 @@ __debug_bin
 binance_go_bot
 .fake
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
 ./datastore.json
