@@ -12,25 +12,27 @@ import (
 // Структура для параметрів запиту
 type (
 	PlaceOrderParams struct {
-		ApiKey                  string  `json:"apiKey"`                  // STRING, YES
-		IcebergQty              float64 `json:"icebergQty"`              // DECIMAL, NO
-		NewClientOrderId        string  `json:"newClientOrderId"`        // STRING, NO
-		NewOrderRespType        string  `json:"newOrderRespType"`        // ENUM, NO
-		Price                   float64 `json:"price"`                   // DECIMAL, NO
-		Quantity                float64 `json:"quantity"`                // DECIMAL, NO
-		QuoteOrderQty           float64 `json:"quoteOrderQty"`           // DECIMAL, NO
-		RecvWindow              int     `json:"recvWindow"`              // INT, NO
-		SelfTradePreventionMode string  `json:"selfTradePreventionMode"` // ENUM, NO
-		Side                    string  `json:"side"`                    // ENUM, YES
-		Signature               string  `json:"signature"`               // STRING, YES
-		StopPrice               float64 `json:"stopPrice"`               // DECIMAL, NO
-		StrategyId              int     `json:"strategyId"`              // INT, NO
-		StrategyType            int     `json:"strategyType"`            // INT, NO
-		Symbol                  string  `json:"symbol"`                  // STRING, YES
-		TimeInForce             string  `json:"timeInForce"`             // ENUM, NO
-		Timestamp               int64   `json:"timestamp"`               // INT, YES
-		TrailingDelta           int     `json:"trailingDelta"`           // INT, NO
-		Type                    string  `json:"type"`                    // ENUM, YES
+		ActivationPrice         string `json:"activationPrice"`         // NO: Used with TRAILING_STOP_MARKET orders, default as the latest price(supporting different workingType)
+		CallbackRate            string `json:"callbackRate"`            // NO: Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
+		ClosePosition           string `json:"closePosition"`           // NO: true, false；Close-All，used with STOP_MARKET or TAKE_PROFIT_MARKET.
+		GoodTillDate            int64  `json:"goodTillDate"`            // NO: order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
+		NewClientOrderId        string `json:"newClientOrderId"`        // NO: A unique id among open orders. Automatically generated if not sent. Can only be string following the rule: ^[\.A-Z\:/a-z0-9_-]{1,36}$
+		NewOrderRespType        string `json:"newOrderRespType"`        // NO: "ACK", "RESULT", default "ACK"
+		PositionSide            string `json:"positionSide"`            // NO: Default BOTH for One-way Mode ; LONG or SHORT for Hedge Mode. It must be sent in Hedge Mode.
+		Price                   string `json:"price"`                   // NO
+		PriceMatch              string `json:"priceMatch"`              // NO: only available for LIMIT/STOP/TAKE_PROFIT order; can be set to OPPONENT/ OPPONENT_5/ OPPONENT_10/ OPPONENT_20: /QUEUE/ QUEUE_5/ QUEUE_10/ QUEUE_20; Can't be passed together with price
+		PriceProtect            string `json:"priceProtect"`            // NO: "TRUE" or "FALSE", default "FALSE". Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+		Quantity                string `json:"quantity"`                // NO: Cannot be sent with closePosition=true(Close-All)
+		RecvWindow              int64  `json:"recvWindow"`              // NO
+		ReduceOnly              string `json:"reduceOnly"`              // NO: "true" or "false". default "false". Cannot be sent in Hedge Mode; cannot be sent with closePosition=true
+		SelfTradePreventionMode string `json:"selfTradePreventionMode"` // NO: NONE:No STP / EXPIRE_TAKER:expire taker order when STP triggers/ EXPIRE_MAKER:expire taker order when STP triggers/ EXPIRE_BOTH:expire both orders when STP triggers; default NONE
+		Side                    string `json:"side"`                    // YES
+		StopPrice               string `json:"stopPrice"`               // NO: Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+		Symbol                  string `json:"symbol"`                  // YES
+		Timestamp               int64  `json:"timestamp"`               // YES
+		TimeInForce             string `json:"timeInForce"`             // NO
+		Type                    string `json:"type"`                    // YES
+		WorkingType             string `json:"workingType"`             // NO: stopPrice triggered by: "MARK_PRICE", "CONTRACT_PRICE". Default "CONTRACT_PRICE"
 	}
 	PlaceOrderResult struct {
 		ClientOrderId string `json:"clientOrderId"`
@@ -48,18 +50,23 @@ type (
 	}
 )
 
-func (po *PlaceOrder) SetSide(side string) *PlaceOrder {
-	po.params.Side = side
+func (po *PlaceOrder) SetActivationPrice(activationPrice string) *PlaceOrder {
+	po.params.ActivationPrice = activationPrice
 	return po
 }
 
-func (po *PlaceOrder) SetOrderType(orderType string) *PlaceOrder {
-	po.params.Type = orderType
+func (po *PlaceOrder) SetCallbackRate(callbackRate string) *PlaceOrder {
+	po.params.CallbackRate = callbackRate
 	return po
 }
 
-func (po *PlaceOrder) SetIcebergQty(icebergQty float64) *PlaceOrder {
-	po.params.IcebergQty = icebergQty
+func (po *PlaceOrder) SetClosePosition(closePosition string) *PlaceOrder {
+	po.params.ClosePosition = closePosition
+	return po
+}
+
+func (po *PlaceOrder) SetGoodTillDate(goodTillDate int64) *PlaceOrder {
+	po.params.GoodTillDate = goodTillDate
 	return po
 }
 
@@ -73,23 +80,38 @@ func (po *PlaceOrder) SetNewOrderRespType(newOrderRespType string) *PlaceOrder {
 	return po
 }
 
-func (po *PlaceOrder) SetPrice(price float64) *PlaceOrder {
+func (po *PlaceOrder) SetPositionSide(positionSide string) *PlaceOrder {
+	po.params.PositionSide = positionSide
+	return po
+}
+
+func (po *PlaceOrder) SetPrice(price string) *PlaceOrder {
 	po.params.Price = price
 	return po
 }
 
-func (po *PlaceOrder) SetQuantity(quantity float64) *PlaceOrder {
+func (po *PlaceOrder) SetPriceMatch(priceMatch string) *PlaceOrder {
+	po.params.PriceMatch = priceMatch
+	return po
+}
+
+func (po *PlaceOrder) SetPriceProtect(priceProtect string) *PlaceOrder {
+	po.params.PriceProtect = priceProtect
+	return po
+}
+
+func (po *PlaceOrder) SetQuantity(quantity string) *PlaceOrder {
 	po.params.Quantity = quantity
 	return po
 }
 
-func (po *PlaceOrder) SetQuoteOrderQty(quoteOrderQty float64) *PlaceOrder {
-	po.params.QuoteOrderQty = quoteOrderQty
+func (po *PlaceOrder) SetRecvWindow(recvWindow int64) *PlaceOrder {
+	po.params.RecvWindow = recvWindow
 	return po
 }
 
-func (po *PlaceOrder) SetRecvWindow(recvWindow int) *PlaceOrder {
-	po.params.RecvWindow = recvWindow
+func (po *PlaceOrder) SetReduceOnly(reduceOnly string) *PlaceOrder {
+	po.params.ReduceOnly = reduceOnly
 	return po
 }
 
@@ -98,28 +120,18 @@ func (po *PlaceOrder) SetSelfTradePreventionMode(selfTradePreventionMode string)
 	return po
 }
 
-func (po *PlaceOrder) SetSignature(signature string) *PlaceOrder {
-	po.params.Signature = signature
+func (po *PlaceOrder) SetSide(side string) *PlaceOrder {
+	po.params.Side = side
 	return po
 }
 
-func (po *PlaceOrder) SetStopPrice(stopPrice float64) *PlaceOrder {
+func (po *PlaceOrder) SetStopPrice(stopPrice string) *PlaceOrder {
 	po.params.StopPrice = stopPrice
 	return po
 }
 
-func (po *PlaceOrder) SetStrategyId(strategyId int) *PlaceOrder {
-	po.params.StrategyId = strategyId
-	return po
-}
-
-func (po *PlaceOrder) SetStrategyType(strategyType int) *PlaceOrder {
-	po.params.StrategyType = strategyType
-	return po
-}
-
-func (po *PlaceOrder) SetTimeInForce(timeInForce string) *PlaceOrder {
-	po.params.TimeInForce = timeInForce
+func (po *PlaceOrder) SetSymbol(symbol string) *PlaceOrder {
+	po.params.Symbol = symbol
 	return po
 }
 
@@ -128,8 +140,18 @@ func (po *PlaceOrder) SetTimestamp(timestamp int64) *PlaceOrder {
 	return po
 }
 
-func (po *PlaceOrder) SetTrailingDelta(trailingDelta int) *PlaceOrder {
-	po.params.TrailingDelta = trailingDelta
+func (po *PlaceOrder) SetTimeInForce(timeInForce string) *PlaceOrder {
+	po.params.TimeInForce = timeInForce
+	return po
+}
+
+func (po *PlaceOrder) SetType(orderType string) *PlaceOrder {
+	po.params.Type = orderType
+	return po
+}
+
+func (po *PlaceOrder) SetWorkingType(workingType string) *PlaceOrder {
+	po.params.WorkingType = workingType
 	return po
 }
 
