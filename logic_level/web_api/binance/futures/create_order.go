@@ -53,6 +53,11 @@ func (po *PlaceOrder) SetSide(side string) *PlaceOrder {
 	return po
 }
 
+func (po *PlaceOrder) SetOrderType(orderType string) *PlaceOrder {
+	po.params.Type = orderType
+	return po
+}
+
 func (po *PlaceOrder) SetIcebergQty(icebergQty float64) *PlaceOrder {
 	po.params.IcebergQty = icebergQty
 	return po

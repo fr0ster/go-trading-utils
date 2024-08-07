@@ -79,6 +79,11 @@ func (cro *CancelReplaceOrder) SetCancelOrderId(cancelOrderId int) *CancelReplac
 	return cro
 }
 
+func (po *PlaceOrder) SetOrderType(orderType string) *PlaceOrder {
+	po.params.Type = orderType
+	return po
+}
+
 // Функція для встановлення CancelOrigClientOrderId
 func (cro *CancelReplaceOrder) SetCancelOrigClientOrderId(cancelOrigClientOrderId string) *CancelReplaceOrder {
 	cro.params.CancelOrigClientOrderId = cancelOrigClientOrderId
