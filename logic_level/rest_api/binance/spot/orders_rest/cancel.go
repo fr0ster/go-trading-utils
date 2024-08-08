@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
+
+	"github.com/bitly/go-simplejson"
 )
 
 type (
@@ -30,7 +31,7 @@ func (o *Orders) CancelOrder(orderID int64) (*CancelOrderResponse, error) {
 	endpoint := "/api/v3/order"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 	params.Set("orderId", strconv.FormatInt(orderID, 10))
 

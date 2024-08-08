@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Функція для отримання одного спотового ордера по номеру
@@ -13,7 +14,7 @@ func (o *Orders) GetOrder(orderID int64) (*QueryOrderResponse, error) {
 	endpoint := "/api/v3/order"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 	params.Set("orderId", strconv.FormatInt(orderID, 10))
 

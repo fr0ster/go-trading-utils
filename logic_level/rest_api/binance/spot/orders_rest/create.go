@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Функція для створення ордера
@@ -13,7 +14,7 @@ func (o *Orders) CreateOrder(side, orderType string, quantity, price float64, ti
 	endpoint := "/api/v3/order"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 	params.Set("side", side)
 	params.Set("type", orderType)

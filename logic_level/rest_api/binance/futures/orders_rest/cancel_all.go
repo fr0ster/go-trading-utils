@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+
+	"github.com/bitly/go-simplejson"
 )
 
 type (
@@ -29,7 +30,7 @@ func (o *Orders) CancelOrders() (*AllOrderCancelResponse, error) {
 	endpoint := "/fapi/v1/allOpenOrders"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 
 	body, err := o.CallAPI(http.MethodDelete, params, endpoint)

@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Функція для отримання масиву всіх спотових ордерів
@@ -12,7 +13,7 @@ func (o *Orders) GetAllOrders() ([]QueryOrderResponse, error) {
 	endpoint := "/fapi/v1/allOrders"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 
 	body, err := o.CallAPI(http.MethodGet, params, endpoint)

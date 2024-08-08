@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
+
+	"github.com/bitly/go-simplejson"
 )
 
 // Функція для отримання відкритих спотових ордерів
@@ -12,7 +13,7 @@ func (o *Orders) GetOpenOrders() ([]QueryOrderResponse, error) {
 	endpoint := "/fapi/v1/openOrders"
 
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("symbol", o.symbol)
 
 	body, err := o.CallAPI(http.MethodGet, params, endpoint)
