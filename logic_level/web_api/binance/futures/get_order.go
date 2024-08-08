@@ -79,7 +79,7 @@ func (qo *QueryOrder) SetOrderId(orderId int64) *QueryOrder {
 // Функція для розміщення ордера через WebSocket
 func (qo *QueryOrder) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOrderResult, err error) {
 	// Створення параметрів запиту
-	params, err := common.StructToUrlValues(qo.params)
+	params, err := common.StructToParameterMap(qo.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return

@@ -81,7 +81,7 @@ func (co *CancelOrder) SetRecvWindow(recvWindow int) *CancelOrder {
 // Функція для розміщення ордера через WebSocket
 func (co *CancelOrder) Do() (result *CancelResult, err error) {
 	// Перетворення структури в строку
-	params, err := common.StructToUrlValues(co.params)
+	params, err := common.StructToParameterMap(co.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return

@@ -60,7 +60,7 @@ func (qoo *QueryAllOrders) SetRecvWindow(recvWindow int) *QueryAllOrders {
 // Функція для розміщення ордера через WebSocket
 func (qoo *QueryAllOrders) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOpenOrdersResults, err error) {
 	// Перетворення структури в строку
-	params, err := common.StructToUrlValues(qoo.params)
+	params, err := common.StructToParameterMap(qoo.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
