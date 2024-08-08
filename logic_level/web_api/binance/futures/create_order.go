@@ -2,7 +2,6 @@ package futures_web_api
 
 import (
 	"fmt"
-	"time"
 
 	common "github.com/fr0ster/turbo-restler/utils/json"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -170,15 +169,13 @@ func (po *PlaceOrder) SetWorkingType(workingType string) *PlaceOrder {
 // Функція для розміщення ордера через WebSocket
 func (po *PlaceOrder) Do() (order *PlaceOrderResult, err error) {
 	// Перетворення структури в строку
-	po.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-	message, err := common.StructToQueryString(*po.params)
+	params, err := common.StructToUrlValues(po.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	po.params.Signature = po.sign.CreateSignature(message)
 
-	response, err := web_api.CallWebAPI(po.waHost, po.waPath, po.method, po.params)
+	response, err := web_api.CallWebAPI(po.waHost, po.waPath, po.method, params, po.sign)
 	if err != nil {
 		return
 	}

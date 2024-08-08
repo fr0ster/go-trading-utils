@@ -2,7 +2,6 @@ package futures_web_api
 
 import (
 	"fmt"
-	"time"
 
 	common "github.com/fr0ster/turbo-restler/utils/json"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -61,15 +60,13 @@ func (qoo *QueryAllOrders) SetRecvWindow(recvWindow int) *QueryAllOrders {
 // Функція для розміщення ордера через WebSocket
 func (qoo *QueryAllOrders) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOpenOrdersResults, err error) {
 	// Створення параметрів запиту
-	qoo.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-	message, err := common.StructToQueryString(qoo.params)
+	params, err := common.StructToUrlValues(qoo.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	qoo.params.Signature = qoo.sign.CreateSignature(message)
 
-	response, err := web_api.CallWebAPI(qoo.waHost, qoo.waPath, qoo.method, qoo.params)
+	response, err := web_api.CallWebAPI(qoo.waHost, qoo.waPath, qoo.method, params, qoo.sign)
 	if err != nil {
 		return
 	}

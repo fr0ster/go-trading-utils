@@ -2,7 +2,6 @@ package spot_web_api
 
 import (
 	"fmt"
-	"time"
 
 	common "github.com/fr0ster/turbo-restler/utils/json"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -79,16 +78,14 @@ func (qo *QueryOrder) SetOrderId(orderId int64) *QueryOrder {
 
 // Функція для розміщення ордера через WebSocket
 func (qo *QueryOrder) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOrderResult, err error) {
-	// Створення параметрів запиту
-	qo.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
-	message, err := common.StructToQueryString(qo.params)
+	// Перетворення структури в строку
+	params, err := common.StructToUrlValues(qo.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	qo.params.Signature = qo.sign.CreateSignature(message)
 
-	response, err := web_api.CallWebAPI(qo.waHost, qo.waPath, qo.method, qo.params)
+	response, err := web_api.CallWebAPI(qo.waHost, qo.waPath, qo.method, params, qo.sign)
 	if err != nil {
 		return
 	}

@@ -10,7 +10,7 @@ import (
 func (wa *WebApi) Logout() (result *LogonResult, err error) {
 	method := "session.logout"
 
-	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, method, nil)
+	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, method, nil, nil)
 	if err != nil {
 		return
 	}

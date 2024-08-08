@@ -2,7 +2,6 @@ package spot_web_api
 
 import (
 	"fmt"
-	"time"
 
 	common "github.com/fr0ster/turbo-restler/utils/json"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -81,17 +80,14 @@ func (co *CancelOrder) SetRecvWindow(recvWindow int) *CancelOrder {
 
 // Функція для розміщення ордера через WebSocket
 func (co *CancelOrder) CancelOrder(orderId int64, timeInForce string) (result *CancelResult, err error) {
-	// Створення параметрів запиту
-	co.params.Timestamp = time.Now().UnixNano() / int64(time.Millisecond)
 	// Перетворення структури в строку
-	message, err := common.StructToQueryString(co.params)
+	params, err := common.StructToUrlValues(co.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	co.params.Signature = co.sign.CreateSignature(message)
 
-	response, err := web_api.CallWebAPI(co.waHost, co.waPath, co.method, co.params)
+	response, err := web_api.CallWebAPI(co.waHost, co.waPath, co.method, params, co.sign)
 	if err != nil {
 		return
 	}
