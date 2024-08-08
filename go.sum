@@ -5,8 +5,8 @@ github.com/bitly/go-simplejson v0.5.1/go.mod h1:YOPVLzCfwK14b4Sff3oP1AmGhI9T9Vsg
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fr0ster/turbo-restler v0.1.4 h1:Y2Ykvbm/XT7pMienrK0qen8D/ZtJkKZ415e1tpJMx7U=
-github.com/fr0ster/turbo-restler v0.1.4/go.mod h1:kS3835cyDcgOCg7sntACKKPF2x57CNoh59bK1MAjI0o=
+github.com/fr0ster/turbo-restler v0.1.5 h1:FjJlhXipr78Fb+UF4G6CnMFlPq2ENhJo6ibtA+ZNtEY=
+github.com/fr0ster/turbo-restler v0.1.5/go.mod h1:E3ONL6U1n7dZ9qJl2zVN6ZHVp6S1EuByECsHgiDd69c=
 github.com/google/btree v1.1.2 h1:xf4v41cLI2Z6FxbKm+8Bu+m8ifhj15JuZ9sa0jZCMUU=
 github.com/google/btree v1.1.2/go.mod h1:qOPhT0dTNdNzV6Z/lhRX0YXUafgPLFUh+gZMl761Gm4=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
