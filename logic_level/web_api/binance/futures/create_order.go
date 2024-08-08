@@ -12,8 +12,8 @@ import (
 // Структура для параметрів запиту
 type (
 	PlaceOrderParams struct {
-		ApiKey                  string `json:"apiKey"`                  // YES
 		ActivationPrice         string `json:"activationPrice"`         // NO: Used with TRAILING_STOP_MARKET orders, default as the latest price(supporting different workingType)
+		ApiKey                  string `json:"apiKey"`                  // YES
 		CallbackRate            string `json:"callbackRate"`            // NO: Used with TRAILING_STOP_MARKET orders, min 0.1, max 5 where 1 for 1%
 		ClosePosition           string `json:"closePosition"`           // NO: true, false；Close-All，used with STOP_MARKET or TAKE_PROFIT_MARKET.
 		GoodTillDate            int64  `json:"goodTillDate"`            // NO: order cancel time for timeInForce GTD, mandatory when timeInforce set to GTD; order the timestamp only retains second-level precision, ms part will be ignored; The goodTillDate timestamp must be greater than the current time plus 600 seconds and smaller than 253402300799000
