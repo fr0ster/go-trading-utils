@@ -8,9 +8,7 @@ import (
 
 // Функція для логіну
 func (wa *WebApi) Logout() (result *LogonResult, err error) {
-	method := "session.logout"
-
-	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, method, nil, nil)
+	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.logout", nil, nil)
 	if err != nil {
 		return
 	}
