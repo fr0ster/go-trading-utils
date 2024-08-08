@@ -194,7 +194,7 @@ func (cro *CancelReplaceOrder) SetRecvWindow(recvWindow int) *CancelReplaceOrder
 // Функція для розміщення ордера через WebSocket
 func (cro *CancelReplaceOrder) Do() (result *CancelReplaceOrderResult, err error) {
 	// Перетворення структури в строку
-	params, err := common.StructToParameterMap(cro.params)
+	params, err := common.StructToUrlValues(cro.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return

@@ -169,7 +169,7 @@ func (po *PlaceOrder) SetWorkingType(workingType string) *PlaceOrder {
 // Функція для розміщення ордера через WebSocket
 func (po *PlaceOrder) Do() (order *PlaceOrderResult, err error) {
 	// Перетворення структури в строку
-	params, err := common.StructToParameterMap(po.params)
+	params, err := common.StructToUrlValues(po.params)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
