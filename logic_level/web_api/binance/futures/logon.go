@@ -2,17 +2,12 @@ package futures_web_api
 
 import (
 	"fmt"
-	"net/url"
 
+	"github.com/bitly/go-simplejson"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 type (
-	LogonParams struct {
-		APIKey    string `json:"apiKey"`
-		Signature string `json:"signature"`
-		Timestamp int64  `json:"timestamp"`
-	}
 	LogonResult struct {
 		APIKey           string `json:"apiKey"`
 		AuthorizedSince  int64  `json:"authorizedSince"`
@@ -25,7 +20,7 @@ type (
 // Функція для логіну
 func (wa *WebApi) Logon() (result *LogonResult, err error) {
 	// Створення параметрів запиту
-	params := url.Values{}
+	params := simplejson.New()
 	params.Set("apiKey", wa.apiKey)
 
 	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.logon", params, nil)

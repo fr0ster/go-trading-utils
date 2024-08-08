@@ -3,26 +3,19 @@ package spot_web_api
 import (
 	"fmt"
 
-	common "github.com/fr0ster/turbo-restler/utils/json"
+	"github.com/bitly/go-simplejson"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 // Структура для параметрів запиту
 type (
-	QueryOpenOrdersParams struct {
-		ApiKey     string `json:"apiKey"`     // YES
-		RecvWindow int    `json:"recvWindow"` // NO: The value cannot be greater than 60000
-		Signature  string `json:"signature"`  // YES
-		Symbol     string `json:"symbol"`     // NO: If omitted, open orders for all symbols are returned
-		Timestamp  int64  `json:"timestamp"`  // YES
-	}
 	QueryOpenOrders struct {
 		sign   signature.Sign
 		waHost string
 		waPath string
 		method string
-		params *QueryOpenOrdersParams
+		params *simplejson.Json
 	}
 
 	QueryOpenOrdersResults []QueryOpenOrdersResult
@@ -51,22 +44,15 @@ type (
 	}
 )
 
-// Функція для встановлення RecvWindow
-func (qoo *QueryOpenOrders) SetRecvWindow(recvWindow int) *QueryOpenOrders {
-	qoo.params.RecvWindow = recvWindow
+// Функція для встановлення параметрів
+func (qoo *QueryOpenOrders) Set(name string, value interface{}) *QueryOpenOrders {
+	qoo.params.Set(name, value)
 	return qoo
 }
 
 // Функція для розміщення ордера через WebSocket
 func (qoo *QueryOpenOrders) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOpenOrdersResults, err error) {
-	// Перетворення структури в строку
-	params, err := common.StructToUrlValues(qoo.params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	response, err := web_api.CallWebAPI(qoo.waHost, qoo.waPath, qoo.method, params, qoo.sign)
+	response, err := web_api.CallWebAPI(qoo.waHost, qoo.waPath, qoo.method, qoo.params, qoo.sign)
 	if err != nil {
 		return
 	}
@@ -81,14 +67,14 @@ func (qoo *QueryOpenOrders) Do(side, orderType, timeInForce, price, quantity str
 }
 
 func newQueryOpenOrders(apiKey, symbol, waHost, waPath string, sign signature.Sign) *QueryOpenOrders {
+	simpleJson := simplejson.New()
+	simpleJson.Set("apiKey", apiKey)
+	simpleJson.Set("symbol", symbol)
 	return &QueryOpenOrders{
 		sign:   sign,
 		waHost: waHost,
 		waPath: waPath,
 		method: "openOrders.status",
-		params: &QueryOpenOrdersParams{
-			ApiKey: apiKey,
-			Symbol: symbol,
-		},
+		params: simpleJson,
 	}
 }

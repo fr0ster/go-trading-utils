@@ -3,29 +3,19 @@ package futures_web_api
 import (
 	"fmt"
 
-	common "github.com/fr0ster/turbo-restler/utils/json"
+	"github.com/bitly/go-simplejson"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 // Структура для параметрів запиту
 type (
-	QueryOrderParams struct {
-		ApiKey            string `json:"apiKey"`            // STRING, YES
-		OrderId           int64  `json:"orderId"`           // LONG, YES
-		OrigClientOrderId string `json:"origClientOrderId"` // STRING, NO
-		Signature         string `json:"signature"`         // STRING, YES
-		Symbol            string `json:"symbol"`            // STRING, YES
-		RecvWindow        int    `json:"recvWindow"`        // INT, NO
-		Timestamp         int64  `json:"timestamp"`         // LONG, YES
-	}
-
 	QueryOrder struct {
 		sign   signature.Sign
 		waHost string
 		waPath string
 		method string
-		params *QueryOrderParams
+		params *simplejson.Json
 	}
 
 	QueryOrderResult struct {
@@ -58,34 +48,15 @@ type (
 	}
 )
 
-// Функція для встановлення OrigClientOrderId
-func (qo *QueryOrder) SetOrigClientOrderId(origClientOrderId string) *QueryOrder {
-	qo.params.OrigClientOrderId = origClientOrderId
-	return qo
-}
-
-// Функція для встановлення RecvWindow
-func (qo *QueryOrder) SetRecvWindow(recvWindow int) *QueryOrder {
-	qo.params.RecvWindow = recvWindow
-	return qo
-}
-
-// Функція для встановлення OrderId
-func (qo *QueryOrder) SetOrderId(orderId int64) *QueryOrder {
-	qo.params.OrderId = orderId
+// Функція для встановлення параметрів
+func (qo *QueryOrder) Set(name string, value interface{}) *QueryOrder {
+	qo.params.Set(name, value)
 	return qo
 }
 
 // Функція для розміщення ордера через WebSocket
 func (qo *QueryOrder) Do(side, orderType, timeInForce, price, quantity string) (result *QueryOrderResult, err error) {
-	// Створення параметрів запиту
-	params, err := common.StructToUrlValues(qo.params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	response, err := web_api.CallWebAPI(qo.waHost, qo.waPath, qo.method, params, qo.sign)
+	response, err := web_api.CallWebAPI(qo.waHost, qo.waPath, qo.method, qo.params, qo.sign)
 	if err != nil {
 		return
 	}
@@ -101,14 +72,14 @@ func (qo *QueryOrder) Do(side, orderType, timeInForce, price, quantity string) (
 }
 
 func newQueryOrder(apiKey, symbol, waHost, waPath string, sign signature.Sign) *QueryOrder {
+	simpleJson := simplejson.New()
+	simpleJson.Set("apiKey", apiKey)
+	simpleJson.Set("symbol", symbol)
 	return &QueryOrder{
 		sign:   sign,
 		waHost: waHost,
 		waPath: waPath,
 		method: "order.status",
-		params: &QueryOrderParams{
-			ApiKey: apiKey,
-			Symbol: symbol,
-		},
+		params: simpleJson,
 	}
 }

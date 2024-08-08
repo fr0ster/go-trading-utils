@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
+
 	spot_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
 	"github.com/fr0ster/go-trading-utils/types"
 	api "github.com/fr0ster/turbo-restler/rest_api"
-	api_common "github.com/fr0ster/turbo-restler/utils/json"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	common "github.com/fr0ster/turbo-restler/web_stream"
 
@@ -154,7 +155,7 @@ func (uds *UserDataStream) listenKey(method string, useTestNet ...bool) (listenK
 
 func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
 	return func(message []byte) {
-		j, err := api_common.NewJSON(message)
+		j, err := simplejson.NewJson(message)
 		if err != nil {
 			errHandler(err)
 			return

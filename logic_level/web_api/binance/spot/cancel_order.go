@@ -3,31 +3,19 @@ package spot_web_api
 import (
 	"fmt"
 
-	common "github.com/fr0ster/turbo-restler/utils/json"
+	"github.com/bitly/go-simplejson"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 // Структура для параметрів запиту
 type (
-	CancelOrderParams struct {
-		ApiKey             string `json:"apiKey"`
-		CancelRestrictions string `json:"cancelRestrictions,omitempty"`
-		NewClientOrderId   string `json:"newClientOrderId,omitempty"`
-		OrderId            int64  `json:"orderId"`
-		OrigClientOrderId  string `json:"origClientOrderId,omitempty"`
-		RecvWindow         int    `json:"recvWindow,omitempty"`
-		Signature          string `json:"signature"`
-		Symbol             string `json:"symbol"`
-		Timestamp          int64  `json:"timestamp"`
-	}
-
 	CancelOrder struct {
 		sign   signature.Sign
 		waHost string
 		waPath string
 		method string
-		params *CancelOrderParams
+		params *simplejson.Json
 	}
 
 	CancelResult struct {
@@ -54,40 +42,15 @@ type (
 	}
 )
 
-// Функція для встановлення CancelRestrictions
-func (co *CancelOrder) SetCancelRestrictions(cancelRestrictions string) *CancelOrder {
-	co.params.CancelRestrictions = cancelRestrictions
-	return co
-}
-
-// Функція для встановлення NewClientOrderId
-func (co *CancelOrder) SetNewClientOrderId(newClientOrderId string) *CancelOrder {
-	co.params.NewClientOrderId = newClientOrderId
-	return co
-}
-
-// Функція для встановлення OrigClientOrderId
-func (co *CancelOrder) SetOrigClientOrderId(origClientOrderId string) *CancelOrder {
-	co.params.OrigClientOrderId = origClientOrderId
-	return co
-}
-
-// Функція для встановлення RecvWindow
-func (co *CancelOrder) SetRecvWindow(recvWindow int) *CancelOrder {
-	co.params.RecvWindow = recvWindow
+// Функція для встановлення параметрів
+func (co *CancelOrder) Set(name string, value interface{}) *CancelOrder {
+	co.params.Set(name, value)
 	return co
 }
 
 // Функція для розміщення ордера через WebSocket
 func (co *CancelOrder) CancelOrder(orderId int64, timeInForce string) (result *CancelResult, err error) {
-	// Перетворення структури в строку
-	params, err := common.StructToUrlValues(co.params)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
-	response, err := web_api.CallWebAPI(co.waHost, co.waPath, co.method, params, co.sign)
+	response, err := web_api.CallWebAPI(co.waHost, co.waPath, co.method, co.params, co.sign)
 	if err != nil {
 		return
 	}
@@ -103,14 +66,14 @@ func (co *CancelOrder) CancelOrder(orderId int64, timeInForce string) (result *C
 
 // Функція для створення нової структури CancelOrderParams
 func newCancelOrder(apiKey string, symbol, waHost, waPath string, sign signature.Sign) *CancelOrder {
+	simpleJson := simplejson.New()
+	simpleJson.Set("apiKey", apiKey)
+	simpleJson.Set("symbol", symbol)
 	return &CancelOrder{
 		sign:   sign,
 		waHost: waHost,
 		waPath: waPath,
 		method: "order.cancel",
-		params: &CancelOrderParams{
-			ApiKey: apiKey,
-			Symbol: symbol,
-		},
+		params: simpleJson,
 	}
 }

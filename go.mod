@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/adshao/go-binance/v2 v2.6.0
-	github.com/fr0ster/turbo-restler v0.1.12
+	github.com/fr0ster/turbo-restler v0.1.14
 	github.com/google/btree v1.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/bitly/go-simplejson v0.5.1 // indirect
+	github.com/bitly/go-simplejson v0.5.1
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
