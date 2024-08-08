@@ -7,6 +7,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fr0ster/turbo-restler v0.1.2 h1:fc2UrzE6p6RvNydNt/LRWGgBe5JA9skSP8vfVsA+uUY=
 github.com/fr0ster/turbo-restler v0.1.2/go.mod h1:kS3835cyDcgOCg7sntACKKPF2x57CNoh59bK1MAjI0o=
+github.com/fr0ster/turbo-restler v0.1.3 h1:eVb+fhMp1RcRmPRnPeUSTQ+J/P5ZDFPiqhmIoounOSQ=
+github.com/fr0ster/turbo-restler v0.1.3/go.mod h1:kS3835cyDcgOCg7sntACKKPF2x57CNoh59bK1MAjI0o=
 github.com/google/btree v1.1.2 h1:xf4v41cLI2Z6FxbKm+8Bu+m8ifhj15JuZ9sa0jZCMUU=
 github.com/google/btree v1.1.2/go.mod h1:qOPhT0dTNdNzV6Z/lhRX0YXUafgPLFUh+gZMl761Gm4=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=

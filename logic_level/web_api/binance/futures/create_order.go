@@ -167,11 +167,6 @@ func (po *PlaceOrder) SetWorkingType(workingType string) *PlaceOrder {
 	return po
 }
 
-func (po *PlaceOrder) SetWorkingType(workingType string) *PlaceOrder {
-	po.params.WorkingType = workingType
-	return po
-}
-
 // Функція для розміщення ордера через WebSocket
 func (po *PlaceOrder) Do() (order *PlaceOrderResult, err error) {
 	// Перетворення структури в строку
