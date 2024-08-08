@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/adshao/go-binance/v2 v2.6.0
-	github.com/fr0ster/turbo-restler v0.1.9
+	github.com/fr0ster/turbo-restler v0.1.10
 	github.com/google/btree v1.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
@@ -23,6 +23,6 @@ require (
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jinzhu/copier v0.4.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
