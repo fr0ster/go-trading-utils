@@ -17,7 +17,7 @@
     {
       "label": "Update dependencies",
       "type": "shell",
-      "command": "go get -u ./...",
+      "command": "go get -u ./... && go mod tidy",
       "group": {
         "kind": "none",
         "isDefault": false
