@@ -3,6 +3,7 @@ package futures_web_api
 import (
 	"sync"
 
+	"github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/order"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
@@ -27,27 +28,27 @@ func (wa *WebApi) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func (wa *WebApi) PlaceOrder() (response *PlaceOrder) {
+func (wa *WebApi) PlaceOrder() *order.Order {
 	return newOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelOrder() (response *CancelOrder) {
+func (wa *WebApi) CancelOrder() *order.Order {
 	return newCancelOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryOrder() (response *QueryOrder) {
+func (wa *WebApi) QueryOrder() *order.Order {
 	return newQueryOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelReplaceOrder() (response *CancelReplaceOrder) {
+func (wa *WebApi) CancelReplaceOrder() *order.Order {
 	return newCancelReplaceOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryOpenOrders() (response *QueryOpenOrders) {
+func (wa *WebApi) QueryOpenOrders() *order.Order {
 	return newQueryOpenOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryAllOrders() (response *QueryAllOrders) {
+func (wa *WebApi) QueryAllOrders() *order.Order {
 	return newQueryAllOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
