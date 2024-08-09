@@ -3,13 +3,13 @@ package futures_web_api
 import (
 	common "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
+	"github.com/fr0ster/turbo-restler/web_api"
 )
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *common.WebApi {
 	var (
-		waHost  string
-		waPath  string
-		baseUrl string
+		waHost string
+		waPath string
 	)
 	if len(useTestNet) == 0 {
 		useTestNet = append(useTestNet, false)
@@ -21,6 +21,5 @@ func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bo
 		waHost = "ws-fapi.binance.com"
 		waPath = "/ws-fapi/v1"
 	}
-	baseUrl = GetWsBaseUrl(useTestNet...)
-	return common.New(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign)
+	return common.New(apiKey, apiSecret, web_api.WsHost(waHost), web_api.WsPath(waPath), symbol, sign)
 }

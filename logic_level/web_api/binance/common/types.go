@@ -5,6 +5,7 @@ import (
 
 	order "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/order"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 type (
@@ -12,9 +13,8 @@ type (
 		apiKey    string
 		apiSecret string
 		symbol    string
-		baseUrl   string
-		waHost    string
-		waPath    string
+		waHost    web_api.WsHost
+		waPath    web_api.WsPath
 		mutex     *sync.Mutex
 		sign      signature.Sign
 	}
@@ -52,12 +52,16 @@ func (wa *WebApi) QueryAllOrders() *order.Order {
 	return newQueryAllOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func newWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath string, sign signature.Sign) *WebApi {
+func newWebApi(
+	apiKey,
+	apiSecret,
+	symbol string,
+	waHost web_api.WsHost,
+	waPath web_api.WsPath, sign signature.Sign) *WebApi {
 	return &WebApi{
 		apiKey:    apiKey,
 		apiSecret: apiSecret,
 		symbol:    symbol,
-		baseUrl:   baseUrl,
 		waHost:    waHost,
 		waPath:    waPath,
 		mutex:     &sync.Mutex{},
