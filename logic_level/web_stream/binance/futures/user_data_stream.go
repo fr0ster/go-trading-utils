@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	futures_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/futures"
 	types "github.com/fr0ster/go-trading-utils/types"
 	api "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -117,8 +116,17 @@ type UserDataStream struct {
 }
 
 func (uds *UserDataStream) listenKey(method api.HttpMethod) (listenKey string, err error) {
-	baseURL := futures_rest.GetAPIBaseUrl(uds.useTestNet)
+	const (
+		BaseAPIMainUrl    = "https://api.binance.com"
+		BaseAPITestnetUrl = "https://testnet.binance.vision"
+	)
+	baseURL := api.ApiBaseUrl("")
 	endpoint := api.EndPoint("/fapi/v1/listenKey")
+	if uds.useTestNet {
+		baseURL = BaseAPITestnetUrl
+	} else {
+		baseURL = BaseAPIMainUrl
+	}
 	var result map[string]interface{}
 
 	body, err := api.CallRestAPI(baseURL, method, nil, endpoint, uds.sign)

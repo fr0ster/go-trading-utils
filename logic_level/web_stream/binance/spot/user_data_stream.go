@@ -7,7 +7,6 @@ import (
 
 	"github.com/bitly/go-simplejson"
 
-	spot_rest "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/spot"
 	"github.com/fr0ster/go-trading-utils/types"
 	api "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -137,9 +136,18 @@ type UserDataStream struct {
 	stopC              chan struct{}
 }
 
-func (uds *UserDataStream) listenKey(method api.HttpMethod, useTestNet ...bool) (listenKey string, err error) {
-	baseURL := spot_rest.GetAPIBaseUrl(useTestNet...)
+func (uds *UserDataStream) listenKey(method api.HttpMethod) (listenKey string, err error) {
+	const (
+		BaseAPIMainUrl    = "https://api.binance.com"
+		BaseAPITestnetUrl = "https://testnet.binance.vision"
+	)
+	baseURL := api.ApiBaseUrl("")
 	endpoint := api.EndPoint("/api/v3/userDataStream")
+	if uds.useTestNet {
+		baseURL = BaseAPITestnetUrl
+	} else {
+		baseURL = BaseAPIMainUrl
+	}
 	var result map[string]interface{}
 
 	body, err := api.CallRestAPI(baseURL, method, nil, endpoint, uds.sign)
@@ -205,7 +213,7 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 
 func (uds *UserDataStream) Start(callBack func(*WsUserDataEvent)) (err error) {
 	wss := GetWsBaseUrl(uds.useTestNet)
-	listenKey, err := uds.listenKey(http.MethodPost, uds.useTestNet)
+	listenKey, err := uds.listenKey(http.MethodPost)
 	if err != nil {
 		return
 	}
