@@ -24,13 +24,6 @@ func (ra *RestApi) NewOrder() *order.Order {
 	return order.New(ra.apiKey, ra.symbol, "POST", ra.apiBaseUrl, "/fapi/v1/order", ra.sign)
 }
 
-func (ra *RestApi) TestOrder() *order.Order {
-	simpleJson := simplejson.New()
-	simpleJson.Set("apiKey", ra.apiKey)
-	simpleJson.Set("symbol", ra.symbol)
-	return order.New(ra.apiKey, ra.symbol, "GET", ra.apiBaseUrl, "/fapi/v1/order", ra.sign)
-}
-
 func (ra *RestApi) QueryOrder() *order.Order {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", ra.apiKey)
