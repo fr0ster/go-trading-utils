@@ -1,10 +1,11 @@
 package spot_web_api
 
 import (
+	common "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
-func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *WebApi {
+func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) *common.WebApi {
 	var (
 		waHost  string
 		waPath  string
@@ -21,5 +22,5 @@ func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bo
 		waPath = "/ws-api/v3"
 	}
 	baseUrl = GetWsBaseUrl(useTestNet...)
-	return newSpotWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign)
+	return common.New(apiKey, apiSecret, symbol, baseUrl, waHost, waPath, sign)
 }

@@ -29,7 +29,7 @@ func (wa *WebApi) Unlock() {
 }
 
 func (wa *WebApi) PlaceOrder() *order.Order {
-	return newOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+	return newPlaceOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
 func (wa *WebApi) CancelOrder() *order.Order {
@@ -52,7 +52,7 @@ func (wa *WebApi) QueryAllOrders() *order.Order {
 	return newQueryAllOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
 }
 
-func newSpotWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath string, sign signature.Sign) *WebApi {
+func newWebApi(apiKey, apiSecret, symbol, baseUrl, waHost, waPath string, sign signature.Sign) *WebApi {
 	return &WebApi{
 		apiKey:    apiKey,
 		apiSecret: apiSecret,

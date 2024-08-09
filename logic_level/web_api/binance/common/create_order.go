@@ -6,7 +6,7 @@ import (
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
-func newOrder(apiKey, symbol, waHost, waPath string, sign signature.Sign) *order.Order {
+func newPlaceOrder(apiKey, symbol, waHost, waPath string, sign signature.Sign) *order.Order {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", apiKey)
 	simpleJson.Set("symbol", symbol)
