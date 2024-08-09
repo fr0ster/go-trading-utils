@@ -7,11 +7,12 @@ import (
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 // Функція для отримання одного спотового ордера по номеру
 func (o *Orders) GetOrder(orderID int64) (*QueryOrderResponse, error) {
-	endpoint := "/api/v3/order"
+	endpoint := common.EndPoint("/api/v3/order")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

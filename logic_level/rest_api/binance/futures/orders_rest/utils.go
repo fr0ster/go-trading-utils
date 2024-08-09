@@ -6,6 +6,6 @@ import (
 )
 
 // Функція для отримання масиву всіх спотових ордерів
-func (o *Orders) CallAPI(method string, params *simplejson.Json, endpoint string) (body []byte, err error) {
+func (o *Orders) CallAPI(method api.HttpMethod, params *simplejson.Json, endpoint api.EndPoint) (body []byte, err error) {
 	return api.CallRestAPI(o.baseUrl, method, params, endpoint, o.sign)
 }

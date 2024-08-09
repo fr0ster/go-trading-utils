@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 type (
@@ -27,7 +28,7 @@ type (
 
 // Функція для відміни ордера
 func (o *Orders) CancelOrders() (*AllOrderCancelResponse, error) {
-	endpoint := "/fapi/v1/allOpenOrders"
+	endpoint := common.EndPoint("/fapi/v1/allOpenOrders")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

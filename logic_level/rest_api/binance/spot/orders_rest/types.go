@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/fr0ster/go-trading-utils/types"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
@@ -54,7 +55,7 @@ type (
 		apiKey    string
 		apiSecret string
 		symbol    string
-		baseUrl   string
+		baseUrl   common.ApiBaseUrl
 		mutex     *sync.Mutex
 		sign      signature.Sign
 	}

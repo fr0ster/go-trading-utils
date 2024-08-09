@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 // Функція для отримання відкритих спотових ордерів
 func (o *Orders) GetOpenOrders() ([]QueryOrderResponse, error) {
-	endpoint := "/api/v3/openOrders"
+	endpoint := common.EndPoint("/api/v3/openOrders")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

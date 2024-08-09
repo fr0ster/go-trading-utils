@@ -116,9 +116,9 @@ type UserDataStream struct {
 	stopC              chan struct{}
 }
 
-func (uds *UserDataStream) listenKey(method string) (listenKey string, err error) {
+func (uds *UserDataStream) listenKey(method api.HttpMethod) (listenKey string, err error) {
 	baseURL := futures_rest.GetAPIBaseUrl(uds.useTestNet)
-	endpoint := "/fapi/v1/listenKey"
+	endpoint := api.EndPoint("/fapi/v1/listenKey")
 	var result map[string]interface{}
 
 	body, err := api.CallRestAPI(baseURL, method, nil, endpoint, uds.sign)

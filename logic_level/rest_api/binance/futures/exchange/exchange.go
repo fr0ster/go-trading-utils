@@ -21,7 +21,7 @@ type (
 
 func New(useTestNet ...bool) (exchangeInfo *ExchangeInfo, err error) {
 	baseUrl := api.GetAPIBaseUrl(useTestNet...)
-	endpoint := "/fapi/v1/exchangeInfo"
+	endpoint := common.EndPoint("/fapi/v1/exchangeInfo")
 
 	body, err := common.CallRestAPI(baseUrl, http.MethodGet, nil, endpoint, nil)
 	if err != nil {

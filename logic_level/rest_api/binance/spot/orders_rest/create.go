@@ -7,11 +7,12 @@ import (
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 // Функція для створення ордера
 func (o *Orders) CreateOrder(side, orderType string, quantity, price float64, timeInForce string) (*CreateOrderResponse, error) {
-	endpoint := "/api/v3/order"
+	endpoint := common.EndPoint("/api/v3/order")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

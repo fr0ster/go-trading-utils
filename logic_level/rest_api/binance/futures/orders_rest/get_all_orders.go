@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 // Функція для отримання масиву всіх спотових ордерів
 func (o *Orders) GetAllOrders() ([]QueryOrderResponse, error) {
-	endpoint := "/fapi/v1/allOrders"
+	endpoint := common.EndPoint("/fapi/v1/allOrders")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

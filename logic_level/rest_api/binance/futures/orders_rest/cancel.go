@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 type (
@@ -28,7 +29,7 @@ type (
 
 // Функція для відміни ордера
 func (o *Orders) CancelOrder(orderID int64) (*OrderCancelResponse, error) {
-	endpoint := "/fapi/v1/order"
+	endpoint := common.EndPoint("/fapi/v1/order")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

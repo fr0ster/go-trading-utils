@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	common "github.com/fr0ster/turbo-restler/rest_api"
+
 	"github.com/bitly/go-simplejson"
 )
 
@@ -39,7 +41,7 @@ type (
 
 // Функція для відміни ордера
 func (o *Orders) CancelOrders() ([]*CancelOpenOrdersResponse, error) {
-	endpoint := "/api/v3/openOrders"
+	endpoint := common.EndPoint("/api/v3/openOrders")
 
 	// Створення параметрів запиту
 	params := simplejson.New()

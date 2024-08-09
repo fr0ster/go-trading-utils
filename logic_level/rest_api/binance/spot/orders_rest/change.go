@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
+	common "github.com/fr0ster/turbo-restler/rest_api"
 )
 
 // Структура для параметрів запиту
@@ -28,7 +29,7 @@ type SpotOrderUpdateResponse struct {
 
 // Функція для зміни ордера
 func (o *Orders) UpdateSpotOrder(orderID int64, quantity, price float64) (*SpotOrderUpdateResponse, error) {
-	endpoint := "/api/v3/order"
+	endpoint := common.EndPoint("/api/v3/order")
 
 	// Створення параметрів запиту
 	params := simplejson.New()
