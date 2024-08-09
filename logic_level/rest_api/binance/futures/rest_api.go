@@ -67,8 +67,8 @@ func (ra *RestApi) QueryAllOrders() *order.Order {
 
 func New(apiKey, apiSecret string, symbol string, sign signature.Sign, useTestNet ...bool) (api *RestApi) {
 	const (
-		BaseAPIMainUrl    = "https://api.binance.com"
-		BaseAPITestnetUrl = "https://testnet.binance.vision"
+		BaseAPIMainUrl    = "https://fapi.binance.com"
+		BaseAPITestnetUrl = "https://testnet.binancefuture.com"
 	)
 	api = &RestApi{
 		apiKey:    apiKey,
