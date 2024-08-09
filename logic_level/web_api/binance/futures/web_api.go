@@ -12,8 +12,6 @@ type WebApi interface {
 	CancelOrder() *order.Order
 	QueryOrder() *order.Order
 	CancelReplaceOrder() *order.Order
-	QueryOpenOrders() *order.Order
-	QueryAllOrders() *order.Order
 }
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebApi {
