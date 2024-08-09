@@ -62,7 +62,7 @@ func (ra *RestApi) QueryOpenOrders() *order.Order {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", ra.apiKey)
 	simpleJson.Set("symbol", ra.symbol)
-	return order.New(ra.apiKey, ra.symbol, "GET", ra.apiBaseUrl, "GET /api/v3/openOrders", ra.sign)
+	return order.New(ra.apiKey, ra.symbol, "GET", ra.apiBaseUrl, "/api/v3/openOrders", ra.sign)
 }
 
 func (ra *RestApi) QueryAllOrders() *order.Order {
