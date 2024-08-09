@@ -5,7 +5,6 @@ import (
 
 	"github.com/bitly/go-simplejson"
 	order "github.com/fr0ster/go-trading-utils/logic_level/rest_api/binance/common/order"
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
@@ -73,18 +72,17 @@ func (ra *RestApi) QueryAllOrders() *order.Order {
 	return order.New(ra.apiKey, ra.symbol, "GET", ra.apiBaseUrl, "/api/v3/allOrders", ra.sign)
 }
 
-func New(apiKey, apiSecret string, baseUrl rest_api.ApiBaseUrl, symbol string, sign signature.Sign, useTestNet ...bool) (api *RestApi) {
+func New(apiKey, apiSecret string, symbol string, sign signature.Sign, useTestNet ...bool) (api *RestApi) {
 	const (
 		BaseAPIMainUrl    = "https://api.binance.com"
 		BaseAPITestnetUrl = "https://testnet.binance.vision"
 	)
 	api = &RestApi{
-		apiKey:     apiKey,
-		apiSecret:  apiSecret,
-		symbol:     symbol,
-		apiBaseUrl: baseUrl,
-		mutex:      &sync.Mutex{},
-		sign:       sign,
+		apiKey:    apiKey,
+		apiSecret: apiSecret,
+		symbol:    symbol,
+		mutex:     &sync.Mutex{},
+		sign:      sign,
 	}
 	if len(useTestNet) > 0 && useTestNet[0] {
 		api.apiBaseUrl = BaseAPITestnetUrl
