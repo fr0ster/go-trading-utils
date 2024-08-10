@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
@@ -33,9 +34,10 @@ func (ks *KlinesStream) Start(interval string, callBack func(*Kline)) (err error
 	wsURL := fmt.Sprintf("%s/%s@kline_%s", ks.baseUrl, strings.ToLower(ks.symbol), interval)
 	ks.doneC, ks.stopC, err = common.StartStreamer(
 		wsURL,
-		func(message []byte) {
+		func(message *simplejson.Json) {
 			// Парсинг JSON
-			kline, err := ks.parseKlineJSON([]byte(message))
+			js, _ := message.MarshalJSON()
+			kline, err := ks.parseKlineJSON(js)
 			if err != nil {
 				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 			}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
@@ -39,9 +40,10 @@ func (ds *DepthStream) Start(levels string, rateStr string, callBack func(*Depth
 	wsURL := fmt.Sprintf("%s/%s@depth%s%s", wss, strings.ToLower(ds.symbol), levels, rateStr)
 	common.StartStreamer(
 		wsURL,
-		func(message []byte) {
+		func(message *simplejson.Json) {
 			// Парсинг JSON
-			depthUpdate, err := ds.parseDepthUpdateJSON([]byte(message))
+			js, _ := message.MarshalJSON()
+			depthUpdate, err := ds.parseDepthUpdateJSON(js)
 			if err != nil {
 				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 			}

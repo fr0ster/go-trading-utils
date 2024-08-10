@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/bitly/go-simplejson"
 	types "github.com/fr0ster/go-trading-utils/types"
 	api "github.com/fr0ster/turbo-restler/rest_api"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
@@ -140,10 +141,11 @@ func (uds *UserDataStream) listenKey(method api.HttpMethod) (listenKey string, e
 	return
 }
 
-func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
-	return func(message []byte) {
+func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message *simplejson.Json) {
+	return func(message *simplejson.Json) {
 		event := new(WsUserDataEvent)
-		err := json.Unmarshal(message, event)
+		js, _ := message.MarshalJSON()
+		err := json.Unmarshal(js, event)
 		if err != nil {
 			errHandler(err)
 			return

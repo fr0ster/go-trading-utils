@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
@@ -33,9 +34,10 @@ func (bts *BookTickersStream) Start(callBack func(*BookTicker)) (err error) {
 	wsURL := fmt.Sprintf("%s/%s@bookTicker", bts.baseUrl, strings.ToLower(bts.symbol))
 	bts.doneC, bts.stopC, err = common.StartStreamer(
 		wsURL,
-		func(message []byte) {
+		func(message *simplejson.Json) {
 			// Парсинг JSON
-			kline, err := bts.parseBookTickerJSON([]byte(message))
+			js, _ := message.MarshalJSON()
+			kline, err := bts.parseBookTickerJSON(js)
 			if err != nil {
 				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 			}

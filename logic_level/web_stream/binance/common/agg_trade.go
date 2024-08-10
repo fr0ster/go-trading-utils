@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitly/go-simplejson"
 	common "github.com/fr0ster/turbo-restler/web_stream"
 
 	"github.com/sirupsen/logrus"
@@ -33,9 +34,10 @@ func (ats *AggTradeStream) Start(callBack func(*AggTrade)) (err error) {
 	wsURL := fmt.Sprintf("%s/%s@aggTrade", ats.baseUrl, strings.ToLower(ats.symbol))
 	ats.doneC, ats.stopC, err = common.StartStreamer(
 		wsURL,
-		func(message []byte) {
+		func(message *simplejson.Json) {
 			// Парсинг JSON
-			aggTrade, err := ats.parseAggTradeJSON([]byte(message))
+			js, _ := message.MarshalJSON()
+			aggTrade, err := ats.parseAggTradeJSON(js)
 			if err != nil {
 				logrus.Fatalf("Error parsing JSON: %v, message: %s", err, message)
 			}

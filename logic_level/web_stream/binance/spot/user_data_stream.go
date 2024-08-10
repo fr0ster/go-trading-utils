@@ -161,9 +161,9 @@ func (uds *UserDataStream) listenKey(method api.HttpMethod) (listenKey string, e
 	return
 }
 
-func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message []byte) {
-	return func(message []byte) {
-		j, err := simplejson.NewJson(message)
+func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHandler func(err error)) func(message *simplejson.Json) {
+	return func(message *simplejson.Json) {
+		js, err := message.MarshalJSON()
 		if err != nil {
 			errHandler(err)
 			return
@@ -171,7 +171,7 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 
 		event := new(WsUserDataEvent)
 
-		err = json.Unmarshal(message, event)
+		err = json.Unmarshal(js, event)
 		if err != nil {
 			errHandler(err)
 			return
@@ -180,27 +180,27 @@ func (uds *UserDataStream) wsHandler(handler func(event *WsUserDataEvent), errHa
 			return
 		}
 
-		switch types.UserDataEventType(j.Get("e").MustString()) {
+		switch types.UserDataEventType(message.Get("e").MustString()) {
 		case UserDataEventTypeOutboundAccountPosition:
-			err = json.Unmarshal(message, &event.AccountUpdate)
+			err = json.Unmarshal(js, &event.AccountUpdate)
 			if err != nil {
 				errHandler(err)
 				return
 			}
 		case UserDataEventTypeBalanceUpdate:
-			err = json.Unmarshal(message, &event.BalanceUpdate)
+			err = json.Unmarshal(js, &event.BalanceUpdate)
 			if err != nil {
 				errHandler(err)
 				return
 			}
 		case UserDataEventTypeExecutionReport:
-			err = json.Unmarshal(message, &event.OrderUpdate)
+			err = json.Unmarshal(js, &event.OrderUpdate)
 			if err != nil {
 				errHandler(err)
 				return
 			}
 		case UserDataEventTypeListStatus:
-			err = json.Unmarshal(message, &event.OCOUpdate)
+			err = json.Unmarshal(js, &event.OCOUpdate)
 			if err != nil {
 				errHandler(err)
 				return
