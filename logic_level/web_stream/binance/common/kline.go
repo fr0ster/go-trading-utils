@@ -47,7 +47,8 @@ func (ks *KlinesStream) Start(interval string, callBack func(*Kline)) (err error
 		},
 		func(err error) {
 			logrus.Fatalf("Error reading from websocket: %v", err)
-		})
+		},
+		ks.websocketKeepalive)
 	if err != nil {
 		return
 	}

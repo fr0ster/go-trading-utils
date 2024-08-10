@@ -47,7 +47,8 @@ func (bts *BookTickersStream) Start(callBack func(*BookTicker)) (err error) {
 		},
 		func(err error) {
 			logrus.Errorf("Error reading from websocket: %v", err)
-		})
+		},
+		bts.websocketKeepalive)
 	if err != nil {
 		return
 	}

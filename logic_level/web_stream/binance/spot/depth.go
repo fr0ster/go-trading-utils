@@ -53,7 +53,8 @@ func (ds *DepthStream) Start(levels string, rateStr string, callBack func(*Depth
 		},
 		func(err error) {
 			logrus.Fatalf("Error reading from websocket: %v", err)
-		})
+		},
+		ds.websocketKeepalive)
 }
 
 func NewDepthStream(symbol string, useTestNet bool, websocketKeepalive ...bool) *DepthStream {

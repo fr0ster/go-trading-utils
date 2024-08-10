@@ -47,7 +47,8 @@ func (ats *AggTradeStream) Start(callBack func(*AggTrade)) (err error) {
 		},
 		func(err error) {
 			logrus.Fatalf("Error reading from websocket: %v", err)
-		})
+		},
+		ats.websocketKeepalive)
 	if err != nil {
 		return
 	}
