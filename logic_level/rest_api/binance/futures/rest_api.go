@@ -45,15 +45,15 @@ func (ra *RestApi) QueryAllOrders() *request.Request {
 }
 
 func (ra *RestApi) ListenKey() *request.Request {
-	return request.New(ra.apiKey, ra.symbol, "POST", ra.apiBaseUrl, "/fapi/v1/listenKey", ra.sign)
+	return request.New(ra.apiKey, ra.symbol, "POST", ra.apiBaseUrl, "/fapi/v1/listenKey", nil)
 }
 
 func (ra *RestApi) KeepAliveListenKey() *request.Request {
-	return request.New(ra.apiKey, ra.symbol, "PUT", ra.apiBaseUrl, "/api/v1/listenKey", ra.sign)
+	return request.New(ra.apiKey, ra.symbol, "PUT", ra.apiBaseUrl, "/api/v1/listenKey", nil)
 }
 
 func (ra *RestApi) CloseListenKey() *request.Request {
-	return request.New(ra.apiKey, ra.symbol, "DELETE", ra.apiBaseUrl, "/api/v1/listenKey", ra.sign)
+	return request.New(ra.apiKey, ra.symbol, "DELETE", ra.apiBaseUrl, "/api/v1/listenKey", nil)
 }
 
 func New(apiKey, apiSecret string, symbol string, sign signature.Sign, useTestNet ...bool) (api *RestApi) {
