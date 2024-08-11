@@ -5,63 +5,62 @@ import (
 	"strings"
 	"sync"
 
-	streamer "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common/streamer"
+	stream "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common/stream"
 
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
-func (wa *WebStream) Klines(interval string) *streamer.Request {
+func (wa *WebStream) Klines(interval string) *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@kline_%s", strings.ToLower(wa.symbol), interval))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) Depths(level DepthStreamLevel) *streamer.Request {
+func (wa *WebStream) Depths(level DepthStreamLevel) *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@depth%s", strings.ToLower(wa.symbol), string(level)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) Depths100ms(level DepthStreamLevel) *streamer.Request {
+func (wa *WebStream) Depths100ms(level DepthStreamLevel) *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@depth%s@100ms", strings.ToLower(wa.symbol), string(level)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) AggTrades() *streamer.Request {
+func (wa *WebStream) AggTrades() *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@aggTrade", strings.ToLower(wa.symbol)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) Trades() *streamer.Request {
+func (wa *WebStream) Trades() *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@Trade", strings.ToLower(wa.symbol)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) BookTickers() *streamer.Request {
+func (wa *WebStream) BookTickers() *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@bookTicker", strings.ToLower(wa.symbol)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) Tickers() *streamer.Request {
+func (wa *WebStream) Tickers() *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@ticker", strings.ToLower(wa.symbol)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) MiniTickers() *streamer.Request {
+func (wa *WebStream) MiniTickers() *stream.Stream {
 	wsPath := web_api.WsPath(fmt.Sprintf("%s@miniTicker", strings.ToLower(wa.symbol)))
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, wsPath, wa.sign)
+	return stream.New(wa.symbol, wa.waHost, wsPath, wa.sign)
 }
 
-func (wa *WebStream) UserData(listenKey string) *streamer.Request {
-	return streamer.New(wa.apiKey, wa.apiSecret, wa.waHost, web_api.WsPath(listenKey), wa.sign)
+func (wa *WebStream) UserData(listenKey string) *stream.Stream {
+	return stream.New(wa.symbol, wa.waHost, web_api.WsPath(listenKey), wa.sign)
 }
 
-func New(apiKey, apiSecret string, host web_api.WsHost, symbol string, sign signature.Sign) *WebStream {
+func New(apiKey string, host web_api.WsHost, symbol string, sign signature.Sign) *WebStream {
 	return &WebStream{
-		apiKey:    apiKey,
-		apiSecret: apiSecret,
-		symbol:    symbol,
-		waHost:    host,
-		mutex:     &sync.Mutex{},
-		sign:      sign,
+		apiKey: apiKey,
+		symbol: symbol,
+		waHost: host,
+		mutex:  &sync.Mutex{},
+		sign:   sign,
 	}
 }

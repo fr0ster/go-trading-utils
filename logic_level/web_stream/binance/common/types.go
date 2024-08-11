@@ -21,11 +21,10 @@ type (
 	DepthStreamLevel int
 	DepthStreamRate  time.Duration
 	WebStream        struct {
-		apiKey    string
-		apiSecret string
-		symbol    string
-		waHost    web_api.WsHost
-		mutex     *sync.Mutex
-		sign      signature.Sign
+		apiKey string
+		symbol string
+		waHost web_api.WsHost
+		mutex  *sync.Mutex
+		sign   signature.Sign
 	}
 )

@@ -2,22 +2,22 @@ package futures_web_stream
 
 import (
 	common "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common"
-	streamer "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common/streamer"
+	stream "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common/stream"
 
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 type WebStream interface {
-	Klines(interval string) *streamer.Request
-	Depths(level common.DepthStreamLevel) *streamer.Request
-	BookTickers() *streamer.Request
-	Trades() *streamer.Request
-	MiniTickers() *streamer.Request
-	UserData(listenKey string) *streamer.Request
+	Klines(interval string) *stream.Stream
+	Depths(level common.DepthStreamLevel) *stream.Stream
+	BookTickers() *stream.Stream
+	Trades() *stream.Stream
+	MiniTickers() *stream.Stream
+	UserData(listenKey string) *stream.Stream
 }
 
-func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebStream {
+func New(symbol string, sign signature.Sign, useTestNet ...bool) WebStream {
 	var (
 		wsEndpoint string
 	)
@@ -29,5 +29,5 @@ func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bo
 	} else {
 		wsEndpoint = "wss://stream.binance.com:9443"
 	}
-	return common.New(apiKey, apiSecret, web_api.WsHost(wsEndpoint), symbol, sign)
+	return common.New(symbol, web_api.WsHost(wsEndpoint), symbol, sign)
 }
