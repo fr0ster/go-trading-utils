@@ -9,9 +9,9 @@ import (
 )
 
 type WebApi interface {
-	PlaceRequest() *request.Request
-	CancelRequest() *request.Request
-	QueryRequest() *request.Request
+	PlaceOrder() *request.Request
+	CancelOrder() *request.Request
+	QueryOrder() *request.Request
 	CancelReplaceRequest() *request.Request
 	QueryOpenRequests() *request.Request
 	QueryAllRequests() *request.Request

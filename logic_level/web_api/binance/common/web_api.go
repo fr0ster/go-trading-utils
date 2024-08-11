@@ -20,16 +20,16 @@ func (wa *WebApi) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func (wa *WebApi) PlaceRequest() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "Request.place", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) PlaceOrder() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "order.place", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelRequest() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "Request.cancel", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) CancelOrder() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "order.cancel", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryRequest() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "Request.status", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryOrder() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "order.status", wa.waHost, wa.waPath, wa.sign)
 }
 
 func (wa *WebApi) CancelReplaceRequest() *request.Request {
