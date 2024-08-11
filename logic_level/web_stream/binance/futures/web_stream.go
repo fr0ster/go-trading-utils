@@ -4,7 +4,6 @@ import (
 	common "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common"
 	stream "github.com/fr0ster/go-trading-utils/logic_level/web_stream/binance/common/stream"
 
-	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
@@ -17,7 +16,7 @@ type WebStream interface {
 	UserData(listenKey string) *stream.Stream
 }
 
-func New(symbol string, sign signature.Sign, useTestNet ...bool) WebStream {
+func New(symbol string, useTestNet ...bool) WebStream {
 	var (
 		wsEndpoint string
 	)
@@ -25,9 +24,9 @@ func New(symbol string, sign signature.Sign, useTestNet ...bool) WebStream {
 		useTestNet = append(useTestNet, false)
 	}
 	if useTestNet[0] {
-		wsEndpoint = "wss://testnet.binancefuture.com"
+		wsEndpoint = "testnet.binancefuture.com"
 	} else {
-		wsEndpoint = "wss://ws-fapi.binance.com"
+		wsEndpoint = "ws-fapi.binance.com"
 	}
-	return common.New(symbol, web_api.WsHost(wsEndpoint), symbol, sign)
+	return common.New(web_api.WsHost(wsEndpoint), symbol)
 }
