@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/bitly/go-simplejson"
-	order "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/order"
+	request "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/request"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
@@ -18,28 +18,28 @@ func (wa *WebApi) Unlock() {
 	wa.mutex.Unlock()
 }
 
-func (wa *WebApi) PlaceOrder() *order.Order {
-	return newPlaceOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) PlaceRequest() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "Request.place", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelOrder() *order.Order {
-	return newCancelOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) CancelRequest() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "Request.cancel", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryOrder() *order.Order {
-	return newQueryOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryRequest() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "Request.status", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelReplaceOrder() *order.Order {
-	return newCancelReplaceOrder(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) CancelReplaceRequest() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "Request.cancelReplace", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryOpenOrders() *order.Order {
-	return newQueryOpenOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryOpenRequests() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "openRequests.status", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryAllOrders() *order.Order {
-	return newQueryAllOrders(wa.apiKey, wa.symbol, wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryAllRequests() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "Request.allRequests", wa.waHost, wa.waPath, wa.sign)
 }
 
 // Функція для логіну
@@ -48,7 +48,7 @@ func (wa *WebApi) Logon() (result *LogonResult, err error) {
 	params := simplejson.New()
 	params.Set("apiKey", wa.apiKey)
 
-	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.logon", params, nil)
+	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.logon", params, wa.sign)
 	if err != nil {
 		return
 	}

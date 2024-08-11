@@ -2,18 +2,18 @@ package spot_web_api
 
 import (
 	common "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common"
-	"github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/order"
+	request "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/request"
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	"github.com/fr0ster/turbo-restler/web_api"
 )
 
 type WebApi interface {
-	PlaceOrder() *order.Order
-	CancelOrder() *order.Order
-	QueryOrder() *order.Order
-	CancelReplaceOrder() *order.Order
-	QueryOpenOrders() *order.Order
-	QueryAllOrders() *order.Order
+	PlaceRequest() *request.Request
+	CancelRequest() *request.Request
+	QueryRequest() *request.Request
+	CancelReplaceRequest() *request.Request
+	QueryOpenRequests() *request.Request
+	QueryAllRequests() *request.Request
 }
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebApi {

@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	Order struct {
+	Request struct {
 		sign   signature.Sign
 		waHost web_api.WsHost
 		waPath web_api.WsPath
@@ -19,12 +19,12 @@ type (
 	}
 )
 
-func (o *Order) Set(name string, value interface{}) *Order {
+func (o *Request) Set(name string, value interface{}) *Request {
 	o.params.Set(name, value)
 	return o
 }
 
-func (po *Order) Do() (order *simplejson.Json, err error) {
+func (po *Request) Do() (order *simplejson.Json, err error) {
 	response, err := web_api.CallWebAPI(web_api.WsHost(po.waHost), po.waPath, po.method, po.params, po.sign)
 	if err != nil {
 		return
@@ -43,11 +43,11 @@ func (po *Order) Do() (order *simplejson.Json, err error) {
 	return
 }
 
-func New(apiKey, symbol string, method web_api.Method, waHost web_api.WsHost, waPath web_api.WsPath, sign signature.Sign) *Order {
+func New(apiKey, symbol string, method web_api.Method, waHost web_api.WsHost, waPath web_api.WsPath, sign signature.Sign) *Request {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", apiKey)
 	simpleJson.Set("symbol", symbol)
-	return &Order{
+	return &Request{
 		sign:   sign,
 		waHost: waHost,
 		waPath: waPath,
