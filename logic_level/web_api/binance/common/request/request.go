@@ -5,8 +5,9 @@ import (
 	"fmt"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/fr0ster/turbo-restler/utils/signature"
-	"github.com/fr0ster/turbo-restler/web_api"
+
+	signature "github.com/fr0ster/turbo-restler/utils/signature"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 type (

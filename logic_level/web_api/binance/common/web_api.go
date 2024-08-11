@@ -5,7 +5,9 @@ import (
 	"sync"
 
 	"github.com/bitly/go-simplejson"
+
 	request "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/request"
+
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
 	web_api "github.com/fr0ster/turbo-restler/web_api"
 )

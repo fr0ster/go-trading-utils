@@ -3,8 +3,9 @@ package spot_web_api
 import (
 	common "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common"
 	request "github.com/fr0ster/go-trading-utils/logic_level/web_api/binance/common/request"
+
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
-	"github.com/fr0ster/turbo-restler/web_api"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 )
 
 type WebApi interface {

@@ -3,10 +3,10 @@ package order
 import (
 	"fmt"
 
-	rest_api "github.com/fr0ster/turbo-restler/rest_api"
-
 	"github.com/bitly/go-simplejson"
-	"github.com/fr0ster/turbo-restler/utils/signature"
+
+	rest_api "github.com/fr0ster/turbo-restler/rest_api"
+	signature "github.com/fr0ster/turbo-restler/utils/signature"
 )
 
 type (

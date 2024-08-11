@@ -4,7 +4,7 @@ import (
 	"github.com/bitly/go-simplejson"
 
 	signature "github.com/fr0ster/turbo-restler/utils/signature"
-	"github.com/fr0ster/turbo-restler/web_api"
+	web_api "github.com/fr0ster/turbo-restler/web_api"
 	web_stream "github.com/fr0ster/turbo-restler/web_stream"
 )
 
