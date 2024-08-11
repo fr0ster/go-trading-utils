@@ -11,8 +11,8 @@ type WebStream interface {
 	Klines(interval string) *stream.Stream
 	Depths(level common.DepthStreamLevel) *stream.Stream
 	BookTickers() *stream.Stream
-	Trades() *stream.Stream
 	MiniTickers() *stream.Stream
+	AggTrades() *stream.Stream
 	UserData(listenKey string) *stream.Stream
 }
 
