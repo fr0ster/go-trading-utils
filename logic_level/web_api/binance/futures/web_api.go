@@ -12,6 +12,10 @@ type WebApi interface {
 	CancelRequest() *request.Request
 	QueryRequest() *request.Request
 	CancelReplaceRequest() *request.Request
+	ListOfSubscriptions() *request.Request
+	Logon() (result *common.Result, err error)
+	Logout() (result *common.Result, err error)
+	Status() (result *common.Result, err error)
 }
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebApi {

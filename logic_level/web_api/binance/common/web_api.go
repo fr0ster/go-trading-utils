@@ -42,8 +42,12 @@ func (wa *WebApi) QueryAllRequests() *request.Request {
 	return request.New(wa.apiKey, wa.symbol, "Request.allRequests", wa.waHost, wa.waPath, wa.sign)
 }
 
+func (wa *WebApi) ListOfSubscriptions() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "LIST_SUBSCRIPTIONS", wa.waHost, wa.waPath, wa.sign)
+}
+
 // Функція для логіну
-func (wa *WebApi) Logon() (result *LogonResult, err error) {
+func (wa *WebApi) Logon() (result *Result, err error) {
 	// Створення параметрів запиту
 	params := simplejson.New()
 	params.Set("apiKey", wa.apiKey)
@@ -58,12 +62,12 @@ func (wa *WebApi) Logon() (result *LogonResult, err error) {
 		return
 	}
 
-	result = response.Result.(*LogonResult)
+	result = response.Result.(*Result)
 	return
 }
 
 // Функція для логіну
-func (wa *WebApi) Logout() (result *LogonResult, err error) {
+func (wa *WebApi) Logout() (result *Result, err error) {
 	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.logout", nil, nil)
 	if err != nil {
 		return
@@ -74,12 +78,12 @@ func (wa *WebApi) Logout() (result *LogonResult, err error) {
 		return
 	}
 
-	result = response.Result.(*LogonResult)
+	result = response.Result.(*Result)
 	return
 }
 
 // Функція для перевірки статусу сесії
-func (wa *WebApi) Status() (result *LogonResult, err error) {
+func (wa *WebApi) Status() (result *Result, err error) {
 	response, err := web_api.CallWebAPI(wa.waHost, wa.waPath, "session.status", nil, nil)
 	if err != nil {
 		return
@@ -90,7 +94,7 @@ func (wa *WebApi) Status() (result *LogonResult, err error) {
 		return
 	}
 
-	result = response.Result.(*LogonResult)
+	result = response.Result.(*Result)
 	return
 }
 

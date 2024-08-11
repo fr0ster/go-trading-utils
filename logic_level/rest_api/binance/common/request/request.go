@@ -10,7 +10,7 @@ import (
 )
 
 type (
-	Order struct {
+	Request struct {
 		sign       signature.Sign
 		apiBAseUrl rest_api.ApiBaseUrl
 		endPoint   rest_api.EndPoint
@@ -19,13 +19,13 @@ type (
 	}
 )
 
-func (o *Order) Set(name string, value interface{}) *Order {
-	o.params.Set(name, value)
-	return o
+func (rq *Request) Set(name string, value interface{}) *Request {
+	rq.params.Set(name, value)
+	return rq
 }
 
-func (o *Order) Do() (order *simplejson.Json, err error) {
-	response, err := rest_api.CallRestAPI(o.apiBAseUrl, o.method, o.params, o.endPoint, o.sign)
+func (rq *Request) Do() (order *simplejson.Json, err error) {
+	response, err := rest_api.CallRestAPI(rq.apiBAseUrl, rq.method, rq.params, rq.endPoint, rq.sign)
 	if err != nil {
 		return nil, fmt.Errorf("error calling API: %v", err)
 	}
@@ -34,11 +34,11 @@ func (o *Order) Do() (order *simplejson.Json, err error) {
 	return
 }
 
-func New(apiKey, symbol string, method rest_api.HttpMethod, baseUrl rest_api.ApiBaseUrl, endPoint rest_api.EndPoint, sign signature.Sign) *Order {
+func New(apiKey, symbol string, method rest_api.HttpMethod, baseUrl rest_api.ApiBaseUrl, endPoint rest_api.EndPoint, sign signature.Sign) *Request {
 	simpleJson := simplejson.New()
 	simpleJson.Set("apiKey", apiKey)
 	simpleJson.Set("symbol", symbol)
-	return &Order{
+	return &Request{
 		sign:       sign,
 		apiBAseUrl: baseUrl,
 		endPoint:   endPoint,

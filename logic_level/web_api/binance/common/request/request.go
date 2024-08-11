@@ -19,13 +19,13 @@ type (
 	}
 )
 
-func (o *Request) Set(name string, value interface{}) *Request {
-	o.params.Set(name, value)
-	return o
+func (rq *Request) Set(name string, value interface{}) *Request {
+	rq.params.Set(name, value)
+	return rq
 }
 
-func (po *Request) Do() (order *simplejson.Json, err error) {
-	response, err := web_api.CallWebAPI(web_api.WsHost(po.waHost), po.waPath, po.method, po.params, po.sign)
+func (rq *Request) Do() (order *simplejson.Json, err error) {
+	response, err := web_api.CallWebAPI(web_api.WsHost(rq.waHost), rq.waPath, rq.method, rq.params, rq.sign)
 	if err != nil {
 		return
 	}

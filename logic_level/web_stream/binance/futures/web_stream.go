@@ -10,12 +10,12 @@ import (
 )
 
 type WebStream interface {
-	Klines(interval string) *streamer.Streamer
-	Depths() *streamer.Streamer
-	Trades() *streamer.Streamer
-	BookTickers() *streamer.Streamer
-	// MiniTickers() *streamer.Streamer
-	UserData(listenKey string) *streamer.Streamer
+	Klines(interval string) *streamer.Request
+	Depths(level common.DepthStreamLevel) *streamer.Request
+	BookTickers() *streamer.Request
+	Trades() *streamer.Request
+	MiniTickers() *streamer.Request
+	UserData(listenKey string) *streamer.Request
 }
 
 func New(apiKey, apiSecret, symbol string, sign signature.Sign, useTestNet ...bool) WebStream {
