@@ -32,16 +32,16 @@ func (wa *WebApi) QueryOrder() *request.Request {
 	return request.New(wa.apiKey, wa.symbol, "order.status", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) CancelReplaceRequest() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "Request.cancelReplace", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) CancelReplaceOrder() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "order.cancelReplace", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryOpenRequests() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "openRequests.status", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryOpenOrders() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "openOrders.status", wa.waHost, wa.waPath, wa.sign)
 }
 
-func (wa *WebApi) QueryAllRequests() *request.Request {
-	return request.New(wa.apiKey, wa.symbol, "Request.allRequests", wa.waHost, wa.waPath, wa.sign)
+func (wa *WebApi) QueryAllOrders() *request.Request {
+	return request.New(wa.apiKey, wa.symbol, "orderList.status", wa.waHost, wa.waPath, wa.sign)
 }
 
 func (wa *WebApi) ListOfSubscriptions() *request.Request {

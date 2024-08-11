@@ -12,9 +12,9 @@ type WebApi interface {
 	PlaceOrder() *request.Request
 	CancelOrder() *request.Request
 	QueryOrder() *request.Request
-	CancelReplaceRequest() *request.Request
-	QueryOpenRequests() *request.Request
-	QueryAllRequests() *request.Request
+	CancelReplaceOrder() *request.Request
+	QueryOpenOrders() *request.Request
+	QueryAllOrders() *request.Request
 	ListOfSubscriptions() *request.Request
 	Logon() (result *common.Result, err error)
 	Logout() (result *common.Result, err error)
