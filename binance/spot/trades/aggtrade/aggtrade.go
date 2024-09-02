@@ -37,7 +37,19 @@ func InitCreator(client *binance.Client, limit int) func(at *aggtrade_types.AggT
 	}
 }
 
-func CallBackCreator(limit int) func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
+func TradeStreamCreator(
+	handler func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler,
+	errHandler func(trade *aggtrade_types.AggTrades) binance.ErrHandler) func(*aggtrade_types.AggTrades) types.StreamFunction {
+	return func(at *aggtrade_types.AggTrades) types.StreamFunction {
+		return func() (doneC, stopC chan struct{}, err error) {
+			// Запускаємо стрім подій користувача
+			doneC, stopC, err = binance.WsAggTradeServe(at.Symbol(), handler(at), errHandler(at))
+			return
+		}
+	}
+}
+
+func DefaultCallBack(limit int) func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
 	return func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
 		return func(event *binance.WsAggTradeEvent) {
 			trade.Lock()         // Locking the depths
@@ -55,14 +67,17 @@ func CallBackCreator(limit int) func(trade *aggtrade_types.AggTrades) binance.Ws
 		}
 	}
 }
-func TradeStreamCreator(
-	handler func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler,
-	errHandler func(trade *aggtrade_types.AggTrades) binance.ErrHandler) func(*aggtrade_types.AggTrades) types.StreamFunction {
-	return func(at *aggtrade_types.AggTrades) types.StreamFunction {
-		return func() (doneC, stopC chan struct{}, err error) {
-			// Запускаємо стрім подій користувача
-			doneC, stopC, err = binance.WsAggTradeServe(at.Symbol(), handler(at), errHandler(at))
-			return
+
+func CallBackCreator(handlers ...func(*aggtrade_types.AggTrades) binance.WsAggTradeHandler) func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
+	return func(trade *aggtrade_types.AggTrades) binance.WsAggTradeHandler {
+		var stack []binance.WsAggTradeHandler
+		for _, handler := range handlers {
+			stack = append(stack, handler(trade))
+		}
+		return func(event *binance.WsAggTradeEvent) {
+			for _, handler := range stack {
+				handler(event)
+			}
 		}
 	}
 }
