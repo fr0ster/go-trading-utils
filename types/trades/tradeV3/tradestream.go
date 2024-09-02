@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func (tv3 *TradesV3) TradeEventStart() (err error) {
+func (tv3 *TradesV3) StreamStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(tv3.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді

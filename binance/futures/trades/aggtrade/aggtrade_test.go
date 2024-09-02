@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/adshao/go-binance/v2"
+	"github.com/adshao/go-binance/v2/futures"
 
-	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/trades/aggtrade"
+	futures_trade "github.com/fr0ster/go-trading-utils/binance/futures/trades/aggtrade"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/aggtrade"
 
 	"github.com/google/btree"
@@ -24,8 +25,8 @@ func TestAggTrades(t *testing.T) {
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
-		spot_trade.TradeStreamCreator(nil, nil),
-		spot_trade.InitCreator(binance.NewClient(api_key, secret_key), 10))
+		futures_trade.TradeStreamCreator(nil, nil),
+		futures_trade.InitCreator(futures.NewClient(api_key, secret_key), 10))
 	test := func(i *trade_types.AggTrades) {
 		i.Lock()
 		defer i.Unlock()

@@ -17,7 +17,7 @@ func (at *AggTrades) IsStreamStarted() bool {
 	return at.isStartedStream
 }
 
-func (at *AggTrades) TradeEventStart() (err error) {
+func (at *AggTrades) StreamStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
 	ticker := time.NewTicker(at.timeOut)
 	// Ініціалізуємо маркер для останньої відповіді
