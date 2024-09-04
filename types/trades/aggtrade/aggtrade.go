@@ -104,6 +104,7 @@ func New(
 		stop:            stop,
 		resetEvent:      make(chan error),
 		isStartedStream: false,
+		timeOut:         1 * time.Hour,
 	}
 	if startTradeStream != nil {
 		this.startTradeStream = startTradeStream(this)
