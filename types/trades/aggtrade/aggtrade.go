@@ -89,7 +89,9 @@ func (at *AggTrades) Symbol() string {
 }
 
 func (at *AggTrades) ResetEvent(err error) {
-	at.resetEvent <- err
+	if at.isStartedStream {
+		at.resetEvent <- err
+	}
 }
 
 func New(

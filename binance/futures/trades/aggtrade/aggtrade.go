@@ -44,6 +44,7 @@ func TradeStreamCreator(
 		return func() (doneC, stopC chan struct{}, err error) {
 			// Запускаємо стрім подій користувача
 			doneC, stopC, err = futures.WsAggTradeServe(at.Symbol(), handler(at), errHandler(at))
+			at.MarkStreamAsStarted()
 			return
 		}
 	}
