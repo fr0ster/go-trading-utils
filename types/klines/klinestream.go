@@ -67,6 +67,7 @@ func (kl *Klines) StreamStart() (err error) {
 					kl.StreamStop()
 					return
 				}
+				kl.MarkStreamAsStarted()
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > kl.timeOut {
@@ -78,6 +79,7 @@ func (kl *Klines) StreamStart() (err error) {
 						kl.StreamStop()
 						return
 					}
+					kl.MarkStreamAsStarted()
 					// Встановлюємо новий час відповіді
 					lastResponse = time.Now()
 				}

@@ -1,8 +1,21 @@
 package tradeV3
 
 import (
+	"errors"
 	"time"
 )
+
+func (tv3 *TradesV3) MarkStreamAsStarted() {
+	tv3.isStartedStream = true
+}
+
+func (tv3 *TradesV3) MarkStreamAsStopped() {
+	tv3.isStartedStream = false
+}
+
+func (tv3 *TradesV3) IsStreamStarted() bool {
+	return tv3.isStartedStream
+}
 
 func (tv3 *TradesV3) StreamStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
@@ -26,6 +39,7 @@ func (tv3 *TradesV3) StreamStart() (err error) {
 					close(tv3.stop)
 					return
 				}
+				tv3.MarkStreamAsStarted()
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > tv3.timeOut {
@@ -37,11 +51,22 @@ func (tv3 *TradesV3) StreamStart() (err error) {
 						close(tv3.stop)
 						return
 					}
+					tv3.MarkStreamAsStarted()
 					// Встановлюємо новий час відповіді
 					lastResponse = time.Now()
 				}
 			}
 		}
 	}()
+	return
+}
+
+func (tv3 *TradesV3) StreamStop() (err error) {
+	if tv3.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(tv3.stop)
+	tv3.MarkStreamAsStopped()
 	return
 }

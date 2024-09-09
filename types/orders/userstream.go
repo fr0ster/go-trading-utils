@@ -43,6 +43,7 @@ func (o *Orders) StreamStart() (err error) {
 					o.StreamStop()
 					return
 				}
+				o.MarkStreamAsStarted()
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > o.timeOut {
@@ -54,6 +55,7 @@ func (o *Orders) StreamStart() (err error) {
 						o.StreamStop()
 						return
 					}
+					o.MarkStreamAsStarted()
 					// Встановлюємо новий час відповіді
 					lastResponse = time.Now()
 				}

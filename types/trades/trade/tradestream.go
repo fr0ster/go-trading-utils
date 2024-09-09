@@ -1,8 +1,21 @@
 package trade
 
 import (
+	"errors"
 	"time"
 )
+
+func (t *Trades) MarkStreamAsStarted() {
+	t.isStartedStream = true
+}
+
+func (t *Trades) MarkStreamAsStopped() {
+	t.isStartedStream = false
+}
+
+func (t *Trades) IsStreamStarted() bool {
+	return t.isStartedStream
+}
 
 func (t *Trades) StreamStart() (err error) {
 	// Ініціалізуємо стріми для відмірювання часу
@@ -26,6 +39,7 @@ func (t *Trades) StreamStart() (err error) {
 					close(t.stop)
 					return
 				}
+				t.MarkStreamAsStarted()
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > t.timeOut {
@@ -37,11 +51,22 @@ func (t *Trades) StreamStart() (err error) {
 						close(t.stop)
 						return
 					}
+					t.MarkStreamAsStarted()
 					// Встановлюємо новий час відповіді
 					lastResponse = time.Now()
 				}
 			}
 		}
 	}()
+	return
+}
+
+func (t *Trades) StreamStop() (err error) {
+	if t.stop == nil {
+		err = errors.New("stop channel is not initialized")
+		return
+	}
+	close(t.stop)
+	t.MarkStreamAsStopped()
 	return
 }

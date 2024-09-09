@@ -16,6 +16,7 @@ type (
 		timeOut          time.Duration
 		stop             chan struct{}
 		resetEvent       chan error
+		isStartedStream  bool
 		startTradeStream types.StreamFunction
 		Init             types.InitFunction
 	}

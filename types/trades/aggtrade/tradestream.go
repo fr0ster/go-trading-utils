@@ -39,6 +39,7 @@ func (at *AggTrades) StreamStart() (err error) {
 					at.StreamStop()
 					return
 				}
+				at.MarkStreamAsStarted()
 			case <-ticker.C:
 				// Перевіряємо чи не вийшли за ліміт часу відповіді
 				if time.Since(lastResponse) > at.timeOut {
@@ -50,6 +51,7 @@ func (at *AggTrades) StreamStart() (err error) {
 						at.StreamStop()
 						return
 					}
+					at.MarkStreamAsStarted()
 					// Встановлюємо новий час відповіді
 					lastResponse = time.Now()
 				}
