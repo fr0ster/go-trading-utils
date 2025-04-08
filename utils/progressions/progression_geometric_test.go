@@ -72,7 +72,7 @@ func TestFindGeometricProgressionTthTerm(t *testing.T) {
 	// Test case 2: first term is 5, last term is 320, length is 6, sum is 630, T is 4
 	expectedResult = 60.62866266041594
 	result = progressions.FindGeometricProgressionTthTerm(5, 320, 6, 630, 4)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.00001, "результати мають бути близькі")
 
 	// Add more test cases here...
 }

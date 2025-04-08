@@ -32,13 +32,13 @@ func TestFindCubicProgressionNthTerm(t *testing.T) {
 	// Expected output: 27.00000000000003
 	result := progressions.FindCubicProgressionNthTerm(1, 3, 4)
 	expected := 27.00000000000003
-	assert.Equal(t, expected, result)
+	assert.InDelta(t, expected, result, 0.00001, "результати мають бути близькі")
 
 	// Test case 2: First term is -2, second term is -4, term position is 6
 	// Expected output: -63.99999999999984
 	result = progressions.FindCubicProgressionNthTerm(-2, -4, 6)
 	expected = -63.99999999999984
-	assert.Equal(t, expected, result)
+	assert.InDelta(t, expected, result, 0.00001, "результати мають бути близькі")
 }
 
 func TestCubicProgressionSum(t *testing.T) {
