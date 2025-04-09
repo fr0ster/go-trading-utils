@@ -8,7 +8,7 @@ require (
 	github.com/adshao/go-binance/v2 v2.8.2
 	github.com/google/btree v1.1.3
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
