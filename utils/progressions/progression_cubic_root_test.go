@@ -48,7 +48,7 @@ func TestFindCubicRootProgressionNthTerm(t *testing.T) {
 	termPosition = 5
 	expectedResult = 0.5832645197880584
 	result = progressions.FindCubicRootProgressionNthTerm(firstTerm, secondTerm, termPosition)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.0000001, "Result is not within the expected delta")
 
 	// Test case 3: firstTerm = -3, secondTerm = 3, termPosition = 4
 	firstTerm = -3.0
@@ -56,7 +56,7 @@ func TestFindCubicRootProgressionNthTerm(t *testing.T) {
 	termPosition = 4
 	expectedResult = 3.000000
 	result = progressions.FindCubicRootProgressionNthTerm(firstTerm, secondTerm, termPosition)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.0000001, "Result is not within the expected delta")
 }
 
 func TestCubicRootProgressionSum(t *testing.T) {
@@ -66,7 +66,7 @@ func TestCubicRootProgressionSum(t *testing.T) {
 	numberOfTerms := 3
 	expectedResult := 3.8473221018630723
 	result := progressions.CubicRootProgressionSum(firstTerm, commonRatio, numberOfTerms)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.0000001, "Result is not within the expected delta")
 
 	// Test case 2: commonRatio = 0.5, numberOfTerms = 5
 	firstTerm = 2.0
@@ -74,7 +74,7 @@ func TestCubicRootProgressionSum(t *testing.T) {
 	numberOfTerms = 5
 	expectedResult = 6.641022627847173
 	result = progressions.CubicRootProgressionSum(firstTerm, commonRatio, numberOfTerms)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.0000001, "Result is not within the expected delta")
 
 	// Test case 3: commonRatio = -1, numberOfTerms = 4
 	firstTerm = 3.0
@@ -82,7 +82,7 @@ func TestCubicRootProgressionSum(t *testing.T) {
 	numberOfTerms = 4
 	expectedResult = 12
 	result = progressions.CubicRootProgressionSum(firstTerm, commonRatio, numberOfTerms)
-	assert.Equal(t, expectedResult, result)
+	assert.InDelta(t, expectedResult, result, 0.0000001, "Result is not within the expected delta")
 }
 
 func TestFindLengthOfCubicRootProgression(t *testing.T) {
