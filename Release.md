@@ -1,6 +1,6 @@
 # go-trading-utils Release Notes
 
-## v0.2.0 - 2025-08-22
+## v0.2.12 - 2025-08-22
 
 Changes:
 - Upgrade dependencies: go-binance v2.8.5, golang.org/x/sys v0.35.0, and others.
