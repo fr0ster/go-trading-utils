@@ -1,11 +1,10 @@
 package trade_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
 	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/trades/trade"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/trade"
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +15,12 @@ var (
 )
 
 func TestHistoricalTrades(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	t.Parallel()
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.HistoricalTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.HistoricalTradesInitCreator(testutil.SpotClient(t), 10))
 	test := func(i *trade_types.Trades) {
 		i.Lock()
 		defer i.Unlock()
@@ -41,14 +38,12 @@ func TestHistoricalTrades(t *testing.T) {
 }
 
 func TestRecentTrades(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	t.Parallel()
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.RecentTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.RecentTradesInitCreator(testutil.SpotClient(t), 10))
 	test := func(i *trade_types.Trades) {
 		i.Lock()
 		defer i.Unlock()

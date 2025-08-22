@@ -1,11 +1,10 @@
 package bookticker_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
 	spot_booktickers "github.com/fr0ster/go-trading-utils/binance/spot/booktickers"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	booktickers_types "github.com/fr0ster/go-trading-utils/types/booktickers"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,17 +14,15 @@ var (
 )
 
 func TestInitPricesTree(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = true
-	spot := binance.NewClient(api_key, secret_key)
+	t.Parallel()
+	client := testutil.SpotClient(t)
 
 	// Call the function under test
 	bookTickers := booktickers_types.New(
 		quit,
 		3,
 		nil,
-		spot_booktickers.InitCreator(spot),
+		spot_booktickers.InitCreator(client),
 		"BTCUSDT")
 
 	// TODO: Add more assertions to validate the behavior of the function

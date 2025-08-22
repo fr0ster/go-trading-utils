@@ -18,9 +18,13 @@ const (
 )
 
 func TestGetExchangeInfo(t *testing.T) {
+	t.Parallel()
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
+	if api_key == "" || secret_key == "" {
+		t.Skip("Пропущено: немає ключів для Spot (SPOT_TEST_BINANCE_API_KEY/SPOT_TEST_BINANCE_SECRET_KEY або API_KEY/SECRET_KEY)")
+	}
 	client := binance.NewClient(api_key, secret_key)
 
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
@@ -32,9 +36,13 @@ func TestGetExchangeInfo(t *testing.T) {
 }
 
 func TestGetOrderTypes(t *testing.T) {
+	t.Parallel()
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
+	if api_key == "" || secret_key == "" {
+		t.Skip("Пропущено: немає ключів для Spot (SPOT_TEST_BINANCE_API_KEY/SPOT_TEST_BINANCE_SECRET_KEY або API_KEY/SECRET_KEY)")
+	}
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
@@ -46,9 +54,13 @@ func TestGetOrderTypes(t *testing.T) {
 }
 
 func TestGetPermissions(t *testing.T) {
+	t.Parallel()
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
+	if api_key == "" || secret_key == "" {
+		t.Skip("Пропущено: немає ключів для Spot (SPOT_TEST_BINANCE_API_KEY/SPOT_TEST_BINANCE_SECRET_KEY або API_KEY/SECRET_KEY)")
+	}
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 
@@ -59,9 +71,13 @@ func TestGetPermissions(t *testing.T) {
 }
 
 func TestGetExchangeInfoSymbol(t *testing.T) {
+	t.Parallel()
 	api_key := os.Getenv(API_KEY)
 	secret_key := os.Getenv(SECRET_KEY)
 	binance.UseTestnet = USE_TEST_NET
+	if api_key == "" || secret_key == "" {
+		t.Skip("Пропущено: немає ключів для Spot (SPOT_TEST_BINANCE_API_KEY/SPOT_TEST_BINANCE_SECRET_KEY або API_KEY/SECRET_KEY)")
+	}
 	client := binance.NewClient(api_key, secret_key)
 	exchangeInfo := exchange_types.New(exchangeinfo.InitCreator(client, degree, "BTCUSDT"))
 

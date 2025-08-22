@@ -1,11 +1,10 @@
 package info_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2/futures"
 	futuresInfo "github.com/fr0ster/go-trading-utils/binance/futures/exchangeinfo"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	"github.com/fr0ster/go-trading-utils/types/exchangeinfo"
 	"github.com/sirupsen/logrus"
 )
@@ -13,10 +12,8 @@ import (
 const degree = 3
 
 func TestGetExchangeInfo(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// futures.UseTestnet = true
-	client := futures.NewClient(api_key, secret_key)
+	t.Parallel()
+	client := testutil.FuturesClient(t)
 
 	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
@@ -27,10 +24,8 @@ func TestGetExchangeInfo(t *testing.T) {
 }
 
 func TestGetOrderTypes(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// futures.UseTestnet = true
-	client := futures.NewClient(api_key, secret_key)
+	t.Parallel()
+	client := testutil.FuturesClient(t)
 	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested
@@ -39,10 +34,8 @@ func TestGetOrderTypes(t *testing.T) {
 }
 
 func TestGetExchangeInfoSymbol(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	// futures.UseTestnet = true
-	client := futures.NewClient(api_key, secret_key)
+	t.Parallel()
+	client := testutil.FuturesClient(t)
 	exchangeInfo := exchangeinfo.New(futuresInfo.InitCreator(client, degree, "BTCUSDT"))
 
 	// Call the function being tested

@@ -1,13 +1,10 @@
 package aggtrade_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
-	"github.com/adshao/go-binance/v2/futures"
-
 	futures_trade "github.com/fr0ster/go-trading-utils/binance/futures/trades/aggtrade"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/aggtrade"
 
 	"github.com/google/btree"
@@ -19,14 +16,12 @@ var (
 )
 
 func TestAggTrades(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	t.Parallel()
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
 		futures_trade.TradeStreamCreator(nil, nil),
-		futures_trade.InitCreator(futures.NewClient(api_key, secret_key), 10))
+		futures_trade.InitCreator(testutil.FuturesClient(t), 10))
 	test := func(i *trade_types.AggTrades) {
 		i.Lock()
 		defer i.Unlock()

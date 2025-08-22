@@ -2,18 +2,18 @@ package orders_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/adshao/go-binance/v2/futures"
 	"github.com/stretchr/testify/assert"
 
 	futures_orders "github.com/fr0ster/go-trading-utils/binance/futures/orders"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	orders_types "github.com/fr0ster/go-trading-utils/types/orders"
 )
 
 func TestEvents(t *testing.T) {
+	t.Parallel()
 	var (
 		quit = make(chan struct{})
 	)
@@ -21,10 +21,7 @@ func TestEvents(t *testing.T) {
 	stepSizeExp := 3
 	tickSizeExp := 1
 	t.Log("TestEvents")
-	api_key := os.Getenv("FUTURE_TEST_BINANCE_API_KEY")
-	api_secret := os.Getenv("FUTURE_TEST_BINANCE_SECRET_KEY")
-	futures.UseTestnet = true
-	client := futures.NewClient(api_key, api_secret)
+	client := testutil.FuturesClient(t)
 	orders := orders_types.New(
 		symbol, // symbol
 		futures_orders.UserDataStreamCreator(

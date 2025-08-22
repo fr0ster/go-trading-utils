@@ -1,11 +1,10 @@
 package trade_test
 
 import (
-	"os"
 	"testing"
 
-	"github.com/adshao/go-binance/v2"
 	spot_trade "github.com/fr0ster/go-trading-utils/binance/spot/trades/tradev3"
+	"github.com/fr0ster/go-trading-utils/internal/testutil"
 	trade_types "github.com/fr0ster/go-trading-utils/types/trades/tradeV3"
 	"github.com/google/btree"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +15,12 @@ var (
 )
 
 func TestListTrade(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	t.Parallel()
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.ListTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.ListTradesInitCreator(testutil.SpotClient(t), 10))
 	test := func(i *trade_types.TradesV3) {
 		i.Lock()
 		defer i.Unlock()
@@ -41,14 +38,12 @@ func TestListTrade(t *testing.T) {
 }
 
 func TestListMarginTrades(t *testing.T) {
-	api_key := os.Getenv("API_KEY")
-	secret_key := os.Getenv("SECRET_KEY")
-	binance.UseTestnet = false
+	t.Parallel()
 	trades := trade_types.New(
 		quit,
 		"BTCUSDT",
 		nil,
-		spot_trade.ListMarginTradesInitCreator(binance.NewClient(api_key, secret_key), 10))
+		spot_trade.ListMarginTradesInitCreator(testutil.SpotClient(t), 10))
 	test := func(i *trade_types.TradesV3) {
 		i.Lock()
 		defer i.Unlock()
