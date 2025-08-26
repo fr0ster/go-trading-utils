@@ -1,5 +1,10 @@
 # go-trading-utils Release Notes
 
+## v0.2.13 - 2025-08-26
+
+Changes:
+- 767774ff feat: add account event types and structures for trading operations
+
 ## v0.2.12 - 2025-08-22
 
 Changes:
